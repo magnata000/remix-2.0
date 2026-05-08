@@ -1,96 +1,90 @@
+## Objetivo
 
-# Plano — TheInsuranceOS (Vitrine Interativa Mock)
+Adicionar histórico versionado de cotações no módulo Multicálculo, com edição que gera nova versão automaticamente, comparação entre versões e gestão de status (ganha/perdida/expirada).
 
-## Visão geral
-App-shell único em `/` simulando o sistema operacional para corretoras de seguros, com **6 módulos navegáveis** e dados 100% mockados. Estética **Bento Grid clean minimalist** com paleta **Azul Bebê + brancos/cinzas** (conforme PDF atualizado), fonte **Inter**.
+## Mudanças no Multicálculo
 
-## Estrutura de navegação
+Transformar o módulo em uma estrutura com **3 abas** no topo:
 
-- **Desktop**: Top bar fixa com logo "TheInsuranceOS" (azul bebê), navegação central (Dashboard, Apólices, Kanban, Multicálculo, Financeiro, Configurações), busca, notificações e avatar.
-- **Mobile**: Top bar enxuta + **drawer lateral** (sheet) acionado por ícone hambúrguer, com a mesma navegação empilhada verticalmente.
-- Rota única `/` com state de módulo ativo (sem múltiplas rotas para manter simplicidade da vitrine).
+1. **Nova cotação** — wizard atual (Cliente → Objeto → Coberturas → Resultado)
+2. **Histórico** — lista de todas as cotações geradas, agrupadas por cliente
+3. **Comparar** — ativada ao selecionar 2+ versões no Histórico
 
-## Módulos
+Ao concluir o wizard e selecionar uma seguradora, a cotação é automaticamente salva no Histórico como **v1** com status "Em aberto".
 
-### 1. Dashboard
-Bento Grid com:
-- 4 KPIs no topo (Apólices Ativas, Novos Clientes, Sinistros Abertos, Receita do Mês) — cartão destacado em azul bebê
-- Gráfico de barras "Performance de Vendas" (12 meses) com barra do mês atual em azul bebê
-- Gráfico radial "Taxa de Renovação" em laranja com centro azul
-- Tabela "Apólices Recentes" com status coloridos
+## Aba Histórico
 
-### 2. Apólices
-- Tabela responsiva com filtros (status, ramo, vigência)
-- Colunas: cliente, número, ramo, seguradora, prêmio, vigência, status (badge)
-- Linha clicável → drawer lateral com detalhes da apólice
-- Em mobile: vira lista de cards
+Lista agrupada por cliente, cada grupo mostra:
+- Nome do cliente + ramo + data da última atualização
+- Badge com nº de versões (ex: "3 versões")
+- Status atual (Em aberto / Ganha / Perdida / Expirada)
 
-### 3. Kanban (Tarefas/Pipeline)
-- **Desktop**: 4 colunas horizontais (Lead, Cotação, Negociação, Fechado) com drag-and-drop visual
-- **Mobile**: 
-  - Tabs no topo para alternar entre colunas (uma coluna visível por vez)
-  - Botão "Mover" em cada card abre menu para escolher coluna destino
-  - Indicador de coluna atual + contador de cards
-- Cards mostram: cliente, ramo, valor estimado, prazo, avatar do responsável
+Ao expandir o cliente, mostra timeline vertical de versões:
+- v1, v2, v3… com data, autor, seguradora vencedora, prêmio
+- Pequeno resumo do que mudou vs versão anterior (ex: "+ Vidros, CEP alterado")
+- Ações por versão: **Editar (gera nova versão)**, **Duplicar**, **Ver detalhes**, **Marcar como ganha/perdida**
 
-### 4. Multicálculo
-- Formulário em etapas (stepper): dados do cliente → veículo/objeto → coberturas
-- Resultado: grid comparativo com 4-5 seguradoras mock (preço, coberturas, franquia, botão "Selecionar")
-- Card vencedor destacado em azul bebê
+Filtros no topo: por cliente, status, ramo, período.
 
-### 5. Financeiro
-- KPIs: Comissões a Receber, Recebido no Mês, Inadimplência, Ticket Médio
-- Gráfico de linhas: receita vs comissões (12 meses)
-- Tabela de comissões com status (pago/pendente/atrasado)
+## Edição → Nova versão automática
 
-### 6. Configurações
-- Seções: Perfil da Corretora, Equipe (lista de usuários mock), Integrações (cards de seguradoras conectáveis), Preferências (tema, notificações), Plano & Faturamento
+Ao clicar em "Editar" numa versão:
+- Abre o wizard pré-preenchido com os dados daquela versão
+- Banner no topo: "Editando v2 de João Silva — uma nova versão será criada ao salvar"
+- Ao recalcular, gera **vN+1** vinculada à mesma cotação-mãe (groupId)
+- A versão anterior fica preservada (imutável)
+- Captura diff (campos alterados) para exibir no histórico
 
-## Design System
+## Aba Comparar (toggle de visualização)
 
-**Tokens de cor (oklch em `src/styles.css`)**:
-- `--brand` (Azul Bebê): `oklch(0.82 0.08 230)` — primário, botões, seleção, destaques
-- `--brand-foreground`: branco
-- `--background`: `oklch(0.98 0.005 250)` — cinza claro do dashboard
-- `--card`: branco puro
-- `--foreground`: `oklch(0.18 0.01 250)` — preto suave
-- `--muted-foreground`: cinza médio
-- Status: laranja (warning/novos), azul suave (info), verde (success), vermelho (danger) — uso pontual
+Acionada ao marcar checkboxes de 2+ versões no Histórico, com **toggle no topo**:
 
-**Tipografia**: Inter via Google Fonts. Bold para títulos/números, Regular para apoio.
+**Modo Tabela** (default desktop):
+- Colunas = versões (v1, v2, v3)
+- Linhas = campos (CEP, Cobertura terceiros, Vidros, Carro reserva… + preço por seguradora)
+- Células com diferença destacadas em amarelo
+- Linha "Melhor preço" no rodapé
 
-**Componentes-chave**: Cards arredondados (`rounded-2xl`), sombras suaves (`shadow-sm`), bordas 1px cinza claro, ícones Lucide outline com círculos coloridos de fundo.
+**Modo Timeline** (default mobile):
+- Cards verticais por versão
+- Cada card expansível mostra apenas o que mudou em relação à anterior
+- Preço destacado, badges de "Mais barata" / "Mais coberturas"
 
-## Estados e qualidade
+## Status e expiração
 
-- **Loading**: Skeletons em todos os cartões/tabelas (Skeleton do shadcn)
-- **Empty states**: Ilustração simples + CTA quando filtros não retornam resultados
-- **Erros**: Toast (Sonner) com mensagem descritiva quando algo falha (ex: falha simulada de cotação)
-- **Acessibilidade**: contraste AA garantido para o azul bebê sobre branco (texto em preto, não no azul); foco visível; navegação por teclado no kanban
-- **Responsividade**: breakpoint principal `md` (768px); top bar colapsa em drawer; tabelas viram cards; kanban vira tabs
+- Status manuais: **Em aberto** (default), **Ganha**, **Perdida** (com motivo: preço, cobertura, prazo, sem retorno, outro)
+- **Expiração automática**: cotações em "Em aberto" há mais de 30 dias sem nova versão viram "Expirada" (calculado on-the-fly a partir da data, sem job)
+- Cotação "Ganha" exibe link visual para gerar apólice (placeholder por ora)
 
-## Mock data
+## Mock e estado
 
-Estrutura em `src/lib/mock/`:
-- `clients.ts`, `policies.ts`, `tasks.ts`, `quotes.ts`, `commissions.ts`, `team.ts`
-- 15-30 registros por entidade com nomes brasileiros, ramos reais (auto, vida, residencial, empresarial, saúde) e seguradoras (Porto, Bradesco, SulAmérica, Allianz, Mapfre)
-- Schemas TypeScript genéricos conforme solicitado
+- Estender `src/lib/mock/data.ts` com tipo `QuoteRecord` (groupId, version, clientId, createdAt, createdBy, status, lostReason?, formData, results[], winnerInsurer)
+- Seed com ~6 grupos de cotação (2-4 versões cada) cobrindo todos os status
+- Estado vivo (novas cotações da sessão) em Context simples ou Zustand-like via useState + provider local ao módulo, sem persistência (apenas vitrine)
 
-## Detalhes técnicos
+## Mobile
 
-- TanStack Start, rota única `/` em `src/routes/index.tsx`
-- Estado de módulo ativo via `useState` no shell + componente por módulo em `src/components/modules/`
-- Top bar e drawer em `src/components/shell/`
-- shadcn/ui: Sheet (drawer mobile), Tabs (kanban mobile), Table, Card, Badge, Skeleton, Sonner, Dialog, Tooltip
-- Recharts para gráficos
-- Sem backend / sem Lovable Cloud nesta versão (puro mock)
+- Abas viram dropdown segmentado
+- Histórico vira lista de cards (sem timeline expandida — toque abre sheet com versões)
+- Comparar força modo Timeline
+
+## Arquivos previstos
+
+- `src/components/modules/MulticalcModule.tsx` — adicionar Tabs, encapsular wizard atual em `MulticalcWizard.tsx`
+- `src/components/multicalc/MulticalcWizard.tsx` (novo, extraído do atual + suporte a `initialData` e `editingVersion`)
+- `src/components/multicalc/QuoteHistory.tsx` (novo)
+- `src/components/multicalc/QuoteCompare.tsx` (novo, com toggle Tabela/Timeline)
+- `src/components/multicalc/QuoteVersionCard.tsx` (novo)
+- `src/components/multicalc/StatusBadge.tsx` (novo)
+- `src/lib/mock/data.ts` — novos tipos + seed
+- `src/lib/multicalc/quoteStore.ts` (novo) — estado em memória + helpers (createVersion, computeDiff, isExpired)
 
 ## Critérios de aceitação
 
-1. Navegação funcional entre os 6 módulos no desktop e via drawer no mobile
-2. Todos os módulos renderizam com dados mock visíveis (sem telas vazias por padrão)
-3. Kanban permite mover cards entre colunas em desktop (drag) e mobile (menu)
-4. Paleta azul bebê aplicada de forma consistente; zero resquício de roxo
-5. Layout sem quebras em viewports de 360px, 768px e 1280px
-6. Skeletons aparecem brevemente no carregamento inicial de cada módulo
-7. Toasts de erro aparecem em ações simuladas que falham (ex: botão "Recalcular" com falha mock)
+1. Concluir o wizard cria automaticamente v1 visível no Histórico
+2. Editar uma versão pré-preenche o wizard e, ao salvar, gera nova versão sem alterar a anterior
+3. Histórico mostra diff resumido entre versões
+4. Comparar permite alternar entre tabela e timeline
+5. Status "Ganha/Perdida" pode ser definido manualmente, com motivo no caso de perdida
+6. Cotações antigas (>30 dias sem nova versão) aparecem como "Expirada"
+7. Tudo responsivo no breakpoint de 1051px e abaixo
