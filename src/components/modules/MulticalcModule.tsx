@@ -45,6 +45,8 @@ function MulticalcInner() {
     setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   };
 
+  const clearSelection = () => setSelected([]);
+
   const goCompare = () => {
     if (selected.length < 2) {
       toast.error("Selecione pelo menos 2 versões para comparar");
