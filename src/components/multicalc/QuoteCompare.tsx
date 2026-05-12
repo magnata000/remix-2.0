@@ -37,6 +37,23 @@ export function QuoteCompare({ selectedIds, onBack }: Props) {
     );
   }
 
+  const branchSet = new Set(versions.map((v) => v.branch));
+  if (branchSet.size > 1) {
+    return (
+      <Card className="p-10 rounded-2xl border-border shadow-none text-center text-sm">
+        <p className="font-medium text-destructive">Não é possível comparar cotações de ramos diferentes.</p>
+        <p className="text-muted-foreground mt-1">
+          Ramos selecionados: {Array.from(branchSet).join(", ")}. Selecione versões do mesmo ramo.
+        </p>
+        <div className="mt-4">
+          <Button variant="outline" className="rounded-xl" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar ao Histórico
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">

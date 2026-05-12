@@ -25,9 +25,11 @@ type Props = {
   onToggleSelect: (id: string) => void;
   onCompare: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
+  allowedBranch?: string | null;
+  mixedBranches?: boolean;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, allowedBranch, mixedBranches }: Props) {
   const { groups, setStatus } = useQuoteStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
@@ -97,13 +99,18 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
           </Select>
           <Button
             onClick={onCompare}
-            disabled={selected.length < 2}
+            disabled={selected.length < 2 || !!mixedBranches}
             className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
           >
             <GitCompareArrows className="h-4 w-4 mr-2" />
             Comparar ({selected.length})
           </Button>
         </div>
+        {mixedBranches && (
+          <p className="text-xs text-destructive mt-2">
+            Não é possível comparar cotações de ramos diferentes. Selecione versões do mesmo ramo.
+          </p>
+        )}
       </Card>
 
       {filtered.length === 0 && (
@@ -155,11 +162,18 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                         const diffs = prev ? computeDiff(prev.formData, v.formData) : [];
                         const versionWinner = v.results.find((r) => r.insurer === v.winnerInsurer);
                         const isSelected = selected.includes(v.id);
+                        const branchBlocked = !isSelected && !!allowedBranch && allowedBranch !== v.branch;
                         const eff = effectiveStatus(v, g.versions);
                         return (
                           <li key={v.id} className="rounded-xl bg-muted/40 p-3 flex flex-col md:flex-row md:items-center gap-3">
                             <div className="flex items-start gap-3 flex-1 min-w-0">
-                              <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelect(v.id)} className="mt-1" />
+                              <Checkbox
+                                checked={isSelected}
+                                disabled={branchBlocked}
+                                onCheckedChange={() => onToggleSelect(v.id)}
+                                className="mt-1"
+                                title={branchBlocked ? "Só é possível comparar cotações do mesmo ramo" : undefined}
+                              />
                               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/30 text-xs font-bold">
                                 v{v.version}
                               </div>

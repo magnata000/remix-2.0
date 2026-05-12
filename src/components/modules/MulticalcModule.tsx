@@ -15,9 +15,13 @@ export function MulticalcModule() {
 }
 
 function MulticalcInner() {
-  const { addNewQuote, addVersion } = useQuoteStore();
+  const { addNewQuote, addVersion, records } = useQuoteStore();
   const [tab, setTab] = useState<"nova" | "historico" | "comparar">("nova");
   const [selected, setSelected] = useState<string[]>([]);
+  const selectedBranches = new Set(
+    selected.map((id) => records.find((r) => r.id === id)?.branch).filter(Boolean) as string[]
+  );
+  const mixedBranches = selectedBranches.size > 1;
   const [editing, setEditing] = useState<{ groupId: string; version: number; clientName: string; data: QuoteFormData } | null>(null);
 
   const handleEditVersion = (rec: QuoteRecord) => {
@@ -46,6 +50,10 @@ function MulticalcInner() {
       toast.error("Selecione pelo menos 2 versões para comparar");
       return;
     }
+    if (mixedBranches) {
+      toast.error("Não é possível comparar cotações de ramos diferentes");
+      return;
+    }
     setTab("comparar");
   };
 
@@ -66,7 +74,7 @@ function MulticalcInner() {
             {editing ? `Editando v${editing.version}` : "Nova cotação"}
           </TabsTrigger>
           <TabsTrigger value="historico" className="flex-1 md:flex-none">Histórico</TabsTrigger>
-          <TabsTrigger value="comparar" className="flex-1 md:flex-none" disabled={selected.length < 2}>
+          <TabsTrigger value="comparar" className="flex-1 md:flex-none" disabled={selected.length < 2 || mixedBranches}>
             Comparar {selected.length > 0 && `(${selected.length})`}
           </TabsTrigger>
         </TabsList>
@@ -94,6 +102,8 @@ function MulticalcInner() {
             onToggleSelect={toggleSelect}
             onCompare={goCompare}
             onEditVersion={handleEditVersion}
+            allowedBranch={selectedBranches.size === 1 ? Array.from(selectedBranches)[0] : null}
+            mixedBranches={mixedBranches}
           />
         </TabsContent>
 
