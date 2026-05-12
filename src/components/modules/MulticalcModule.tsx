@@ -15,9 +15,13 @@ export function MulticalcModule() {
 }
 
 function MulticalcInner() {
-  const { addNewQuote, addVersion } = useQuoteStore();
+  const { addNewQuote, addVersion, records } = useQuoteStore();
   const [tab, setTab] = useState<"nova" | "historico" | "comparar">("nova");
   const [selected, setSelected] = useState<string[]>([]);
+  const selectedBranches = new Set(
+    selected.map((id) => records.find((r) => r.id === id)?.branch).filter(Boolean) as string[]
+  );
+  const mixedBranches = selectedBranches.size > 1;
   const [editing, setEditing] = useState<{ groupId: string; version: number; clientName: string; data: QuoteFormData } | null>(null);
 
   const handleEditVersion = (rec: QuoteRecord) => {
