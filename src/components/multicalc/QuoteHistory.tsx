@@ -25,9 +25,11 @@ type Props = {
   onToggleSelect: (id: string) => void;
   onCompare: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
+  allowedBranch?: string | null;
+  mixedBranches?: boolean;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, allowedBranch, mixedBranches }: Props) {
   const { groups, setStatus } = useQuoteStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
