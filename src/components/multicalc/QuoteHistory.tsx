@@ -99,13 +99,18 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
           </Select>
           <Button
             onClick={onCompare}
-            disabled={selected.length < 2}
+            disabled={selected.length < 2 || !!mixedBranches}
             className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
           >
             <GitCompareArrows className="h-4 w-4 mr-2" />
             Comparar ({selected.length})
           </Button>
         </div>
+        {mixedBranches && (
+          <p className="text-xs text-destructive mt-2">
+            Não é possível comparar cotações de ramos diferentes. Selecione versões do mesmo ramo.
+          </p>
+        )}
       </Card>
 
       {filtered.length === 0 && (
