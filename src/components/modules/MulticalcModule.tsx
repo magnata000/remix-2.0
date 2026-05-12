@@ -45,6 +45,8 @@ function MulticalcInner() {
     setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   };
 
+  const clearSelection = () => setSelected([]);
+
   const goCompare = () => {
     if (selected.length < 2) {
       toast.error("Selecione pelo menos 2 versões para comparar");
@@ -102,6 +104,7 @@ function MulticalcInner() {
             onToggleSelect={toggleSelect}
             onCompare={goCompare}
             onEditVersion={handleEditVersion}
+            onClearSelection={clearSelection}
             allowedBranch={selectedBranches.size === 1 ? Array.from(selectedBranches)[0] : null}
             mixedBranches={mixedBranches}
           />

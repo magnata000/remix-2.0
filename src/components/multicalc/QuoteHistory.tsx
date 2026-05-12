@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search,
+  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/mock/data";
@@ -25,11 +25,12 @@ type Props = {
   onToggleSelect: (id: string) => void;
   onCompare: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
+  onClearSelection?: () => void;
   allowedBranch?: string | null;
   mixedBranches?: boolean;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, allowedBranch, mixedBranches }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onClearSelection, allowedBranch, mixedBranches }: Props) {
   const { groups, setStatus } = useQuoteStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
@@ -106,6 +107,17 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
             Comparar ({selected.length})
           </Button>
         </div>
+        {selected.length > 0 && onClearSelection && (
+          <button
+            type="button"
+            onClick={onClearSelection}
+            title="Limpar todas as seleções"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition"
+          >
+            <X className="h-3 w-3" />
+            Limpar seleção ({selected.length})
+          </button>
+        )}
         {mixedBranches && (
           <p className="text-xs text-destructive mt-2">
             Não é possível comparar cotações de ramos diferentes. Selecione versões do mesmo ramo.
@@ -198,10 +210,21 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                                 {idx === 0 && <p className="text-[11px] text-muted-foreground mt-1 italic">Versão inicial</p>}
                               </div>
                             </div>
-                            <div className="flex gap-2 md:shrink-0">
+                            <div className="flex gap-2 md:shrink-0 items-center">
                               <Button size="sm" variant="outline" className="rounded-lg" onClick={() => onEditVersion(v)}>
                                 <Pencil className="h-3.5 w-3.5 mr-1" /> Editar (nova versão)
                               </Button>
+                              {isSelected && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  title="Remover desta comparação"
+                                  onClick={() => onToggleSelect(v.id)}
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </li>
                         );
