@@ -102,6 +102,8 @@ function MulticalcInner() {
             onToggleSelect={toggleSelect}
             onCompare={goCompare}
             onEditVersion={handleEditVersion}
+            allowedBranch={selectedBranches.size === 1 ? Array.from(selectedBranches)[0] : null}
+            mixedBranches={mixedBranches}
           />
         </TabsContent>
 
