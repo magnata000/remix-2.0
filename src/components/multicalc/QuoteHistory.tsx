@@ -107,6 +107,17 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
             Comparar ({selected.length})
           </Button>
         </div>
+        {selected.length > 0 && onClearSelection && (
+          <button
+            type="button"
+            onClick={onClearSelection}
+            title="Limpar todas as seleções"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition"
+          >
+            <X className="h-3 w-3" />
+            Limpar seleção ({selected.length})
+          </button>
+        )}
         {mixedBranches && (
           <p className="text-xs text-destructive mt-2">
             Não é possível comparar cotações de ramos diferentes. Selecione versões do mesmo ramo.
