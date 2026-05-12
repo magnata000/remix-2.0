@@ -50,6 +50,10 @@ function MulticalcInner() {
       toast.error("Selecione pelo menos 2 versões para comparar");
       return;
     }
+    if (mixedBranches) {
+      toast.error("Não é possível comparar cotações de ramos diferentes");
+      return;
+    }
     setTab("comparar");
   };
 
