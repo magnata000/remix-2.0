@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search,
+  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/mock/data";
@@ -25,11 +25,12 @@ type Props = {
   onToggleSelect: (id: string) => void;
   onCompare: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
+  onClearSelection?: () => void;
   allowedBranch?: string | null;
   mixedBranches?: boolean;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, allowedBranch, mixedBranches }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onClearSelection, allowedBranch, mixedBranches }: Props) {
   const { groups, setStatus } = useQuoteStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
