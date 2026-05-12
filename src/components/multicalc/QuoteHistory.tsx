@@ -210,10 +210,21 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                                 {idx === 0 && <p className="text-[11px] text-muted-foreground mt-1 italic">Versão inicial</p>}
                               </div>
                             </div>
-                            <div className="flex gap-2 md:shrink-0">
+                            <div className="flex gap-2 md:shrink-0 items-center">
                               <Button size="sm" variant="outline" className="rounded-lg" onClick={() => onEditVersion(v)}>
                                 <Pencil className="h-3.5 w-3.5 mr-1" /> Editar (nova versão)
                               </Button>
+                              {isSelected && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  title="Remover desta comparação"
+                                  onClick={() => onToggleSelect(v.id)}
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </li>
                         );
