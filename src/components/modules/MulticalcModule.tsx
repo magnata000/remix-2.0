@@ -74,7 +74,7 @@ function MulticalcInner() {
             {editing ? `Editando v${editing.version}` : "Nova cotação"}
           </TabsTrigger>
           <TabsTrigger value="historico" className="flex-1 md:flex-none">Histórico</TabsTrigger>
-          <TabsTrigger value="comparar" className="flex-1 md:flex-none" disabled={selected.length < 2}>
+          <TabsTrigger value="comparar" className="flex-1 md:flex-none" disabled={selected.length < 2 || mixedBranches}>
             Comparar {selected.length > 0 && `(${selected.length})`}
           </TabsTrigger>
         </TabsList>
