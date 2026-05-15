@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus,
+  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/mock/data";
@@ -26,6 +26,7 @@ type Props = {
   onToggleSelect: (id: string) => void;
   onCompare: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
+  onRecalculate?: (rec: QuoteRecord) => void;
   onClearSelection?: () => void;
   onStatusChanged?: (groupId: string, status: "ganha" | "perdida", lostReason?: LostReason) => void;
   onOpenPipeline?: (opportunityId: string) => void;
@@ -35,7 +36,7 @@ type Props = {
   onClearFocus?: () => void;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onRecalculate, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
   const { groups, setStatus } = useQuoteStore();
   const { byQuoteGroup, createFromQuote } = usePipelineStore();
   const [search, setSearch] = useState("");
@@ -271,6 +272,17 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                               <Button size="sm" variant="outline" className="rounded-lg" onClick={() => onEditVersion(v)}>
                                 <Pencil className="h-3.5 w-3.5 mr-1" /> Editar (nova versão)
                               </Button>
+                              {g.status === "expirada" && onRecalculate && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-lg"
+                                  onClick={() => onRecalculate(v)}
+                                  title="Refazer cotação com os mesmos dados"
+                                >
+                                  <RefreshCw className="h-3.5 w-3.5 mr-1" /> Recalcular
+                                </Button>
+                              )}
                               {isSelected && (
                                 <Button
                                   size="icon"

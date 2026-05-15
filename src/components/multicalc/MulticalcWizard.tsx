@@ -10,8 +10,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check, RefreshCw, Sparkles, Star, Trophy, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { quotes as baseQuotes, formatBRL, Insurer, Quote, Branch } from "@/lib/mock/data";
-import { QuoteFormData, emptyForm } from "@/lib/multicalc/quoteStore";
+import { formatBRL, Insurer, Quote, Branch } from "@/lib/mock/data";
+import { QuoteFormData, emptyForm, generateResults } from "@/lib/multicalc/quoteStore";
 
 const steps = ["Cliente", "Objeto", "Coberturas", "Resultado"];
 
@@ -26,19 +26,6 @@ type Props = {
   editingLabel?: string; // e.g. "Editando v2 de João Silva"
   onComplete: (payload: WizardCompletePayload) => void;
 };
-
-// Generate randomized quote results based on form to feel "live"
-function generateResults(form: QuoteFormData): Quote[] {
-  const baseFactor =
-    (form.coberturas.terceiros === "200.000" ? 1.15 : form.coberturas.terceiros === "50.000" ? 0.85 : 1) *
-    (form.coberturas.carroReserva === "Sim" ? 1.05 : 1) *
-    (form.coberturas.vidros === "Completo" ? 1.04 : form.coberturas.vidros === "Para-brisa" ? 1.02 : 1) *
-    (form.coberturas.assistencia24h === "Sim" ? 1.03 : 1);
-  return baseQuotes.map((q, i) => ({
-    ...q,
-    price: Math.round(q.price * baseFactor + i * 17),
-  }));
-}
 
 export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props) {
   const [step, setStep] = useState(0);

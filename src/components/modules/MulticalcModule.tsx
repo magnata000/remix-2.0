@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MulticalcWizard } from "@/components/multicalc/MulticalcWizard";
 import { QuoteHistory } from "@/components/multicalc/QuoteHistory";
 import { QuoteCompare } from "@/components/multicalc/QuoteCompare";
-import { useQuoteStore, QuoteRecord, QuoteFormData } from "@/lib/multicalc/quoteStore";
+import { useQuoteStore, QuoteRecord, QuoteFormData, generateResults } from "@/lib/multicalc/quoteStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useNavigation } from "@/lib/navigation";
 import { toast } from "sonner";
@@ -28,6 +28,15 @@ export function MulticalcModule() {
   const handleEditVersion = (rec: QuoteRecord) => {
     setEditing({ groupId: rec.groupId, version: rec.version, clientName: rec.clientName, data: rec.formData });
     setTab("nova");
+  };
+
+  const handleRecalculate = (rec: QuoteRecord) => {
+    const results = generateResults(rec.formData);
+    const cheapest = results.reduce((a, b) => (b.price < a.price ? b : a));
+    const newRec = addVersion(rec.groupId, rec.formData, results, cheapest.insurer);
+    setFocusedGroupId(rec.groupId);
+    setTab("historico");
+    toast.success(`Cotação recalculada — nova versão v${newRec.version} salva`);
   };
 
   const handleComplete = (payload: { formData: QuoteFormData; results: QuoteRecord["results"]; winner: QuoteRecord["winnerInsurer"] }) => {
@@ -121,6 +130,7 @@ export function MulticalcModule() {
             onToggleSelect={toggleSelect}
             onCompare={goCompare}
             onEditVersion={handleEditVersion}
+            onRecalculate={handleRecalculate}
             onClearSelection={clearSelection}
             onStatusChanged={onStatusChanged}
             onOpenPipeline={(opportunityId) => goTo("kanban", { opportunityId })}

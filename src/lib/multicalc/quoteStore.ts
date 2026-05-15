@@ -25,6 +25,21 @@ export type QuoteRecord = {
   winnerInsurer: Insurer;
 };
 
+// Shared price calculation used by the wizard and by the "Recalcular" shortcut
+export function generateResults(form: QuoteFormData): Quote[] {
+  const baseFactor =
+    (form.coberturas.terceiros === "200.000" ? 1.15 : form.coberturas.terceiros === "50.000" ? 0.85 : 1) *
+    (form.coberturas.carroReserva === "Sim" ? 1.05 : 1) *
+    (form.coberturas.vidros === "Completo" ? 1.04 : form.coberturas.vidros === "Para-brisa" ? 1.02 : 1) *
+    (form.coberturas.assistencia24h === "Sim" ? 1.03 : 1);
+  // small jitter so successive recalculations differ slightly
+  const jitter = 0.97 + Math.random() * 0.06;
+  return baseQuotes.map((q, i) => ({
+    ...q,
+    price: Math.round(q.price * baseFactor * jitter + i * 17),
+  }));
+}
+
 export const emptyForm = (): QuoteFormData => ({
   cliente: { nome: "", cpf: "", email: "", telefone: "" },
   objeto: { tipo: "Auto", marcaModelo: "", ano: "", cep: "" },
