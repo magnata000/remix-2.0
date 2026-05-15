@@ -1,23 +1,38 @@
-## Mudança
+## Objetivo
 
-Em `src/lib/multicalc/quoteStore.ts`, na função `effectiveStatus`, alterar o limite de expiração de 30 para 10 dias.
-
-```ts
-return ageDays > 10 ? "expirada" : "aberto";
-```
+Adicionar um botão **Recalcular** ao lado do botão **Editar (nova versão)** nos cards de versão de cotações classificadas como **Expirada**, permitindo refazer a cotação com os mesmos dados já preenchidos.
 
 ## Comportamento
 
-- Cotações com status `aberto` cuja versão mais recente tenha mais de 10 dias passam a aparecer como **Expirada** no histórico, comparações e em qualquer badge que use `effectiveStatus`.
-- Versões antigas dentro de um grupo continuam exibindo o badge original (regra atual preservada).
-- Cotações já marcadas como `ganha` ou `perdida` não são afetadas.
+- O botão **Recalcular** aparece apenas quando o status efetivo do grupo é `expirada`.
+- Visível em todas as versões do grupo expirado (assim como o botão Editar já é).
+- Ao clicar:
+  1. Reaproveita o `formData` da versão (igual ao fluxo de "Editar nova versão").
+  2. Abre o **MulticalcWizard** já preenchido na aba "Nova cotação".
+  3. Pula direto para a etapa final (resultados), recalculando os preços com a data atual — gerando uma nova versão `vN+1` no mesmo grupo.
+  4. Como a nova versão terá `createdAt = hoje`, o status efetivo do grupo volta automaticamente para **Em aberto** (regra dos 10 dias já existente).
+- Diferença em relação a **Editar (nova versão)**: o Editar leva o usuário ao passo 1 do wizard para eventuais ajustes; o Recalcular vai direto ao recalculo sem revisar campos (atalho de "mesmos dados, novos preços").
 
-## Fora de escopo
+## Mudanças técnicas
 
-- Não altera dados semeados (mock) — eles passam a refletir a nova regra automaticamente conforme as datas.
-- Não cria job/agendador: a expiração continua sendo derivada (computada na leitura), o que é suficiente para o mock atual.
-- Sem alteração visual no `StatusBadge` (o rótulo "Expirada" já existe).
+**`src/components/multicalc/QuoteHistory.tsx`**
+- Adicionar prop opcional `onRecalculate?: (rec: QuoteRecord) => void`.
+- No bloco de ações da versão (`<div className="flex gap-2 md:shrink-0 ...">`), renderizar um botão **Recalcular** (ícone `RefreshCw` do lucide-react) condicional a `eff === "expirada"` (ou ao status do grupo `g.status === "expirada"` — usar o status do grupo para mostrar em todas as versões).
 
-## Critério de aceitação
+**`src/components/modules/MulticalcModule.tsx`**
+- Adicionar handler `handleRecalculate(rec)` que:
+  - Chama `addVersion(rec.groupId, rec.formData, novosResultados, novoWinner)` diretamente, sem passar pelo wizard, OU
+  - Define um estado `recalculating` e abre o wizard em modo "auto-submit" pulando para a tela final.
+- Recomendação: implementar a opção mais simples — criar nova versão imediatamente via `addVersion`, recomputando preços com a função de cálculo já usada pelo wizard (extrair/reutilizar). Toast: `"Cotação recalculada — nova versão vN salva"`.
+- Após salvar, mudar para a aba `historico` e focar o grupo (`setFocusedGroupId(rec.groupId)`).
 
-Grupos `aberto` com `latest.createdAt` > 10 dias atrás aparecem como Expirada (ex.: grupo "Beatriz Costa", semeado com ~45 dias, já passa; "Carlos Lima" com 3 dias e "Rafael Mendes" com 5 dias continuam Em aberto).
+**`src/lib/multicalc/quoteStore.ts`** (somente se a função de cálculo de preços viver hoje dentro do wizard)
+- Extrair a lógica de `computeResults(formData)` para o store/util compartilhado, para que `handleRecalculate` possa chamá-la sem montar o wizard.
+
+## Critérios de aceitação
+
+- Em um grupo com status **Expirada** (ex.: "Beatriz Costa"), ao expandir, cada versão exibe **Editar (nova versão)** e **Recalcular** lado a lado.
+- Em grupos **Em aberto / Ganha / Perdida**, o botão Recalcular **não** aparece.
+- Clicar em Recalcular cria uma nova versão `vN+1` no mesmo grupo, com `createdAt` atual e novos `results`.
+- O badge do grupo passa de **Expirada** para **Em aberto** automaticamente após o recálculo.
+- Toast de sucesso é exibido e a aba muda para Histórico com o grupo expandido.
