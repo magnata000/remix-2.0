@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X,
+  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/mock/data";
 import { useQuoteStore, QuoteRecord, QuoteStatus, LostReason, computeDiff, effectiveStatus } from "@/lib/multicalc/quoteStore";
+import { usePipelineStore, stageLabels } from "@/lib/pipeline/opportunityStore";
 import { StatusBadge } from "./StatusBadge";
 
 type Props = {
@@ -26,18 +27,35 @@ type Props = {
   onCompare: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
   onClearSelection?: () => void;
+  onStatusChanged?: (groupId: string, status: "ganha" | "perdida", lostReason?: LostReason) => void;
+  onOpenPipeline?: (opportunityId: string) => void;
   allowedBranch?: string | null;
   mixedBranches?: boolean;
+  focusedGroupId?: string | null;
+  onClearFocus?: () => void;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onClearSelection, allowedBranch, mixedBranches }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
   const { groups, setStatus } = useQuoteStore();
+  const { byQuoteGroup, createFromQuote } = usePipelineStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [branchFilter, setBranchFilter] = useState<string>("todos");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lostDialog, setLostDialog] = useState<{ groupId: string } | null>(null);
   const [lostReason, setLostReason] = useState<LostReason>("preco");
+
+  // Auto-expand + scroll to focused group from cross-module navigation
+  useEffect(() => {
+    if (focusedGroupId) {
+      setOpenGroups((s) => ({ ...s, [focusedGroupId]: true }));
+      const t = setTimeout(() => {
+        document.getElementById(`quote-group-${focusedGroupId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        onClearFocus?.();
+      }, 80);
+      return () => clearTimeout(t);
+    }
+  }, [focusedGroupId, onClearFocus]);
 
   const filtered = useMemo(() => {
     return groups.filter((g) => {
@@ -55,14 +73,27 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
     }
     setStatus(groupId, status);
     toast.success(status === "ganha" ? "Cotação marcada como Ganha" : "Status atualizado");
+    if (status === "ganha") onStatusChanged?.(groupId, "ganha");
   };
 
   const confirmLost = () => {
     if (lostDialog) {
       setStatus(lostDialog.groupId, "perdida", lostReason);
       toast.success("Cotação marcada como Perdida");
+      onStatusChanged?.(lostDialog.groupId, "perdida", lostReason);
       setLostDialog(null);
     }
+  };
+
+  const handleAddToPipeline = (g: typeof groups[number]) => {
+    const winnerPrice = Math.min(...g.latest.results.map((r) => r.price));
+    createFromQuote({
+      clientName: g.clientName,
+      branch: g.branch,
+      estimatedValue: winnerPrice,
+      quoteGroupId: g.groupId,
+    });
+    toast.success(`${g.clientName} adicionado ao pipeline em "Cotação"`);
   };
 
   return (
@@ -135,8 +166,9 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
         {filtered.map((g) => {
           const isOpen = openGroups[g.groupId] ?? false;
           const winnerPrice = Math.min(...g.latest.results.map((r) => r.price));
+          const linkedOpp = byQuoteGroup(g.groupId);
           return (
-            <Card key={g.groupId} className="rounded-2xl border-border shadow-none overflow-hidden">
+            <Card id={`quote-group-${g.groupId}`} key={g.groupId} className="rounded-2xl border-border shadow-none overflow-hidden scroll-mt-20">
               <Collapsible open={isOpen} onOpenChange={(o) => setOpenGroups((s) => ({ ...s, [g.groupId]: o }))}>
                 <CollapsibleTrigger asChild>
                   <button className="w-full p-4 flex items-center gap-3 hover:bg-muted/40 transition text-left">
@@ -147,6 +179,31 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                         <Badge variant="outline" className="bg-muted border-0">{g.branch}</Badge>
                         <Badge variant="outline" className="bg-muted border-0">{g.versions.length} {g.versions.length === 1 ? "versão" : "versões"}</Badge>
                         <StatusBadge status={g.status} />
+                        {linkedOpp ? (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); onOpenPipeline?.(linkedOpp.id); }}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onOpenPipeline?.(linkedOpp.id); } }}
+                            title="Abrir no Pipeline de Vendas"
+                            className="inline-flex items-center gap-1 text-[11px] bg-brand/15 text-brand-foreground px-2 py-0.5 rounded-md hover:bg-brand/25 transition cursor-pointer"
+                          >
+                            <Link2 className="h-3 w-3" />
+                            No pipeline · {stageLabels[linkedOpp.stage]}
+                          </span>
+                        ) : (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); handleAddToPipeline(g); }}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); handleAddToPipeline(g); } }}
+                            title="Criar oportunidade no pipeline"
+                            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition cursor-pointer"
+                          >
+                            <Plus className="h-3 w-3" />
+                            Adicionar ao pipeline
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Última atualização em {formatDate(g.latest.createdAt)} · melhor preço {formatBRL(winnerPrice)}
