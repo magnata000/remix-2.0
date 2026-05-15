@@ -1,103 +1,98 @@
-# Relação Pipeline de Vendas ↔ Multicálculo
+# Corrigir loop infinito ao abrir grupo de cotação vinda do Pipeline
 
-Hoje os dois módulos vivem em silos: o Kanban tem `Task` (oportunidade com etapa, valor estimado, responsável) e o Multicálculo tem `QuoteRecord` agrupado por `groupId` (cotações com versões, vencedora, status ganha/perdida). Eles tratam do mesmo cliente e da mesma venda, mas não se enxergam.
+## Causa raiz
 
-A proposta: tratar a **oportunidade do Kanban como a entidade-mãe** e as **cotações do Multicálculo como filhas dessa oportunidade**.
+`NavigationProvider` (`src/lib/navigation.tsx`):
 
-## Modelo conceitual
-
-```text
-Oportunidade (Kanban)
-├── Cliente, ramo, responsável, valor estimado, etapa
-└── Cotações (Multicálculo)
-    ├── v1 — coberturas A → vencedora: SulAmérica R$ 1.200
-    ├── v2 — coberturas B → vencedora: Porto    R$ 1.350
-    └── v3 — coberturas C → vencedora: SulAmérica R$ 1.180  ← escolhida
+```ts
+const consumeFocus = useCallback(() => {
+  const current = focus;
+  setFocus({});
+  return current;
+}, [focus]); // ← muda a cada setFocus
 ```
 
-Uma oportunidade tem 0..N grupos de cotação. Na prática o normal é **1 oportunidade ↔ 1 grupo de cotação** (mesmo cliente + ramo), mas o modelo permite mais de um grupo se o corretor cotar Auto e Vida para o mesmo lead.
+`MulticalcModule`:
 
-## Regras de sincronização (a parte que dá funcionalidade real)
-
-**Etapa do Kanban derivada das cotações:**
-
-
-| Estado das cotações                   | Etapa sugerida |
-| ------------------------------------- | -------------- |
-| Nenhuma cotação ainda                 | Lead           |
-| 1+ cotação em aberto                  | Cotação        |
-| Cotação enviada ao cliente / proposta | Negociação     |
-| Cotação marcada como "ganha"          | Fechado        |
-| Cotação "perdida" em todas as versões | Perdido (col.) |
-
-
-A movimentação é **sugestão automática, não imposição** — o corretor pode mover manualmente, mas o card mostra um aviso "esta etapa não bate com o status da cotação".
-
-**Status do Multicálculo reflete na oportunidade:**
-
-- Marcar cotação como "ganha" → move card para Fechado e preenche `valorFechado`. Abre-se um modal perguntando qual versão daquele grupo foi fechada.
-- Marcar como "perdida" + motivo → move para coluna Perdido e registra o motivo no card.
-
-## Mudanças concretas
-
-### 1. Card do Kanban mostra a cotação vinculada
-
-Cada `Task` ganha um campo opcional `quoteGroupId`. No card aparece um chip discreto:
-
-```text
-┌──────────────────────────────────┐
-│ Renovação Auto — João Silva      │
-│ [Auto]                  R$ 2.840 │
-│ 📋 3 cotações · v3 vencedora     │  ← novo
-│ 📅 12/05      [AS]               │
-└──────────────────────────────────┘
+```ts
+useEffect(() => {
+  const f = consumeFocus();
+  if (f.quoteGroupId) { setTab("historico"); setFocusedGroupId(f.quoteGroupId); }
+}, [consumeFocus]); // ← re-executa quando consumeFocus muda
 ```
 
-Clicar no chip abre o Multicálculo já filtrado naquele grupo.
+Cada chamada de `consumeFocus()` faz `setFocus({})` (novo objeto, sem bail-out de identidade) → `focus` muda → `consumeFocus` ganha nova referência → effect roda de novo → setFocus de novo → loop.
 
-### 2. Botão "Abrir cotação" no card
+## Correção
 
-No menu `...` do card: **"Abrir cotação"** (vai para Multicálculo > Histórico) ou **"Nova cotação"** se ainda não existir (vai para Multicálculo > Nova com cliente pré-preenchido).
+Tornar `consumeFocus` **estável** usando um `useRef` em vez de depender do estado, e manter `focus` em estado só pelo que for realmente reativo.
 
-### 3. Botão "Vincular a oportunidade" no Multicálculo
+### Mudança 1 — `src/lib/navigation.tsx`
 
-No `QuoteHistory`, em cada grupo, um botão discreto:
+Substituir o estado `focus` por uma referência mutável + função estável:
 
-- Se já vinculado: chip "🔗 No pipeline · Negociação" (clicável → Kanban)
-- Se não vinculado: "Adicionar ao pipeline" → cria uma `Task` nova com cliente, ramo, valor estimado (= preço da vencedora) já preenchidos.
+```ts
+const focusRef = useRef<Focus>({});
 
-### 4. Ao salvar uma cotação "ganha"
+const goTo = useCallback((module, f) => {
+  focusRef.current = f ?? {};
+  setActive(module);
+}, [setActive]);
 
-Diálogo já existente "Marcar como ganha" passa a perguntar:
+const consumeFocus = useCallback(() => {
+  const current = focusRef.current;
+  focusRef.current = {};
+  return current;
+}, []); // sem dependências — referência estável
+```
 
-- ☑ Mover oportunidade para "Fechado" no pipeline
-- ☑ Atualizar valor do card com R$ X (preço da vencedora)
+Remover o `focus` do contexto (consumidores só usam `consumeFocus`/`goTo`). Se algum dia precisar reagir a mudanças, criamos um sinal separado; hoje nenhum componente lê `focus` diretamente.
 
-### 5. Coluna "Perdido" no Kanban
+### Mudança 2 — opcional, defensiva — `MulticalcModule`
 
-Hoje só existem 4 etapas. Adicionar uma 5ª coluna **"Perdido"** (colapsada por padrão) para acomodar oportunidades cuja cotação foi marcada como perdida — sem isso o status "perdida" do Multicálculo não tem onde aterrissar.
+Trocar o `useEffect` por **lazy init de useState** (mesmo padrão do `KanbanModule`), eliminando a dependência reativa e o risco de re-execução:
 
-## Detalhes técnicos
+```ts
+const [tab, setTab] = useState<"nova" | "historico" | "comparar">(() => {
+  const f = consumeFocus();
+  if (f.quoteGroupId) return "historico";
+  return "nova";
+});
+const [focusedGroupId, setFocusedGroupId] = useState<string | null>(() => {
+  // já consumido acima — guardar via ref no provider resolveria,
+  // alternativa: ler ambos em uma única chamada antes do useState
+  return null;
+});
+```
 
-- **Store compartilhado**: criar `src/lib/pipeline/opportunityStore.ts` (provider) ou mesclar com `quoteStore`. Recomendo um provider novo `PipelineStoreProvider` que envolve `MulticalcModule` e `KanbanModule` no `routes/index.tsx`, expondo `opportunities` + helpers de vinculação.
-- **Tipo `Task**`: adicionar `quoteGroupId?: string` e `lostReason?: LostReason`.
-- **Tipo `QuoteRecord` / grupo**: adicionar `opportunityId?: string` (espelho do vínculo).
-- **Derivação de etapa**: helper puro `suggestStage(opportunity, group): KanbanStage` que o card usa para mostrar o aviso de divergência.
-- **Mock data**: vincular as oportunidades atuais (`tasks`) aos `groupIds` do `quoteStore` para a demo já abrir conectada (ex: João Silva — g1, Mariana — g2, Carlos — g3).
-- Sem mudanças de backend agora — tudo em memória como o resto do app.
+Como `consumeFocus` agora limpa o ref, chamá-lo duas vezes no mesmo mount perderia info. Solução: **uma só chamada** no topo do componente, antes dos `useState`:
+
+```ts
+const initialFocus = useMemo(() => consumeFocus(), []); // 1x no mount
+const [tab, setTab] = useState(initialFocus.quoteGroupId ? "historico" : "nova");
+const [focusedGroupId, setFocusedGroupId] = useState(initialFocus.quoteGroupId ?? null);
+```
+
+Remover o `useEffect` antigo que dependia de `consumeFocus`.
+
+### Mudança 3 — alinhar `KanbanModule`
+
+Aplicar o mesmo padrão `useMemo(() => consumeFocus(), [])` para consistência (hoje funciona porque está em `useState` lazy init, mas o padrão único é mais previsível).
+
+## Por que isso resolve
+
+- `consumeFocus` deixa de mudar de referência → efeitos/memos que dependem dele não disparam em cascata.
+- Cada módulo lê o foco **uma única vez** no mount, exatamente quando o `goTo` da navegação trocou o módulo ativo.
+- Ref evita render extra ao limpar o foco (não há `setState`).
 
 ## Critérios de aceitação
 
-- Card do Kanban com cotação vinculada mostra contagem de versões e vencedora atual.
-- Clicar no card leva ao Multicálculo já no grupo certo.
-- Marcar cotação como ganha sugere mover para Fechado e atualiza valor.
-- Marcar como perdida move para nova coluna Perdido com motivo.
-- Cotações sem oportunidade têm CTA "Adicionar ao pipeline".
-- Oportunidades sem cotação têm CTA "Nova cotação".
-- Aviso visual quando etapa do Kanban diverge do status real da cotação.
+- Clicar em "🔗 No pipeline · Cotação" no Multicálculo navega ao Kanban e destaca o card sem erro.
+- Clicar no chip "N cotações · vN" no Kanban abre o Multicálculo no Histórico, com o grupo expandido e scroll, sem "Maximum update depth".
+- Trocar de módulo várias vezes não dispara loops.
+- Sem mudança de comportamento dos outros módulos.
 
-## O que **não** faz parte deste plano
+## Fora de escopo
 
-- Persistência real (ainda em memória).
-- Múltiplos grupos de cotação por oportunidade na UI (modelo permite, UI fica para depois).
-- Histórico de movimentações / auditoria.
+- Refatorar a forma como módulos são montados (`active === "x" && <Module />` continua igual).
+- Persistir foco em URL (poderia ser feito depois, com `validateSearch`).

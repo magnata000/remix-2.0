@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,8 @@ export function KanbanModule() {
   const { groups } = useQuoteStore();
   const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
-  const [highlightId] = useState<string | null>(() => consumeFocus().opportunityId ?? null);
+  const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
+  const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
   const move = (id: string, stage: KanbanStage) => moveStage(id, stage);
 
