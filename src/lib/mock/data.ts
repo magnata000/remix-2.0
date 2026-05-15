@@ -15,7 +15,8 @@ export type Policy = {
   endDate: string;
   status: PolicyStatus;
 };
-export type KanbanStage = "lead" | "cotacao" | "negociacao" | "fechado";
+export type KanbanStage = "lead" | "cotacao" | "negociacao" | "fechado" | "perdido";
+export type LostReason = "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro";
 export type Task = {
   id: string;
   title: string;
@@ -25,6 +26,8 @@ export type Task = {
   dueDate: string;
   assignee: string;
   stage: KanbanStage;
+  quoteGroupId?: string;
+  lostReason?: LostReason;
 };
 export type Quote = {
   insurer: Insurer;
