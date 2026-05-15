@@ -10,24 +10,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MoreHorizontal, Plus, GripVertical, Calendar } from "lucide-react";
-import { tasks as initialTasks, formatBRL, formatDate, type KanbanStage, type Task } from "@/lib/mock/data";
+import { MoreHorizontal, Plus, GripVertical, Calendar, Trophy, Calculator, Link2 } from "lucide-react";
+import { formatBRL, formatDate, type KanbanStage, type Task } from "@/lib/mock/data";
+import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { useQuoteStore } from "@/lib/multicalc/quoteStore";
+import { useNavigation } from "@/lib/navigation";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
   { key: "cotacao", label: "Cotação", color: "bg-warning/15 text-warning" },
   { key: "negociacao", label: "Negociação", color: "bg-brand/30 text-brand-foreground" },
   { key: "fechado", label: "Fechado", color: "bg-success/15 text-success" },
+  { key: "perdido", label: "Perdido", color: "bg-destructive/15 text-destructive" },
 ];
 
 export function KanbanModule() {
-  const [items, setItems] = useState<Task[]>(initialTasks);
+  const { opportunities, moveStage } = usePipelineStore();
+  const { groups } = useQuoteStore();
+  const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
+  const [highlightId] = useState<string | null>(() => consumeFocus().opportunityId ?? null);
 
-  const move = (id: string, stage: KanbanStage) =>
-    setItems((arr) => arr.map((t) => (t.id === id ? { ...t, stage } : t)));
+  const move = (id: string, stage: KanbanStage) => moveStage(id, stage);
 
-  const byStage = (s: KanbanStage) => items.filter((t) => t.stage === s);
+  const byStage = (s: KanbanStage) => opportunities.filter((t) => t.stage === s);
+
+  const groupFor = (quoteGroupId?: string) => quoteGroupId ? groups.find((g) => g.groupId === quoteGroupId) : undefined;
+
+  const openQuote = (quoteGroupId?: string) => {
+    if (quoteGroupId) goTo("multicalc", { quoteGroupId });
+    else goTo("multicalc");
+  };
 
   return (
     <div className="space-y-5">
@@ -35,7 +48,7 @@ export function KanbanModule() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Pipeline de Vendas</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Arraste para mover • {items.length} oportunidades
+            Arraste para mover • {opportunities.length} oportunidades · vinculadas ao Multicálculo
           </p>
         </div>
         <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
@@ -44,7 +57,7 @@ export function KanbanModule() {
       </div>
 
       {/* Desktop kanban */}
-      <div className="hidden md:grid grid-cols-4 gap-4">
+      <div className="hidden md:grid grid-cols-5 gap-4">
         {stages.map((s) => (
           <div
             key={s.key}
@@ -69,9 +82,16 @@ export function KanbanModule() {
                   key={t.id}
                   draggable
                   onDragStart={() => setDragId(t.id)}
-                  className="bg-card border border-border rounded-xl p-3 cursor-grab active:cursor-grabbing hover:border-brand transition"
+                  className={`bg-card border rounded-xl p-3 cursor-grab active:cursor-grabbing hover:border-brand transition ${
+                    highlightId === t.id ? "border-brand ring-2 ring-brand/30" : "border-border"
+                  }`}
                 >
-                  <KanbanCardBody task={t} onMove={move} />
+                  <KanbanCardBody
+                    task={t}
+                    quoteSummary={groupFor(t.quoteGroupId)}
+                    onMove={move}
+                    onOpenQuote={() => openQuote(t.quoteGroupId)}
+                  />
                 </div>
               ))}
               {byStage(s.key).length === 0 && (
@@ -84,12 +104,12 @@ export function KanbanModule() {
 
       {/* Mobile: tabs */}
       <Tabs defaultValue="lead" className="md:hidden">
-        <TabsList className="grid grid-cols-4 w-full bg-muted rounded-xl">
+        <TabsList className="grid grid-cols-5 w-full bg-muted rounded-xl">
           {stages.map((s) => (
             <TabsTrigger
               key={s.key}
               value={s.key}
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-xs"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-[11px]"
             >
               {s.label}
               <span className="ml-1 text-muted-foreground">({byStage(s.key).length})</span>
@@ -105,7 +125,12 @@ export function KanbanModule() {
             ) : (
               byStage(s.key).map((t) => (
                 <div key={t.id} className="bg-card border border-border rounded-xl p-3">
-                  <KanbanCardBody task={t} onMove={move} />
+                  <KanbanCardBody
+                    task={t}
+                    quoteSummary={groupFor(t.quoteGroupId)}
+                    onMove={move}
+                    onOpenQuote={() => openQuote(t.quoteGroupId)}
+                  />
                 </div>
               ))
             )}
@@ -116,7 +141,16 @@ export function KanbanModule() {
   );
 }
 
-function KanbanCardBody({ task, onMove }: { task: Task; onMove: (id: string, s: KanbanStage) => void }) {
+type GroupSummary = ReturnType<typeof useQuoteStore>["groups"][number];
+
+function KanbanCardBody({
+  task, quoteSummary, onMove, onOpenQuote,
+}: {
+  task: Task;
+  quoteSummary?: GroupSummary;
+  onMove: (id: string, s: KanbanStage) => void;
+  onOpenQuote: () => void;
+}) {
   return (
     <>
       <div className="flex items-start justify-between gap-2">
@@ -134,6 +168,9 @@ function KanbanCardBody({ task, onMove }: { task: Task; onMove: (id: string, s: 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onOpenQuote}>
+              {task.quoteGroupId ? "Abrir cotação" : "Nova cotação"}
+            </DropdownMenuItem>
             {stages
               .filter((s) => s.key !== task.stage)
               .map((s) => (
@@ -144,12 +181,41 @@ function KanbanCardBody({ task, onMove }: { task: Task; onMove: (id: string, s: 
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="mt-3 flex items-center justify-between">
+
+      <div className="mt-3 flex items-center justify-between gap-2">
         <Badge variant="outline" className="rounded-full text-xs">
           {task.branch}
         </Badge>
         <p className="text-sm font-bold">{formatBRL(task.estimatedValue)}</p>
       </div>
+
+      {/* Quote link / CTA */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onOpenQuote(); }}
+        className="mt-2 w-full text-left text-[11px] flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 transition text-muted-foreground hover:text-foreground"
+        title={task.quoteGroupId ? "Abrir no Multicálculo" : "Cotar no Multicálculo"}
+      >
+        {task.quoteGroupId && quoteSummary ? (
+          <>
+            <Link2 className="h-3 w-3 shrink-0 text-brand" />
+            <span className="truncate">
+              {quoteSummary.versions.length} {quoteSummary.versions.length === 1 ? "cotação" : "cotações"}
+            </span>
+            <Trophy className="h-3 w-3 shrink-0 ml-auto" />
+            <span className="font-medium text-foreground">v{quoteSummary.latest.version}</span>
+          </>
+        ) : (
+          <>
+            <Calculator className="h-3 w-3 shrink-0" />
+            <span>Cotar no Multicálculo</span>
+          </>
+        )}
+      </button>
+
+      {task.stage === "perdido" && task.lostReason && (
+        <p className="mt-1.5 text-[11px] text-destructive">Motivo: {task.lostReason}</p>
+      )}
+
       <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
