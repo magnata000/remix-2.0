@@ -12,23 +12,18 @@ export function MulticalcModule() {
   const { addNewQuote, addVersion, records, groups } = useQuoteStore();
   const { byQuoteGroup, moveStage, setEstimatedValue } = usePipelineStore();
   const { consumeFocus, goTo } = useNavigation();
-  const [tab, setTab] = useState<"nova" | "historico" | "comparar">("nova");
+  // Read incoming focus once on mount (stable consumeFocus from ref-based provider)
+  const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
+  const [tab, setTab] = useState<"nova" | "historico" | "comparar">(
+    initialFocus.quoteGroupId ? "historico" : "nova"
+  );
   const [selected, setSelected] = useState<string[]>([]);
-  const [focusedGroupId, setFocusedGroupId] = useState<string | null>(null);
+  const [focusedGroupId, setFocusedGroupId] = useState<string | null>(initialFocus.quoteGroupId ?? null);
   const selectedBranches = new Set(
     selected.map((id) => records.find((r) => r.id === id)?.branch).filter(Boolean) as string[]
   );
   const mixedBranches = selectedBranches.size > 1;
   const [editing, setEditing] = useState<{ groupId: string; version: number; clientName: string; data: QuoteFormData } | null>(null);
-
-  // Consume nav focus on mount
-  useEffect(() => {
-    const f = consumeFocus();
-    if (f.quoteGroupId) {
-      setTab("historico");
-      setFocusedGroupId(f.quoteGroupId);
-    }
-  }, [consumeFocus]);
 
   const handleEditVersion = (rec: QuoteRecord) => {
     setEditing({ groupId: rec.groupId, version: rec.version, clientName: rec.clientName, data: rec.formData });
