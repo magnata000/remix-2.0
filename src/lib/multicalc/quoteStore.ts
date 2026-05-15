@@ -153,7 +153,7 @@ export const effectiveStatus = (r: QuoteRecord, allInGroup: QuoteRecord[]): Quot
   const latest = allInGroup.reduce((a, b) => (b.version > a.version ? b : a));
   if (latest.id !== r.id) return r.status; // older versions keep "aberto" badge
   const ageDays = (Date.now() - new Date(r.createdAt).getTime()) / 86400000;
-  return ageDays > 30 ? "expirada" : "aberto";
+  return ageDays > 10 ? "expirada" : "aberto";
 };
 
 export type FieldDiff = { field: string; label: string; from: string; to: string };
