@@ -1,28 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MulticalcWizard } from "@/components/multicalc/MulticalcWizard";
 import { QuoteHistory } from "@/components/multicalc/QuoteHistory";
 import { QuoteCompare } from "@/components/multicalc/QuoteCompare";
-import { QuoteStoreProvider, useQuoteStore, QuoteRecord, QuoteFormData } from "@/lib/multicalc/quoteStore";
+import { useQuoteStore, QuoteRecord, QuoteFormData } from "@/lib/multicalc/quoteStore";
+import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { useNavigation } from "@/lib/navigation";
 import { toast } from "sonner";
 
 export function MulticalcModule() {
-  return (
-    <QuoteStoreProvider>
-      <MulticalcInner />
-    </QuoteStoreProvider>
-  );
-}
-
-function MulticalcInner() {
-  const { addNewQuote, addVersion, records } = useQuoteStore();
+  const { addNewQuote, addVersion, records, groups } = useQuoteStore();
+  const { byQuoteGroup, moveStage, setEstimatedValue } = usePipelineStore();
+  const { consumeFocus, goTo } = useNavigation();
   const [tab, setTab] = useState<"nova" | "historico" | "comparar">("nova");
   const [selected, setSelected] = useState<string[]>([]);
+  const [focusedGroupId, setFocusedGroupId] = useState<string | null>(null);
   const selectedBranches = new Set(
     selected.map((id) => records.find((r) => r.id === id)?.branch).filter(Boolean) as string[]
   );
   const mixedBranches = selectedBranches.size > 1;
   const [editing, setEditing] = useState<{ groupId: string; version: number; clientName: string; data: QuoteFormData } | null>(null);
+
+  // Consume nav focus on mount
+  useEffect(() => {
+    const f = consumeFocus();
+    if (f.quoteGroupId) {
+      setTab("historico");
+      setFocusedGroupId(f.quoteGroupId);
+    }
+  }, [consumeFocus]);
 
   const handleEditVersion = (rec: QuoteRecord) => {
     setEditing({ groupId: rec.groupId, version: rec.version, clientName: rec.clientName, data: rec.formData });
@@ -57,6 +63,22 @@ function MulticalcInner() {
       return;
     }
     setTab("comparar");
+  };
+
+  // Sync pipeline when quote status changes (ganha/perdida)
+  const onStatusChanged = (groupId: string, status: "ganha" | "perdida", lostReason?: import("@/lib/multicalc/quoteStore").LostReason) => {
+    const opp = byQuoteGroup(groupId);
+    if (!opp) return;
+    if (status === "ganha") {
+      const grp = groups.find((g) => g.groupId === groupId);
+      const winnerPrice = grp ? Math.min(...grp.latest.results.map((r) => r.price)) : opp.estimatedValue;
+      moveStage(opp.id, "fechado");
+      setEstimatedValue(opp.id, winnerPrice);
+      toast.success(`Pipeline atualizado: ${opp.clientName} → Fechado`);
+    } else {
+      moveStage(opp.id, "perdido", lostReason);
+      toast.success(`Pipeline atualizado: ${opp.clientName} → Perdido`);
+    }
   };
 
   return (
@@ -105,8 +127,12 @@ function MulticalcInner() {
             onCompare={goCompare}
             onEditVersion={handleEditVersion}
             onClearSelection={clearSelection}
+            onStatusChanged={onStatusChanged}
+            onOpenPipeline={(opportunityId) => goTo("kanban", { opportunityId })}
             allowedBranch={selectedBranches.size === 1 ? Array.from(selectedBranches)[0] : null}
             mixedBranches={mixedBranches}
+            focusedGroupId={focusedGroupId}
+            onClearFocus={() => setFocusedGroupId(null)}
           />
         </TabsContent>
 
