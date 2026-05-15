@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode, createElement } from "react";
-import { Branch, Insurer, Quote, quotes as baseQuotes } from "@/lib/mock/data";
+import { Branch, Insurer, Quote, quotes as baseQuotes, LostReason } from "@/lib/mock/data";
 
 export type QuoteStatus = "aberto" | "ganha" | "perdida" | "expirada";
-export type LostReason = "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro";
+export type { LostReason };
 
 export type QuoteFormData = {
   cliente: { nome: string; cpf: string; email: string; telefone: string };
