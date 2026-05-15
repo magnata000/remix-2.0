@@ -89,20 +89,51 @@ export const policies: Policy[] = Array.from({ length: 24 }, (_, i) => {
 
 const stages: KanbanStage[] = ["lead", "cotacao", "negociacao", "fechado"];
 
-export const tasks: Task[] = Array.from({ length: 16 }, (_, i) => {
+// Curated opportunities — first 5 are linked to seeded quote groups (g1..g5 in quoteStore)
+const curated: Task[] = [
+  {
+    id: "t1", title: "Renovação Auto", clientName: "João Silva", branch: "Auto",
+    estimatedValue: 1850, dueDate: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
+    assignee: "AS", stage: "fechado", quoteGroupId: "g1",
+  },
+  {
+    id: "t2", title: "Seguro de Vida", clientName: "Mariana Alves", branch: "Vida",
+    estimatedValue: 1650, dueDate: new Date(Date.now() + 8 * 86400000).toISOString().slice(0, 10),
+    assignee: "CL", stage: "perdido", quoteGroupId: "g2", lostReason: "preco",
+  },
+  {
+    id: "t3", title: "Seguro Residencial — apto", clientName: "Carlos Lima", branch: "Residencial",
+    estimatedValue: 1750, dueDate: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+    assignee: "AS", stage: "negociacao", quoteGroupId: "g3",
+  },
+  {
+    id: "t4", title: "Renovação Auto Corolla", clientName: "Beatriz Costa", branch: "Auto",
+    estimatedValue: 1930, dueDate: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10),
+    assignee: "MA", stage: "cotacao", quoteGroupId: "g4",
+  },
+  {
+    id: "t5", title: "PME — Empresarial", clientName: "Rafael Mendes", branch: "Empresarial",
+    estimatedValue: 2270, dueDate: new Date(Date.now() + 6 * 86400000).toISOString().slice(0, 10),
+    assignee: "AS", stage: "cotacao", quoteGroupId: "g5",
+  },
+];
+
+const extras: Task[] = Array.from({ length: 8 }, (_, i) => {
   const due = new Date();
   due.setDate(due.getDate() + (i * 3 - 5));
   return {
-    id: `t${i + 1}`,
-    title: `${rand(["Renovação", "Nova cotação", "Follow-up", "Proposta"], i)} ${rand(branches, i)}`,
-    clientName: rand(names, i + 3),
+    id: `t${i + 6}`,
+    title: `${rand(["Novo lead", "Follow-up", "Proposta"], i)} ${rand(branches, i)}`,
+    clientName: rand(names, i + 8),
     branch: rand(branches, i + 1),
-    estimatedValue: 1200 + (i * 213) % 7800,
+    estimatedValue: 1200 + (i * 213) % 6800,
     dueDate: due.toISOString().slice(0, 10),
     assignee: rand(["AS", "CL", "MA", "JP"], i),
-    stage: stages[i % stages.length],
+    stage: stages[i % 3] as KanbanStage, // lead, cotacao, negociacao
   };
 });
+
+export const tasks: Task[] = [...curated, ...extras];
 
 export const quotes: Quote[] = insurers.map((ins, i) => ({
   insurer: ins,
