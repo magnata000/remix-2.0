@@ -166,8 +166,9 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
         {filtered.map((g) => {
           const isOpen = openGroups[g.groupId] ?? false;
           const winnerPrice = Math.min(...g.latest.results.map((r) => r.price));
+          const linkedOpp = byQuoteGroup(g.groupId);
           return (
-            <Card key={g.groupId} className="rounded-2xl border-border shadow-none overflow-hidden">
+            <Card id={`quote-group-${g.groupId}`} key={g.groupId} className="rounded-2xl border-border shadow-none overflow-hidden scroll-mt-20">
               <Collapsible open={isOpen} onOpenChange={(o) => setOpenGroups((s) => ({ ...s, [g.groupId]: o }))}>
                 <CollapsibleTrigger asChild>
                   <button className="w-full p-4 flex items-center gap-3 hover:bg-muted/40 transition text-left">
@@ -178,6 +179,31 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                         <Badge variant="outline" className="bg-muted border-0">{g.branch}</Badge>
                         <Badge variant="outline" className="bg-muted border-0">{g.versions.length} {g.versions.length === 1 ? "versão" : "versões"}</Badge>
                         <StatusBadge status={g.status} />
+                        {linkedOpp ? (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); onOpenPipeline?.(linkedOpp.id); }}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onOpenPipeline?.(linkedOpp.id); } }}
+                            title="Abrir no Pipeline de Vendas"
+                            className="inline-flex items-center gap-1 text-[11px] bg-brand/15 text-brand-foreground px-2 py-0.5 rounded-md hover:bg-brand/25 transition cursor-pointer"
+                          >
+                            <Link2 className="h-3 w-3" />
+                            No pipeline · {stageLabels[linkedOpp.stage]}
+                          </span>
+                        ) : (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); handleAddToPipeline(g); }}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); handleAddToPipeline(g); } }}
+                            title="Criar oportunidade no pipeline"
+                            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition cursor-pointer"
+                          >
+                            <Plus className="h-3 w-3" />
+                            Adicionar ao pipeline
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Última atualização em {formatDate(g.latest.createdAt)} · melhor preço {formatBRL(winnerPrice)}
