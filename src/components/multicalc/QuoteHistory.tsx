@@ -272,6 +272,17 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                               <Button size="sm" variant="outline" className="rounded-lg" onClick={() => onEditVersion(v)}>
                                 <Pencil className="h-3.5 w-3.5 mr-1" /> Editar (nova versão)
                               </Button>
+                              {g.status === "expirada" && onRecalculate && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-lg"
+                                  onClick={() => onRecalculate(v)}
+                                  title="Refazer cotação com os mesmos dados"
+                                >
+                                  <RefreshCw className="h-3.5 w-3.5 mr-1" /> Recalcular
+                                </Button>
+                              )}
                               {isSelected && (
                                 <Button
                                   size="icon"
