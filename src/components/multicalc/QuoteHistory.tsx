@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X,
+  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/mock/data";
 import { useQuoteStore, QuoteRecord, QuoteStatus, LostReason, computeDiff, effectiveStatus } from "@/lib/multicalc/quoteStore";
+import { usePipelineStore, stageLabels } from "@/lib/pipeline/opportunityStore";
 import { StatusBadge } from "./StatusBadge";
 
 type Props = {
@@ -26,12 +27,17 @@ type Props = {
   onCompare: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
   onClearSelection?: () => void;
+  onStatusChanged?: (groupId: string, status: "ganha" | "perdida", lostReason?: LostReason) => void;
+  onOpenPipeline?: (opportunityId: string) => void;
   allowedBranch?: string | null;
   mixedBranches?: boolean;
+  focusedGroupId?: string | null;
+  onClearFocus?: () => void;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onClearSelection, allowedBranch, mixedBranches }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
   const { groups, setStatus } = useQuoteStore();
+  const { byQuoteGroup, createFromQuote } = usePipelineStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [branchFilter, setBranchFilter] = useState<string>("todos");
