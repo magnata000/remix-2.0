@@ -45,6 +45,18 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
   const [lostDialog, setLostDialog] = useState<{ groupId: string } | null>(null);
   const [lostReason, setLostReason] = useState<LostReason>("preco");
 
+  // Auto-expand + scroll to focused group from cross-module navigation
+  useEffect(() => {
+    if (focusedGroupId) {
+      setOpenGroups((s) => ({ ...s, [focusedGroupId]: true }));
+      const t = setTimeout(() => {
+        document.getElementById(`quote-group-${focusedGroupId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        onClearFocus?.();
+      }, 80);
+      return () => clearTimeout(t);
+    }
+  }, [focusedGroupId, onClearFocus]);
+
   const filtered = useMemo(() => {
     return groups.filter((g) => {
       if (search && !g.clientName.toLowerCase().includes(search.toLowerCase())) return false;
@@ -61,14 +73,27 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
     }
     setStatus(groupId, status);
     toast.success(status === "ganha" ? "Cotação marcada como Ganha" : "Status atualizado");
+    if (status === "ganha") onStatusChanged?.(groupId, "ganha");
   };
 
   const confirmLost = () => {
     if (lostDialog) {
       setStatus(lostDialog.groupId, "perdida", lostReason);
       toast.success("Cotação marcada como Perdida");
+      onStatusChanged?.(lostDialog.groupId, "perdida", lostReason);
       setLostDialog(null);
     }
+  };
+
+  const handleAddToPipeline = (g: typeof groups[number]) => {
+    const winnerPrice = Math.min(...g.latest.results.map((r) => r.price));
+    createFromQuote({
+      clientName: g.clientName,
+      branch: g.branch,
+      estimatedValue: winnerPrice,
+      quoteGroupId: g.groupId,
+    });
+    toast.success(`${g.clientName} adicionado ao pipeline em "Cotação"`);
   };
 
   return (
