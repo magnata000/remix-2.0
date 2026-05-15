@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MulticalcWizard } from "@/components/multicalc/MulticalcWizard";
 import { QuoteHistory } from "@/components/multicalc/QuoteHistory";

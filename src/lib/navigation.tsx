@@ -1,11 +1,10 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useRef, ReactNode, useCallback } from "react";
 import type { ModuleKey } from "@/components/shell/TopBar";
 
 type Focus = { quoteGroupId?: string; opportunityId?: string };
 
 type Ctx = {
   active: ModuleKey;
-  focus: Focus;
   goTo: (module: ModuleKey, focus?: Focus) => void;
   consumeFocus: () => Focus;
 };
@@ -21,21 +20,21 @@ export function NavigationProvider({
   setActive: (k: ModuleKey) => void;
   children: ReactNode;
 }) {
-  const [focus, setFocus] = useState<Focus>({});
+  const focusRef = useRef<Focus>({});
 
   const goTo = useCallback((module: ModuleKey, f?: Focus) => {
-    setFocus(f ?? {});
+    focusRef.current = f ?? {};
     setActive(module);
   }, [setActive]);
 
   const consumeFocus = useCallback(() => {
-    const current = focus;
-    setFocus({});
+    const current = focusRef.current;
+    focusRef.current = {};
     return current;
-  }, [focus]);
+  }, []);
 
   return (
-    <NavigationContext.Provider value={{ active, focus, goTo, consumeFocus }}>
+    <NavigationContext.Provider value={{ active, goTo, consumeFocus }}>
       {children}
     </NavigationContext.Provider>
   );
