@@ -12,6 +12,7 @@ export type TaskComment = {
   createdAt: string;
   editedAt?: string;
   editedBy?: string;
+  attachmentIds?: string[];
 };
 
 export type TaskAttachment = {
