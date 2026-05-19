@@ -16,7 +16,8 @@ import { ManageColumnsDialog } from "./ManageColumnsDialog";
 import { ScheduledTasksPanel } from "./ScheduledTasksPanel";
 
 export function TasksBoard() {
-  const { columns, tasks, moveTask } = useTaskStore();
+  const { columns, tasks, moveTask, deleteTask } = useTaskStore();
+  const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
