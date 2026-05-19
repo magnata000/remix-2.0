@@ -335,12 +335,16 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     setScheduled((arr) => arr.filter((s) => s.id !== id));
   }, []);
 
+  const deleteTask = useCallback((id: string) => {
+    setTasks((arr) => arr.filter((t) => t.id !== id));
+  }, []);
+
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, moveTask, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment,
+    addTask, moveTask, deleteTask, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }
