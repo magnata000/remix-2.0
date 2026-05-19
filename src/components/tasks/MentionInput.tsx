@@ -43,11 +43,18 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
   const insertMention = (name: string) => {
     if (mentionStart == null) return;
     const cursor = ref.current?.selectionStart ?? value.length;
-    const next = value.slice(0, mentionStart) + `@${name} ` + value.slice(cursor);
+    const insert = `@${name} `;
+    const next = value.slice(0, mentionStart) + insert + value.slice(cursor);
+    const caret = mentionStart + insert.length;
     onChange(next);
     setOpen(false);
     setMentionStart(null);
-    setTimeout(() => ref.current?.focus(), 0);
+    setTimeout(() => {
+      const node = ref.current;
+      if (!node) return;
+      node.focus();
+      node.setSelectionRange(caret, caret);
+    }, 0);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
