@@ -174,6 +174,11 @@ export function TasksBoard() {
       </div>
 
       <NewTaskDialog open={newOpen} onOpenChange={setNewOpen} />
+      <NewTaskDialog
+        open={!!editTask}
+        onOpenChange={(v) => { if (!v) setEditTask(null); }}
+        task={editTask ?? undefined}
+      />
       <ManageColumnsDialog open={manageOpen} onOpenChange={setManageOpen} />
       <ScheduledTasksPanel open={scheduleOpen} onOpenChange={setScheduleOpen} />
       <TaskDetailDialog task={currentDetail} onOpenChange={(v) => { if (!v) setDetail(null); }} />
