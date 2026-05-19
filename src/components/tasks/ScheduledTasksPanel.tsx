@@ -34,6 +34,9 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const submit = () => {
     if (!title.trim()) { toast.error("Informe um título"); return; }
     if (kind === "data" && !range?.from) { toast.error("Escolha uma data"); return; }
+    if (kind === "data" && range?.from && range?.to && range.to.getTime() < range.from.getTime()) {
+      toast.error("A data final não pode ser anterior à inicial"); return;
+    }
     if (kind === "semana" && weekdays.length === 0) { toast.error("Selecione ao menos um dia"); return; }
     if (kind === "periodo" && !startDate) { toast.error("Escolha a data de início"); return; }
     const from = range?.from;
