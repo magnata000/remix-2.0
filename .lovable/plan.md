@@ -1,53 +1,51 @@
 ## Objetivo
-Adicionar ícones discretos de **lápis (editar)** e **lixeira (excluir)** nos cards da aba Tarefas, visíveis apenas no hover.
+Fazer o ícone de **lápis** no card abrir um formulário de edição com os mesmos campos do formulário de criação (título, descrição, prazo, prioridade, colaborador, coluna, cliente), em vez de abrir o painel de detalhes/timeline.
 
-## Comportamento
-- **Lápis**: abre o `TaskDetailDialog` já existente (mesmo efeito do clique no card). Serve como entrada explícita para visualizar/editar.
-- **Lixeira**: abre um `AlertDialog` de confirmação ("Excluir tarefa? Esta ação não pode ser desfeita.") e, ao confirmar, remove a tarefa e exibe `toast.success("Tarefa excluída")`.
-- Os ícones só aparecem no hover do card (`opacity-0 group-hover:opacity-100 transition-opacity`), no canto superior direito, ao lado do badge de prioridade.
-- `stopPropagation` em ambos os botões para não disparar o `onClick` do card.
+## Abordagem
+Reaproveitar `NewTaskDialog` transformando-o em formulário dual-modo (criar/editar) para evitar duplicação de UI.
 
 ## Alterações
 
 ### `src/lib/tasks/taskStore.tsx`
-- Adicionar ação no contexto:
+- Adicionar ação:
   ```ts
-  const deleteTask = useCallback((id: string) => {
-    setTasks((arr) => arr.filter((t) => t.id !== id));
-  }, []);
+  updateTaskFields: (id: string, patch: Partial<Pick<TaskItem,
+    "title" | "description" | "dueDate" | "priority" | "assigneeId" | "clientName" | "columnId"
+  >>) => void;
   ```
-- Incluir `deleteTask` no tipo `Ctx` e no `value` exportado.
+- Implementação via `setTasks(arr => arr.map(...))`. Quando `columnId` mudar, registrar uma entrada no `timeline` (kind `"moved"`, igual ao `moveTask`) para manter coerência. Demais campos não geram timeline (mantém o histórico limpo).
+- Expor no `Ctx` e no `value`.
 
-### `src/components/tasks/TaskCard.tsx`
-- Trocar o `<button>` raiz por um `<div className="group relative ...">` com `role="button"`, `tabIndex={0}`, `onClick`, e `onKeyDown` (Enter/Space) para preservar acessibilidade.
-- Novas props:
+### `src/components/tasks/NewTaskDialog.tsx`
+- Renomear o componente para algo dual-modo, porém **manter o arquivo e o nome do export** (`NewTaskDialog`) para evitar quebrar imports; adicionar nova prop opcional:
   ```ts
   type Props = {
-    task: TaskItem;
-    onClick: () => void;
-    onEdit: () => void;
-    onDelete: () => void;
+    open: boolean;
+    onOpenChange: (v: boolean) => void;
+    defaultColumnId?: string;
+    task?: TaskItem; // quando presente => modo edição
   };
   ```
-- Barra de ações flutuante no canto superior direito (antes do badge), exibindo `Pencil` e `Trash2` (lucide-react) tamanho `h-3.5 w-3.5`:
-  - container: `absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity`
-  - botões: `p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground` (lixeira ganha `hover:text-destructive`)
-- Reajustar padding do topo (`pt-7` ou similar) para não sobrepor o título quando aparecerem, OU manter os botões no canto sem mover o conteúdo (preferência: sem mover; o título já tem espaço suficiente à direita do badge).
+- `useEffect` que, quando `open` vira `true`, popula os estados a partir de `task` (modo edição) ou reseta (modo criação).
+- Título do diálogo dinâmico: "Nova tarefa" vs "Editar tarefa".
+- Botão primário: "Criar tarefa" vs "Salvar alterações".
+- `submit()`:
+  - Se `task` definido: chama `updateTaskFields(task.id, {...})` e `toast.success("Tarefa atualizada")`.
+  - Caso contrário: comportamento atual.
 
 ### `src/components/tasks/TasksBoard.tsx`
-- Estado novo: `confirmDelete: TaskItem | null`.
-- Passar handlers ao `TaskCard`:
+- Novo estado: `editTask: TaskItem | null`.
+- Trocar `onEdit={() => setDetail(t)}` por `onEdit={() => setEditTask(t)}`.
+- Renderizar uma segunda instância de `NewTaskDialog` em modo edição:
   ```tsx
-  <TaskCard
-    task={t}
-    onClick={() => setDetail(t)}
-    onEdit={() => setDetail(t)}
-    onDelete={() => setConfirmDelete(t)}
+  <NewTaskDialog
+    open={!!editTask}
+    onOpenChange={(v) => { if (!v) setEditTask(null); }}
+    task={editTask ?? undefined}
   />
   ```
-- Pegar `deleteTask` via `useTaskStore()` e importar `toast` de `sonner`.
-- Renderizar uma única instância de `AlertDialog` (de `@/components/ui/alert-dialog`) controlada por `confirmDelete`, com botão de confirmação destrutivo que chama `deleteTask` e fecha o modal.
+- O clique no corpo do card continua abrindo o `TaskDetailDialog` (visualização/timeline). Apenas o lápis aciona o formulário de edição.
 
 ## Fora de escopo
-- Edição inline dos campos da tarefa (título, prazo, responsável, etc.) continua via `TaskDetailDialog`. Um modo de edição completa em formulário pode ser endereçado em outro turno.
-- Não toca em `KanbanModule`, pipeline, tarefas agendadas nem no `MentionInput`.
+- Não altera `TaskDetailDialog` nem comentários/anexos.
+- Não cria entrada de timeline para edições de campos textuais (somente para mudança de coluna, mantendo o comportamento de `moveTask`).

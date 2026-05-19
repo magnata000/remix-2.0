@@ -20,6 +20,7 @@ import { toast } from "sonner";
 export function TasksBoard() {
   const { columns, tasks, moveTask, deleteTask } = useTaskStore();
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
+  const [editTask, setEditTask] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -159,7 +160,7 @@ export function TasksBoard() {
                   <TaskCard
                     task={t}
                     onClick={() => setDetail(t)}
-                    onEdit={() => setDetail(t)}
+                    onEdit={() => setEditTask(t)}
                     onDelete={() => setConfirmDelete(t)}
                   />
                 </div>
@@ -173,6 +174,11 @@ export function TasksBoard() {
       </div>
 
       <NewTaskDialog open={newOpen} onOpenChange={setNewOpen} />
+      <NewTaskDialog
+        open={!!editTask}
+        onOpenChange={(v) => { if (!v) setEditTask(null); }}
+        task={editTask ?? undefined}
+      />
       <ManageColumnsDialog open={manageOpen} onOpenChange={setManageOpen} />
       <ScheduledTasksPanel open={scheduleOpen} onOpenChange={setScheduleOpen} />
       <TaskDetailDialog task={currentDetail} onOpenChange={(v) => { if (!v) setDetail(null); }} />
