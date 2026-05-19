@@ -3,9 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Calendar, User, Tag, Layers, FileText, Pencil } from "lucide-react";
+import { Paperclip, Send, Calendar, User, Tag, Layers, FileText, Pencil, X, Trash2, Image as ImageIcon } from "lucide-react";
 import { team, formatDate } from "@/lib/mock/data";
-import { PRIORITY_META, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { PRIORITY_META, TaskAttachment, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "./MentionInput";
 
 const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -16,26 +16,39 @@ const initialsOf = (id: string) => {
 };
 const nameOf = (id: string) => team.find((x) => x.id === id)?.name ?? "—";
 const formatTime = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+const formatBytes = (n: number) => {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+};
+const isImage = (type: string) => type.startsWith("image/");
 
 export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null; onOpenChange: (v: boolean) => void }) {
-  const { columns, addComment, editComment, addAttachment, currentUserId } = useTaskStore();
+  const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
+  const [pending, setPending] = useState<File[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const column = useMemo(() => columns.find((c) => c.id === task?.columnId), [columns, task]);
   if (!task) return null;
   const pr = PRIORITY_META[task.priority];
 
+  const canSend = text.trim().length > 0 || pending.length > 0;
+
   const submit = () => {
-    if (!text.trim()) return;
-    addComment(task.id, text.trim());
+    if (!canSend) return;
+    addMessage(task.id, text, pending);
     setText("");
+    setPending([]);
   };
 
-  const handleFiles = (files: FileList | null) => {
+  const addFiles = (files: FileList | File[] | null) => {
     if (!files) return;
-    Array.from(files).forEach((f) => addAttachment(task.id, f));
+    const list = Array.from(files);
+    if (list.length) setPending((p) => [...p, ...list]);
   };
+  const removePending = (idx: number) => setPending((p) => p.filter((_, i) => i !== idx));
 
   return (
     <Dialog open={!!task} onOpenChange={onOpenChange}>
@@ -78,15 +91,22 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
                 if (ev.kind === "moved") return (<TimelineRow key={i} authorId={ev.by} at={ev.at}><em className="text-muted-foreground">moveu de <strong>{ev.from}</strong> para <strong>{ev.to}</strong></em></TimelineRow>);
                 if (ev.kind === "comment") {
                   const c = task.comments.find((x) => x.id === ev.commentId);
-                  return c ? (
+                  if (!c) return null;
+                  const atts = (c.attachmentIds ?? [])
+                    .map((id) => task.attachments.find((a) => a.id === id))
+                    .filter((a): a is TaskAttachment => !!a);
+                  return (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
                       <CommentBubble
                         comment={c}
+                        attachments={atts}
                         canEdit={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
-                        onSave={(text) => editComment(task.id, c.id, text)}
+                        onSaveText={(t) => editComment(task.id, c.id, t)}
+                        onRemoveAttachment={(aid) => removeCommentAttachment(task.id, c.id, aid)}
+                        onDelete={() => deleteComment(task.id, c.id)}
                       />
                     </TimelineRow>
-                  ) : null;
+                  );
                 }
                 if (ev.kind === "attachment") {
                   const a = task.attachments.find((x) => x.id === ev.attachmentId);
@@ -102,24 +122,47 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
               })}
             </div>
 
-            <div className="mt-3 flex items-end gap-2 shrink-0 pb-1">
-              <div className="flex-1 min-w-0">
-                <MentionInput value={text} onChange={setText} onSubmit={submit} placeholder="Escreva um comentário... use @ para mencionar" rows={2} />
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
+              className={`mt-3 shrink-0 rounded-xl border bg-muted/60 p-2 transition ${dragOver ? "border-brand ring-2 ring-brand/40 bg-brand/5" : "border-border"}`}
+            >
+              {pending.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {pending.map((f, i) => <PendingChip key={i} file={f} onRemove={() => removePending(i)} />)}
+                </div>
+              )}
+              <MentionInput
+                value={text}
+                onChange={setText}
+                onSubmit={submit}
+                placeholder={dragOver ? "Solte os arquivos para anexar..." : "Escreva um comentário ou solte arquivos aqui... use @ para mencionar"}
+                rows={2}
+                className="resize-none border-0 bg-transparent focus-visible:ring-0 shadow-none px-2 py-1.5"
+              />
+              <div className="flex items-center justify-end gap-1 mt-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInput.current?.click()}
+                  className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+                  aria-label="Anexar arquivo"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <input ref={fileInput} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+                <Button
+                  onClick={submit}
+                  disabled={!canSend}
+                  size="icon"
+                  className="h-8 w-8 rounded-lg bg-brand text-brand-foreground hover:bg-brand/90"
+                  aria-label="Enviar"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => fileInput.current?.click()}
-                className="rounded-xl text-muted-foreground hover:text-foreground"
-                aria-label="Anexar arquivo"
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <input ref={fileInput} type="file" multiple hidden onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
-              <Button onClick={submit} disabled={!text.trim()} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
-                <Send className="h-4 w-4" />
-              </Button>
             </div>
           </section>
         </div>
@@ -152,23 +195,93 @@ function TimelineRow({ authorId, at, children }: { authorId: string; at: string;
   );
 }
 
-function CommentBubble({ comment, canEdit, onSave }: { comment: TaskComment; canEdit: boolean; onSave: (text: string) => void }) {
+function PendingChip({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const previewUrl = useMemo(() => (isImage(file.type) ? URL.createObjectURL(file) : null), [file]);
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border pl-1 pr-1.5 py-1 text-xs max-w-[220px]">
+      {previewUrl ? (
+        <img src={previewUrl} alt={file.name} className="h-6 w-6 rounded object-cover" />
+      ) : (
+        <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-muted-foreground">
+          <FileText className="h-3.5 w-3.5" />
+        </span>
+      )}
+      <span className="truncate flex-1" title={file.name}>{file.name}</span>
+      <span className="text-[10px] text-muted-foreground">{formatBytes(file.size)}</span>
+      <button type="button" onClick={onRemove} aria-label="Remover" className="text-muted-foreground hover:text-foreground">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+function AttachmentChip({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void }) {
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border pl-1 pr-1.5 py-1 text-xs max-w-[220px]">
+      <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-muted-foreground">
+        {isImage(a.type) ? <ImageIcon className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+      </span>
+      <a href={a.url} target="_blank" rel="noreferrer" className="truncate flex-1 text-brand hover:underline" title={a.name}>{a.name}</a>
+      <span className="text-[10px] text-muted-foreground">{formatBytes(a.size)}</span>
+      {onRemove && (
+        <button type="button" onClick={onRemove} aria-label="Remover anexo" className="text-muted-foreground hover:text-destructive">
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CommentBubble({
+  comment,
+  attachments,
+  canEdit,
+  onSaveText,
+  onRemoveAttachment,
+  onDelete,
+}: {
+  comment: TaskComment;
+  attachments: TaskAttachment[];
+  canEdit: boolean;
+  onSaveText: (text: string) => void;
+  onRemoveAttachment: (attachmentId: string) => void;
+  onDelete: () => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.text);
 
   const save = () => {
     const clean = draft.trim();
-    if (!clean) return;
-    if (clean !== comment.text) onSave(clean);
+    if (clean !== comment.text) onSaveText(clean);
     setEditing(false);
   };
+
+  const showDeleteAction = draft.trim().length === 0 && attachments.length <= 1;
 
   if (editing) {
     return (
       <div className="space-y-1.5">
         <MentionInput value={draft} onChange={setDraft} onSubmit={save} rows={2} />
-        <div className="flex gap-1.5">
-          <Button size="sm" className="h-6 px-2 text-xs rounded-md bg-brand text-brand-foreground hover:bg-brand/90" onClick={save}>Salvar</Button>
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {attachments.map((a) => (
+              <AttachmentChip key={a.id} a={a} onRemove={() => onRemoveAttachment(a.id)} />
+            ))}
+          </div>
+        )}
+        <div className="flex gap-1.5 items-center">
+          {showDeleteAction ? (
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-6 px-2 text-xs rounded-md"
+              onClick={() => { onDelete(); setEditing(false); }}
+            >
+              <Trash2 className="h-3 w-3 mr-1" /> Excluir mensagem
+            </Button>
+          ) : (
+            <Button size="sm" className="h-6 px-2 text-xs rounded-md bg-brand text-brand-foreground hover:bg-brand/90" onClick={save}>Salvar</Button>
+          )}
           <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { setDraft(comment.text); setEditing(false); }}>Cancelar</Button>
         </div>
       </div>
@@ -178,13 +291,22 @@ function CommentBubble({ comment, canEdit, onSave }: { comment: TaskComment; can
   return (
     <div className="group/comment">
       <div className="flex items-start gap-1.5">
-        <span className="flex-1 whitespace-pre-wrap break-words">{renderMentions(comment.text)}</span>
+        <div className="flex-1 min-w-0 space-y-1.5">
+          {comment.text && (
+            <span className="block whitespace-pre-wrap break-words">{renderMentions(comment.text)}</span>
+          )}
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {attachments.map((a) => <AttachmentChip key={a.id} a={a} />)}
+            </div>
+          )}
+        </div>
         {canEdit && (
           <button
             type="button"
             onClick={() => { setDraft(comment.text); setEditing(true); }}
             className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-foreground shrink-0"
-            aria-label="Editar comentário"
+            aria-label="Editar mensagem"
           >
             <Pencil className="h-3 w-3" />
           </button>
