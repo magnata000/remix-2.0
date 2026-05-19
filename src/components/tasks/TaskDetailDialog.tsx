@@ -3,10 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Upload, Calendar, User, Tag, Layers, FileText } from "lucide-react";
+import { Paperclip, Send, Upload, Calendar, User, Tag, Layers, FileText, Pencil } from "lucide-react";
 import { team, formatDate } from "@/lib/mock/data";
-import { PRIORITY_META, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { PRIORITY_META, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "./MentionInput";
+
+const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const initialsOf = (id: string) => {
   const m = team.find((x) => x.id === id);
@@ -16,7 +18,7 @@ const nameOf = (id: string) => team.find((x) => x.id === id)?.name ?? "—";
 const formatTime = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null; onOpenChange: (v: boolean) => void }) {
-  const { columns, addComment, addAttachment } = useTaskStore();
+  const { columns, addComment, editComment, addAttachment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -77,7 +79,15 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
                 if (ev.kind === "moved") return (<TimelineRow key={i} authorId={ev.by} at={ev.at}><em className="text-muted-foreground">moveu de <strong>{ev.from}</strong> para <strong>{ev.to}</strong></em></TimelineRow>);
                 if (ev.kind === "comment") {
                   const c = task.comments.find((x) => x.id === ev.commentId);
-                  return c ? (<TimelineRow key={i} authorId={ev.by} at={ev.at}><span>{renderMentions(c.text)}</span></TimelineRow>) : null;
+                  return c ? (
+                    <TimelineRow key={i} authorId={ev.by} at={ev.at}>
+                      <CommentBubble
+                        comment={c}
+                        canEdit={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
+                        onSave={(text) => editComment(task.id, c.id, text)}
+                      />
+                    </TimelineRow>
+                  ) : null;
                 }
                 if (ev.kind === "attachment") {
                   const a = task.attachments.find((x) => x.id === ev.attachmentId);
@@ -143,6 +153,53 @@ function TimelineRow({ authorId, at, children }: { authorId: string; at: string;
         </div>
         <div className="text-sm break-words">{children}</div>
       </div>
+    </div>
+  );
+}
+
+function CommentBubble({ comment, canEdit, onSave }: { comment: TaskComment; canEdit: boolean; onSave: (text: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.text);
+
+  const save = () => {
+    const clean = draft.trim();
+    if (!clean) return;
+    if (clean !== comment.text) onSave(clean);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="space-y-1.5">
+        <MentionInput value={draft} onChange={setDraft} onSubmit={save} rows={2} />
+        <div className="flex gap-1.5">
+          <Button size="sm" className="h-6 px-2 text-xs rounded-md bg-brand text-brand-foreground hover:bg-brand/90" onClick={save}>Salvar</Button>
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { setDraft(comment.text); setEditing(false); }}>Cancelar</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group/comment">
+      <div className="flex items-start gap-1.5">
+        <span className="flex-1">{renderMentions(comment.text)}</span>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => { setDraft(comment.text); setEditing(true); }}
+            className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Editar comentário"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+      {comment.editedAt && comment.editedBy && (
+        <span className="text-[10px] text-muted-foreground italic">
+          editada por {nameOf(comment.editedBy)}
+        </span>
+      )}
     </div>
   );
 }

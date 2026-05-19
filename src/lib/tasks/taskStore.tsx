@@ -10,6 +10,8 @@ export type TaskComment = {
   authorId: string;
   text: string;
   createdAt: string;
+  editedAt?: string;
+  editedBy?: string;
 };
 
 export type TaskAttachment = {
@@ -156,6 +158,7 @@ type Ctx = {
   addTask: (t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">) => TaskItem;
   moveTask: (id: string, columnId: string) => void;
   addComment: (taskId: string, text: string) => void;
+  editComment: (taskId: string, commentId: string, text: string) => void;
   addAttachment: (taskId: string, file: File) => void;
   addColumn: (title: string, color: string) => void;
   renameColumn: (id: string, title: string) => void;
@@ -211,6 +214,22 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [currentUserId]);
 
+  const editComment = useCallback((taskId: string, commentId: string, text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      return {
+        ...t,
+        comments: t.comments.map((c) =>
+          c.id === commentId && c.authorId === currentUserId && c.text !== clean
+            ? { ...c, text: clean, editedAt: new Date().toISOString(), editedBy: currentUserId }
+            : c
+        ),
+      };
+    }));
+  }, [currentUserId]);
+
   const addAttachment = useCallback((taskId: string, file: File) => {
     setTasks((arr) => arr.map((t) => {
       if (t.id !== taskId) return t;
@@ -256,10 +275,10 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, moveTask, addComment, addAttachment,
+    addTask, moveTask, addComment, editComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, addComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, addComment, editComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }

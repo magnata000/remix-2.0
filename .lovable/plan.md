@@ -1,38 +1,33 @@
 ## Objetivo
-Transformar o campo "Data" da opção "Data específica (avulsa)" em um seletor de intervalo (data inicial → data final), mantendo o comportamento atual quando o usuário selecionar apenas uma data.
+Permitir editar comentários da timeline dentro de 24h após a postagem, e exibir uma legenda sutil indicando "editada por (nome)" quando aplicável.
 
-## Comportamento esperado
-- Ao abrir o popover do calendário, ele entra em modo `range`.
-- Primeiro clique define a **data inicial** (e, implicitamente, a final igual a ela).
-- Segundo clique em uma data diferente define a **data final**.
-- Se o usuário fechar o popover sem escolher uma segunda data, a final permanece igual à inicial (ex.: `19/05 a 19/05`).
-- O botão exibe o intervalo formatado: `19/05/2026 → 26/05/2026` (ou apenas a data quando início = fim).
-- Repetir anualmente continua disponível e aplica-se ao intervalo inteiro.
+## Regras
+- **Quem pode editar**: apenas o autor do comentário (`comment.authorId === currentUserId`) — autoria já existe.
+- **Janela de edição**: 24h a partir de `createdAt`. Após esse prazo, o botão de editar desaparece.
+- **Indicador "editada"**: após salvar, mostrar abaixo/ao lado do timestamp um texto sutil em `text-[10px] text-muted-foreground italic`, formato: `editada por {nome}`. Não exibir nada se nunca foi editada.
+- **Sem histórico de versões**: armazenamos só o último estado.
 
 ## Mudanças técnicas
 
 ### 1. `src/lib/tasks/taskStore.tsx`
-- Atualizar o tipo `ScheduledTask` para o caso `kind: "data"`:
-  - Substituir `date?: string` por `startDate?: string` **e** `endDate?: string` (mantendo `yearly`).
-  - Ajustar o `seedScheduled` para usar os dois campos.
-- Nota: já existe um `startDate` usado pelo caso `"periodo"`. Para evitar conflito semântico, manter `startDate`/`endDate` apenas para `"data"` e renomear o do `"periodo"` para `periodStart` (ou manter `startDate` compartilhado — decidir na implementação para impacto mínimo; preferência: manter `startDate` compartilhado e adicionar `endDate` só para `"data"`).
+- Estender `TaskComment` com:
+  - `editedAt?: string`
+  - `editedBy?: string`
+- Adicionar ação `editComment(taskId, commentId, text)` no `Ctx` que:
+  - Atualiza `text`, `editedAt = now`, `editedBy = currentUserId`.
+  - **Não** cria novo evento de timeline (a edição é uma propriedade do próprio comentário, mantendo a ordem original).
+- Expor `editComment` no value do provider.
 
-### 2. `src/components/tasks/ScheduledTasksPanel.tsx`
-- Substituir o estado `date: Date | undefined` por `range: { from?: Date; to?: Date } | undefined`.
-- Criar um novo componente local `DateRangePick` (baseado em `DatePick`) usando `<Calendar mode="range" />` do shadcn.
-  - Label do botão:
-    - vazio → "Selecionar intervalo"
-    - só `from` → `formatDate(from)` (final assumida igual)
-    - `from` + `to` → `formatDate(from) → formatDate(to)`
-- Validação no `submit`: se `kind === "data"`, exigir ao menos `range?.from`. Se não houver `to`, definir `to = from`.
-- Passar para `addScheduled`: `startDate: range.from.toISOString()`, `endDate: (range.to ?? range.from).toISOString()`.
-- Atualizar `describeSchedule` para o caso `"data"`:
-  - Se `startDate === endDate`: `formatDate(startDate)` (comportamento atual).
-  - Caso contrário: `formatDate(startDate) → formatDate(endDate)` + sufixo `· todo ano` quando `yearly`.
-
-### 3. Limpeza
-- Resetar `range` ao `undefined` após criar o agendamento (junto com os outros resets já existentes).
+### 2. `src/components/tasks/TaskDetailDialog.tsx`
+- No bloco `ev.kind === "comment"`, em vez de renderizar texto puro, montar um sub-componente `CommentBubble` com:
+  - Conteúdo via `renderMentions(c.text)`.
+  - Botão "Editar" sutil (ícone `Pencil` em `ghost` pequeno) — só visível se `c.authorId === currentUserId` **e** `Date.now() - new Date(c.createdAt).getTime() < 24*60*60*1000`.
+  - Ao clicar: alterna para `MentionInput` controlado com o texto atual + botões "Salvar" / "Cancelar".
+  - Salvar chama `editComment(task.id, c.id, newText)`; trim + ignora se inalterado/vazio.
+  - Se `c.editedAt` existir, render abaixo do texto: `<span className="text-[10px] text-muted-foreground italic">editada por {nameOf(c.editedBy)}</span>`.
+- Imports adicionais: `Pencil` de `lucide-react`.
 
 ## Fora de escopo
-- Não altera os fluxos "Dias da semana" nem "Períodos".
-- Não altera a lógica de geração/expansão das ocorrências (apenas o armazenamento dos dois extremos do intervalo).
+- Edição de outros tipos de evento (created/moved/attachment).
+- Histórico de versões de edição.
+- Permissão para admin editar comentário alheio.
