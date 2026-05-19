@@ -242,7 +242,7 @@ function KanbanCardBody({
       <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          {formatDate(task.dueDate)}
+          {formatDateShort(task.dueDate)}
         </div>
         <Avatar className="h-6 w-6">
           <AvatarFallback className="text-[10px] bg-brand-soft text-brand-foreground font-semibold">
