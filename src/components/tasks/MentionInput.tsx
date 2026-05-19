@@ -64,6 +64,29 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
   useEffect(() => { if (!open) setHoverIndex(0); }, [open, query]);
   useEffect(() => { if (hoverIndex >= options.length) setHoverIndex(0); }, [options.length, hoverIndex]);
 
+  const [pos, setPos] = useState<{ left: number; bottom: number; width: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) { setPos(null); return; }
+    const compute = () => {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setPos({
+        left: rect.left,
+        bottom: window.innerHeight - rect.top + 8,
+        width: Math.max(rect.width, 256),
+      });
+    };
+    compute();
+    window.addEventListener("scroll", compute, true);
+    window.addEventListener("resize", compute);
+    return () => {
+      window.removeEventListener("scroll", compute, true);
+      window.removeEventListener("resize", compute);
+    };
+  }, [open, options.length, value]);
+
   const handleChange = (v: string) => {
     onChange(v);
     const cursor = ref.current?.selectionStart ?? v.length;
