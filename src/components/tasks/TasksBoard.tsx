@@ -154,7 +154,12 @@ export function TasksBoard() {
                   onDragEnd={() => setDragId(null)}
                   className="cursor-grab active:cursor-grabbing"
                 >
-                  <TaskCard task={t} onClick={() => setDetail(t)} />
+                  <TaskCard
+                    task={t}
+                    onClick={() => setDetail(t)}
+                    onEdit={() => setDetail(t)}
+                    onDelete={() => setConfirmDelete(t)}
+                  />
                 </div>
               ))}
               {byColumn(col.id).length === 0 && (
