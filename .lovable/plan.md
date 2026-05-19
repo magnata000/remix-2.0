@@ -1,33 +1,10 @@
 ## Objetivo
-Permitir editar comentários da timeline dentro de 24h após a postagem, e exibir uma legenda sutil indicando "editada por (nome)" quando aplicável.
+Garantir que, no seletor "Data específica avulsa" das Tarefas Agendadas, a data final nunca seja anterior à data inicial.
 
-## Regras
-- **Quem pode editar**: apenas o autor do comentário (`comment.authorId === currentUserId`) — autoria já existe.
-- **Janela de edição**: 24h a partir de `createdAt`. Após esse prazo, o botão de editar desaparece.
-- **Indicador "editada"**: após salvar, mostrar abaixo/ao lado do timestamp um texto sutil em `text-[10px] text-muted-foreground italic`, formato: `editada por {nome}`. Não exibir nada se nunca foi editada.
-- **Sem histórico de versões**: armazenamos só o último estado.
+## Alterações em `src/components/tasks/ScheduledTasksPanel.tsx`
 
-## Mudanças técnicas
+1. **`DateRangePick` (onSelect)**: interceptar a seleção do react-day-picker. Se `range.to` existir e for anterior a `range.from`, descartar a seleção inválida e tratar o clique como nova data inicial (reiniciando `from` com a data clicada e `to = undefined`). Exibir `toast.error("A data final não pode ser anterior à inicial")`.
 
-### 1. `src/lib/tasks/taskStore.tsx`
-- Estender `TaskComment` com:
-  - `editedAt?: string`
-  - `editedBy?: string`
-- Adicionar ação `editComment(taskId, commentId, text)` no `Ctx` que:
-  - Atualiza `text`, `editedAt = now`, `editedBy = currentUserId`.
-  - **Não** cria novo evento de timeline (a edição é uma propriedade do próprio comentário, mantendo a ordem original).
-- Expor `editComment` no value do provider.
+2. **Validação no submit (`handleSave`)**: além das checagens existentes, quando `kind === "data"`, validar `range.to && range.to < range.from`. Bloquear o save e mostrar o mesmo toast (defesa em profundidade).
 
-### 2. `src/components/tasks/TaskDetailDialog.tsx`
-- No bloco `ev.kind === "comment"`, em vez de renderizar texto puro, montar um sub-componente `CommentBubble` com:
-  - Conteúdo via `renderMentions(c.text)`.
-  - Botão "Editar" sutil (ícone `Pencil` em `ghost` pequeno) — só visível se `c.authorId === currentUserId` **e** `Date.now() - new Date(c.createdAt).getTime() < 24*60*60*1000`.
-  - Ao clicar: alterna para `MentionInput` controlado com o texto atual + botões "Salvar" / "Cancelar".
-  - Salvar chama `editComment(task.id, c.id, newText)`; trim + ignora se inalterado/vazio.
-  - Se `c.editedAt` existir, render abaixo do texto: `<span className="text-[10px] text-muted-foreground italic">editada por {nameOf(c.editedBy)}</span>`.
-- Imports adicionais: `Pencil` de `lucide-react`.
-
-## Fora de escopo
-- Edição de outros tipos de evento (created/moved/attachment).
-- Histórico de versões de edição.
-- Permissão para admin editar comentário alheio.
+3. **Sem mudanças de UI/estilo** — apenas lógica de validação. Nenhum outro componente ou store é afetado.
