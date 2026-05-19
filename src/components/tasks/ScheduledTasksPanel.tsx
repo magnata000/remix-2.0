@@ -195,7 +195,21 @@ function DateRangePick({ value, onChange }: { value?: DateRange; onChange: (r: D
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="range" selected={value} onSelect={onChange} initialFocus numberOfMonths={1} className={cn("p-3 pointer-events-auto")} />
+        <Calendar
+          mode="range"
+          selected={value}
+          onSelect={(r) => {
+            if (r?.from && r?.to && r.to.getTime() < r.from.getTime()) {
+              toast.error("A data final não pode ser anterior à inicial");
+              onChange({ from: r.to, to: undefined });
+              return;
+            }
+            onChange(r);
+          }}
+          initialFocus
+          numberOfMonths={1}
+          className={cn("p-3 pointer-events-auto")}
+        />
       </PopoverContent>
     </Popover>
   );
