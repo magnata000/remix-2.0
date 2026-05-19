@@ -23,7 +23,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
-import { policies, salesByMonth, formatBRL, formatDate } from "@/lib/mock/data";
+import { policies, salesByMonth, formatBRL, formatDateShort } from "@/lib/mock/data";
 
 type Kpi = {
   label: string;

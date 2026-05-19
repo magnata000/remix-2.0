@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, formatDate } from "@/lib/mock/data";
+import { team, formatDateShort } from "@/lib/mock/data";
 import { PeriodKind, Priority, ScheduledKind, useTaskStore } from "@/lib/tasks/taskStore";
 import { toast } from "sonner";
 
@@ -169,7 +169,7 @@ function DatePick({ value, onChange }: { value?: Date; onChange: (d: Date | unde
       <PopoverTrigger asChild>
         <Button variant="outline" className={cn("w-full justify-start rounded-xl bg-muted border-0 font-normal", !value && "text-muted-foreground")}>
           <CalendarIcon className="h-4 w-4 mr-2" />
-          {value ? formatDate(value.toISOString()) : "Selecionar data"}
+          {value ? formatDateShort(value.toISOString()) : "Selecionar data"}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -182,9 +182,9 @@ function DatePick({ value, onChange }: { value?: Date; onChange: (d: Date | unde
 function DateRangePick({ value, onChange }: { value?: DateRange; onChange: (r: DateRange | undefined) => void }) {
   const label = (() => {
     if (!value?.from) return "Selecionar intervalo";
-    const from = formatDate(value.from.toISOString());
+    const from = formatDateShort(value.from.toISOString());
     if (!value.to || value.to.getTime() === value.from.getTime()) return from;
-    return `${from} → ${formatDate(value.to.toISOString())}`;
+    return `${from} → ${formatDateShort(value.to.toISOString())}`;
   })();
   return (
     <Popover>
@@ -217,12 +217,12 @@ function DateRangePick({ value, onChange }: { value?: DateRange; onChange: (r: D
 
 function describeSchedule(s: ReturnType<typeof useTaskStore>["scheduled"][number]) {
   if (s.kind === "data" && s.startDate) {
-    const start = formatDate(s.startDate);
-    const end = s.endDate ? formatDate(s.endDate) : start;
+    const start = formatDateShort(s.startDate);
+    const end = s.endDate ? formatDateShort(s.endDate) : start;
     const range = start === end ? start : `${start} → ${end}`;
     return `${range}${s.yearly ? " · todo ano" : ""}`;
   }
   if (s.kind === "semana" && s.weekdays) return `Dias: ${s.weekdays.map((d) => WEEKDAY_LABELS[d]).join(", ")}`;
-  if (s.kind === "periodo" && s.startDate) return `${s.period} · início ${formatDate(s.startDate)}`;
+  if (s.kind === "periodo" && s.startDate) return `${s.period} · início ${formatDateShort(s.startDate)}`;
   return "—";
 }

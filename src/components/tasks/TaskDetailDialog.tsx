@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip, Send, Calendar, User, Tag, Layers, FileText, Pencil, X, Trash2, Image as ImageIcon } from "lucide-react";
-import { team, formatDate } from "@/lib/mock/data";
+import { team, formatDateShort } from "@/lib/mock/data";
 import { PRIORITY_META, TaskAttachment, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "./MentionInput";
 
@@ -73,7 +73,7 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
                 {nameOf(task.assigneeId)}
               </span>
             </Meta>
-            {task.dueDate && <Meta icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo">{formatDate(task.dueDate)}</Meta>}
+            {task.dueDate && <Meta icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo">{formatDateShort(task.dueDate)}</Meta>}
             {task.clientName && <Meta icon={<Tag className="h-3.5 w-3.5" />} label="Cliente">{task.clientName}</Meta>}
             {task.description && (
               <div>

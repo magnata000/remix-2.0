@@ -13,7 +13,7 @@ import {
   Legend,
 } from "recharts";
 import { Wallet, Clock, AlertCircle, BarChart3 } from "lucide-react";
-import { commissions, salesByMonth, formatBRL, formatDate } from "@/lib/mock/data";
+import { commissions, salesByMonth, formatBRL, formatDateShort } from "@/lib/mock/data";
 
 const statusColor: Record<string, string> = {
   pago: "bg-success/15 text-success border-0",
@@ -187,7 +187,7 @@ export function FinancialModule() {
                       {c.insurer}
                     </td>
                     <td className="px-5 py-3 text-xs text-muted-foreground hidden sm:table-cell">
-                      {formatDate(c.dueDate)}
+                      {formatDateShort(c.dueDate)}
                     </td>
                     <td className="px-5 py-3 font-semibold">{formatBRL(c.amount)}</td>
                     <td className="px-5 py-3">
