@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { DateRange } from "react-day-picker";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,7 +25,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("media");
   const [kind, setKind] = useState<ScheduledKind>("data");
-  const [date, setDate] = useState<Date | undefined>();
+  const [range, setRange] = useState<DateRange | undefined>();
   const [yearly, setYearly] = useState(false);
   const [weekdays, setWeekdays] = useState<string[]>([]);
   const [period, setPeriod] = useState<PeriodKind>("mensal");
@@ -32,19 +33,21 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
 
   const submit = () => {
     if (!title.trim()) { toast.error("Informe um título"); return; }
-    if (kind === "data" && !date) { toast.error("Escolha uma data"); return; }
+    if (kind === "data" && !range?.from) { toast.error("Escolha uma data"); return; }
     if (kind === "semana" && weekdays.length === 0) { toast.error("Selecione ao menos um dia"); return; }
     if (kind === "periodo" && !startDate) { toast.error("Escolha a data de início"); return; }
+    const from = range?.from;
+    const to = range?.to ?? range?.from;
     addScheduled({
       title: title.trim(), assigneeId, priority, kind,
-      date: kind === "data" ? date?.toISOString() : undefined,
+      startDate: kind === "data" ? from?.toISOString() : kind === "periodo" ? startDate?.toISOString() : undefined,
+      endDate: kind === "data" ? to?.toISOString() : undefined,
       yearly: kind === "data" ? yearly : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
       period: kind === "periodo" ? period : undefined,
-      startDate: kind === "periodo" ? startDate?.toISOString() : undefined,
     });
     toast.success("Agendamento criado");
-    setTitle(""); setYearly(false); setWeekdays([]); setDate(undefined); setStartDate(undefined);
+    setTitle(""); setYearly(false); setWeekdays([]); setRange(undefined); setStartDate(undefined);
   };
 
   return (
@@ -89,7 +92,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
           {kind === "data" && (
             <div className="space-y-2 rounded-xl bg-muted/40 p-3">
               <Label className="text-xs text-muted-foreground">Data</Label>
-              <DatePick value={date} onChange={setDate} />
+              <DateRangePick value={range} onChange={setRange} />
               <label className="flex items-center gap-2 text-xs">
                 <Checkbox checked={yearly} onCheckedChange={(v) => setYearly(!!v)} />
                 Repetir anualmente (ex: aniversários)
@@ -173,8 +176,35 @@ function DatePick({ value, onChange }: { value?: Date; onChange: (d: Date | unde
   );
 }
 
+function DateRangePick({ value, onChange }: { value?: DateRange; onChange: (r: DateRange | undefined) => void }) {
+  const label = (() => {
+    if (!value?.from) return "Selecionar intervalo";
+    const from = formatDate(value.from.toISOString());
+    if (!value.to || value.to.getTime() === value.from.getTime()) return from;
+    return `${from} → ${formatDate(value.to.toISOString())}`;
+  })();
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={cn("w-full justify-start rounded-xl bg-muted border-0 font-normal", !value?.from && "text-muted-foreground")}>
+          <CalendarIcon className="h-4 w-4 mr-2" />
+          {label}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar mode="range" selected={value} onSelect={onChange} initialFocus numberOfMonths={1} className={cn("p-3 pointer-events-auto")} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function describeSchedule(s: ReturnType<typeof useTaskStore>["scheduled"][number]) {
-  if (s.kind === "data" && s.date) return `${formatDate(s.date)}${s.yearly ? " · todo ano" : ""}`;
+  if (s.kind === "data" && s.startDate) {
+    const start = formatDate(s.startDate);
+    const end = s.endDate ? formatDate(s.endDate) : start;
+    const range = start === end ? start : `${start} → ${end}`;
+    return `${range}${s.yearly ? " · todo ano" : ""}`;
+  }
   if (s.kind === "semana" && s.weekdays) return `Dias: ${s.weekdays.map((d) => WEEKDAY_LABELS[d]).join(", ")}`;
   if (s.kind === "periodo" && s.startDate) return `${s.period} · início ${formatDate(s.startDate)}`;
   return "—";

@@ -51,14 +51,14 @@ export type ScheduledTask = {
   assigneeId: string;
   priority: Priority;
   kind: ScheduledKind;
-  // data
-  date?: string;
+  // data (intervalo inicial → final; final = inicial quando único dia)
+  startDate?: string;
+  endDate?: string;
   yearly?: boolean;
   // semana — 0=Dom..6=Sab
   weekdays?: number[];
   // periodo
   period?: PeriodKind;
-  startDate?: string;
 };
 
 const SEED_COLUMNS: TaskColumn[] = [
@@ -144,7 +144,7 @@ const seedScheduled = (): ScheduledTask[] => [
   {
     id: "sch1", title: "Felicitar aniversariantes do mês",
     assigneeId: team[2]?.id ?? "u3", priority: "baixa",
-    kind: "data", date: isoDaysFromNow(20), yearly: true,
+    kind: "data", startDate: isoDaysFromNow(20), endDate: isoDaysFromNow(20), yearly: true,
   },
 ];
 
