@@ -25,7 +25,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("media");
   const [kind, setKind] = useState<ScheduledKind>("data");
-  const [date, setDate] = useState<Date | undefined>();
+  const [range, setRange] = useState<DateRange | undefined>();
   const [yearly, setYearly] = useState(false);
   const [weekdays, setWeekdays] = useState<string[]>([]);
   const [period, setPeriod] = useState<PeriodKind>("mensal");
@@ -33,19 +33,21 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
 
   const submit = () => {
     if (!title.trim()) { toast.error("Informe um título"); return; }
-    if (kind === "data" && !date) { toast.error("Escolha uma data"); return; }
+    if (kind === "data" && !range?.from) { toast.error("Escolha uma data"); return; }
     if (kind === "semana" && weekdays.length === 0) { toast.error("Selecione ao menos um dia"); return; }
     if (kind === "periodo" && !startDate) { toast.error("Escolha a data de início"); return; }
+    const from = range?.from;
+    const to = range?.to ?? range?.from;
     addScheduled({
       title: title.trim(), assigneeId, priority, kind,
-      date: kind === "data" ? date?.toISOString() : undefined,
+      startDate: kind === "data" ? from?.toISOString() : kind === "periodo" ? startDate?.toISOString() : undefined,
+      endDate: kind === "data" ? to?.toISOString() : undefined,
       yearly: kind === "data" ? yearly : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
       period: kind === "periodo" ? period : undefined,
-      startDate: kind === "periodo" ? startDate?.toISOString() : undefined,
     });
     toast.success("Agendamento criado");
-    setTitle(""); setYearly(false); setWeekdays([]); setDate(undefined); setStartDate(undefined);
+    setTitle(""); setYearly(false); setWeekdays([]); setRange(undefined); setStartDate(undefined);
   };
 
   return (
