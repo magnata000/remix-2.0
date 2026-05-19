@@ -79,7 +79,15 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
                 if (ev.kind === "moved") return (<TimelineRow key={i} authorId={ev.by} at={ev.at}><em className="text-muted-foreground">moveu de <strong>{ev.from}</strong> para <strong>{ev.to}</strong></em></TimelineRow>);
                 if (ev.kind === "comment") {
                   const c = task.comments.find((x) => x.id === ev.commentId);
-                  return c ? (<TimelineRow key={i} authorId={ev.by} at={ev.at}><span>{renderMentions(c.text)}</span></TimelineRow>) : null;
+                  return c ? (
+                    <TimelineRow key={i} authorId={ev.by} at={ev.at}>
+                      <CommentBubble
+                        comment={c}
+                        canEdit={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
+                        onSave={(text) => editComment(task.id, c.id, text)}
+                      />
+                    </TimelineRow>
+                  ) : null;
                 }
                 if (ev.kind === "attachment") {
                   const a = task.attachments.find((x) => x.id === ev.attachmentId);
