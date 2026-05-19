@@ -214,6 +214,22 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [currentUserId]);
 
+  const editComment = useCallback((taskId: string, commentId: string, text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      return {
+        ...t,
+        comments: t.comments.map((c) =>
+          c.id === commentId && c.authorId === currentUserId && c.text !== clean
+            ? { ...c, text: clean, editedAt: new Date().toISOString(), editedBy: currentUserId }
+            : c
+        ),
+      };
+    }));
+  }, [currentUserId]);
+
   const addAttachment = useCallback((taskId: string, file: File) => {
     setTasks((arr) => arr.map((t) => {
       if (t.id !== taskId) return t;
