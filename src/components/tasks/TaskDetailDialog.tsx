@@ -183,7 +183,7 @@ function CommentBubble({ comment, canEdit, onSave }: { comment: TaskComment; can
   return (
     <div className="group/comment">
       <div className="flex items-start gap-1.5">
-        <span className="flex-1">{renderMentions(comment.text)}</span>
+        <span className="flex-1 whitespace-pre-wrap break-words">{renderMentions(comment.text)}</span>
         {canEdit && (
           <button
             type="button"
