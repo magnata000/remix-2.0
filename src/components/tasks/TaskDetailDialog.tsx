@@ -18,7 +18,7 @@ const nameOf = (id: string) => team.find((x) => x.id === id)?.name ?? "—";
 const formatTime = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null; onOpenChange: (v: boolean) => void }) {
-  const { columns, addComment, addAttachment } = useTaskStore();
+  const { columns, addComment, editComment, addAttachment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
