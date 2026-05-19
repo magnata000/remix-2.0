@@ -1,19 +1,17 @@
 ## Objetivo
-Inverter o comportamento das teclas na caixa de comentários da timeline:
-- `Enter` → envia o comentário
-- `Ctrl/Cmd + Enter` → quebra de linha
-- `Shift + Enter` → continua quebrando linha (padrão usual, mantido)
+Preservar quebras de linha (`\n`) na renderização dos comentários da timeline.
 
-Quando o popover de @menções estiver aberto, `Enter` continua selecionando o colaborador (comportamento atual preservado).
+## Causa
+O texto é renderizado em `<span>` inline padrão (`white-space: normal`), que colapsa `\n` em espaço.
 
-## Alteração em `src/components/tasks/MentionInput.tsx`
+## Alteração em `src/components/tasks/TaskDetailDialog.tsx`
 
-No handler `onKeyDown`, após o bloco que trata o popover de menções aberto:
+Linha 186 — adicionar `whitespace-pre-wrap break-words` ao span que envolve `renderMentions(comment.text)`:
 
-1. Se `e.key === "Enter"` e `e.ctrlKey || e.metaKey` → **NÃO** prevenir default; deixar inserir quebra de linha manualmente via `document.execCommand` ou, mais simples, inserir `"\n"` na posição do cursor e atualizar `value`.
-2. Se `e.key === "Enter"` sem modificadores e sem Shift → `e.preventDefault()` e chamar `onSubmit?.()`.
-3. `Shift + Enter` → comportamento padrão do textarea (quebra de linha), nenhum tratamento.
+```tsx
+<span className="flex-1 whitespace-pre-wrap break-words">
+  {renderMentions(comment.text)}
+</span>
+```
 
-## Verificação
-- Confirmar que `TaskDetailDialog` usa `onSubmit` do `MentionInput` para postar o comentário (já é o caso).
-- Nenhuma outra mudança de UI/estilo.
+Sem outras mudanças.
