@@ -21,7 +21,6 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
   const { columns, addComment, editComment, addAttachment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
 
   const column = useMemo(() => columns.find((c) => c.id === task?.columnId), [columns, task]);
   if (!task) return null;
