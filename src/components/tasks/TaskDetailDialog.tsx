@@ -156,3 +156,50 @@ function TimelineRow({ authorId, at, children }: { authorId: string; at: string;
     </div>
   );
 }
+
+function CommentBubble({ comment, canEdit, onSave }: { comment: TaskComment; canEdit: boolean; onSave: (text: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.text);
+
+  const save = () => {
+    const clean = draft.trim();
+    if (!clean) return;
+    if (clean !== comment.text) onSave(clean);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="space-y-1.5">
+        <MentionInput value={draft} onChange={setDraft} onSubmit={save} rows={2} />
+        <div className="flex gap-1.5">
+          <Button size="sm" className="h-6 px-2 text-xs rounded-md bg-brand text-brand-foreground hover:bg-brand/90" onClick={save}>Salvar</Button>
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { setDraft(comment.text); setEditing(false); }}>Cancelar</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group/comment">
+      <div className="flex items-start gap-1.5">
+        <span className="flex-1">{renderMentions(comment.text)}</span>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => { setDraft(comment.text); setEditing(true); }}
+            className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Editar comentário"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+      {comment.editedAt && comment.editedBy && (
+        <span className="text-[10px] text-muted-foreground italic">
+          editada por {nameOf(comment.editedBy)}
+        </span>
+      )}
+    </div>
+  );
+}
