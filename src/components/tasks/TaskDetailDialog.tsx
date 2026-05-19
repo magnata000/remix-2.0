@@ -3,10 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Upload, Calendar, User, Tag, Layers, FileText } from "lucide-react";
+import { Paperclip, Send, Upload, Calendar, User, Tag, Layers, FileText, Pencil } from "lucide-react";
 import { team, formatDate } from "@/lib/mock/data";
-import { PRIORITY_META, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { PRIORITY_META, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "./MentionInput";
+
+const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const initialsOf = (id: string) => {
   const m = team.find((x) => x.id === id);
