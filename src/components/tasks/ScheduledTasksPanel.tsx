@@ -92,7 +92,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
           {kind === "data" && (
             <div className="space-y-2 rounded-xl bg-muted/40 p-3">
               <Label className="text-xs text-muted-foreground">Data</Label>
-              <DatePick value={date} onChange={setDate} />
+              <DateRangePick value={range} onChange={setRange} />
               <label className="flex items-center gap-2 text-xs">
                 <Checkbox checked={yearly} onCheckedChange={(v) => setYearly(!!v)} />
                 Repetir anualmente (ex: aniversários)
