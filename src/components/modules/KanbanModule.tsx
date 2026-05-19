@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal, Plus, GripVertical, Calendar, Trophy, Calculator, Link2 } from "lucide-react";
-import { formatBRL, formatDate, type KanbanStage, type Task } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type KanbanStage, type Task } from "@/lib/mock/data";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
@@ -242,7 +242,7 @@ function KanbanCardBody({
       <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          {formatDate(task.dueDate)}
+          {formatDateShort(task.dueDate)}
         </div>
         <Avatar className="h-6 w-6">
           <AvatarFallback className="text-[10px] bg-brand-soft text-brand-foreground font-semibold">

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, MessageSquare, Paperclip, Pencil, Trash2 } from "lucide-react";
-import { formatDate } from "@/lib/mock/data";
+import { formatDateShort } from "@/lib/mock/data";
 import { team } from "@/lib/mock/data";
 import { PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
 
@@ -60,7 +60,7 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
           {task.dueDate && (
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {formatDate(task.dueDate)}
+              {formatDateShort(task.dueDate)}
             </span>
           )}
           {task.comments.length > 0 && (
