@@ -10,6 +10,8 @@ export type TaskComment = {
   authorId: string;
   text: string;
   createdAt: string;
+  editedAt?: string;
+  editedBy?: string;
 };
 
 export type TaskAttachment = {
