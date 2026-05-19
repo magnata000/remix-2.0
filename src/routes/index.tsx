@@ -9,6 +9,7 @@ import { FinancialModule } from "@/components/modules/FinancialModule";
 import { SettingsModule } from "@/components/modules/SettingsModule";
 import { PipelineStoreProvider } from "@/lib/pipeline/opportunityStore";
 import { QuoteStoreProvider } from "@/lib/multicalc/quoteStore";
+import { TaskStoreProvider } from "@/lib/tasks/taskStore";
 import { NavigationProvider } from "@/lib/navigation";
 
 export const Route = createFileRoute("/")({
@@ -36,20 +37,23 @@ function AppShell() {
   return (
     <PipelineStoreProvider>
       <QuoteStoreProvider>
-        <NavigationProvider active={active} setActive={setActive}>
-          <div className="min-h-screen bg-background">
-            <TopBar active={active} onChange={setActive} />
-            <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
-              {active === "dashboard" && <DashboardModule />}
-              {active === "policies" && <PoliciesModule />}
-              {active === "kanban" && <KanbanModule />}
-              {active === "multicalc" && <MulticalcModule />}
-              {active === "financial" && <FinancialModule />}
-              {active === "settings" && <SettingsModule />}
-            </main>
-          </div>
-        </NavigationProvider>
+        <TaskStoreProvider>
+          <NavigationProvider active={active} setActive={setActive}>
+            <div className="min-h-screen bg-background">
+              <TopBar active={active} onChange={setActive} />
+              <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
+                {active === "dashboard" && <DashboardModule />}
+                {active === "policies" && <PoliciesModule />}
+                {active === "kanban" && <KanbanModule />}
+                {active === "multicalc" && <MulticalcModule />}
+                {active === "financial" && <FinancialModule />}
+                {active === "settings" && <SettingsModule />}
+              </main>
+            </div>
+          </NavigationProvider>
+        </TaskStoreProvider>
       </QuoteStoreProvider>
     </PipelineStoreProvider>
+
   );
 }
