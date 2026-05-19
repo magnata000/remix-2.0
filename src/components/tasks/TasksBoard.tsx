@@ -160,7 +160,7 @@ export function TasksBoard() {
                   <TaskCard
                     task={t}
                     onClick={() => setDetail(t)}
-                    onEdit={() => setDetail(t)}
+                    onEdit={() => setEditTask(t)}
                     onDelete={() => setConfirmDelete(t)}
                   />
                 </div>
