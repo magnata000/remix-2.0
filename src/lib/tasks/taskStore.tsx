@@ -12,6 +12,7 @@ export type TaskComment = {
   createdAt: string;
   editedAt?: string;
   editedBy?: string;
+  attachmentIds?: string[];
 };
 
 export type TaskAttachment = {
@@ -158,7 +159,10 @@ type Ctx = {
   addTask: (t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">) => TaskItem;
   moveTask: (id: string, columnId: string) => void;
   addComment: (taskId: string, text: string) => void;
+  addMessage: (taskId: string, text: string, files: File[]) => void;
   editComment: (taskId: string, commentId: string, text: string) => void;
+  removeCommentAttachment: (taskId: string, commentId: string, attachmentId: string) => void;
+  deleteComment: (taskId: string, commentId: string) => void;
   addAttachment: (taskId: string, file: File) => void;
   addColumn: (title: string, color: string) => void;
   renameColumn: (id: string, title: string) => void;
@@ -247,6 +251,63 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [currentUserId]);
 
+  const addMessage = useCallback((taskId: string, text: string, files: File[]) => {
+    const clean = text.trim();
+    if (!clean && files.length === 0) return;
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      const at = new Date().toISOString();
+      const newAtts: TaskAttachment[] = files.map((f, i) => ({
+        id: `at${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        name: f.name, size: f.size, type: f.type || "file",
+        url: URL.createObjectURL(f), uploadedAt: at,
+      }));
+      const commentId = `cm${Date.now()}`;
+      const comment: TaskComment = {
+        id: commentId, authorId: currentUserId, text: clean, createdAt: at,
+        attachmentIds: newAtts.length ? newAtts.map((a) => a.id) : undefined,
+      };
+      return {
+        ...t,
+        attachments: [...t.attachments, ...newAtts],
+        comments: [...t.comments, comment],
+        timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId }],
+      };
+    }));
+  }, [currentUserId]);
+
+  const removeCommentAttachment = useCallback((taskId: string, commentId: string, attachmentId: string) => {
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      const c = t.comments.find((x) => x.id === commentId);
+      if (!c || c.authorId !== currentUserId) return t;
+      return {
+        ...t,
+        attachments: t.attachments.filter((a) => a.id !== attachmentId),
+        comments: t.comments.map((x) =>
+          x.id === commentId
+            ? { ...x, attachmentIds: (x.attachmentIds ?? []).filter((id) => id !== attachmentId), editedAt: new Date().toISOString(), editedBy: currentUserId }
+            : x
+        ),
+      };
+    }));
+  }, [currentUserId]);
+
+  const deleteComment = useCallback((taskId: string, commentId: string) => {
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      const c = t.comments.find((x) => x.id === commentId);
+      if (!c || c.authorId !== currentUserId) return t;
+      const attIds = new Set(c.attachmentIds ?? []);
+      return {
+        ...t,
+        comments: t.comments.filter((x) => x.id !== commentId),
+        attachments: t.attachments.filter((a) => !attIds.has(a.id)),
+        timeline: t.timeline.filter((ev) => !(ev.kind === "comment" && ev.commentId === commentId)),
+      };
+    }));
+  }, [currentUserId]);
+
   const addColumn = useCallback((title: string, color: string) => {
     setColumns((arr) => [...arr, { id: `c-${Date.now()}`, title: title.trim() || "Nova coluna", color }]);
   }, []);
@@ -275,10 +336,10 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, moveTask, addComment, editComment, addAttachment,
+    addTask, moveTask, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, addComment, editComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }

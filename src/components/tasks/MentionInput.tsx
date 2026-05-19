@@ -8,9 +8,10 @@ type Props = {
   onSubmit?: () => void;
   placeholder?: string;
   rows?: number;
+  className?: string;
 };
 
-export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2 }: Props) {
+export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2, className }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -86,7 +87,7 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2 
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         rows={rows}
-        className="rounded-xl bg-muted border-0 resize-none"
+        className={className ?? "rounded-xl bg-muted border-0 resize-none"}
       />
       {open && (
         <div className="absolute z-50 bottom-full mb-2 left-0 w-64 rounded-xl border border-border bg-popover/95 backdrop-blur-sm shadow-xl ring-1 ring-border/50 p-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
