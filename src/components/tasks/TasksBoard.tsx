@@ -176,6 +176,32 @@ export function TasksBoard() {
       <ManageColumnsDialog open={manageOpen} onOpenChange={setManageOpen} />
       <ScheduledTasksPanel open={scheduleOpen} onOpenChange={setScheduleOpen} />
       <TaskDetailDialog task={currentDetail} onOpenChange={(v) => { if (!v) setDetail(null); }} />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => { if (!v) setConfirmDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir tarefa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete ? `"${confirmDelete.title}" será removida. Esta ação não pode ser desfeita.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDelete) {
+                  deleteTask(confirmDelete.id);
+                  toast.success("Tarefa excluída");
+                  setConfirmDelete(null);
+                }
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
