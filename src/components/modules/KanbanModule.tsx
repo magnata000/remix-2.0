@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal, Plus, GripVertical, Calendar, Trophy, Calculator, Link2 } from "lucide-react";
-import { formatBRL, formatDate, type KanbanStage, type Task } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type KanbanStage, type Task } from "@/lib/mock/data";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
