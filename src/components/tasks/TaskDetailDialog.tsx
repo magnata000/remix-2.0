@@ -70,7 +70,7 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
             )}
           </aside>
 
-          <section className="flex flex-col overflow-hidden border-l border-border pl-4">
+          <section className="flex flex-col overflow-hidden min-h-0 border-l border-border pl-4">
             <h3 className="text-sm font-semibold mb-2">Timeline</h3>
             <div className="flex-1 overflow-y-auto space-y-3 pr-2">
               {task.timeline.map((ev, i) => {
