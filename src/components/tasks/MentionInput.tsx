@@ -164,8 +164,11 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
         rows={rows}
         className={className ?? "rounded-xl bg-muted border-0 resize-none"}
       />
-      {open && (
-        <div className="absolute z-50 bottom-full mb-2 left-0 w-64 rounded-xl border border-border bg-popover/95 backdrop-blur-sm shadow-xl ring-1 ring-border/50 p-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+      {open && pos && createPortal(
+        <div
+          style={{ position: "fixed", left: pos.left, bottom: pos.bottom, width: pos.width, maxWidth: "min(20rem, 90vw)" }}
+          className="z-[100] rounded-xl border border-border bg-popover/95 backdrop-blur-sm shadow-xl ring-1 ring-border/50 p-1 max-h-[60vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-200"
+        >
           {options.length > 0 ? (
             options.map((o, i) => {
               const isAll = o.id === "__all__";
@@ -174,7 +177,7 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
                   key={o.id}
                   type="button"
                   onMouseEnter={() => setHoverIndex(i)}
-                  onClick={() => insertMention(o.name)}
+                  onMouseDown={(e) => { e.preventDefault(); insertMention(o.name); }}
                   className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${
                     i === hoverIndex ? "bg-muted" : "hover:bg-muted/80"
                   }`}
@@ -196,7 +199,8 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
               {hasAll || mentionedNames.size > 0 ? "Nenhuma menção disponível" : "Nenhum colaborador encontrado"}
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
