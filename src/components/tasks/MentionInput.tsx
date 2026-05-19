@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Users } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { team } from "@/lib/mock/data";
