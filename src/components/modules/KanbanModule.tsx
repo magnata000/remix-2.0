@@ -15,6 +15,7 @@ import { formatBRL, formatDate, type KanbanStage, type Task } from "@/lib/mock/d
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
+import { TasksBoard } from "@/components/tasks/TasksBoard";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
@@ -152,9 +153,16 @@ export function KanbanModule() {
           </TabsContent>
         ))}
       </Tabs>
+        </TabsContent>
+
+        <TabsContent value="tarefas" className="mt-5">
+          <TasksBoard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
 
 type GroupSummary = ReturnType<typeof useQuoteStore>["groups"][number];
 
