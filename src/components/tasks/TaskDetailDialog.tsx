@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Upload, Calendar, User, Tag, Layers, FileText, Pencil } from "lucide-react";
+import { Paperclip, Send, Calendar, User, Tag, Layers, FileText, Pencil } from "lucide-react";
 import { team, formatDate } from "@/lib/mock/data";
 import { PRIORITY_META, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "./MentionInput";
