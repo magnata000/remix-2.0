@@ -15,6 +15,7 @@ import { formatBRL, formatDate, type KanbanStage, type Task } from "@/lib/mock/d
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
+import { TasksBoard } from "@/components/tasks/TasksBoard";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
@@ -45,17 +46,31 @@ export function KanbanModule() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Pipeline de Vendas</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Arraste para mover • {opportunities.length} oportunidades · vinculadas ao Multicálculo
-          </p>
-        </div>
-        <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
-          <Plus className="h-4 w-4 mr-2" /> Nova oportunidade
-        </Button>
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Quadro</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Pipeline de vendas e tarefas internas da corretora
+        </p>
       </div>
+
+      <Tabs defaultValue="pipeline" className="w-full">
+        <TabsList className="h-10">
+          <TabsTrigger value="pipeline">Pipeline de Vendas</TabsTrigger>
+          <TabsTrigger value="tarefas">Tarefas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pipeline" className="mt-5 space-y-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Arraste para mover • {opportunities.length} oportunidades · vinculadas ao Multicálculo
+              </p>
+            </div>
+            <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
+              <Plus className="h-4 w-4 mr-2" /> Nova oportunidade
+            </Button>
+          </div>
+
 
       {/* Desktop kanban */}
       <div className="hidden md:grid grid-cols-5 gap-4">
@@ -138,9 +153,16 @@ export function KanbanModule() {
           </TabsContent>
         ))}
       </Tabs>
+        </TabsContent>
+
+        <TabsContent value="tarefas" className="mt-5">
+          <TasksBoard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
 
 type GroupSummary = ReturnType<typeof useQuoteStore>["groups"][number];
 
