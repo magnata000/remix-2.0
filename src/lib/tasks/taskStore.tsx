@@ -51,14 +51,14 @@ export type ScheduledTask = {
   assigneeId: string;
   priority: Priority;
   kind: ScheduledKind;
-  // data
-  date?: string;
+  // data (intervalo inicial → final; final = inicial quando único dia)
+  startDate?: string;
+  endDate?: string;
   yearly?: boolean;
   // semana — 0=Dom..6=Sab
   weekdays?: number[];
   // periodo
   period?: PeriodKind;
-  startDate?: string;
 };
 
 const SEED_COLUMNS: TaskColumn[] = [
