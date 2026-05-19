@@ -14,6 +14,8 @@ import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { ManageColumnsDialog } from "./ManageColumnsDialog";
 import { ScheduledTasksPanel } from "./ScheduledTasksPanel";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export function TasksBoard() {
   const { columns, tasks, moveTask, deleteTask } = useTaskStore();
