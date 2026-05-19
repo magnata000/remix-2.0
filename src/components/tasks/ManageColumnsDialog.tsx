@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Plus, Trash2 } from "lucide-react";
 import { COLUMN_PALETTE, useTaskStore } from "@/lib/tasks/taskStore";
 import { toast } from "sonner";
@@ -66,27 +67,28 @@ export function ManageColumnsDialog({ open, onOpenChange }: { open: boolean; onO
 function Swatch({ color, onChange }: { color: string; onChange: (c: string) => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="h-9 w-9 rounded-xl border border-border"
-        style={{ background: color }}
-        title="Trocar cor"
-      />
-      {open && (
-        <div className="absolute z-50 mt-1 grid grid-cols-3 gap-1 rounded-xl border border-border bg-popover p-2 shadow-lg">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="h-9 w-9 shrink-0 rounded-xl border border-border"
+          style={{ background: color }}
+          title="Trocar cor"
+        />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto p-2">
+        <div className="grid grid-cols-5 gap-1.5">
           {COLUMN_PALETTE.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => { onChange(c); setOpen(false); }}
-              className="h-7 w-7 rounded-lg border border-border"
+              className="h-7 w-7 rounded-lg border border-border transition-transform hover:scale-110"
               style={{ background: c }}
             />
           ))}
         </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
