@@ -60,7 +60,7 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
           {task.dueDate && (
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {formatDate(task.dueDate)}
+              {formatDateShort(task.dueDate)}
             </span>
           )}
           {task.comments.length > 0 && (
