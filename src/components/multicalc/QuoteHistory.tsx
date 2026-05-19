@@ -16,7 +16,7 @@ import {
   ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatBRL, formatDate } from "@/lib/mock/data";
+import { formatBRL, formatDateShort } from "@/lib/mock/data";
 import { useQuoteStore, QuoteRecord, QuoteStatus, LostReason, computeDiff, effectiveStatus } from "@/lib/multicalc/quoteStore";
 import { usePipelineStore, stageLabels } from "@/lib/pipeline/opportunityStore";
 import { StatusBadge } from "./StatusBadge";
@@ -207,7 +207,7 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Última atualização em {formatDate(g.latest.createdAt)} · melhor preço {formatBRL(winnerPrice)}
+                        Última atualização em {formatDateShort(g.latest.createdAt)} · melhor preço {formatBRL(winnerPrice)}
                       </p>
                     </div>
                     <div className="hidden md:flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -254,7 +254,7 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
                                   {idx === g.versions.length - 1 && eff !== g.status && <StatusBadge status={eff} />}
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-0.5">
-                                  {formatDate(v.createdAt)} · por {v.createdBy}
+                                  {formatDateShort(v.createdAt)} · por {v.createdBy}
                                 </p>
                                 {diffs.length > 0 && (
                                   <div className="mt-2 flex flex-wrap gap-1">

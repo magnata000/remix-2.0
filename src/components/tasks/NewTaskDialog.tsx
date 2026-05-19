@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, clients, formatDate } from "@/lib/mock/data";
+import { team, clients, formatDateShort } from "@/lib/mock/data";
 import { Priority, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { toast } from "sonner";
 
@@ -104,7 +104,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !dueDate && "text-muted-foreground")}>
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {dueDate ? formatDate(dueDate.toISOString()) : "Selecionar data"}
+                    {dueDate ? formatDateShort(dueDate.toISOString()) : "Selecionar data"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

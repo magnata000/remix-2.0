@@ -18,7 +18,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Search, FileText, Calendar, Building2, User } from "lucide-react";
-import { policies, formatBRL, formatDate, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { policies, formatBRL, formatDateShort, type Policy, type PolicyStatus } from "@/lib/mock/data";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
@@ -153,7 +153,7 @@ export function PoliciesModule() {
                       <td className="px-5 py-3 text-muted-foreground">{p.insurer}</td>
                       <td className="px-5 py-3 font-semibold">{formatBRL(p.premium)}</td>
                       <td className="px-5 py-3 text-xs text-muted-foreground">
-                        {formatDate(p.endDate)}
+                        {formatDateShort(p.endDate)}
                       </td>
                       <td className="px-5 py-3">
                         <Badge className={statusColor[p.status]}>{p.status}</Badge>
@@ -189,7 +189,7 @@ export function PoliciesModule() {
                   <Row
                     icon={Calendar}
                     label="Vigência"
-                    value={`${formatDate(selected.startDate)} → ${formatDate(selected.endDate)}`}
+                    value={`${formatDateShort(selected.startDate)} → ${formatDateShort(selected.endDate)}`}
                   />
                 </div>
 

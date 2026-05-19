@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Table as TableIcon, GitBranch, Trophy } from "lucide-react";
 import { useQuoteStore, QuoteRecord, computeDiff } from "@/lib/multicalc/quoteStore";
-import { formatBRL, formatDate } from "@/lib/mock/data";
+import { formatBRL, formatDateShort } from "@/lib/mock/data";
 import { StatusBadge } from "./StatusBadge";
 
 type Props = {
@@ -118,7 +118,7 @@ function CompareTable({ versions }: { versions: QuoteRecord[] }) {
                     <span>v{v.version}</span>
                     <span className="text-xs text-muted-foreground">{v.clientName}</span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground font-normal">{formatDate(v.createdAt)}</div>
+                  <div className="text-[11px] text-muted-foreground font-normal">{formatDateShort(v.createdAt)}</div>
                 </th>
               ))}
             </tr>
@@ -194,7 +194,7 @@ function CompareTimeline({ versions }: { versions: QuoteRecord[] }) {
                   <StatusBadge status={v.status} />
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {formatDate(v.createdAt)} · por {v.createdBy}
+                  {formatDateShort(v.createdAt)} · por {v.createdBy}
                 </p>
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="rounded-xl bg-muted/50 p-3">
