@@ -1,10 +1,15 @@
 ## Objetivo
-Garantir que, no seletor "Data específica avulsa" das Tarefas Agendadas, a data final nunca seja anterior à data inicial.
+No `MentionInput` (timeline de tarefas), exibir o popover de menções **acima** da caixa de texto ao digitar `@`, com efeito flutuante (fade + slide-up + sombra elevada).
 
-## Alterações em `src/components/tasks/ScheduledTasksPanel.tsx`
+## Alterações em `src/components/tasks/MentionInput.tsx`
 
-1. **`DateRangePick` (onSelect)**: interceptar a seleção do react-day-picker. Se `range.to` existir e for anterior a `range.from`, descartar a seleção inválida e tratar o clique como nova data inicial (reiniciando `from` com a data clicada e `to = undefined`). Exibir `toast.error("A data final não pode ser anterior à inicial")`.
+1. **Posicionamento acima**: trocar `mt-1` por `bottom-full mb-2 left-0` no container do popover, para ancorar acima do textarea.
 
-2. **Validação no submit (`handleSave`)**: além das checagens existentes, quando `kind === "data"`, validar `range.to && range.to < range.from`. Bloquear o save e mostrar o mesmo toast (defesa em profundidade).
+2. **Efeito flutuante**:
+   - Adicionar `animate-in fade-in slide-in-from-bottom-2 duration-200` (Tailwind animate plugin já presente via shadcn).
+   - Reforçar elevação: `shadow-xl ring-1 ring-border/50 backdrop-blur-sm bg-popover/95`.
+   - Itens com transição suave (`transition-colors`) e leve scale no hover (`hover:bg-muted/80`).
 
-3. **Sem mudanças de UI/estilo** — apenas lógica de validação. Nenhum outro componente ou store é afetado.
+3. **Estado vazio**: quando `filtered.length === 0` mas o usuário digitou `@`, mostrar um pequeno card "Nenhum colaborador encontrado" (mesmo estilo flutuante) — opcional, mantém UX clara.
+
+4. **Sem mudanças** no comportamento de teclado, lógica de detecção `@`, store ou outros componentes.
