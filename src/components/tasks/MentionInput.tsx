@@ -73,25 +73,29 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2 
         rows={rows}
         className="rounded-xl bg-muted border-0 resize-none"
       />
-      {open && filtered.length > 0 && (
-        <div className="absolute z-50 mt-1 w-64 rounded-xl border border-border bg-popover shadow-lg p-1">
-          {filtered.map((m, i) => (
-            <button
-              key={m.id}
-              type="button"
-              onMouseEnter={() => setHoverIndex(i)}
-              onClick={() => insertMention(m.name)}
-              className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 ${
-                i === hoverIndex ? "bg-muted" : ""
-              }`}
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-soft text-[10px] font-bold text-brand-foreground">
-                {m.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
-              </span>
-              <span className="flex-1">{m.name}</span>
-              <span className="text-[10px] text-muted-foreground">{m.role}</span>
-            </button>
-          ))}
+      {open && (
+        <div className="absolute z-50 bottom-full mb-2 left-0 w-64 rounded-xl border border-border bg-popover/95 backdrop-blur-sm shadow-xl ring-1 ring-border/50 p-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          {filtered.length > 0 ? (
+            filtered.map((m, i) => (
+              <button
+                key={m.id}
+                type="button"
+                onMouseEnter={() => setHoverIndex(i)}
+                onClick={() => insertMention(m.name)}
+                className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                  i === hoverIndex ? "bg-muted" : "hover:bg-muted/80"
+                }`}
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-soft text-[10px] font-bold text-brand-foreground">
+                  {m.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
+                </span>
+                <span className="flex-1">{m.name}</span>
+                <span className="text-[10px] text-muted-foreground">{m.role}</span>
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum colaborador encontrado</div>
+          )}
         </div>
       )}
     </div>
