@@ -102,25 +102,21 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
               })}
             </div>
 
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-              className={`mt-3 rounded-xl border-2 border-dashed p-3 text-xs text-muted-foreground transition ${dragOver ? "border-brand bg-brand/10" : "border-border"}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5"><Upload className="h-3.5 w-3.5" /> Arraste arquivos aqui ou</span>
-                <Button size="sm" variant="outline" className="rounded-lg h-7" onClick={() => fileInput.current?.click()}>
-                  Selecionar
-                </Button>
-                <input ref={fileInput} type="file" multiple hidden onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-end gap-2">
-              <div className="flex-1">
+            <div className="mt-3 flex items-end gap-2 shrink-0 pb-1">
+              <div className="flex-1 min-w-0">
                 <MentionInput value={text} onChange={setText} onSubmit={submit} placeholder="Escreva um comentário... use @ para mencionar" rows={2} />
               </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInput.current?.click()}
+                className="rounded-xl text-muted-foreground hover:text-foreground"
+                aria-label="Anexar arquivo"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <input ref={fileInput} type="file" multiple hidden onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
               <Button onClick={submit} disabled={!text.trim()} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
                 <Send className="h-4 w-4" />
               </Button>
