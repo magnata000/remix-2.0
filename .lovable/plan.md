@@ -1,15 +1,19 @@
 ## Objetivo
-No `MentionInput` (timeline de tarefas), exibir o popover de menções **acima** da caixa de texto ao digitar `@`, com efeito flutuante (fade + slide-up + sombra elevada).
+Inverter o comportamento das teclas na caixa de comentários da timeline:
+- `Enter` → envia o comentário
+- `Ctrl/Cmd + Enter` → quebra de linha
+- `Shift + Enter` → continua quebrando linha (padrão usual, mantido)
 
-## Alterações em `src/components/tasks/MentionInput.tsx`
+Quando o popover de @menções estiver aberto, `Enter` continua selecionando o colaborador (comportamento atual preservado).
 
-1. **Posicionamento acima**: trocar `mt-1` por `bottom-full mb-2 left-0` no container do popover, para ancorar acima do textarea.
+## Alteração em `src/components/tasks/MentionInput.tsx`
 
-2. **Efeito flutuante**:
-   - Adicionar `animate-in fade-in slide-in-from-bottom-2 duration-200` (Tailwind animate plugin já presente via shadcn).
-   - Reforçar elevação: `shadow-xl ring-1 ring-border/50 backdrop-blur-sm bg-popover/95`.
-   - Itens com transição suave (`transition-colors`) e leve scale no hover (`hover:bg-muted/80`).
+No handler `onKeyDown`, após o bloco que trata o popover de menções aberto:
 
-3. **Estado vazio**: quando `filtered.length === 0` mas o usuário digitou `@`, mostrar um pequeno card "Nenhum colaborador encontrado" (mesmo estilo flutuante) — opcional, mantém UX clara.
+1. Se `e.key === "Enter"` e `e.ctrlKey || e.metaKey` → **NÃO** prevenir default; deixar inserir quebra de linha manualmente via `document.execCommand` ou, mais simples, inserir `"\n"` na posição do cursor e atualizar `value`.
+2. Se `e.key === "Enter"` sem modificadores e sem Shift → `e.preventDefault()` e chamar `onSubmit?.()`.
+3. `Shift + Enter` → comportamento padrão do textarea (quebra de linha), nenhum tratamento.
 
-4. **Sem mudanças** no comportamento de teclado, lógica de detecção `@`, store ou outros componentes.
+## Verificação
+- Confirmar que `TaskDetailDialog` usa `onSubmit` do `MentionInput` para postar o comentário (já é o caso).
+- Nenhuma outra mudança de UI/estilo.

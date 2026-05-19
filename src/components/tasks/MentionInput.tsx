@@ -56,7 +56,22 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2 
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); insertMention(filtered[hoverIndex].name); return; }
       if (e.key === "Escape") { setOpen(false); return; }
     }
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      const el = ref.current;
+      const start = el?.selectionStart ?? value.length;
+      const end = el?.selectionEnd ?? value.length;
+      const next = value.slice(0, start) + "\n" + value.slice(end);
+      onChange(next);
+      setTimeout(() => {
+        if (el) {
+          el.focus();
+          el.selectionStart = el.selectionEnd = start + 1;
+        }
+      }, 0);
+      return;
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       onSubmit?.();
     }
