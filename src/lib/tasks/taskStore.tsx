@@ -158,6 +158,7 @@ type Ctx = {
   addTask: (t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">) => TaskItem;
   moveTask: (id: string, columnId: string) => void;
   addComment: (taskId: string, text: string) => void;
+  editComment: (taskId: string, commentId: string, text: string) => void;
   addAttachment: (taskId: string, file: File) => void;
   addColumn: (title: string, color: string) => void;
   renameColumn: (id: string, title: string) => void;
