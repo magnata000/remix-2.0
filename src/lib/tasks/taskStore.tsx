@@ -159,6 +159,7 @@ type Ctx = {
   addTask: (t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">) => TaskItem;
   moveTask: (id: string, columnId: string) => void;
   deleteTask: (id: string) => void;
+  updateTaskFields: (id: string, patch: Partial<Pick<TaskItem, "title" | "description" | "dueDate" | "priority" | "assigneeId" | "clientName" | "columnId">>) => void;
   addComment: (taskId: string, text: string) => void;
   addMessage: (taskId: string, text: string, files: File[]) => void;
   editComment: (taskId: string, commentId: string, text: string) => void;
