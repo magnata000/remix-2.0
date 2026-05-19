@@ -14,9 +14,12 @@ import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { ManageColumnsDialog } from "./ManageColumnsDialog";
 import { ScheduledTasksPanel } from "./ScheduledTasksPanel";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export function TasksBoard() {
-  const { columns, tasks, moveTask } = useTaskStore();
+  const { columns, tasks, moveTask, deleteTask } = useTaskStore();
+  const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -153,7 +156,12 @@ export function TasksBoard() {
                   onDragEnd={() => setDragId(null)}
                   className="cursor-grab active:cursor-grabbing"
                 >
-                  <TaskCard task={t} onClick={() => setDetail(t)} />
+                  <TaskCard
+                    task={t}
+                    onClick={() => setDetail(t)}
+                    onEdit={() => setDetail(t)}
+                    onDelete={() => setConfirmDelete(t)}
+                  />
                 </div>
               ))}
               {byColumn(col.id).length === 0 && (
@@ -168,6 +176,32 @@ export function TasksBoard() {
       <ManageColumnsDialog open={manageOpen} onOpenChange={setManageOpen} />
       <ScheduledTasksPanel open={scheduleOpen} onOpenChange={setScheduleOpen} />
       <TaskDetailDialog task={currentDetail} onOpenChange={(v) => { if (!v) setDetail(null); }} />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => { if (!v) setConfirmDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir tarefa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete ? `"${confirmDelete.title}" será removida. Esta ação não pode ser desfeita.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDelete) {
+                  deleteTask(confirmDelete.id);
+                  toast.success("Tarefa excluída");
+                  setConfirmDelete(null);
+                }
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

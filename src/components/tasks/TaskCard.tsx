@@ -1,21 +1,54 @@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, MessageSquare, Paperclip } from "lucide-react";
+import { Calendar, MessageSquare, Paperclip, Pencil, Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/mock/data";
 import { team } from "@/lib/mock/data";
 import { PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
 
-export function TaskCard({ task, onClick }: { task: TaskItem; onClick: () => void }) {
+type Props = {
+  task: TaskItem;
+  onClick: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+};
+
+export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
   const assignee = team.find((m) => m.id === task.assigneeId);
   const initials = assignee?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
   const pr = PRIORITY_META[task.priority];
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-full text-left bg-card border border-border rounded-xl p-3 hover:border-brand transition"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="group relative w-full text-left bg-card border border-border rounded-xl p-3 hover:border-brand transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity z-10">
+        <button
+          type="button"
+          aria-label="Editar tarefa"
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          aria-label="Excluir tarefa"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-destructive"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="flex items-start justify-between gap-2 pr-16">
         <p className="font-semibold text-sm flex-1 min-w-0">{task.title}</p>
         <Badge className={`${pr.className} border-0 shrink-0`}>{pr.label}</Badge>
       </div>
@@ -47,6 +80,6 @@ export function TaskCard({ task, onClick }: { task: TaskItem; onClick: () => voi
           </AvatarFallback>
         </Avatar>
       </div>
-    </button>
+    </div>
   );
 }
