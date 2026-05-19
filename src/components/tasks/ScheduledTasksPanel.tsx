@@ -176,8 +176,35 @@ function DatePick({ value, onChange }: { value?: Date; onChange: (d: Date | unde
   );
 }
 
+function DateRangePick({ value, onChange }: { value?: DateRange; onChange: (r: DateRange | undefined) => void }) {
+  const label = (() => {
+    if (!value?.from) return "Selecionar intervalo";
+    const from = formatDate(value.from.toISOString());
+    if (!value.to || value.to.getTime() === value.from.getTime()) return from;
+    return `${from} → ${formatDate(value.to.toISOString())}`;
+  })();
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={cn("w-full justify-start rounded-xl bg-muted border-0 font-normal", !value?.from && "text-muted-foreground")}>
+          <CalendarIcon className="h-4 w-4 mr-2" />
+          {label}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar mode="range" selected={value} onSelect={onChange} initialFocus numberOfMonths={1} className={cn("p-3 pointer-events-auto")} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function describeSchedule(s: ReturnType<typeof useTaskStore>["scheduled"][number]) {
-  if (s.kind === "data" && s.date) return `${formatDate(s.date)}${s.yearly ? " · todo ano" : ""}`;
+  if (s.kind === "data" && s.startDate) {
+    const start = formatDate(s.startDate);
+    const end = s.endDate ? formatDate(s.endDate) : start;
+    const range = start === end ? start : `${start} → ${end}`;
+    return `${range}${s.yearly ? " · todo ano" : ""}`;
+  }
   if (s.kind === "semana" && s.weekdays) return `Dias: ${s.weekdays.map((d) => WEEKDAY_LABELS[d]).join(", ")}`;
   if (s.kind === "periodo" && s.startDate) return `${s.period} · início ${formatDate(s.startDate)}`;
   return "—";
