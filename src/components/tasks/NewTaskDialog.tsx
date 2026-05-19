@@ -173,7 +173,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
         </div>
         <DialogFooter>
           <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>Criar tarefa</Button>
+          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>{isEdit ? "Salvar alterações" : "Criar tarefa"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
