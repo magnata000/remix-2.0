@@ -8,9 +8,10 @@ type Props = {
   onSubmit?: () => void;
   placeholder?: string;
   rows?: number;
+  className?: string;
 };
 
-export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2 }: Props) {
+export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2, className }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
