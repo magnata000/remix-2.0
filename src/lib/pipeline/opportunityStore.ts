@@ -9,6 +9,7 @@ type Ctx = {
   moveStage: (id: string, stage: KanbanStage, lostReason?: LostReason) => void;
   linkQuoteGroup: (opportunityId: string, quoteGroupId: string) => void;
   createFromQuote: (input: { clientName: string; branch: Branch; estimatedValue: number; quoteGroupId: string }) => Opportunity;
+  createOpportunity: (input: { title: string; clientName: string; branch: Branch; estimatedValue: number; dueDate: string; assignee: string; stage: KanbanStage }) => Opportunity;
   setEstimatedValue: (id: string, value: number) => void;
 };
 
