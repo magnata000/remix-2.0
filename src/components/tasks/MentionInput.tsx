@@ -173,7 +173,7 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
       />
       {open && pos && createPortal(
         <div
-          style={{ position: "fixed", left: pos.left, bottom: pos.bottom, width: pos.width, maxWidth: "min(20rem, 90vw)" }}
+          style={{ position: "fixed", left: pos.left, bottom: pos.bottom, width: pos.width, maxWidth: "min(20rem, 90vw)", pointerEvents: "auto" }}
           className="z-[100] rounded-xl border border-border bg-popover/95 backdrop-blur-sm shadow-xl ring-1 ring-border/50 p-1 max-h-[60vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           {options.length > 0 ? (
