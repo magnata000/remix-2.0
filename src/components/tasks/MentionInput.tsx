@@ -52,17 +52,24 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
     () => [ALL_OPTION, ...team.map((t) => ({ id: t.id, name: t.name, role: t.role }))],
     []
   );
-  const options = useMemo(
-    () =>
-      baseOptions
-        .filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
-        .filter((o) => (hasAll ? false : !mentionedNames.has(o.name)))
-        .slice(0, 6),
-    [baseOptions, query, hasAll, mentionedNames]
-  );
+  const options = useMemo(() => {
+    const q = query.toLowerCase();
+    const filtered = baseOptions
+      .filter((o) => o.name.toLowerCase().includes(q))
+      .filter((o) => (hasAll ? false : !mentionedNames.has(o.name)));
+    const scored = filtered.map((o) => {
+      const lower = o.name.toLowerCase();
+      let rank = 2;
+      if (o.id === "__all__") rank = -1; // sempre no topo
+      else if (q && lower.startsWith(q)) rank = 0;
+      else if (q && lower.includes(q)) rank = 1;
+      return { o, rank };
+    });
+    scored.sort((a, b) => a.rank - b.rank || a.o.name.localeCompare(b.o.name));
+    return scored.map((s) => s.o).slice(0, 6);
+  }, [baseOptions, query, hasAll, mentionedNames]);
 
-  useEffect(() => { if (!open) setHoverIndex(0); }, [open, query]);
-  useEffect(() => { if (hoverIndex >= options.length) setHoverIndex(0); }, [options.length, hoverIndex]);
+  useEffect(() => { setHoverIndex(0); }, [query, options.length]);
 
   const [pos, setPos] = useState<{ left: number; bottom: number; width: number } | null>(null);
 
