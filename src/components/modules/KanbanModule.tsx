@@ -16,6 +16,7 @@ import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
+import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
