@@ -9,6 +9,7 @@ type Ctx = {
   moveStage: (id: string, stage: KanbanStage, lostReason?: LostReason) => void;
   linkQuoteGroup: (opportunityId: string, quoteGroupId: string) => void;
   createFromQuote: (input: { clientName: string; branch: Branch; estimatedValue: number; quoteGroupId: string }) => Opportunity;
+  createOpportunity: (input: { title: string; clientName: string; branch: Branch; estimatedValue: number; dueDate: string; assignee: string; stage: KanbanStage }) => Opportunity;
   setEstimatedValue: (id: string, value: number) => void;
 };
 
@@ -48,6 +49,12 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     return opp;
   }, []);
 
+  const createOpportunity = useCallback((input: { title: string; clientName: string; branch: Branch; estimatedValue: number; dueDate: string; assignee: string; stage: KanbanStage }) => {
+    const opp: Opportunity = { id: `t${Date.now()}`, ...input };
+    setOpportunities((arr) => [opp, ...arr]);
+    return opp;
+  }, []);
+
   const setEstimatedValue = useCallback((id: string, value: number) => {
     setOpportunities((arr) => arr.map((t) => t.id === id ? { ...t, estimatedValue: value } : t));
   }, []);
@@ -60,7 +67,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
 
   const byQuoteGroup = useCallback((groupId: string) => indexByGroup.get(groupId), [indexByGroup]);
 
-  const value: Ctx = { opportunities, byQuoteGroup, moveStage, linkQuoteGroup, createFromQuote, setEstimatedValue };
+  const value: Ctx = { opportunities, byQuoteGroup, moveStage, linkQuoteGroup, createFromQuote, createOpportunity, setEstimatedValue };
   return createElement(PipelineContext.Provider, { value }, children);
 }
 

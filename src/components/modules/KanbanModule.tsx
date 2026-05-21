@@ -16,6 +16,7 @@ import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
+import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
@@ -30,6 +31,7 @@ export function KanbanModule() {
   const { groups } = useQuoteStore();
   const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
+  const [openNew, setOpenNew] = useState(false);
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
@@ -66,10 +68,11 @@ export function KanbanModule() {
                 Arraste para mover • {opportunities.length} oportunidades · vinculadas ao Multicálculo
               </p>
             </div>
-            <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
+            <Button onClick={() => setOpenNew(true)} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
               <Plus className="h-4 w-4 mr-2" /> Nova oportunidade
             </Button>
           </div>
+          <NewOpportunityDialog open={openNew} onOpenChange={setOpenNew} />
 
 
       {/* Desktop kanban */}
