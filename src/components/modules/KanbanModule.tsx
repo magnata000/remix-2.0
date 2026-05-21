@@ -31,6 +31,7 @@ export function KanbanModule() {
   const { groups } = useQuoteStore();
   const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
+  const [openNew, setOpenNew] = useState(false);
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
