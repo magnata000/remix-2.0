@@ -68,10 +68,11 @@ export function KanbanModule() {
                 Arraste para mover • {opportunities.length} oportunidades · vinculadas ao Multicálculo
               </p>
             </div>
-            <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
+            <Button onClick={() => setOpenNew(true)} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
               <Plus className="h-4 w-4 mr-2" /> Nova oportunidade
             </Button>
           </div>
+          <NewOpportunityDialog open={openNew} onOpenChange={setOpenNew} />
 
 
       {/* Desktop kanban */}
