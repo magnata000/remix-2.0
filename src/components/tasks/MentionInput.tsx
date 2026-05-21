@@ -185,7 +185,7 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 2,
                   type="button"
                   onMouseEnter={() => setHoverIndex(i)}
                   onMouseDown={(e) => { e.preventDefault(); insertMention(o.name); }}
-                  className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                  className={`pointer-events-auto w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${
                     i === hoverIndex ? "bg-muted" : "hover:bg-muted/80"
                   }`}
                 >
