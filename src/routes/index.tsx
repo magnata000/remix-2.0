@@ -10,6 +10,7 @@ import { SettingsModule } from "@/components/modules/SettingsModule";
 import { PipelineStoreProvider } from "@/lib/pipeline/opportunityStore";
 import { QuoteStoreProvider } from "@/lib/multicalc/quoteStore";
 import { TaskStoreProvider } from "@/lib/tasks/taskStore";
+import { DocumentStoreProvider } from "@/lib/documents/documentStore";
 import { NavigationProvider } from "@/lib/navigation";
 
 export const Route = createFileRoute("/")({
@@ -38,22 +39,23 @@ function AppShell() {
     <PipelineStoreProvider>
       <QuoteStoreProvider>
         <TaskStoreProvider>
-          <NavigationProvider active={active} setActive={setActive}>
-            <div className="min-h-screen bg-background">
-              <TopBar active={active} onChange={setActive} />
-              <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
-                {active === "dashboard" && <DashboardModule />}
-                {active === "policies" && <PortfolioModule />}
-                {active === "kanban" && <KanbanModule />}
-                {active === "multicalc" && <MulticalcModule />}
-                {active === "financial" && <FinancialModule />}
-                {active === "settings" && <SettingsModule />}
-              </main>
-            </div>
-          </NavigationProvider>
+          <DocumentStoreProvider>
+            <NavigationProvider active={active} setActive={setActive}>
+              <div className="min-h-screen bg-background">
+                <TopBar active={active} onChange={setActive} />
+                <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
+                  {active === "dashboard" && <DashboardModule />}
+                  {active === "policies" && <PortfolioModule />}
+                  {active === "kanban" && <KanbanModule />}
+                  {active === "multicalc" && <MulticalcModule />}
+                  {active === "financial" && <FinancialModule />}
+                  {active === "settings" && <SettingsModule />}
+                </main>
+              </div>
+            </NavigationProvider>
+          </DocumentStoreProvider>
         </TaskStoreProvider>
       </QuoteStoreProvider>
     </PipelineStoreProvider>
-
   );
 }

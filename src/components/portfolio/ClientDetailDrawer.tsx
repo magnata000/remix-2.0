@@ -21,6 +21,7 @@ import {
   Sparkles,
   ArrowRight,
   Calendar,
+  FolderOpen,
 } from "lucide-react";
 import {
   policies,
@@ -38,6 +39,7 @@ import {
   initialsOf,
   type ClientStatus,
 } from "@/lib/portfolio/clientStats";
+import { useDocumentStore } from "@/lib/documents/documentStore";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 
 const statusColor: Record<ClientStatus, string> = {
@@ -62,6 +64,7 @@ type Props = {
   clientName: string | null;
   onOpenChange: (open: boolean) => void;
   onOpenPolicy?: (policy: Policy) => void;
+  onJumpToDocuments?: (clientName: string) => void;
 };
 
 type TimelineEvent = {
@@ -72,11 +75,18 @@ type TimelineEvent = {
   meta: string;
 };
 
-export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: Props) {
+export function ClientDetailDrawer({
+  clientName,
+  onOpenChange,
+  onOpenPolicy,
+  onJumpToDocuments,
+}: Props) {
   const { opportunities } = usePipelineStore();
   const { groups } = useQuoteStore();
   const { goTo } = useNavigation();
+  const docStore = useDocumentStore();
   const [newOpp, setNewOpp] = useState(false);
+  const docCount = clientName ? docStore.countByClient(clientName) : 0;
 
   const stats = useMemo(() => (clientName ? getClientStats(clientName) : null), [clientName]);
 
@@ -281,6 +291,36 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
                   Abrir no Quadro <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>
               )}
+            </Section>
+
+            {/* Documentos (resumo + link) */}
+            <Section title="Documentos" count={docCount} icon={FolderOpen}>
+              <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                  <FolderOpen className="h-4 w-4 text-brand" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium">
+                    {docCount} arquivo{docCount === 1 ? "" : "s"} em pastas
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Organizados por apólice
+                  </div>
+                </div>
+                {onJumpToDocuments && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg h-8"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onJumpToDocuments(c.name);
+                    }}
+                  >
+                    Abrir <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </Section>
 
             {/* Timeline */}

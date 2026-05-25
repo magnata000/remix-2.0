@@ -17,6 +17,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search, FileText, Calendar, Building2, User } from "lucide-react";
 import {
   policies,
@@ -25,6 +26,8 @@ import {
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
+import { useDocumentStore } from "@/lib/documents/documentStore";
+import { FolderTree } from "@/components/documents/FolderTree";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
@@ -186,34 +189,66 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
       )}
 
       {/* Drawer de detalhes */}
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          {selected && (
-            <>
-              <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-brand" />
-                  {selected.number}
-                </SheetTitle>
-                <SheetDescription>Detalhes da apólice</SheetDescription>
-              </SheetHeader>
-              <div className="px-4 mt-6 space-y-5">
-                <Badge className={statusColor[selected.status]}>{selected.status}</Badge>
+      <PolicySheet
+        policy={selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+      />
+    </div>
+  );
+}
+
+function PolicySheet({
+  policy,
+  onOpenChange,
+}: {
+  policy: Policy | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const docStore = useDocumentStore();
+  const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
+  const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
+
+  return (
+    <Sheet open={!!policy} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        {policy && (
+          <>
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-brand" />
+                {policy.number}
+              </SheetTitle>
+              <SheetDescription>Detalhes da apólice</SheetDescription>
+            </SheetHeader>
+
+            <Tabs defaultValue="details" className="px-4 mt-6">
+              <TabsList className="rounded-xl bg-muted">
+                <TabsTrigger value="details" className="rounded-lg">
+                  Detalhes
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="rounded-lg">
+                  Documentos
+                  <span className="ml-1.5 text-xs text-muted-foreground">({docCount})</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="mt-5 space-y-5">
+                <Badge className={statusColor[policy.status]}>{policy.status}</Badge>
 
                 <div className="space-y-3">
-                  <Row icon={User} label="Cliente" value={selected.clientName} />
-                  <Row icon={Building2} label="Seguradora" value={selected.insurer} />
-                  <Row icon={FileText} label="Ramo" value={selected.branch} />
+                  <Row icon={User} label="Cliente" value={policy.clientName} />
+                  <Row icon={Building2} label="Seguradora" value={policy.insurer} />
+                  <Row icon={FileText} label="Ramo" value={policy.branch} />
                   <Row
                     icon={Calendar}
                     label="Vigência"
-                    value={`${formatDateShort(selected.startDate)} → ${formatDateShort(selected.endDate)}`}
+                    value={`${formatDateShort(policy.startDate)} → ${formatDateShort(policy.endDate)}`}
                   />
                 </div>
 
                 <div className="rounded-2xl bg-brand/15 p-5">
                   <p className="text-xs text-muted-foreground">Prêmio anual</p>
-                  <p className="mt-1 text-3xl font-bold">{formatBRL(selected.premium)}</p>
+                  <p className="mt-1 text-3xl font-bold">{formatBRL(policy.premium)}</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -224,12 +259,22 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                     Imprimir
                   </Button>
                 </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-    </div>
+              </TabsContent>
+
+              <TabsContent value="documents" className="mt-5">
+                {root ? (
+                  <FolderTree rootFolders={[root]} showRootNames={false} dense />
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    Nenhuma pasta disponível para esta apólice.
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }
 
