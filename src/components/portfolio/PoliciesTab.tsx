@@ -209,9 +209,12 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
         policy={selected}
         onOpenChange={(o) => !o && setSelected(null)}
       />
+
+      <NewPolicyDialog open={newOpen} onOpenChange={setNewOpen} />
     </div>
   );
 }
+
 
 function PolicySheet({
   policy,
