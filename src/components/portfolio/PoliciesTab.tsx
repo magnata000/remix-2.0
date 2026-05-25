@@ -44,10 +44,12 @@ type Props = {
 };
 
 export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) {
+  const { policies } = usePolicyStore();
   const [q, setQ] = useState(initialClientFilter ?? "");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
   const [selected, setSelected] = useState<Policy | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -59,11 +61,23 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
             p.clientName.toLowerCase().includes(q.toLowerCase()) ||
             p.number.toLowerCase().includes(q.toLowerCase())),
       ),
-    [q, status, branch],
+    [policies, q, status, branch],
   );
 
   return (
     <div className="space-y-5">
+      {/* Header com botão Nova */}
+      <div className="flex items-center justify-end">
+        <Button
+          onClick={() => setNewOpen(true)}
+          className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90 h-9"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden md:inline">Nova apólice</span>
+        </Button>
+      </div>
+
+
       {/* Filtros */}
       <Card className="p-4 rounded-2xl border-border shadow-none">
         <div className="flex flex-col md:flex-row gap-3">
