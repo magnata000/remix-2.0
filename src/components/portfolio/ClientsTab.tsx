@@ -10,7 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Users, Plus } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
@@ -22,6 +23,10 @@ import {
   type ClientStats,
   type ClientStatus,
 } from "@/lib/portfolio/clientStats";
+import { useClientStore } from "@/lib/portfolio/clientStore";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { NewClientDialog } from "@/components/portfolio/NewClientDialog";
+
 
 const statusColor: Record<ClientStatus, string> = {
   ativo: "bg-success/15 text-success border-0",
@@ -39,11 +44,14 @@ type Props = {
 };
 
 export function ClientsTab({ onSelectClient }: Props) {
+  const { clients } = useClientStore();
+  const { policies } = usePolicyStore();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
+  const [newOpen, setNewOpen] = useState(false);
 
-  const all = useMemo(() => listClientsWithStats(), []);
+  const all = useMemo(() => listClientsWithStats(clients, policies), [clients, policies]);
 
   const filtered = useMemo(
     () =>
@@ -66,6 +74,17 @@ export function ClientsTab({ onSelectClient }: Props) {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-end">
+        <Button
+          onClick={() => setNewOpen(true)}
+          className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90 h-9"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden md:inline">Novo cliente</span>
+        </Button>
+      </div>
+
+
       {/* Filtros */}
       <Card className="p-4 rounded-2xl border-border shadow-none">
         <div className="flex flex-col md:flex-row gap-3">
@@ -195,6 +214,9 @@ export function ClientsTab({ onSelectClient }: Props) {
           </Card>
         </>
       )}
+
+      <NewClientDialog open={newOpen} onOpenChange={setNewOpen} />
     </div>
   );
 }
+

@@ -1,16 +1,20 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PoliciesTab } from "@/components/portfolio/PoliciesTab";
 import { ClientsTab } from "@/components/portfolio/ClientsTab";
 import { ClientDetailDrawer } from "@/components/portfolio/ClientDetailDrawer";
-import { clients, policies } from "@/lib/mock/data";
+import { useClientStore } from "@/lib/portfolio/clientStore";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
 
 export function PortfolioModule() {
   const [tab, setTab] = useState("policies");
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const { clients } = useClientStore();
+  const { policies } = usePolicyStore();
 
   const policiesCount = policies.length;
-  const clientsCount = useMemo(() => clients.length, []);
+  const clientsCount = clients.length;
+
 
   const openClient = (name: string) => setSelectedClient(name);
 

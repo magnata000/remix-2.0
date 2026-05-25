@@ -1,4 +1,4 @@
-import { clients, policies, tasks, commissions, type Client, type Branch, type PolicyStatus } from "@/lib/mock/data";
+import { clients as defaultClients, policies as defaultPolicies, tasks, commissions, type Client, type Branch, type Policy, type PolicyStatus } from "@/lib/mock/data";
 
 export type ClientStatus = "ativo" | "inativo" | "lead";
 
@@ -16,18 +16,25 @@ export type ClientStats = {
 
 const isActiveStatus = (s: PolicyStatus) => s === "ativa" || s === "pendente";
 
-export function getClientStats(clientName: string): ClientStats | null {
-  const client = clients.find((c) => c.name === clientName);
+export function getClientStats(
+  clientName: string,
+  clientsArr: Client[] = defaultClients,
+  policiesArr: Policy[] = defaultPolicies,
+): ClientStats | null {
+  const client = clientsArr.find((c) => c.name === clientName);
   if (!client) return null;
-  return computeStats(client);
+  return computeStats(client, policiesArr);
 }
 
-export function listClientsWithStats(): ClientStats[] {
-  return clients.map(computeStats);
+export function listClientsWithStats(
+  clientsArr: Client[] = defaultClients,
+  policiesArr: Policy[] = defaultPolicies,
+): ClientStats[] {
+  return clientsArr.map((c) => computeStats(c, policiesArr));
 }
 
-function computeStats(client: Client): ClientStats {
-  const myPolicies = policies.filter((p) => p.clientName === client.name);
+function computeStats(client: Client, policiesArr: Policy[]): ClientStats {
+  const myPolicies = policiesArr.filter((p) => p.clientName === client.name);
   const activePolicies = myPolicies.filter((p) => isActiveStatus(p.status));
   const annualPremium = activePolicies.reduce((sum, p) => sum + p.premium, 0);
   const ltv = myPolicies.reduce((sum, p) => sum + p.premium, 0);

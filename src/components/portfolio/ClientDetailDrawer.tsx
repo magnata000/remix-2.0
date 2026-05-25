@@ -27,13 +27,14 @@ import {
   FolderOpen,
 } from "lucide-react";
 import {
-  policies,
   commissions,
   formatBRL,
   formatDateShort,
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
+import { useClientStore } from "@/lib/portfolio/clientStore";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
@@ -42,6 +43,7 @@ import {
   initialsOf,
   type ClientStatus,
 } from "@/lib/portfolio/clientStats";
+
 import {
   useDocumentStore,
   formatFileSize,
@@ -88,17 +90,23 @@ export function ClientDetailDrawer({
 }: Props) {
   const { opportunities } = usePipelineStore();
   const { groups } = useQuoteStore();
+  const { clients } = useClientStore();
+  const { policies } = usePolicyStore();
   const { goTo } = useNavigation();
   const docStore = useDocumentStore();
   const [newOpp, setNewOpp] = useState(false);
   const docCount = clientName ? docStore.countByClient(clientName) : 0;
 
-  const stats = useMemo(() => (clientName ? getClientStats(clientName) : null), [clientName]);
+  const stats = useMemo(
+    () => (clientName ? getClientStats(clientName, clients, policies) : null),
+    [clientName, clients, policies],
+  );
 
   const clientPolicies = useMemo(
     () => (clientName ? policies.filter((p) => p.clientName === clientName) : []),
-    [clientName],
+    [policies, clientName],
   );
+
 
   const clientOpps = useMemo(
     () =>

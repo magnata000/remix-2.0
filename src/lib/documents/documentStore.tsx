@@ -56,12 +56,19 @@ type Ctx = {
     policyId: string | null;
     clientName: string;
   }) => DocFolder;
+  ensurePolicyRoots: (input: {
+    policyId: string;
+    policyNumber: string;
+    branch: string;
+    clientName: string;
+  }) => void;
   renameFolder: (id: string, name: string) => void;
   deleteFolder: (id: string) => void;
   addFile: (input: { name: string; folderId: string; mime?: string; sizeKB?: number }) => DocFile | null;
   renameFile: (id: string, name: string) => void;
   deleteFile: (id: string) => void;
 };
+
 
 const DocCtx = createContext<Ctx | null>(null);
 
@@ -223,6 +230,52 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const ensurePolicyRoots = useCallback(
+    (input: { policyId: string; policyNumber: string; branch: string; clientName: string }) => {
+      setFolders((arr) => {
+        const next = [...arr];
+        const hasClientRoot = next.some((f) => f.isClientRoot && f.clientName === input.clientName);
+        if (!hasClientRoot) {
+          next.push({
+            id: `f-client-${input.clientName}-${Date.now()}`,
+            name: "Geral do Cliente",
+            parentId: null,
+            policyId: null,
+            clientName: input.clientName,
+            createdAt: today(),
+            isClientRoot: true,
+          });
+        }
+        const hasPolicyRoot = next.some((f) => f.parentId === null && f.policyId === input.policyId);
+        if (!hasPolicyRoot) {
+          const rootId = `f-root-${input.policyId}`;
+          next.push({
+            id: rootId,
+            name: `Apólice ${input.policyNumber} — ${input.branch}`,
+            parentId: null,
+            policyId: input.policyId,
+            clientName: input.clientName,
+            createdAt: today(),
+          });
+          ["Proposta", "Boletos", "Endossos"].forEach((name, j) => {
+            next.push({
+              id: `f-${input.policyId}-${j}`,
+              name,
+              parentId: rootId,
+              policyId: input.policyId,
+              clientName: input.clientName,
+              createdAt: today(),
+            });
+          });
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+
+
   const renameFolder = useCallback((id: string, name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -299,6 +352,8 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     searchFilesByClient,
     findFolder,
     createFolder,
+    ensurePolicyRoots,
+
     renameFolder,
     deleteFolder,
     addFile,
