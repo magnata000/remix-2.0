@@ -11,21 +11,29 @@ import { policies } from "@/lib/mock/data";
 export type DocFolder = {
   id: string;
   name: string;
-  parentId: string | null; // null = raiz da apólice
-  policyId: string;
+  parentId: string | null; // null = raiz (cliente ou apólice)
+  policyId: string | null; // null quando é raiz "Geral do Cliente"
   clientName: string;
   createdAt: string;
+  /** Raiz fixa "Geral do Cliente" (não renomeável/removível). */
+  isClientRoot?: boolean;
 };
 
 export type DocFile = {
   id: string;
   name: string;
   folderId: string;
-  policyId: string;
+  policyId: string | null;
   clientName: string;
   mime: string;
   sizeKB: number;
   uploadedAt: string;
+};
+
+export type DocSearchHit = {
+  file: DocFile;
+  folder: DocFolder;
+  rootFolder: DocFolder;
 };
 
 type Ctx = {
@@ -33,12 +41,21 @@ type Ctx = {
   files: DocFile[];
   // queries
   rootFolderOf: (policyId: string) => DocFolder | undefined;
+  clientRootOf: (clientName: string) => DocFolder | undefined;
+  rootFoldersByClient: (clientName: string) => DocFolder[];
   childrenOf: (folderId: string) => DocFolder[];
   filesIn: (folderId: string) => DocFile[];
   countByPolicy: (policyId: string) => number;
   countByClient: (clientName: string) => number;
+  searchFilesByClient: (clientName: string, query: string) => DocSearchHit[];
+  findFolder: (id: string) => DocFolder | undefined;
   // mutations
-  createFolder: (input: { name: string; parentId: string; policyId: string; clientName: string }) => DocFolder;
+  createFolder: (input: {
+    name: string;
+    parentId: string;
+    policyId: string | null;
+    clientName: string;
+  }) => DocFolder;
   renameFolder: (id: string, name: string) => void;
   deleteFolder: (id: string) => void;
   addFile: (input: { name: string; folderId: string; mime?: string; sizeKB?: number }) => DocFile | null;
@@ -54,11 +71,29 @@ function seed(): { folders: DocFolder[]; files: DocFile[] } {
   const folders: DocFolder[] = [];
   const files: DocFile[] = [];
   const defaults = ["Proposta", "Boletos", "Endossos"];
+
+  // 1) "Geral do Cliente" para cada cliente único
+  const clientsSeen = new Set<string>();
+  policies.forEach((p) => {
+    if (clientsSeen.has(p.clientName)) return;
+    clientsSeen.add(p.clientName);
+    folders.push({
+      id: `f-client-${p.clientName}`,
+      name: "Geral do Cliente",
+      parentId: null,
+      policyId: null,
+      clientName: p.clientName,
+      createdAt: p.startDate,
+      isClientRoot: true,
+    });
+  });
+
+  // 2) raiz por apólice + subpastas default + arquivos fake
   policies.forEach((p, idx) => {
     const rootId = `f-root-${p.id}`;
     folders.push({
       id: rootId,
-      name: p.number,
+      name: `Apólice ${p.number} — ${p.branch}`,
       parentId: null,
       policyId: p.id,
       clientName: p.clientName,
@@ -74,7 +109,6 @@ function seed(): { folders: DocFolder[]; files: DocFile[] } {
         clientName: p.clientName,
         createdAt: p.startDate,
       });
-      // 1-2 arquivos fake por subpasta nas primeiras apólices
       if (idx < 8) {
         const n = (idx + j) % 2 === 0 ? 2 : 1;
         for (let k = 0; k < n; k++) {
@@ -105,6 +139,25 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     [folders],
   );
 
+  const clientRootOf = useCallback(
+    (clientName: string) =>
+      folders.find((f) => f.isClientRoot && f.clientName === clientName),
+    [folders],
+  );
+
+  const rootFoldersByClient = useCallback(
+    (clientName: string) => {
+      const roots = folders.filter((f) => f.parentId === null && f.clientName === clientName);
+      // "Geral do Cliente" primeiro, depois apólices por nome
+      return roots.sort((a, b) => {
+        if (a.isClientRoot && !b.isClientRoot) return -1;
+        if (!a.isClientRoot && b.isClientRoot) return 1;
+        return a.name.localeCompare(b.name, "pt-BR");
+      });
+    },
+    [folders],
+  );
+
   const childrenOf = useCallback(
     (folderId: string) => folders.filter((f) => f.parentId === folderId),
     [folders],
@@ -125,10 +178,39 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     [files],
   );
 
+  const findFolder = useCallback(
+    (id: string) => folders.find((f) => f.id === id),
+    [folders],
+  );
+
+  const searchFilesByClient = useCallback(
+    (clientName: string, query: string): DocSearchHit[] => {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      const rootOfFolder = (folderId: string): DocFolder | undefined => {
+        let cur = folders.find((f) => f.id === folderId);
+        while (cur && cur.parentId) {
+          cur = folders.find((f) => f.id === cur!.parentId);
+        }
+        return cur;
+      };
+      const hits: DocSearchHit[] = [];
+      files.forEach((file) => {
+        if (file.clientName !== clientName) return;
+        if (!file.name.toLowerCase().includes(q)) return;
+        const folder = folders.find((f) => f.id === file.folderId);
+        const root = rootOfFolder(file.folderId);
+        if (folder && root) hits.push({ file, folder, rootFolder: root });
+      });
+      return hits.slice(0, 50);
+    },
+    [folders, files],
+  );
+
   const createFolder = useCallback(
-    (input: { name: string; parentId: string; policyId: string; clientName: string }) => {
+    (input: { name: string; parentId: string; policyId: string | null; clientName: string }) => {
       const folder: DocFolder = {
-        id: `f-${Date.now()}`,
+        id: `f-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         name: input.name.trim() || "Nova pasta",
         parentId: input.parentId,
         policyId: input.policyId,
@@ -144,15 +226,20 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   const renameFolder = useCallback((id: string, name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    setFolders((arr) => arr.map((f) => (f.id === id ? { ...f, name: trimmed } : f)));
+    setFolders((arr) =>
+      arr.map((f) => {
+        if (f.id !== id) return f;
+        // bloquear renomear raízes (cliente ou apólice)
+        if (f.parentId === null) return f;
+        return { ...f, name: trimmed };
+      }),
+    );
   }, []);
 
   const deleteFolder = useCallback((id: string) => {
     setFolders((arr) => {
-      // não permitir excluir raiz
       const target = arr.find((f) => f.id === id);
-      if (!target || target.parentId === null) return arr;
-      // coletar descendentes recursivamente
+      if (!target || target.parentId === null) return arr; // não excluir raízes
       const toDelete = new Set<string>([id]);
       let changed = true;
       while (changed) {
@@ -174,7 +261,7 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
       const folder = folders.find((f) => f.id === input.folderId);
       if (!folder) return null;
       const file: DocFile = {
-        id: `file-${Date.now()}`,
+        id: `file-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         name: input.name.trim() || "documento.pdf",
         folderId: folder.id,
         policyId: folder.policyId,
@@ -203,10 +290,14 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     folders,
     files,
     rootFolderOf,
+    clientRootOf,
+    rootFoldersByClient,
     childrenOf,
     filesIn,
     countByPolicy,
     countByClient,
+    searchFilesByClient,
+    findFolder,
     createFolder,
     renameFolder,
     deleteFolder,
