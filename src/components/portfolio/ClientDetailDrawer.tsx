@@ -293,6 +293,36 @@ export function ClientDetailDrawer({
               )}
             </Section>
 
+            {/* Documentos (resumo + link) */}
+            <Section title="Documentos" count={docCount} icon={FolderOpen}>
+              <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                  <FolderOpen className="h-4 w-4 text-brand" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium">
+                    {docCount} arquivo{docCount === 1 ? "" : "s"} em pastas
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Organizados por apólice
+                  </div>
+                </div>
+                {onJumpToDocuments && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg h-8"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onJumpToDocuments(c.name);
+                    }}
+                  >
+                    Abrir <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </Section>
+
             {/* Timeline */}
             <Section title="Linha do tempo" count={timeline.length} icon={Sparkles}>
               {timeline.length === 0 ? (
