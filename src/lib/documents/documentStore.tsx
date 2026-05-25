@@ -56,12 +56,19 @@ type Ctx = {
     policyId: string | null;
     clientName: string;
   }) => DocFolder;
+  ensurePolicyRoots: (input: {
+    policyId: string;
+    policyNumber: string;
+    branch: string;
+    clientName: string;
+  }) => void;
   renameFolder: (id: string, name: string) => void;
   deleteFolder: (id: string) => void;
   addFile: (input: { name: string; folderId: string; mime?: string; sizeKB?: number }) => DocFile | null;
   renameFile: (id: string, name: string) => void;
   deleteFile: (id: string) => void;
 };
+
 
 const DocCtx = createContext<Ctx | null>(null);
 
