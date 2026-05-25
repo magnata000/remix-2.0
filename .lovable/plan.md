@@ -1,84 +1,125 @@
-# Formulário de Nova Oportunidade
+# Unificar Apólices + Clientes em um único módulo com visão 360°
 
-Hoje o botão **+ Nova oportunidade** no `KanbanModule` não tem ação. O plano é abrir um `Dialog` com um formulário estruturado, validado e já conectado ao `pipelineStore.createFromQuote` / novo `create`.
+Hoje o módulo **Apólices** lista contratos isoladamente e não existe uma página de **Clientes** — o dado do cliente aparece só como string dentro da apólice. O plano é transformar esse módulo em **"Carteira"** com duas abas internas (**Apólices** e **Clientes**) compartilhando filtros visuais, e adicionar um drawer 360° por cliente.
 
-## 1. Novo componente: `src/components/pipeline/NewOpportunityDialog.tsx`
+## 1. Renomear módulo e ajustar navegação
 
-Diálogo modal (shadcn `Dialog`) acionado pelo botão do header da aba Pipeline. Segue o mesmo padrão visual do `NewTaskDialog`.
+- `src/components/shell/TopBar.tsx`: trocar label `"Apólices"` por `"Carteira"`; manter `key: "policies"` (sem mexer em rotas, store, ou em `ModuleKey`).
+- Ícone permanece `FileText` (ou trocar por `Users` se preferir — decisão visual menor).
 
-### Campos do formulário
+## 2. Novo container com abas — `src/components/modules/PortfolioModule.tsx`
 
-Agrupados em 3 blocos para evitar parede de inputs:
+Substitui `PoliciesModule` como módulo renderizado. Estrutura:
 
-**Bloco 1 — Cliente**
-- `Cliente` (Combobox com `clients` do mock + opção "Novo cliente" que libera um input livre de nome)
-- `Telefone` (opcional, prefill se cliente existente)
-- `E-mail` (opcional, prefill se cliente existente)
+```text
+<h1>Carteira</h1>
+<p>Apólices e clientes em um só lugar</p>
 
-**Bloco 2 — Oportunidade**
-- `Título` (input, obrigatório, máx 80) — placeholder "Ex: Renovação Auto"
-- `Ramo` (Select: Auto / Vida / Residencial / Empresarial / Saúde — obrigatório)
-- `Etapa inicial` (Select: Lead / Cotação / Negociação — default `lead`; oculta "Fechado" e "Perdido")
-- `Valor estimado (R$)` (input numérico, obrigatório, min 0)
-- `Prazo` (DatePicker, obrigatório, default = hoje + 7 dias)
+<Tabs defaultValue="policies">
+  <TabsList>
+    <TabsTrigger value="policies">Apólices ({n})</TabsTrigger>
+    <TabsTrigger value="clients">Clientes ({n})</TabsTrigger>
+  </TabsList>
 
-**Bloco 3 — Atribuição**
-- `Responsável` (Select com iniciais a partir de `team` em `data.ts` — default = usuário atual `AS`)
-- `Observações` (Textarea opcional, máx 280 — apenas armazenado, exibido depois no card)
-
-### Validação (zod)
+  <TabsContent value="policies"><PoliciesTab /></TabsContent>
+  <TabsContent value="clients"><ClientsTab /></TabsContent>
+</Tabs>
 ```
-title: string min1 max80
-clientName: string min1 max80
-branch: enum Branch
-stage: enum (lead|cotacao|negociacao)
-estimatedValue: number min0
-dueDate: string ISO (não anterior a hoje)
-assignee: string len2
-```
-Erros exibidos abaixo de cada campo; toast de sucesso ao salvar.
 
-### Footer
-- `Cancelar` (fecha)
-- `Criar oportunidade` (disabled enquanto inválido)
+- `src/routes/index.tsx`: trocar `<PoliciesModule />` por `<PortfolioModule />`.
+- `PoliciesTab` recebe o conteúdo atual de `PoliciesModule` (filtros + tabela + drawer da apólice) refatorado como subcomponente.
 
-## 2. Mudanças no store — `src/lib/pipeline/opportunityStore.ts`
+## 3. Nova aba **Clientes** — `ClientsTab`
 
-Adicionar ação genérica `createOpportunity(input)` (sem exigir `quoteGroupId`):
+Lista os 25 clientes mock derivando KPIs **on the fly** a partir de `policies`, `tasks`, `commissions` e `quotes`.
+
+### Filtros (mesmo padrão visual da aba Apólices)
+- Busca por nome / e-mail / documento.
+- Filtro `Status` (cliente ativo = tem apólice ativa; inativo = só vencidas/canceladas; lead = sem apólice mas com oportunidade).
+- Filtro `Ramo` (cliente possui apólice naquele ramo).
+
+### Tabela desktop
+| Cliente | Contato | Apólices ativas | Prêmio total/ano | Última atividade | Status |
+
+### Cards mobile
+Nome + iniciais, total de apólices, prêmio anual agregado, badge de status.
+
+Clicar na linha abre o **drawer 360°**.
+
+## 4. Drawer 360° — `src/components/portfolio/ClientDetailDrawer.tsx`
+
+`Sheet` largo (`sm:max-w-2xl`) com 4 seções verticais:
+
+### Bloco 1 — Cabeçalho
+- Avatar com iniciais, nome, badge de status.
+- Linha de contato: telefone, e-mail, documento.
+- KPIs em 3 cartões: **Apólices ativas**, **Prêmio anual total**, **LTV estimado** (soma de todos os prêmios históricos).
+
+### Bloco 2 — Apólices vinculadas
+- Lista compacta de apólices do cliente (filtra `policies.clientName === client.name`).
+- Cada item: número, ramo, seguradora, vigência, status badge, prêmio.
+- Clicar abre o drawer existente de apólice (reutiliza estado de `PoliciesTab` via callback).
+
+### Bloco 3 — Pipeline & cotações
+- Oportunidades em aberto (filtra `tasks.clientName === client.name` e `stage !== "fechado" && stage !== "perdido"`).
+- Cotações recentes (do `quoteStore`, agrupadas por `quoteGroupId`).
+- CTA "Abrir no Quadro" → navega para módulo `kanban` via `NavigationProvider`.
+
+### Bloco 4 — Timeline de atividade
+- Eventos derivados: criação de apólice (data início), oportunidades criadas, cotações geradas, comissões pagas.
+- Ordenado desc por data, máx 10 itens, com ícone + cor por tipo.
+
+### Footer do drawer
+- `Nova oportunidade` (abre `NewOpportunityDialog` pré-preenchido com cliente).
+- `Nova cotação` (navega para `multicalc` com cliente selecionado — placeholder se não houver integração).
+
+## 5. Helper de derivação — `src/lib/portfolio/clientStats.ts`
+
+Funções puras que recebem os mocks e retornam visão agregada:
 
 ```ts
-createOpportunity: (input: {
-  title: string; clientName: string; branch: Branch;
-  estimatedValue: number; dueDate: string; assignee: string;
-  stage: KanbanStage;
-}) => Opportunity
+type ClientStats = {
+  client: Client;
+  activePolicies: number;
+  totalPolicies: number;
+  annualPremium: number;
+  ltv: number;
+  lastActivity: string;        // ISO
+  status: "ativo" | "inativo" | "lead";
+  branches: Branch[];
+};
+
+getClientStats(clientName: string): ClientStats
+listClientsWithStats(): ClientStats[]
 ```
-Implementação espelha `createFromQuote`, mas sem `quoteGroupId` e respeitando `stage` recebido. Gera id `t{Date.now()}` e faz prepend.
 
-## 3. Integração no `KanbanModule.tsx`
+Centraliza a lógica para evitar `.filter()` espalhado pelos componentes.
 
-- Importar `NewOpportunityDialog`.
-- Estado local `const [openNew, setOpenNew] = useState(false)`.
-- Trocar o `<Button>` "Nova oportunidade" por trigger que seta `openNew=true`.
-- Renderizar `<NewOpportunityDialog open={openNew} onOpenChange={setOpenNew} />` ao final da aba pipeline.
+## 6. Detalhes UX
 
-Após criação:
-- toast `"Oportunidade criada"`.
-- Card aparece imediatamente na coluna escolhida (estado já reativo).
-- Sem `quoteGroupId` → o CTA do card já exibe "Cotar no Multicálculo" (comportamento existente).
+- Abas mantêm `Tabs` do shadcn no mesmo padrão visual do módulo Quadro.
+- Contagens entre parênteses no `TabsTrigger` ajudam orientação (`Apólices (24)`, `Clientes (25)`).
+- Drawer da apólice (já existente) e drawer do cliente coexistem — ao abrir um pelo outro, o anterior fecha.
+- Empty states em cada aba (ícone + frase + CTA).
+- Responsivo: em <768px as abas viram tabs roláveis, drawer ocupa tela toda.
 
-## 4. Detalhes UX
+## 7. Arquivos tocados
 
-- O combobox de cliente filtra os 25 mocks por nome; selecionar preenche telefone/e-mail (read-only). "Novo cliente" desbloqueia campos editáveis.
-- Valor estimado formatado em BRL no blur (`formatBRL`).
-- Etapa inicial: ícone colorido ao lado do label, espelhando os badges das colunas.
-- Responsivo: largura `sm:max-w-[560px]`, scroll interno se necessário.
-- Atalho: Enter no último campo dispara submit; Esc fecha.
+**Novos**
+- `src/components/modules/PortfolioModule.tsx`
+- `src/components/portfolio/ClientsTab.tsx`
+- `src/components/portfolio/ClientDetailDrawer.tsx`
+- `src/lib/portfolio/clientStats.ts`
 
-## Arquivos tocados
+**Editados**
+- `src/components/shell/TopBar.tsx` (label "Apólices" → "Carteira")
+- `src/routes/index.tsx` (importa `PortfolioModule` no lugar de `PoliciesModule`)
+- `src/components/modules/PoliciesModule.tsx` → renomeado internamente como `PoliciesTab` (mantendo o arquivo, exportando o subcomponente) **ou** copiado para `src/components/portfolio/PoliciesTab.tsx` e o arquivo antigo apagado. Recomendo a segunda opção para deixar o módulo de portfólio coeso.
 
-- `src/components/pipeline/NewOpportunityDialog.tsx` (novo)
-- `src/lib/pipeline/opportunityStore.ts` (adiciona `createOpportunity`)
-- `src/components/modules/KanbanModule.tsx` (liga botão + monta dialog)
+**Sem mudanças**
+- Rotas, `ModuleKey`, stores (`opportunityStore`, `quoteStore`, `taskStore`), tipos em `data.ts`.
 
-Sem mudanças em rotas, tipos globais ou em outros módulos.
+## Fora do escopo desta entrega
+- Aba "Serviços" (sinistros/endossos) — fica para uma segunda fase, conforme combinado.
+- CRUD real de cliente (criar/editar) — hoje todos os clientes vêm do mock; o drawer é read-only + ações que abrem fluxos existentes.
+- Persistência: nenhum dado novo é salvo, tudo é derivado dos mocks já em memória.
