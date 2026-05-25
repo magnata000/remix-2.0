@@ -21,6 +21,7 @@ import {
   Sparkles,
   ArrowRight,
   Calendar,
+  FolderOpen,
 } from "lucide-react";
 import {
   policies,
