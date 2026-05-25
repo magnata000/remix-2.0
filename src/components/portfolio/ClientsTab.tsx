@@ -214,6 +214,9 @@ export function ClientsTab({ onSelectClient }: Props) {
           </Card>
         </>
       )}
+
+      <NewClientDialog open={newOpen} onOpenChange={setNewOpen} />
     </div>
   );
 }
+
