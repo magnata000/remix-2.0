@@ -43,7 +43,7 @@ function AppShell() {
               <TopBar active={active} onChange={setActive} />
               <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
                 {active === "dashboard" && <DashboardModule />}
-                {active === "policies" && <PoliciesModule />}
+                {active === "policies" && <PortfolioModule />}
                 {active === "kanban" && <KanbanModule />}
                 {active === "multicalc" && <MulticalcModule />}
                 {active === "financial" && <FinancialModule />}
