@@ -18,7 +18,13 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Search, FileText, Calendar, Building2, User } from "lucide-react";
-import { policies, formatBRL, formatDateShort, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import {
+  policies,
+  formatBRL,
+  formatDateShort,
+  type Policy,
+  type PolicyStatus,
+} from "@/lib/mock/data";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
@@ -27,8 +33,13 @@ const statusColor: Record<PolicyStatus, string> = {
   cancelada: "bg-muted text-muted-foreground border-0",
 };
 
-export function PoliciesModule() {
-  const [q, setQ] = useState("");
+type Props = {
+  initialClientFilter?: string;
+  onClientClick?: (clientName: string) => void;
+};
+
+export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) {
+  const [q, setQ] = useState(initialClientFilter ?? "");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
   const [selected, setSelected] = useState<Policy | null>(null);
@@ -48,13 +59,6 @@ export function PoliciesModule() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Apólices</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gerencie todas as apólices da sua carteira
-        </p>
-      </div>
-
       {/* Filtros */}
       <Card className="p-4 rounded-2xl border-border shadow-none">
         <div className="flex flex-col md:flex-row gap-3">
@@ -148,7 +152,21 @@ export function PoliciesModule() {
                       className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer"
                     >
                       <td className="px-5 py-3 font-mono text-xs">{p.number}</td>
-                      <td className="px-5 py-3 font-medium">{p.clientName}</td>
+                      <td className="px-5 py-3 font-medium">
+                        {onClientClick ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onClientClick(p.clientName);
+                            }}
+                            className="hover:text-brand hover:underline"
+                          >
+                            {p.clientName}
+                          </button>
+                        ) : (
+                          p.clientName
+                        )}
+                      </td>
                       <td className="px-5 py-3 text-muted-foreground">{p.branch}</td>
                       <td className="px-5 py-3 text-muted-foreground">{p.insurer}</td>
                       <td className="px-5 py-3 font-semibold">{formatBRL(p.premium)}</td>

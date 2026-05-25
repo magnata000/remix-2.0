@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { TopBar, type ModuleKey } from "@/components/shell/TopBar";
 import { DashboardModule } from "@/components/modules/DashboardModule";
-import { PoliciesModule } from "@/components/modules/PoliciesModule";
+import { PortfolioModule } from "@/components/modules/PortfolioModule";
 import { KanbanModule } from "@/components/modules/KanbanModule";
 import { MulticalcModule } from "@/components/modules/MulticalcModule";
 import { FinancialModule } from "@/components/modules/FinancialModule";
@@ -43,7 +43,7 @@ function AppShell() {
               <TopBar active={active} onChange={setActive} />
               <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
                 {active === "dashboard" && <DashboardModule />}
-                {active === "policies" && <PoliciesModule />}
+                {active === "policies" && <PortfolioModule />}
                 {active === "kanban" && <KanbanModule />}
                 {active === "multicalc" && <MulticalcModule />}
                 {active === "financial" && <FinancialModule />}

@@ -13,7 +13,7 @@ import { clients, team, formatBRL, formatDateShort, type Branch, type KanbanStag
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { toast } from "sonner";
 
-type Props = { open: boolean; onOpenChange: (v: boolean) => void };
+type Props = { open: boolean; onOpenChange: (v: boolean) => void; defaultClientName?: string };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
 const STAGES: { key: KanbanStage; label: string; dot: string }[] = [
@@ -25,7 +25,7 @@ const STAGES: { key: KanbanStage; label: string; dot: string }[] = [
 const initialsOf = (name: string) =>
   name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
-export function NewOpportunityDialog({ open, onOpenChange }: Props) {
+export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: Props) {
   const { createOpportunity } = usePipelineStore();
 
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
@@ -50,6 +50,16 @@ export function NewOpportunityDialog({ open, onOpenChange }: Props) {
     setTitle(""); setBranch("Auto"); setStage("lead"); setEstimatedValue("");
     const d = new Date(); d.setDate(d.getDate() + 7); setDueDate(d);
     setAssigneeId(team[0]?.id ?? "");
+    if (defaultClientName) {
+      const c = clients.find((x) => x.name === defaultClientName);
+      if (c) {
+        setClientMode("existing");
+        setClientId(c.id); setClientName(c.name); setPhone(c.phone); setEmail(c.email);
+      } else {
+        setClientMode("new");
+        setClientName(defaultClientName);
+      }
+    }
   };
 
   useEffect(() => { if (open) reset(); /* eslint-disable-next-line */ }, [open]);

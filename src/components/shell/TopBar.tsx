@@ -27,7 +27,7 @@ export type ModuleKey =
 
 export const modules: { key: ModuleKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "policies", label: "Apólices", icon: FileText },
+  { key: "policies", label: "Carteira", icon: FileText },
   { key: "kanban", label: "Kanban", icon: KanbanSquare },
   { key: "multicalc", label: "Multicálculo", icon: Calculator },
   { key: "financial", label: "Financeiro", icon: Wallet },
