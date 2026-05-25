@@ -64,6 +64,7 @@ type Props = {
   clientName: string | null;
   onOpenChange: (open: boolean) => void;
   onOpenPolicy?: (policy: Policy) => void;
+  onJumpToDocuments?: (clientName: string) => void;
 };
 
 type TimelineEvent = {
@@ -74,11 +75,18 @@ type TimelineEvent = {
   meta: string;
 };
 
-export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: Props) {
+export function ClientDetailDrawer({
+  clientName,
+  onOpenChange,
+  onOpenPolicy,
+  onJumpToDocuments,
+}: Props) {
   const { opportunities } = usePipelineStore();
   const { groups } = useQuoteStore();
   const { goTo } = useNavigation();
+  const docStore = useDocumentStore();
   const [newOpp, setNewOpp] = useState(false);
+  const docCount = clientName ? docStore.countByClient(clientName) : 0;
 
   const stats = useMemo(() => (clientName ? getClientStats(clientName) : null), [clientName]);
 
