@@ -1,68 +1,68 @@
 
-# Reorganização do módulo Documentos
+# Plano: Criar Apólice e Cliente a partir da Carteira
 
-## Objetivo
-Eliminar a aba global "Documentos" do `PortfolioModule`. Centralizar a gestão consolidada no Drawer do Cliente; manter o Drawer da Apólice focado apenas na pasta daquela apólice.
+## 1. Novos stores (persistência em memória + seed dos mocks)
 
-## Nova arquitetura de dados
+**`src/lib/portfolio/clientStore.tsx`**
+- Provider + hook `useClientStore()`.
+- Estado inicial = `clients` de `mock/data.ts`.
+- API: `clients`, `addClient(input)` → gera `id` `c{timestamp}`.
 
-Hierarquia de pastas raiz por cliente:
-```
-Cliente João
-├── Geral do Cliente        (parentId=null, policyId=null, clientName=João)
-├── Apólice AUTO-1234       (parentId=null, policyId=AUTO-1234, clientName=João)
-│   └── (subpastas livres do usuário)
-└── Apólice VIDA-9876       (parentId=null, policyId=VIDA-9876, clientName=João)
-```
+**`src/lib/portfolio/policyStore.tsx`**
+- Provider + hook `usePolicyStore()`.
+- Estado inicial = `policies` de `mock/data.ts`.
+- API: `policies`, `addPolicy(input)` → gera `id` e `number` no formato `APO-2026-XXXX` (próximo sequencial baseado no array atual).
+- No `addPolicy`, dispara criação de pastas raiz no `documentStore` (Geral do Cliente se ainda não existir + pasta da apólice nova). Para evitar import circular, o componente que chama `addPolicy` também chama o `documentStore` na sequência — store fica puro.
 
-- Pasta **"Geral do Cliente"** criada automaticamente no seed para todo cliente, marcada como `isClientRoot: true` (não pode ser excluída nem renomeada).
-- Pastas de apólice continuam como raízes (`parentId: null`), uma por apólice, também não-removíveis no nível raiz.
-- Subpastas livres dentro de cada raiz continuam totalmente editáveis.
+Ambos providers montados em `src/routes/index.tsx`, acima de `DocumentStoreProvider`.
 
-## Mudanças por arquivo
+## 2. Migração de consumidores
 
-### `src/lib/documents/documentStore.tsx`
-- Adicionar campo `isClientRoot?: boolean` em `DocFolder`.
-- Atualizar seed: para cada cliente único derivado de `policies`, criar 1 pasta "Geral do Cliente" + 1 pasta por apólice (nome: `Apólice {numero} — {ramo}`), todas como raiz (`parentId: null`).
-- Bloquear `renameFolder`/`deleteFolder` quando a pasta é raiz de apólice ou `isClientRoot`.
-- Novo helper: `rootFoldersByClient(clientName)` → retorna `[geralDoCliente, ...pastasDeApolice]` ordenadas (Geral primeiro).
-- Novo helper: `searchFilesByClient(clientName, query)` → busca por nome de arquivo em todas as pastas (recursivo) daquele cliente.
+Trocar imports diretos de `clients`/`policies` do mock pelos hooks dos novos stores em:
+- `src/components/portfolio/ClientsTab.tsx`
+- `src/components/portfolio/PoliciesTab.tsx`
+- `src/components/modules/PortfolioModule.tsx` (counts)
+- `src/components/portfolio/ClientDetailDrawer.tsx` (lookup de cliente + apólices)
 
-### `src/components/portfolio/ClientDetailDrawer.tsx`
-- Trocar layout interno por `Tabs`: **Visão geral** | **Documentos**.
-- **Visão geral**: conteúdo atual (KPIs, apólices, pipeline, timeline, ações). Remover a seção compacta "Documentos" + botão "Ver na aba Documentos".
-- **Documentos**: render `<FolderTree rootFolders={rootFoldersByClient(clientName)} />` + campo de busca no topo (filtra arquivos via `searchFilesByClient`; quando há query, mostra lista plana de resultados com breadcrumb da pasta de origem em vez da árvore).
-- Aumentar largura do Sheet para `sm:max-w-2xl` para acomodar a árvore + painel de arquivos.
-- Remover prop `onJumpToDocuments` (sem uso após mudança).
+Demais consumidores (Kanban, Multicálculo, Financeiro, Dashboard) continuam usando o mock estático — fora de escopo.
 
-### `src/components/modules/PortfolioModule.tsx`
-- Remover `TabsTrigger` "Documentos" e `TabsContent` correspondente.
-- Remover state `documentsFilter` e handler `jumpToDocuments`.
-- Remover import de `DocumentsTab` e `useDocumentStore`.
-- TabsList passa a ter 2 abas: **Apólices** | **Clientes**.
+## 3. Diálogos de criação
 
-### `src/components/portfolio/PoliciesTab.tsx`
-- Drawer da apólice continua com abas internas (Detalhes | Documentos), sem alteração estrutural.
-- Ajuste fino: `<FolderTree rootFolders={[pastaDaApolice]} showRootNames={false} />` (já comporta — só garantir que o seed gera 1 raiz por apólice).
+**`src/components/portfolio/NewClientDialog.tsx`**
+- `Dialog` centralizado + `react-hook-form` + `zod`.
+- Campos: Nome, E-mail, Telefone, Documento (CPF/CNPJ).
+- Validação: nome obrigatório (2–100), e-mail válido, telefone obrigatório (mín. 8), documento obrigatório.
+- Submit → `addClient` → toast sucesso → fecha.
 
-### `src/components/portfolio/DocumentsTab.tsx`
-- **Deletar arquivo.**
+**`src/components/portfolio/NewPolicyDialog.tsx`**
+- `Dialog` centralizado + `react-hook-form` + `zod`.
+- Campos:
+  - **Cliente** — combobox buscável (`Popover` + `Command`) listando clientes do `clientStore`.
+  - **Ramo** — `Select` (Auto / Vida / Residencial / Empresarial / Saúde).
+  - **Seguradora** — `Select` (Porto Seguro / Bradesco / SulAmérica / Allianz / Mapfre).
+  - **Prêmio** — input numérico em BRL.
+  - **Vigência início** — `DatePicker` (shadcn, `pointer-events-auto`).
+  - **Vigência fim** — `DatePicker`, auto-preenchido com início +1 ano ao escolher início, editável.
+  - **Status** — `Select` (ativa / pendente / vencida / cancelada).
+  - **Vendedor** — `Select` populado com `team` de `mock/data.ts`.
+- Número da apólice gerado automaticamente (não exibido no form).
+- Submit → `addPolicy` → cria pastas no `documentStore` → toast → fecha.
 
-### `src/components/documents/FolderTree.tsx`
-- Esconder botões "Renomear" e "Excluir" quando `selected.isClientRoot === true` ou quando `selected.parentId === null && selected.policyId` (raiz de apólice). A lógica atual já oculta para `parentId === null`, basta manter coerente.
-- Sem mudanças na assinatura pública.
+## 4. Botões "+" nas abas
 
-### Busca dentro da aba Documentos do cliente
-Componente novo enxuto `<ClientDocsSearch />` (inline no drawer ou em `src/components/documents/ClientDocsSearch.tsx`):
-- Input de busca controlado.
-- Quando vazio → renderiza `FolderTree`.
-- Quando preenchido → lista resultados (ícone, nome, pasta de origem com label da apólice, data, tamanho) clicáveis que selecionam a pasta correspondente na árvore e limpam a busca.
+**`PoliciesTab`** e **`ClientsTab`**: header já existente da aba ganha um `Button` ícone `Plus` à direita (label "Nova apólice" / "Novo cliente" em telas md+, só ícone em mobile). Estado local `open` controla o respectivo dialog.
+
+## Detalhes técnicos
+
+- Validação: `zod` + `@hookform/resolvers/zod` (já em uso no projeto).
+- Combobox: `Command` + `Popover` (shadcn), filtragem case-insensitive por nome.
+- Datas armazenadas como `YYYY-MM-DD` (igual ao mock atual) via `date.toISOString().slice(0,10)`.
+- Toasts via `sonner` (`toast.success`).
+- Sem alteração em `mock/data.ts` — stores apenas o consomem como seed.
 
 ## Fora de escopo
-- Upload real, drag-and-drop, versionamento, permissões.
-- Migração para Lovable Cloud (mantém Zustand + localStorage por enquanto).
-- Mover/copiar arquivos entre pastas de apólices diferentes.
 
-## Riscos / notas
-- Usuários com localStorage populado pela versão anterior verão pastas seed antigas até o store fazer reset. Vou bumpar a versão do storage key (ex.: `lov-docs-v2`) para forçar re-seed limpo com a nova estrutura (Geral do Cliente + raízes de apólice).
-- Drawer do cliente fica mais largo (`max-w-2xl`); em telas < 640px o Sheet continua full-width, sem regressão mobile.
+- Edição/remoção de apólice ou cliente.
+- Upload de documentos no momento da criação.
+- Persistência real (Lovable Cloud) — fica em memória, igual aos demais stores.
+- Atualização dos módulos Kanban/Multicálculo/Financeiro para consumir os novos stores.
