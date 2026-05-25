@@ -13,7 +13,7 @@ import { clients, team, formatBRL, formatDateShort, type Branch, type KanbanStag
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { toast } from "sonner";
 
-type Props = { open: boolean; onOpenChange: (v: boolean) => void };
+type Props = { open: boolean; onOpenChange: (v: boolean) => void; defaultClientName?: string };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
 const STAGES: { key: KanbanStage; label: string; dot: string }[] = [
