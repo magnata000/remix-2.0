@@ -39,6 +39,7 @@ import {
   initialsOf,
   type ClientStatus,
 } from "@/lib/portfolio/clientStats";
+import { useDocumentStore } from "@/lib/documents/documentStore";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 
 const statusColor: Record<ClientStatus, string> = {
