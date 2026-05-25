@@ -90,17 +90,23 @@ export function ClientDetailDrawer({
 }: Props) {
   const { opportunities } = usePipelineStore();
   const { groups } = useQuoteStore();
+  const { clients } = useClientStore();
+  const { policies } = usePolicyStore();
   const { goTo } = useNavigation();
   const docStore = useDocumentStore();
   const [newOpp, setNewOpp] = useState(false);
   const docCount = clientName ? docStore.countByClient(clientName) : 0;
 
-  const stats = useMemo(() => (clientName ? getClientStats(clientName) : null), [clientName]);
+  const stats = useMemo(
+    () => (clientName ? getClientStats(clientName, clients, policies) : null),
+    [clientName, clients, policies],
+  );
 
   const clientPolicies = useMemo(
     () => (clientName ? policies.filter((p) => p.clientName === clientName) : []),
-    [clientName],
+    [policies, clientName],
   );
+
 
   const clientOpps = useMemo(
     () =>
