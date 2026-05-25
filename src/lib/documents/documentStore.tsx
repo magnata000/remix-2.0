@@ -352,6 +352,8 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     searchFilesByClient,
     findFolder,
     createFolder,
+    ensurePolicyRoots,
+
     renameFolder,
     deleteFolder,
     addFile,
