@@ -10,7 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Users, Plus } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
@@ -22,6 +23,10 @@ import {
   type ClientStats,
   type ClientStatus,
 } from "@/lib/portfolio/clientStats";
+import { useClientStore } from "@/lib/portfolio/clientStore";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { NewClientDialog } from "@/components/portfolio/NewClientDialog";
+
 
 const statusColor: Record<ClientStatus, string> = {
   ativo: "bg-success/15 text-success border-0",
