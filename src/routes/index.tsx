@@ -11,6 +11,9 @@ import { PipelineStoreProvider } from "@/lib/pipeline/opportunityStore";
 import { QuoteStoreProvider } from "@/lib/multicalc/quoteStore";
 import { TaskStoreProvider } from "@/lib/tasks/taskStore";
 import { DocumentStoreProvider } from "@/lib/documents/documentStore";
+import { ClientStoreProvider } from "@/lib/portfolio/clientStore";
+import { PolicyStoreProvider } from "@/lib/portfolio/policyStore";
+
 import { NavigationProvider } from "@/lib/navigation";
 
 export const Route = createFileRoute("/")({
