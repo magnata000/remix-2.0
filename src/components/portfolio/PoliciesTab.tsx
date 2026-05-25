@@ -17,6 +17,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search, FileText, Calendar, Building2, User } from "lucide-react";
 import {
   policies,
@@ -25,6 +26,8 @@ import {
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
+import { useDocumentStore } from "@/lib/documents/documentStore";
+import { FolderTree } from "@/components/documents/FolderTree";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
