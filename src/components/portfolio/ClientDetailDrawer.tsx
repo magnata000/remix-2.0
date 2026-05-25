@@ -27,13 +27,14 @@ import {
   FolderOpen,
 } from "lucide-react";
 import {
-  policies,
   commissions,
   formatBRL,
   formatDateShort,
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
+import { useClientStore } from "@/lib/portfolio/clientStore";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
@@ -42,6 +43,7 @@ import {
   initialsOf,
   type ClientStatus,
 } from "@/lib/portfolio/clientStats";
+
 import {
   useDocumentStore,
   formatFileSize,
