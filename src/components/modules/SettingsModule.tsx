@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Building2, Users, Plug, Bell, CreditCard, Check } from "lucide-react";
 import { team } from "@/lib/mock/data";
 import { toast } from "sonner";
+import { ComingSoonOverlay } from "@/components/shared/ComingSoonOverlay";
 
 const integrations = [
   { name: "Porto Seguro", connected: true },
