@@ -36,7 +36,7 @@ export function TasksBoard() {
 
   const filtered = useMemo(() => {
     let list = [...tasks];
-    if (fAssignee !== "todos") list = list.filter((t) => t.assigneeId === fAssignee);
+    if (fAssignee !== "todos") list = list.filter((t) => t.assigneeId === fAssignee || t.assigneeId === "all");
     if (fPriority.length) list = list.filter((t) => fPriority.includes(t.priority));
     if (fClient) list = list.filter((t) => t.clientName?.toLowerCase().includes(fClient.toLowerCase()));
     list.sort((a, b) => fSort === "recent"
