@@ -146,7 +146,7 @@ const seedScheduled = (): ScheduledTask[] => [
   {
     id: "sch1", title: "Felicitar aniversariantes do mês",
     assigneeId: team[2]?.id ?? "u3", priority: "baixa",
-    kind: "data", startDate: isoDaysFromNow(20), endDate: isoDaysFromNow(20), yearly: true,
+    kind: "data", startDate: isoDaysFromNow(20), endDate: isoDaysFromNow(20), period: "anual",
   },
 ];
 
