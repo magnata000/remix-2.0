@@ -200,6 +200,8 @@ type Ctx = {
   addNewQuote: (data: QuoteFormData, results: Quote[], winner: Insurer, createdBy?: string) => QuoteRecord;
   addVersion: (groupId: string, data: QuoteFormData, results: Quote[], winner: Insurer, createdBy?: string) => QuoteRecord;
   setStatus: (groupId: string, status: QuoteStatus, lostReason?: LostReason, lostNote?: string) => void;
+  deleteVersion: (versionId: string) => void;
+  deleteGroup: (groupId: string) => void;
 };
 
 const QuoteStoreContext = createContext<Ctx | null>(null);
@@ -248,6 +250,14 @@ export function QuoteStoreProvider({ children }: { children: ReactNode }) {
       : x));
   }, []);
 
+  const deleteVersion = useCallback((versionId: string) => {
+    setRecords((r) => r.filter((x) => x.id !== versionId));
+  }, []);
+
+  const deleteGroup = useCallback((groupId: string) => {
+    setRecords((r) => r.filter((x) => x.groupId !== groupId));
+  }, []);
+
   const groups = useMemo(() => {
     const map = new Map<string, QuoteRecord[]>();
     records.forEach((r) => {
@@ -264,7 +274,7 @@ export function QuoteStoreProvider({ children }: { children: ReactNode }) {
     }).sort((a, b) => +new Date(b.latest.createdAt) - +new Date(a.latest.createdAt));
   }, [records]);
 
-  const value: Ctx = { records, groups, addNewQuote, addVersion, setStatus };
+  const value: Ctx = { records, groups, addNewQuote, addVersion, setStatus, deleteVersion, deleteGroup };
   return createElement(QuoteStoreContext.Provider, { value }, children);
 }
 

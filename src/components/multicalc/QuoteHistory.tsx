@@ -9,7 +9,11 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw, Calculator,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw, Calculator, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateShort } from "@/lib/mock/data";
@@ -35,13 +39,15 @@ type Props = {
 };
 
 export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, onEditVersion, onRecalculate, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
-  const { groups, setStatus } = useQuoteStore();
-  const { byQuoteGroup, createFromQuote } = usePipelineStore();
+  const { groups, setStatus, deleteVersion, deleteGroup } = useQuoteStore();
+  const { byQuoteGroup, createFromQuote, unlinkQuoteGroup } = usePipelineStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [branchFilter, setBranchFilter] = useState<string>("todos");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lostDialog, setLostDialog] = useState<{ groupId: string } | null>(null);
+  const [versionToDelete, setVersionToDelete] = useState<QuoteRecord | null>(null);
+  const [groupToDelete, setGroupToDelete] = useState<{ groupId: string; clientName: string; count: number; hasLinkedOpp: boolean } | null>(null);
 
   // Auto-expand + scroll to focused group from cross-module navigation
   useEffect(() => {
@@ -93,6 +99,23 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
     });
     toast.success(`${g.clientName} adicionado ao pipeline em "Cotação"`);
   };
+
+  const confirmDeleteVersion = () => {
+    if (!versionToDelete) return;
+    if (selected.includes(versionToDelete.id)) onToggleSelect(versionToDelete.id);
+    deleteVersion(versionToDelete.id);
+    toast.success(`Versão v${versionToDelete.version} excluída`);
+    setVersionToDelete(null);
+  };
+
+  const confirmDeleteGroup = () => {
+    if (!groupToDelete) return;
+    if (groupToDelete.hasLinkedOpp) unlinkQuoteGroup(groupToDelete.groupId);
+    deleteGroup(groupToDelete.groupId);
+    toast.success(`Cotação de ${groupToDelete.clientName} excluída`);
+    setGroupToDelete(null);
+  };
+
 
   return (
     <div className="space-y-4">
@@ -229,6 +252,15 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
                           Perdida
                         </Button>
                       )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        title="Excluir cotação completa"
+                        onClick={() => setGroupToDelete({ groupId: g.groupId, clientName: g.clientName, count: g.versions.length, hasLinkedOpp: !!linkedOpp })}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </button>
                 </CollapsibleTrigger>
@@ -302,6 +334,15 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
                                   <X className="h-3.5 w-3.5" />
                                 </Button>
                               )}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                title="Excluir esta versão"
+                                onClick={() => setVersionToDelete(v)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           </li>
                         );
@@ -332,6 +373,49 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
         onOpenChange={(o) => !o && setLostDialog(null)}
         onConfirm={confirmLost}
       />
+
+      <AlertDialog open={!!versionToDelete} onOpenChange={(o) => !o && setVersionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir versão v{versionToDelete?.version}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A versão será removida do histórico.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteVersion}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!groupToDelete} onOpenChange={(o) => !o && setGroupToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cotação de {groupToDelete?.clientName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {groupToDelete?.count === 1
+                ? "1 versão será removida permanentemente."
+                : `Todas as ${groupToDelete?.count} versões serão removidas permanentemente.`}
+              {groupToDelete?.hasLinkedOpp && " O card vinculado no Pipeline será desvinculado."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteGroup}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir cotação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

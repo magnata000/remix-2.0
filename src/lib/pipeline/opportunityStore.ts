@@ -11,6 +11,7 @@ type Ctx = {
   createFromQuote: (input: { clientName: string; branch: Branch; estimatedValue: number; quoteGroupId: string }) => Opportunity;
   createOpportunity: (input: { title: string; clientName: string; branch: Branch; estimatedValue: number; dueDate: string; assignee: string; stage: KanbanStage }) => Opportunity;
   setEstimatedValue: (id: string, value: number) => void;
+  unlinkQuoteGroup: (quoteGroupId: string) => void;
 };
 
 const PipelineContext = createContext<Ctx | null>(null);
@@ -64,6 +65,10 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     setOpportunities((arr) => arr.map((t) => t.id === id ? { ...t, estimatedValue: value } : t));
   }, []);
 
+  const unlinkQuoteGroup = useCallback((quoteGroupId: string) => {
+    setOpportunities((arr) => arr.map((t) => t.quoteGroupId === quoteGroupId ? { ...t, quoteGroupId: undefined } : t));
+  }, []);
+
   const indexByGroup = useMemo(() => {
     const m = new Map<string, Opportunity>();
     opportunities.forEach((o) => { if (o.quoteGroupId) m.set(o.quoteGroupId, o); });
@@ -72,7 +77,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
 
   const byQuoteGroup = useCallback((groupId: string) => indexByGroup.get(groupId), [indexByGroup]);
 
-  const value: Ctx = { opportunities, byQuoteGroup, moveStage, linkQuoteGroup, createFromQuote, createOpportunity, setEstimatedValue };
+  const value: Ctx = { opportunities, byQuoteGroup, moveStage, linkQuoteGroup, createFromQuote, createOpportunity, setEstimatedValue, unlinkQuoteGroup };
   return createElement(PipelineContext.Provider, { value }, children);
 }
 

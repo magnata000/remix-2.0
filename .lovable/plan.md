@@ -1,51 +1,47 @@
-# Valor estimado opcional + Modal de fechamento
+# Excluir cotações e versões no Multicálculo
 
 ## Objetivo
-Tornar `Valor estimado` opcional ao criar oportunidade e, ao mover o card para a coluna **Fechado**, abrir um modal que pergunta qual cotação foi fechada (ou aceita valor manual) — sobrescrevendo o `estimatedValue` com o valor real.
+Permitir excluir uma **versão** individual ou um **grupo de cotações inteiro** na página Multicálculo, com UI discreta (ícones ghost) e confirmação obrigatória.
 
 ## Mudanças
 
-### 1. `NewOpportunityDialog.tsx` — tornar valor opcional
-- Remover asterisco do label "Valor estimado".
-- Remover regra `valueNum <= 0` de `errors`.
-- Permitir submit com valor vazio/zero (passa `0` ao store).
-- Placeholder muda para "Opcional" para deixar claro.
+### 1. `src/lib/multicalc/quoteStore.ts` — novos métodos no store
+- `deleteVersion(versionId: string)`: remove o `QuoteRecord` do array. Se era a última versão do grupo, o grupo deixa de existir automaticamente (pois `groups` é derivado).
+- `deleteGroup(groupId: string)`: remove todos os `QuoteRecord` do grupo.
+- Expor ambos no `Ctx` e no `value` do provider.
 
-### 2. Card e listagens — exibir "—" quando valor for 0
-- Em `KanbanModule` / cards de oportunidade, quando `estimatedValue === 0`, mostrar `—` no lugar de `R$ 0`. (Localizar e ajustar onde `formatBRL(estimatedValue)` é renderizado em cards do pipeline.)
+### 2. `src/lib/pipeline/opportunityStore.ts` — limpar vínculo órfão
+- Novo método `unlinkQuoteGroup(groupId: string)`: percorre `opportunities` e zera `quoteGroupId` em qualquer card vinculado. Chamado pelo Multicálculo após excluir um grupo, para não deixar o card do pipeline apontando para uma cotação inexistente.
 
-### 3. Novo componente `CloseOpportunityDialog.tsx`
-Modal disparado quando o usuário move um card para a coluna **Fechado** (drag-and-drop ou ação de menu).
+### 3. `src/components/multicalc/QuoteHistory.tsx` — UI discreta
 
-Conteúdo do modal:
-- Título: "Fechar oportunidade — {clientName}"
-- **Se houver cotações vinculadas** (busca via `quoteGroupId` no `quoteStore`):
-  - Lista as cotações da seguradora com prêmio (radio list).
-  - Usuário escolhe uma → valor da cotação preenche automaticamente um campo "Valor fechado" (editável caso precise ajustar).
-- **Se não houver cotações**:
-  - Apenas campo numérico "Valor fechado *" obrigatório.
-- Botões: Cancelar / Confirmar fechamento.
+**Excluir versão** (linha de cada `v.version`):
+- Adicionar `Button` `size="icon" variant="ghost"` com ícone `Trash2` (lucide), classe `h-7 w-7 text-muted-foreground hover:text-destructive`, junto dos demais botões da linha (ao lado do "Editar (nova versão)").
+- `title="Excluir esta versão"`.
+- Ao clicar, abre `AlertDialog` de confirmação:
+  - Título: "Excluir versão v{n}?"
+  - Descrição: "Esta ação não pode ser desfeita. A versão será removida do histórico."
+  - Confirmar → `deleteVersion(v.id)` + toast "Versão excluída". Se a versão estava em `selected`, remover via `onToggleSelect`.
 
-Ao confirmar:
-- Chama `setEstimatedValue(id, valorFinal)` (sobrescreve).
-- Chama `moveStage(id, "fechado")`.
-- Toast de sucesso.
+**Excluir grupo inteiro** (header do `Collapsible`):
+- Adicionar ícone `Trash2` discreto no canto direito do header (junto aos botões "Ganha"/"Perdida"), `size="icon" variant="ghost"` com `text-muted-foreground hover:text-destructive`.
+- `title="Excluir cotação completa"`.
+- Ao clicar, abre `AlertDialog`:
+  - Título: "Excluir cotação de {clientName}?"
+  - Descrição: "Todas as {n} versões serão removidas permanentemente.{linkedOpp ? " O card vinculado no Pipeline será desvinculado." : ""}"
+  - Confirmar → `deleteGroup(g.groupId)` + se `linkedOpp` existe, `unlinkQuoteGroup(g.groupId)` + toast "Cotação excluída".
 
-Se cancelar: card volta para a coluna anterior (não move).
+### 4. Estados locais no `QuoteHistory`
+- `const [versionToDelete, setVersionToDelete] = useState<QuoteRecord | null>(null)`
+- `const [groupToDelete, setGroupToDelete] = useState<{ groupId, clientName, versionsCount, hasLinkedOpp } | null>(null)`
 
-### 4. Integração no `KanbanModule`
-- Interceptar a transição para `"fechado"` antes de chamar `moveStage` diretamente.
-- Em vez disso, abrir o `CloseOpportunityDialog` com a oportunidade selecionada.
-- Só após confirmação o `moveStage` é executado.
-- Outras transições (lead → cotação, etc.) continuam sem modal.
+Usar `<AlertDialog>` (já existe em `src/components/ui/alert-dialog.tsx`).
 
 ## Fora do escopo
-- Não adicionar campo separado `closedValue` (decisão: sobrescrever `estimatedValue`).
-- Não alterar fluxo de "Perdido" (já tem seu próprio modal).
-- Não criar relatório de previsto vs realizado.
+- Não há "lixeira"/undo — exclusão é definitiva (mock data; toast simples).
+- Não alterar layout dos filtros nem dos botões principais.
 
 ## Arquivos afetados
-- `src/components/pipeline/NewOpportunityDialog.tsx` (editar)
-- `src/components/pipeline/CloseOpportunityDialog.tsx` (novo)
-- `src/components/modules/KanbanModule.tsx` (interceptar transição para "fechado")
-- Cards do pipeline onde `estimatedValue` é exibido (formatação "—" para 0)
+- `src/lib/multicalc/quoteStore.ts` (adicionar `deleteVersion`, `deleteGroup`)
+- `src/lib/pipeline/opportunityStore.ts` (adicionar `unlinkQuoteGroup`)
+- `src/components/multicalc/QuoteHistory.tsx` (botões + AlertDialogs)
