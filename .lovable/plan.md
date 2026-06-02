@@ -1,32 +1,23 @@
-## Problema
-Ao reabrir o card de tarefa, a Timeline mostra a primeira mensagem em vez da última. Causa: o `DialogContent` do Radix tem animação de abertura; o `requestAnimationFrame` único dispara antes do layout final, então `scrollHeight` ainda não reflete o conteúdo completo.
+## Objetivo
+Remover as abas "Nova cotação" / "Histórico" do Multicálculo. O Histórico passa a ser a tela padrão; "Nova cotação" vira um botão com ícone de calculadora + sinal de mais, posicionado imediatamente à direita do botão "Comparar". Ao clicar abre o wizard em um modal centralizado. Editar/recalcular versão também usa o modal.
 
-## Mudança
+## Mudanças
 
-**`src/components/tasks/TaskDetailDialog.tsx`**
+**`src/components/multicalc/QuoteHistory.tsx`**
+- Adicionar prop `onNewQuote: () => void`.
+- Renderizar novo `<Button>` logo após o botão "Comparar" (linhas 129–136), com `<Calculator />` sobreposto por um `<Plus />` pequeno no canto superior esquerdo (ou agrupados via `<span>` com `Calculator` + `Plus` absoluto). Texto "Nova cotação" ao lado, mesmo estilo do botão Comparar (variant primário com `bg-brand`).
+- Importar `Calculator` e `Plus` de `lucide-react`.
 
-Trocar o `useEffect` atual por uma versão que rola após a animação assentar:
-
-```ts
-useLayoutEffect(() => {
-  if (!task) return;
-  const el = timelineRef.current;
-  if (!el) return;
-  // Dois RAFs garantem que o scroll ocorra após o layout final do DialogContent
-  const r1 = requestAnimationFrame(() => {
-    const r2 = requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
-    });
-    (el as any).__r2 = r2;
-  });
-  return () => {
-    cancelAnimationFrame(r1);
-    if ((el as any).__r2) cancelAnimationFrame((el as any).__r2);
-  };
-}, [task?.id, task?.timeline.length]);
-```
-
-Adicionar `useLayoutEffect` ao import do React.
+**`src/components/modules/MulticalcModule.tsx`**
+- Remover `Tabs/TabsList/TabsTrigger/TabsContent`.
+- Estado `view: "historico" | "comparar"` + estado `wizardOpen: boolean`.
+- Renderizar `QuoteHistory` quando `view === "historico"` e `QuoteCompare` quando `"comparar"`.
+- Renderizar `<Dialog open={wizardOpen} onOpenChange={...}>` com `<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">` contendo `MulticalcWizard` (com `key`, `initialData`, `editingLabel`, `onComplete`).
+- `handleEditVersion` e `handleRecalculate` → `setEditing(...); setWizardOpen(true)` (sem mudar tab).
+- `handleComplete` fecha o modal (`setWizardOpen(false)`) e limpa `editing`.
+- Passar `onNewQuote={() => { setEditing(null); setWizardOpen(true); }}` para `QuoteHistory`.
+- Se `initialFocus.quoteGroupId` → manter `view = "historico"` (default).
 
 ## Fora de escopo
-- Outros componentes/estilos.
+- Estilo interno do `MulticalcWizard`, lógica de cotação, comparar, status.
+- Outras abas/seções.
