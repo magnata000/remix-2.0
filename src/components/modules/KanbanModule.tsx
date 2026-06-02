@@ -258,7 +258,7 @@ function KanbanCardBody({
         <Badge variant="outline" className="rounded-full text-xs">
           {task.branch}
         </Badge>
-        <p className="text-sm font-bold">{formatBRL(task.estimatedValue)}</p>
+        <p className="text-sm font-bold">{task.estimatedValue > 0 ? formatBRL(task.estimatedValue) : "—"}</p>
       </div>
 
       {/* Quote link / CTA */}
