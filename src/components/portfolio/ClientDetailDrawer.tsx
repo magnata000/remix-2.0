@@ -102,68 +102,7 @@ export function ClientDetailDrawer({
   );
 
 
-  const clientOpps = useMemo(
-    () =>
-      clientName
-        ? opportunities.filter(
-            (o) => o.clientName === clientName && o.stage !== "fechado" && o.stage !== "perdido",
-          )
-        : [],
-    [opportunities, clientName],
-  );
 
-  const clientGroups = useMemo(
-    () => (clientName ? groups.filter((g) => g.clientName === clientName).slice(0, 5) : []),
-    [groups, clientName],
-  );
-
-  const timeline = useMemo<TimelineEvent[]>(() => {
-    if (!clientName) return [];
-    const ev: TimelineEvent[] = [];
-    clientPolicies.forEach((p) =>
-      ev.push({
-        id: `pol-${p.id}`,
-        date: p.startDate,
-        type: "policy",
-        title: `Apólice ${p.number}`,
-        meta: `${p.branch} • ${p.insurer}`,
-      }),
-    );
-    opportunities
-      .filter((o) => o.clientName === clientName)
-      .forEach((o) =>
-        ev.push({
-          id: `opp-${o.id}`,
-          date: o.dueDate,
-          type: "opportunity",
-          title: o.title,
-          meta: `Oportunidade • ${o.stage}`,
-        }),
-      );
-    groups
-      .filter((g) => g.clientName === clientName)
-      .forEach((g) =>
-        ev.push({
-          id: `q-${g.groupId}`,
-          date: g.latest.createdAt.slice(0, 10),
-          type: "quote",
-          title: `Cotação ${g.branch}`,
-          meta: `v${g.latest.version} • ${g.status}`,
-        }),
-      );
-    commissions
-      .filter((c) => c.clientName === clientName)
-      .forEach((c) =>
-        ev.push({
-          id: `cm-${c.id}`,
-          date: c.dueDate,
-          type: "commission",
-          title: `Comissão ${formatBRL(c.amount)}`,
-          meta: `${c.insurer} • ${c.status}`,
-        }),
-      );
-    return ev.sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 10);
-  }, [clientName, clientPolicies, opportunities, groups]);
 
   const open = !!clientName && !!stats;
 
