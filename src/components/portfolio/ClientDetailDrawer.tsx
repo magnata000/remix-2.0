@@ -67,21 +67,11 @@ type Props = {
   onOpenPolicy?: (policy: Policy) => void;
 };
 
-type TimelineEvent = {
-  id: string;
-  date: string;
-  type: "policy" | "opportunity" | "quote" | "commission";
-  title: string;
-  meta: string;
-};
-
 export function ClientDetailDrawer({
   clientName,
   onOpenChange,
   onOpenPolicy,
 }: Props) {
-  const { opportunities } = usePipelineStore();
-  const { groups } = useQuoteStore();
   const { clients } = useClientStore();
   const { policies } = usePolicyStore();
   const { goTo } = useNavigation();
