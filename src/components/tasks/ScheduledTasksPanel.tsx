@@ -30,7 +30,7 @@ const REPEAT_OPTIONS: { value: RepeatValue; label: string }[] = [
 ];
 
 export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { scheduled, addScheduled, removeScheduled } = useTaskStore();
+  const { scheduled, addScheduled, updateScheduled, removeScheduled } = useTaskStore();
   const [title, setTitle] = useState("");
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("media");
@@ -38,6 +38,33 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const [range, setRange] = useState<DateRange | undefined>();
   const [repeat, setRepeat] = useState<RepeatValue>("nenhuma");
   const [weekdays, setWeekdays] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setTitle("");
+    setAssigneeId(team[0]?.id ?? "");
+    setPriority("media");
+    setKind("data");
+    setRange(undefined);
+    setRepeat("nenhuma");
+    setWeekdays([]);
+    setEditingId(null);
+  };
+
+  const startEdit = (s: typeof scheduled[number]) => {
+    setEditingId(s.id);
+    setTitle(s.title);
+    setAssigneeId(s.assigneeId);
+    setPriority(s.priority);
+    setKind(s.kind);
+    setRepeat(s.period ?? "nenhuma");
+    setWeekdays(s.weekdays?.map(String) ?? []);
+    if (s.kind === "data" && s.startDate) {
+      setRange({ from: new Date(s.startDate), to: s.endDate ? new Date(s.endDate) : undefined });
+    } else {
+      setRange(undefined);
+    }
+  };
 
   const submit = () => {
     if (!title.trim()) { toast.error("Informe um título"); return; }
@@ -48,15 +75,21 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     if (kind === "semana" && weekdays.length === 0) { toast.error("Selecione ao menos um dia"); return; }
     const from = range?.from;
     const to = range?.to ?? range?.from;
-    addScheduled({
+    const payload = {
       title: title.trim(), assigneeId, priority, kind,
       startDate: kind === "data" ? from?.toISOString() : undefined,
       endDate: kind === "data" ? to?.toISOString() : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
       period: kind === "data" && repeat !== "nenhuma" ? repeat : undefined,
-    });
-    toast.success("Agendamento criado");
-    setTitle(""); setRepeat("nenhuma"); setWeekdays([]); setRange(undefined);
+    };
+    if (editingId) {
+      updateScheduled(editingId, payload);
+      toast.success("Agendamento atualizado");
+    } else {
+      addScheduled(payload);
+      toast.success("Agendamento criado");
+    }
+    resetForm();
   };
 
   return (
