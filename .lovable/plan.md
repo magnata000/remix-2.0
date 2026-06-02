@@ -1,68 +1,48 @@
 
-# Plano: Criar Apólice e Cliente a partir da Carteira
+# Plano: Modal "Marcar como perdida/o" unificado + correção de rótulos
 
-## 1. Novos stores (persistência em memória + seed dos mocks)
+## 1. Tipos e stores
 
-**`src/lib/portfolio/clientStore.tsx`**
-- Provider + hook `useClientStore()`.
-- Estado inicial = `clients` de `mock/data.ts`.
-- API: `clients`, `addClient(input)` → gera `id` `c{timestamp}`.
+**`src/lib/mock/data.ts`**
+- Adicionar `lostNote?: string` em `Task`.
+- Exportar mapa `lostReasonLabel: Record<LostReason, string>` = { preco: "Preço", cobertura: "Cobertura", prazo: "Prazo", "sem-retorno": "Sem retorno", outro: "Outro" }.
 
-**`src/lib/portfolio/policyStore.tsx`**
-- Provider + hook `usePolicyStore()`.
-- Estado inicial = `policies` de `mock/data.ts`.
-- API: `policies`, `addPolicy(input)` → gera `id` e `number` no formato `APO-2026-XXXX` (próximo sequencial baseado no array atual).
-- No `addPolicy`, dispara criação de pastas raiz no `documentStore` (Geral do Cliente se ainda não existir + pasta da apólice nova). Para evitar import circular, o componente que chama `addPolicy` também chama o `documentStore` na sequência — store fica puro.
+**`src/lib/pipeline/opportunityStore.ts`**
+- Assinatura: `moveStage(id, stage, lostReason?, lostNote?)`. Persistir `lostNote` apenas quando `stage === "perdido"`; limpar quando muda de stage.
 
-Ambos providers montados em `src/routes/index.tsx`, acima de `DocumentStoreProvider`.
+**`src/lib/multicalc/quoteStore.ts`**
+- Adicionar `lostNote?: string` em `QuoteRecord`.
+- Assinatura: `setStatus(groupId, status, lostReason?, lostNote?)`. Limpar quando status ≠ "perdida".
 
-## 2. Migração de consumidores
+## 2. Componente reutilizável
 
-Trocar imports diretos de `clients`/`policies` do mock pelos hooks dos novos stores em:
-- `src/components/portfolio/ClientsTab.tsx`
-- `src/components/portfolio/PoliciesTab.tsx`
-- `src/components/modules/PortfolioModule.tsx` (counts)
-- `src/components/portfolio/ClientDetailDrawer.tsx` (lookup de cliente + apólices)
+**`src/components/shared/LostReasonDialog.tsx`** (novo)
+- Props: `open`, `onOpenChange`, `title?` ("Marcar como perdida" ou "Mover para Perdido"), `onConfirm(reason, note)`.
+- Conteúdo: `Select` com as 5 opções já existentes (rótulos com acento) + `Textarea` (label "Descrição (opcional)", maxLength 500, placeholder "Detalhe o motivo...").
+- Botões "Cancelar" / "Confirmar". Reset ao abrir.
 
-Demais consumidores (Kanban, Multicálculo, Financeiro, Dashboard) continuam usando o mock estático — fora de escopo.
+## 3. Kanban — interceptar entrada em "Perdido"
 
-## 3. Diálogos de criação
+**`src/components/modules/KanbanModule.tsx`**
+- Novo estado `pendingLost: { id: string } | null`.
+- Helper `requestMove(id, stage)`: se `stage === "perdido"` → setPendingLost; senão → `moveStage(id, stage)`.
+- Substituir todos os call sites por `requestMove`:
+  - Desktop drop handler (linha 84-89).
+  - Mobile dropdown "Mover para" no `KanbanCardBody` (passa `requestMove` como `onMove`).
+- Renderizar `<LostReasonDialog open={!!pendingLost} onConfirm={(r,n) => { moveStage(pendingLost.id, "perdido", r, n); setPendingLost(null); }} />`.
+- Corrigir exibição no card (linha 241-243): usar `lostReasonLabel[task.lostReason]` e, se `task.lostNote`, mostrar em linha separada truncada com `title` mostrando o texto completo.
 
-**`src/components/portfolio/NewClientDialog.tsx`**
-- `Dialog` centralizado + `react-hook-form` + `zod`.
-- Campos: Nome, E-mail, Telefone, Documento (CPF/CNPJ).
-- Validação: nome obrigatório (2–100), e-mail válido, telefone obrigatório (mín. 8), documento obrigatório.
-- Submit → `addClient` → toast sucesso → fecha.
+## 4. Multicálculo — usar o componente compartilhado
 
-**`src/components/portfolio/NewPolicyDialog.tsx`**
-- `Dialog` centralizado + `react-hook-form` + `zod`.
-- Campos:
-  - **Cliente** — combobox buscável (`Popover` + `Command`) listando clientes do `clientStore`.
-  - **Ramo** — `Select` (Auto / Vida / Residencial / Empresarial / Saúde).
-  - **Seguradora** — `Select` (Porto Seguro / Bradesco / SulAmérica / Allianz / Mapfre).
-  - **Prêmio** — input numérico em BRL.
-  - **Vigência início** — `DatePicker` (shadcn, `pointer-events-auto`).
-  - **Vigência fim** — `DatePicker`, auto-preenchido com início +1 ano ao escolher início, editável.
-  - **Status** — `Select` (ativa / pendente / vencida / cancelada).
-  - **Vendedor** — `Select` populado com `team` de `mock/data.ts`.
-- Número da apólice gerado automaticamente (não exibido no form).
-- Submit → `addPolicy` → cria pastas no `documentStore` → toast → fecha.
+**`src/components/multicalc/QuoteHistory.tsx`**
+- Remover Dialog inline (linhas 322-343) e o state `lostReason`.
+- Usar `<LostReasonDialog>`; `confirmLost` agora recebe `(reason, note)` e chama `setStatus(groupId, "perdida", reason, note)`.
 
-## 4. Botões "+" nas abas
+## 5. Correções gramaticais
 
-**`PoliciesTab`** e **`ClientsTab`**: header já existente da aba ganha um `Button` ícone `Plus` à direita (label "Nova apólice" / "Novo cliente" em telas md+, só ícone em mobile). Estado local `open` controla o respectivo dialog.
-
-## Detalhes técnicos
-
-- Validação: `zod` + `@hookform/resolvers/zod` (já em uso no projeto).
-- Combobox: `Command` + `Popover` (shadcn), filtragem case-insensitive por nome.
-- Datas armazenadas como `YYYY-MM-DD` (igual ao mock atual) via `date.toISOString().slice(0,10)`.
-- Toasts via `sonner` (`toast.success`).
-- Sem alteração em `mock/data.ts` — stores apenas o consomem como seed.
+- O card mostrava "Motivo: preco" — resolvido pelo passo 3 (mapa de labels). Mesmo tratamento onde quer que `lostReason` apareça como texto cru. Verificar `ClientDetailDrawer` se exibe `stage` cru também — fora deste escopo a menos que use `lostReason`.
 
 ## Fora de escopo
-
-- Edição/remoção de apólice ou cliente.
-- Upload de documentos no momento da criação.
-- Persistência real (Lovable Cloud) — fica em memória, igual aos demais stores.
-- Atualização dos módulos Kanban/Multicálculo/Financeiro para consumir os novos stores.
+- Persistência real (Lovable Cloud).
+- Editar/limpar motivo após salvo (basta mover o card para outra etapa).
+- Histórico de mudanças de stage.

@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal, Plus, GripVertical, Calendar, Trophy, Calculator, Link2 } from "lucide-react";
-import { formatBRL, formatDateShort, type KanbanStage, type Task } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type LostReason, type Task } from "@/lib/mock/data";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
+import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
+import { toast } from "sonner";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
@@ -32,10 +34,24 @@ export function KanbanModule() {
   const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
   const [openNew, setOpenNew] = useState(false);
+  const [pendingLost, setPendingLost] = useState<{ id: string } | null>(null);
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
-  const move = (id: string, stage: KanbanStage) => moveStage(id, stage);
+  const move = (id: string, stage: KanbanStage) => {
+    if (stage === "perdido") {
+      setPendingLost({ id });
+      return;
+    }
+    moveStage(id, stage);
+  };
+
+  const confirmLost = (reason: LostReason, note?: string) => {
+    if (!pendingLost) return;
+    moveStage(pendingLost.id, "perdido", reason, note);
+    toast.success("Oportunidade marcada como Perdida");
+    setPendingLost(null);
+  };
 
   const byStage = (s: KanbanStage) => opportunities.filter((t) => t.stage === s);
 
@@ -162,6 +178,13 @@ export function KanbanModule() {
           <TasksBoard />
         </TabsContent>
       </Tabs>
+
+      <LostReasonDialog
+        open={!!pendingLost}
+        onOpenChange={(o) => !o && setPendingLost(null)}
+        title="Mover para Perdido"
+        onConfirm={confirmLost}
+      />
     </div>
   );
 }
@@ -239,7 +262,14 @@ function KanbanCardBody({
       </button>
 
       {task.stage === "perdido" && task.lostReason && (
-        <p className="mt-1.5 text-[11px] text-destructive">Motivo: {task.lostReason}</p>
+        <div className="mt-1.5 space-y-0.5">
+          <p className="text-[11px] text-destructive">Motivo: {lostReasonLabel[task.lostReason]}</p>
+          {task.lostNote && (
+            <p className="text-[11px] text-muted-foreground truncate" title={task.lostNote}>
+              {task.lostNote}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="mt-2 flex items-center justify-between">

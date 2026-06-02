@@ -9,10 +9,6 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
   ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +16,7 @@ import { formatBRL, formatDateShort } from "@/lib/mock/data";
 import { useQuoteStore, QuoteRecord, QuoteStatus, LostReason, computeDiff, effectiveStatus } from "@/lib/multicalc/quoteStore";
 import { usePipelineStore, stageLabels } from "@/lib/pipeline/opportunityStore";
 import { StatusBadge } from "./StatusBadge";
+import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
 
 type Props = {
   selected: string[]; // quote ids
@@ -44,7 +41,6 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
   const [branchFilter, setBranchFilter] = useState<string>("todos");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lostDialog, setLostDialog] = useState<{ groupId: string } | null>(null);
-  const [lostReason, setLostReason] = useState<LostReason>("preco");
 
   // Auto-expand + scroll to focused group from cross-module navigation
   useEffect(() => {
@@ -77,11 +73,11 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
     if (status === "ganha") onStatusChanged?.(groupId, "ganha");
   };
 
-  const confirmLost = () => {
+  const confirmLost = (reason: LostReason, note?: string) => {
     if (lostDialog) {
-      setStatus(lostDialog.groupId, "perdida", lostReason);
+      setStatus(lostDialog.groupId, "perdida", reason, note);
       toast.success("Cotação marcada como Perdida");
-      onStatusChanged?.(lostDialog.groupId, "perdida", lostReason);
+      onStatusChanged?.(lostDialog.groupId, "perdida", reason);
       setLostDialog(null);
     }
   };
@@ -319,28 +315,11 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
         })}
       </div>
 
-      <Dialog open={!!lostDialog} onOpenChange={(o) => !o && setLostDialog(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Marcar como perdida</DialogTitle></DialogHeader>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Motivo</Label>
-            <Select value={lostReason} onValueChange={(v) => setLostReason(v as LostReason)}>
-              <SelectTrigger className="rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="preco">Preço</SelectItem>
-                <SelectItem value="cobertura">Cobertura</SelectItem>
-                <SelectItem value="prazo">Prazo</SelectItem>
-                <SelectItem value="sem-retorno">Sem retorno</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" className="rounded-xl" onClick={() => setLostDialog(null)}>Cancelar</Button>
-            <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={confirmLost}>Confirmar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LostReasonDialog
+        open={!!lostDialog}
+        onOpenChange={(o) => !o && setLostDialog(null)}
+        onConfirm={confirmLost}
+      />
     </div>
   );
 }

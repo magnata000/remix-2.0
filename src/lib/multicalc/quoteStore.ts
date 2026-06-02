@@ -20,6 +20,7 @@ export type QuoteRecord = {
   createdBy: string;
   status: QuoteStatus;
   lostReason?: LostReason;
+  lostNote?: string;
   formData: QuoteFormData;
   results: Quote[];
   winnerInsurer: Insurer;
@@ -198,7 +199,7 @@ type Ctx = {
   groups: { groupId: string; clientName: string; branch: Branch; versions: QuoteRecord[]; latest: QuoteRecord; status: QuoteStatus }[];
   addNewQuote: (data: QuoteFormData, results: Quote[], winner: Insurer, createdBy?: string) => QuoteRecord;
   addVersion: (groupId: string, data: QuoteFormData, results: Quote[], winner: Insurer, createdBy?: string) => QuoteRecord;
-  setStatus: (groupId: string, status: QuoteStatus, lostReason?: LostReason) => void;
+  setStatus: (groupId: string, status: QuoteStatus, lostReason?: LostReason, lostNote?: string) => void;
 };
 
 const QuoteStoreContext = createContext<Ctx | null>(null);
@@ -236,8 +237,15 @@ export function QuoteStoreProvider({ children }: { children: ReactNode }) {
     return rec!;
   }, []);
 
-  const setStatus = useCallback((groupId: string, status: QuoteStatus, lostReason?: LostReason) => {
-    setRecords((r) => r.map((x) => x.groupId === groupId ? { ...x, status, lostReason: status === "perdida" ? lostReason : undefined } : x));
+  const setStatus = useCallback((groupId: string, status: QuoteStatus, lostReason?: LostReason, lostNote?: string) => {
+    setRecords((r) => r.map((x) => x.groupId === groupId
+      ? {
+          ...x,
+          status,
+          lostReason: status === "perdida" ? lostReason : undefined,
+          lostNote: status === "perdida" ? lostNote : undefined,
+        }
+      : x));
   }, []);
 
   const groups = useMemo(() => {
