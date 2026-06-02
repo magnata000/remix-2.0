@@ -73,11 +73,11 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
     if (status === "ganha") onStatusChanged?.(groupId, "ganha");
   };
 
-  const confirmLost = () => {
+  const confirmLost = (reason: LostReason, note?: string) => {
     if (lostDialog) {
-      setStatus(lostDialog.groupId, "perdida", lostReason);
+      setStatus(lostDialog.groupId, "perdida", reason, note);
       toast.success("Cotação marcada como Perdida");
-      onStatusChanged?.(lostDialog.groupId, "perdida", lostReason);
+      onStatusChanged?.(lostDialog.groupId, "perdida", reason);
       setLostDialog(null);
     }
   };
