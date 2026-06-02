@@ -1,21 +1,51 @@
+# Valor estimado opcional + Modal de fechamento
+
 ## Objetivo
-Reagrupar todos os filtros/botões da aba Tarefas em uma única **box branca** (Card), com layout responsivo que não quebra feio nem sobrepõe elementos em telas menores.
+Tornar `Valor estimado` opcional ao criar oportunidade e, ao mover o card para a coluna **Fechado**, abrir um modal que pergunta qual cotação foi fechada (ou aceita valor manual) — sobrescrevendo o `estimatedValue` com o valor real.
 
-## Alterações em `src/components/tasks/TasksBoard.tsx`
+## Mudanças
 
-1. **Restaurar o Card branco** envolvendo toda a barra de filtros + botões (`<Card className="p-3 rounded-2xl">`).
-2. **Manter a descrição** "Demandas internas..." acima do Card (fora da box), como linha de subtítulo.
-3. **Estrutura interna do Card** em duas zonas com `flex flex-wrap items-center gap-2`:
-   - **Zona esquerda (filtros, cresce)**: Buscar Cliente, Colaborador, Ordenação, Prioridade — agrupados em `flex-1 min-w-0 flex-wrap`.
-   - **Zona direita (ações, fixa)**: Agendamentos, Gerenciar etapas, Nova tarefa — agrupados com `ml-auto flex-wrap`.
-4. **Ajustes responsivos**:
-   - Inputs/Selects com largura adaptativa: `w-full sm:w-56` (Buscar), `w-full sm:w-48` (Colaborador), `w-full sm:w-40` (Ordenação).
-   - ToggleGroup de prioridade com `shrink-0`.
-   - Botões de ação em telas estreitas (<sm): mostrar só ícone (`<span className="hidden md:inline">texto</span>`) para evitar sobreposição.
-   - `gap-2` consistente, `flex-wrap` em todos os containers para quebra controlada.
-5. **Sem alterações de lógica/negócio** — apenas reorganização visual e classes responsivas.
+### 1. `NewOpportunityDialog.tsx` — tornar valor opcional
+- Remover asterisco do label "Valor estimado".
+- Remover regra `valueNum <= 0` de `errors`.
+- Permitir submit com valor vazio/zero (passa `0` ao store).
+- Placeholder muda para "Opcional" para deixar claro.
 
-## Resultado
-Em desktop (≥1024px): tudo em uma linha dentro da box branca.
-Em tablet (640-1024px): filtros podem quebrar para uma segunda linha de forma alinhada.
-Em mobile (<640px): inputs ocupam largura total empilhados, botões de ação compactados com ícones.
+### 2. Card e listagens — exibir "—" quando valor for 0
+- Em `KanbanModule` / cards de oportunidade, quando `estimatedValue === 0`, mostrar `—` no lugar de `R$ 0`. (Localizar e ajustar onde `formatBRL(estimatedValue)` é renderizado em cards do pipeline.)
+
+### 3. Novo componente `CloseOpportunityDialog.tsx`
+Modal disparado quando o usuário move um card para a coluna **Fechado** (drag-and-drop ou ação de menu).
+
+Conteúdo do modal:
+- Título: "Fechar oportunidade — {clientName}"
+- **Se houver cotações vinculadas** (busca via `quoteGroupId` no `quoteStore`):
+  - Lista as cotações da seguradora com prêmio (radio list).
+  - Usuário escolhe uma → valor da cotação preenche automaticamente um campo "Valor fechado" (editável caso precise ajustar).
+- **Se não houver cotações**:
+  - Apenas campo numérico "Valor fechado *" obrigatório.
+- Botões: Cancelar / Confirmar fechamento.
+
+Ao confirmar:
+- Chama `setEstimatedValue(id, valorFinal)` (sobrescreve).
+- Chama `moveStage(id, "fechado")`.
+- Toast de sucesso.
+
+Se cancelar: card volta para a coluna anterior (não move).
+
+### 4. Integração no `KanbanModule`
+- Interceptar a transição para `"fechado"` antes de chamar `moveStage` diretamente.
+- Em vez disso, abrir o `CloseOpportunityDialog` com a oportunidade selecionada.
+- Só após confirmação o `moveStage` é executado.
+- Outras transições (lead → cotação, etc.) continuam sem modal.
+
+## Fora do escopo
+- Não adicionar campo separado `closedValue` (decisão: sobrescrever `estimatedValue`).
+- Não alterar fluxo de "Perdido" (já tem seu próprio modal).
+- Não criar relatório de previsto vs realizado.
+
+## Arquivos afetados
+- `src/components/pipeline/NewOpportunityDialog.tsx` (editar)
+- `src/components/pipeline/CloseOpportunityDialog.tsx` (novo)
+- `src/components/modules/KanbanModule.tsx` (interceptar transição para "fechado")
+- Cards do pipeline onde `estimatedValue` é exibido (formatação "—" para 0)
