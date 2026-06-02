@@ -86,7 +86,7 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
             </Meta>
             <Meta icon={<User className="h-3.5 w-3.5" />} label="Responsável">
               <span className="inline-flex items-center gap-2">
-                <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px] bg-brand-soft text-brand-foreground font-semibold">{initialsOf(task.assigneeId)}</AvatarFallback></Avatar>
+                <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px] bg-brand-soft text-brand-foreground font-semibold">{task.assigneeId === "all" ? <Users className="h-3 w-3" /> : initialsOf(task.assigneeId)}</AvatarFallback></Avatar>
                 {nameOf(task.assigneeId)}
               </span>
             </Meta>
