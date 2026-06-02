@@ -201,6 +201,13 @@ export function KanbanModule() {
         title="Mover para Perdido"
         onConfirm={confirmLost}
       />
+
+      <CloseOpportunityDialog
+        open={!!pendingClose}
+        onOpenChange={(o) => !o && setPendingClose(null)}
+        opportunity={closingOpportunity}
+        onConfirm={confirmClose}
+      />
     </div>
   );
 }
