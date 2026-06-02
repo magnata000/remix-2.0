@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { Wallet, Clock, AlertCircle, BarChart3 } from "lucide-react";
 import { commissions, salesByMonth, formatBRL, formatDateShort } from "@/lib/mock/data";
+import { ComingSoonOverlay } from "@/components/shared/ComingSoonOverlay";
 
 const statusColor: Record<string, string> = {
   pago: "bg-success/15 text-success border-0",
