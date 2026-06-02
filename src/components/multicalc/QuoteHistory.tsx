@@ -334,6 +334,15 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
                                   <X className="h-3.5 w-3.5" />
                                 </Button>
                               )}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                title="Excluir esta versão"
+                                onClick={() => setVersionToDelete(v)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           </li>
                         );
