@@ -9,10 +9,6 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
   ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +16,7 @@ import { formatBRL, formatDateShort } from "@/lib/mock/data";
 import { useQuoteStore, QuoteRecord, QuoteStatus, LostReason, computeDiff, effectiveStatus } from "@/lib/multicalc/quoteStore";
 import { usePipelineStore, stageLabels } from "@/lib/pipeline/opportunityStore";
 import { StatusBadge } from "./StatusBadge";
+import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
 
 type Props = {
   selected: string[]; // quote ids
