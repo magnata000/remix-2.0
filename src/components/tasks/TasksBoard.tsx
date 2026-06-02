@@ -52,81 +52,77 @@ export function TasksBoard() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-sm text-muted-foreground">Demandas internas, agendamentos e delegações da corretora.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="rounded-xl" onClick={() => setScheduleOpen(true)}>
-            <CalendarClock className="h-4 w-4 mr-2" /> Agendamentos
-          </Button>
-          <Button variant="outline" className="rounded-xl" onClick={() => setManageOpen(true)}>
-            <Settings className="h-4 w-4 mr-2" /> Gerenciar etapas
-          </Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => setNewOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Nova tarefa
-          </Button>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm text-muted-foreground mr-auto">Demandas internas, agendamentos e delegações da corretora.</p>
+
+        <Popover open={clientOpen} onOpenChange={setClientOpen}>
+          <PopoverTrigger asChild>
+            <div className="relative w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                readOnly
+                value={fClient}
+                placeholder="Buscar cliente..."
+                className="pl-9 rounded-xl bg-muted border-0 cursor-pointer"
+                onClick={() => setClientOpen(true)}
+              />
+              {fClient && (
+                <button onClick={(e) => { e.stopPropagation(); setFClient(""); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Digite o nome..." />
+              <CommandList>
+                <CommandEmpty>Nenhum cliente.</CommandEmpty>
+                <CommandGroup>
+                  {clients.map((c) => (
+                    <CommandItem key={c.id} value={c.name} onSelect={() => { setFClient(c.name); setClientOpen(false); }}>
+                      {c.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        <Select value={fAssignee} onValueChange={setFAssignee}>
+          <SelectTrigger className="w-48 rounded-xl bg-muted border-0"><SelectValue placeholder="Colaborador" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os colaboradores</SelectItem>
+            {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={fSort} onValueChange={(v) => setFSort(v as "recent" | "old")}>
+          <SelectTrigger className="w-44 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Mais recentes</SelectItem>
+            <SelectItem value="old">Mais antigas</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <ToggleGroup type="multiple" value={fPriority} onValueChange={setFPriority} className="justify-start">
+          <ToggleGroupItem value="alta" className="rounded-lg h-9 text-xs">Alta</ToggleGroupItem>
+          <ToggleGroupItem value="media" className="rounded-lg h-9 text-xs">Média</ToggleGroupItem>
+          <ToggleGroupItem value="baixa" className="rounded-lg h-9 text-xs">Baixa</ToggleGroupItem>
+        </ToggleGroup>
+
+        <Button variant="outline" className="rounded-xl" onClick={() => setScheduleOpen(true)}>
+          <CalendarClock className="h-4 w-4 mr-2" /> Agendamentos
+        </Button>
+        <Button variant="outline" className="rounded-xl" onClick={() => setManageOpen(true)}>
+          <Settings className="h-4 w-4 mr-2" /> Gerenciar etapas
+        </Button>
+        <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => setNewOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Nova tarefa
+        </Button>
       </div>
 
-      {/* Filters */}
-      <Card className="p-3 rounded-2xl border-border shadow-none">
-        <div className="flex flex-col lg:flex-row gap-2 lg:items-center">
-          <Select value={fAssignee} onValueChange={setFAssignee}>
-            <SelectTrigger className="lg:w-48 rounded-xl bg-muted border-0"><SelectValue placeholder="Colaborador" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os colaboradores</SelectItem>
-              {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <ToggleGroup type="multiple" value={fPriority} onValueChange={setFPriority} className="justify-start">
-            <ToggleGroupItem value="alta" className="rounded-lg h-9 text-xs">Alta</ToggleGroupItem>
-            <ToggleGroupItem value="media" className="rounded-lg h-9 text-xs">Média</ToggleGroupItem>
-            <ToggleGroupItem value="baixa" className="rounded-lg h-9 text-xs">Baixa</ToggleGroupItem>
-          </ToggleGroup>
-          <Popover open={clientOpen} onOpenChange={setClientOpen}>
-            <PopoverTrigger asChild>
-              <div className="relative lg:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  readOnly
-                  value={fClient}
-                  placeholder="Buscar cliente..."
-                  className="pl-9 rounded-xl bg-muted border-0 cursor-pointer"
-                  onClick={() => setClientOpen(true)}
-                />
-                {fClient && (
-                  <button onClick={(e) => { e.stopPropagation(); setFClient(""); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Digite o nome..." />
-                <CommandList>
-                  <CommandEmpty>Nenhum cliente.</CommandEmpty>
-                  <CommandGroup>
-                    {clients.map((c) => (
-                      <CommandItem key={c.id} value={c.name} onSelect={() => { setFClient(c.name); setClientOpen(false); }}>
-                        {c.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          <Select value={fSort} onValueChange={(v) => setFSort(v as "recent" | "old")}>
-            <SelectTrigger className="lg:w-44 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Mais recentes</SelectItem>
-              <SelectItem value="old">Mais antigas</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
 
       {/* Board */}
       <div
