@@ -231,17 +231,17 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Valor estimado *</Label>
+                <Label className="text-xs text-muted-foreground">Valor estimado</Label>
                 <Input
                   inputMode="numeric"
                   value={estimatedValue}
                   onChange={(e) => setEstimatedValue(e.target.value.replace(/\D/g, ""))}
                   onBlur={() => { if (valueNum > 0) setEstimatedValue(formatBRL(valueNum)); }}
                   onFocus={() => setEstimatedValue(String(valueNum || ""))}
-                  placeholder="R$ 0"
+                  placeholder="Opcional"
                   className="mt-1.5 rounded-xl bg-muted border-0"
                 />
-                {errors.value && <p className="text-xs text-destructive mt-1">{errors.value}</p>}
+                <p className="text-[11px] text-muted-foreground mt-1">Definido no fechamento.</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Prazo *</Label>
