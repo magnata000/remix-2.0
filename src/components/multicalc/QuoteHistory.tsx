@@ -9,7 +9,11 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw, Calculator,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  ChevronDown, ChevronRight, Pencil, GitCompareArrows, Trophy, FileCheck2, Search, X, Link2, Plus, RefreshCw, Calculator, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDateShort } from "@/lib/mock/data";
