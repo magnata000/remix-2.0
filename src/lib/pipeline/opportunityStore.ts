@@ -6,7 +6,7 @@ export type Opportunity = Task;
 type Ctx = {
   opportunities: Opportunity[];
   byQuoteGroup: (groupId: string) => Opportunity | undefined;
-  moveStage: (id: string, stage: KanbanStage, lostReason?: LostReason) => void;
+  moveStage: (id: string, stage: KanbanStage, lostReason?: LostReason, lostNote?: string) => void;
   linkQuoteGroup: (opportunityId: string, quoteGroupId: string) => void;
   createFromQuote: (input: { clientName: string; branch: Branch; estimatedValue: number; quoteGroupId: string }) => Opportunity;
   createOpportunity: (input: { title: string; clientName: string; branch: Branch; estimatedValue: number; dueDate: string; assignee: string; stage: KanbanStage }) => Opportunity;
@@ -18,10 +18,15 @@ const PipelineContext = createContext<Ctx | null>(null);
 export function PipelineStoreProvider({ children }: { children: ReactNode }) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>(() => initialTasks);
 
-  const moveStage = useCallback((id: string, stage: KanbanStage, lostReason?: LostReason) => {
+  const moveStage = useCallback((id: string, stage: KanbanStage, lostReason?: LostReason, lostNote?: string) => {
     setOpportunities((arr) => arr.map((t) =>
       t.id === id
-        ? { ...t, stage, lostReason: stage === "perdido" ? (lostReason ?? t.lostReason) : undefined }
+        ? {
+            ...t,
+            stage,
+            lostReason: stage === "perdido" ? (lostReason ?? t.lostReason) : undefined,
+            lostNote: stage === "perdido" ? (lostNote ?? t.lostNote) : undefined,
+          }
         : t
     ));
   }, []);
