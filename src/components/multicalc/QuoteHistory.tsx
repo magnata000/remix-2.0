@@ -100,6 +100,23 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
     toast.success(`${g.clientName} adicionado ao pipeline em "Cotação"`);
   };
 
+  const confirmDeleteVersion = () => {
+    if (!versionToDelete) return;
+    if (selected.includes(versionToDelete.id)) onToggleSelect(versionToDelete.id);
+    deleteVersion(versionToDelete.id);
+    toast.success(`Versão v${versionToDelete.version} excluída`);
+    setVersionToDelete(null);
+  };
+
+  const confirmDeleteGroup = () => {
+    if (!groupToDelete) return;
+    if (groupToDelete.hasLinkedOpp) unlinkQuoteGroup(groupToDelete.groupId);
+    deleteGroup(groupToDelete.groupId);
+    toast.success(`Cotação de ${groupToDelete.clientName} excluída`);
+    setGroupToDelete(null);
+  };
+
+
   return (
     <div className="space-y-4">
       {/* Filters */}
