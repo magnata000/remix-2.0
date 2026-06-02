@@ -200,6 +200,8 @@ type Ctx = {
   addNewQuote: (data: QuoteFormData, results: Quote[], winner: Insurer, createdBy?: string) => QuoteRecord;
   addVersion: (groupId: string, data: QuoteFormData, results: Quote[], winner: Insurer, createdBy?: string) => QuoteRecord;
   setStatus: (groupId: string, status: QuoteStatus, lostReason?: LostReason, lostNote?: string) => void;
+  deleteVersion: (versionId: string) => void;
+  deleteGroup: (groupId: string) => void;
 };
 
 const QuoteStoreContext = createContext<Ctx | null>(null);
