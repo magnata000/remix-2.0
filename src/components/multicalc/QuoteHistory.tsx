@@ -22,6 +22,7 @@ type Props = {
   selected: string[]; // quote ids
   onToggleSelect: (id: string) => void;
   onCompare: () => void;
+  onNewQuote: () => void;
   onEditVersion: (rec: QuoteRecord) => void;
   onRecalculate?: (rec: QuoteRecord) => void;
   onClearSelection?: () => void;
