@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal, Plus, GripVertical, Calendar, Trophy, Calculator, Link2 } from "lucide-react";
-import { formatBRL, formatDateShort, type KanbanStage, type Task } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type LostReason, type Task } from "@/lib/mock/data";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
+import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
+import { toast } from "sonner";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
