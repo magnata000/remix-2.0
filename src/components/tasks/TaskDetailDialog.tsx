@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,13 +30,19 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
   const [dragOver, setDragOver] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const el = timelineRef.current;
-    if (!el) return;
-    const id = requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
+  useLayoutEffect(() => {
+    if (!task) return;
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => {
+        const el = timelineRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
+      });
     });
-    return () => cancelAnimationFrame(id);
+    return () => {
+      cancelAnimationFrame(r1);
+      if (r2) cancelAnimationFrame(r2);
+    };
   }, [task?.id, task?.timeline.length]);
   const fileInput = useRef<HTMLInputElement>(null);
 
