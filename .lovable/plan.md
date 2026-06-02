@@ -1,49 +1,31 @@
-## Problema
+## Objetivo
 
-`src/styles.css` quebra o transform do Vite (HTTP 500 em `/src/styles.css`), o que faz a página renderizar sem nenhum estilo (screenshot em anexo). A causa é o `@import url("https://fonts.googleapis.com/...")` dentro do CSS:
-
-- Antes da última edição: vinha depois de `@import "tailwindcss"`, violando a regra do lightningcss de que `@import` precisa vir antes de qualquer outra regra.
-- Depois da edição: foi para o topo, mas o lightningcss (usado pelo Tailwind v4) não busca URLs remotas — tenta `fs.readFileSync` na URL e falha com `ENOENT`.
-
-Ou seja, **nenhuma posição do `@import url(...)` funciona** com a configuração atual. A fonte precisa ser carregada fora do CSS.
+Sinalizar que os módulos **Financeiro** e **Configurações** ainda estão em construção, adicionando um quadro com efeito glassmorphism e a frase "Em Breve" sobre o conteúdo atual de cada página.
 
 ## Mudanças
 
-### 1. `src/styles.css`
-Remover a linha:
-```css
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
-```
-Restaurar a ordem original:
-```css
-@import "tailwindcss" source(none);
-@import "tw-animate-css";
+### 1. Novo componente `src/components/shared/ComingSoonOverlay.tsx`
+Componente reutilizável que:
+- Envolve o conteúdo do módulo (`children`) num container `relative`.
+- Renderiza o conteúdo existente com `pointer-events-none` e leve `opacity` reduzida (preview borrado ao fundo).
+- Sobrepõe uma camada absoluta centralizada com um card glassmorphism contendo:
+  - Ícone (lucide `Construction` ou `Sparkles`).
+  - Título "Em Breve".
+  - Subtítulo curto: "Este módulo está em construção e estará disponível em breve."
+- Estilo glass usando tokens existentes:
+  - `bg-white/30 dark:bg-white/10`
+  - `backdrop-blur-xl`
+  - `border border-white/40`
+  - `shadow-xl`, `rounded-2xl`
+  - Sem `-webkit-backdrop-filter` manual (regra do Tailwind v4).
 
-@source "../src";
-...
-```
+### 2. `src/components/modules/FinancialModule.tsx`
+- Envolver o `return` (todo o conteúdo do módulo) com `<ComingSoonOverlay>`.
 
-### 2. `src/routes/__root.tsx`
-Adicionar as tags `<link>` do Google Fonts no `head()` do root route (com `preconnect` para performance), assim a fonte Inter é carregada pelo navegador, não pelo bundler CSS:
-
-```ts
-head: () => ({
-  links: [
-    { rel: "preconnect", href: "https://fonts.googleapis.com" },
-    { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
-    {
-      rel: "stylesheet",
-      href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
-    },
-    // ...links existentes
-  ],
-  // ...meta existente
-})
-```
-(Se já houver `links` no `head()`, apenas concatenar os 3 novos.)
+### 3. `src/components/modules/SettingsModule.tsx`
+- Mesma alteração: envolver o conteúdo com `<ComingSoonOverlay>`.
 
 ## Validação
 
-- Após o restart, `/src/styles.css` retorna 200 e a UI volta a renderizar com Tailwind/tema aplicados.
-- Verificar nos logs do Vite que não há mais `Internal server error` em `vite:css`.
-- Confirmar visualmente no preview que a fonte Inter aparece (em vez do serif default que está no screenshot).
+- Navegar para "Financeiro" e "Configurações" no preview: o conteúdo aparece desfocado/atenuado ao fundo, com o card glass "Em Breve" centralizado e legível.
+- Dashboard, Carteira, Kanban e Multicálculo continuam funcionando normalmente.
