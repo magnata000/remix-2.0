@@ -195,85 +195,8 @@ export function ClientDetailDrawer({
                 )}
               </Section>
 
-              {/* Pipeline & cotações */}
-              <Section title="Pipeline & cotações" count={clientOpps.length + clientGroups.length} icon={TrendingUp}>
-                {clientOpps.length === 0 && clientGroups.length === 0 ? (
-                  <Empty text="Sem oportunidades ou cotações em aberto" />
-                ) : (
-                  <div className="space-y-2">
-                    {clientOpps.map((o) => (
-                      <div
-                        key={o.id}
-                        className="bg-card border border-border rounded-xl p-3 flex items-center gap-3"
-                      >
-                        <KanbanSquare className="h-4 w-4 text-brand shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{o.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {o.branch} • {o.stage} • vence {formatDateShort(o.dueDate)}
-                          </div>
-                        </div>
-                        <div className="text-sm font-semibold">{formatBRL(o.estimatedValue)}</div>
-                      </div>
-                    ))}
-                    {clientGroups.map((g) => (
-                      <div
-                        key={g.groupId}
-                        className="bg-card border border-border rounded-xl p-3 flex items-center gap-3"
-                      >
-                        <Calculator className="h-4 w-4 text-brand shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">
-                            Cotação {g.branch} <span className="text-muted-foreground">v{g.latest.version}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {g.status} • {formatDateShort(g.latest.createdAt.slice(0, 10))}
-                          </div>
-                        </div>
-                        <div className="text-sm font-semibold">{formatBRL(g.latest.results[0]?.price ?? 0)}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {clientOpps.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2 h-8 text-xs rounded-lg"
-                    onClick={() => {
-                      onOpenChange(false);
-                      goTo("kanban");
-                    }}
-                  >
-                    Abrir no Quadro <ArrowRight className="ml-1 h-3 w-3" />
-                  </Button>
-                )}
-              </Section>
 
-              {/* Timeline */}
-              <Section title="Linha do tempo" count={timeline.length} icon={Sparkles}>
-                {timeline.length === 0 ? (
-                  <Empty text="Sem atividade registrada" />
-                ) : (
-                  <ol className="relative border-l border-border pl-4 space-y-3">
-                    {timeline.map((ev) => (
-                      <li key={ev.id} className="relative">
-                        <span className="absolute -left-[21px] top-1 flex h-3 w-3 items-center justify-center rounded-full bg-brand ring-4 ring-background" />
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium">{ev.title}</div>
-                            <div className="text-xs text-muted-foreground">{ev.meta}</div>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                            <Calendar className="h-3 w-3" />
-                            {formatDateShort(ev.date)}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </Section>
+
 
               {/* Footer actions */}
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
