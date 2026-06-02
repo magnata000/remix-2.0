@@ -1,47 +1,49 @@
-# Excluir cotações e versões no Multicálculo
+## Problema
 
-## Objetivo
-Permitir excluir uma **versão** individual ou um **grupo de cotações inteiro** na página Multicálculo, com UI discreta (ícones ghost) e confirmação obrigatória.
+`src/styles.css` quebra o transform do Vite (HTTP 500 em `/src/styles.css`), o que faz a página renderizar sem nenhum estilo (screenshot em anexo). A causa é o `@import url("https://fonts.googleapis.com/...")` dentro do CSS:
+
+- Antes da última edição: vinha depois de `@import "tailwindcss"`, violando a regra do lightningcss de que `@import` precisa vir antes de qualquer outra regra.
+- Depois da edição: foi para o topo, mas o lightningcss (usado pelo Tailwind v4) não busca URLs remotas — tenta `fs.readFileSync` na URL e falha com `ENOENT`.
+
+Ou seja, **nenhuma posição do `@import url(...)` funciona** com a configuração atual. A fonte precisa ser carregada fora do CSS.
 
 ## Mudanças
 
-### 1. `src/lib/multicalc/quoteStore.ts` — novos métodos no store
-- `deleteVersion(versionId: string)`: remove o `QuoteRecord` do array. Se era a última versão do grupo, o grupo deixa de existir automaticamente (pois `groups` é derivado).
-- `deleteGroup(groupId: string)`: remove todos os `QuoteRecord` do grupo.
-- Expor ambos no `Ctx` e no `value` do provider.
+### 1. `src/styles.css`
+Remover a linha:
+```css
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+```
+Restaurar a ordem original:
+```css
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
 
-### 2. `src/lib/pipeline/opportunityStore.ts` — limpar vínculo órfão
-- Novo método `unlinkQuoteGroup(groupId: string)`: percorre `opportunities` e zera `quoteGroupId` em qualquer card vinculado. Chamado pelo Multicálculo após excluir um grupo, para não deixar o card do pipeline apontando para uma cotação inexistente.
+@source "../src";
+...
+```
 
-### 3. `src/components/multicalc/QuoteHistory.tsx` — UI discreta
+### 2. `src/routes/__root.tsx`
+Adicionar as tags `<link>` do Google Fonts no `head()` do root route (com `preconnect` para performance), assim a fonte Inter é carregada pelo navegador, não pelo bundler CSS:
 
-**Excluir versão** (linha de cada `v.version`):
-- Adicionar `Button` `size="icon" variant="ghost"` com ícone `Trash2` (lucide), classe `h-7 w-7 text-muted-foreground hover:text-destructive`, junto dos demais botões da linha (ao lado do "Editar (nova versão)").
-- `title="Excluir esta versão"`.
-- Ao clicar, abre `AlertDialog` de confirmação:
-  - Título: "Excluir versão v{n}?"
-  - Descrição: "Esta ação não pode ser desfeita. A versão será removida do histórico."
-  - Confirmar → `deleteVersion(v.id)` + toast "Versão excluída". Se a versão estava em `selected`, remover via `onToggleSelect`.
+```ts
+head: () => ({
+  links: [
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
+    {
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+    },
+    // ...links existentes
+  ],
+  // ...meta existente
+})
+```
+(Se já houver `links` no `head()`, apenas concatenar os 3 novos.)
 
-**Excluir grupo inteiro** (header do `Collapsible`):
-- Adicionar ícone `Trash2` discreto no canto direito do header (junto aos botões "Ganha"/"Perdida"), `size="icon" variant="ghost"` com `text-muted-foreground hover:text-destructive`.
-- `title="Excluir cotação completa"`.
-- Ao clicar, abre `AlertDialog`:
-  - Título: "Excluir cotação de {clientName}?"
-  - Descrição: "Todas as {n} versões serão removidas permanentemente.{linkedOpp ? " O card vinculado no Pipeline será desvinculado." : ""}"
-  - Confirmar → `deleteGroup(g.groupId)` + se `linkedOpp` existe, `unlinkQuoteGroup(g.groupId)` + toast "Cotação excluída".
+## Validação
 
-### 4. Estados locais no `QuoteHistory`
-- `const [versionToDelete, setVersionToDelete] = useState<QuoteRecord | null>(null)`
-- `const [groupToDelete, setGroupToDelete] = useState<{ groupId, clientName, versionsCount, hasLinkedOpp } | null>(null)`
-
-Usar `<AlertDialog>` (já existe em `src/components/ui/alert-dialog.tsx`).
-
-## Fora do escopo
-- Não há "lixeira"/undo — exclusão é definitiva (mock data; toast simples).
-- Não alterar layout dos filtros nem dos botões principais.
-
-## Arquivos afetados
-- `src/lib/multicalc/quoteStore.ts` (adicionar `deleteVersion`, `deleteGroup`)
-- `src/lib/pipeline/opportunityStore.ts` (adicionar `unlinkQuoteGroup`)
-- `src/components/multicalc/QuoteHistory.tsx` (botões + AlertDialogs)
+- Após o restart, `/src/styles.css` retorna 200 e a UI volta a renderizar com Tailwind/tema aplicados.
+- Verificar nos logs do Vite que não há mais `Internal server error` em `vite:css`.
+- Confirmar visualmente no preview que a fonte Inter aparece (em vez do serif default que está no screenshot).
