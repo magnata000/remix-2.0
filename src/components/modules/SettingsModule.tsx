@@ -143,6 +143,7 @@ export function SettingsModule() {
         </div>
       </Section>
     </div>
+    </ComingSoonOverlay>
   );
 }
 
