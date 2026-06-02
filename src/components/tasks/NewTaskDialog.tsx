@@ -128,6 +128,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
               <Select value={assigneeId} onValueChange={setAssigneeId}>
                 <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
                   {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
                 </SelectContent>
               </Select>

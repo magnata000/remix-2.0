@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Calendar, User, Tag, Layers, FileText, Pencil, X, Trash2, Image as ImageIcon } from "lucide-react";
+import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText, Pencil, X, Trash2, Image as ImageIcon } from "lucide-react";
 import { team, formatDateShort } from "@/lib/mock/data";
 import { PRIORITY_META, TaskAttachment, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "./MentionInput";
@@ -11,10 +11,11 @@ import { MentionInput, renderMentions } from "./MentionInput";
 const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const initialsOf = (id: string) => {
+  if (id === "all") return "TD";
   const m = team.find((x) => x.id === id);
   return m?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
 };
-const nameOf = (id: string) => team.find((x) => x.id === id)?.name ?? "—";
+const nameOf = (id: string) => (id === "all" ? "Todos" : team.find((x) => x.id === id)?.name ?? "—");
 const formatTime = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 const formatBytes = (n: number) => {
   if (n < 1024) return `${n} B`;
@@ -85,7 +86,7 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
             </Meta>
             <Meta icon={<User className="h-3.5 w-3.5" />} label="Responsável">
               <span className="inline-flex items-center gap-2">
-                <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px] bg-brand-soft text-brand-foreground font-semibold">{initialsOf(task.assigneeId)}</AvatarFallback></Avatar>
+                <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px] bg-brand-soft text-brand-foreground font-semibold">{task.assigneeId === "all" ? <Users className="h-3 w-3" /> : initialsOf(task.assigneeId)}</AvatarFallback></Avatar>
                 {nameOf(task.assigneeId)}
               </span>
             </Meta>
