@@ -16,18 +16,12 @@ import {
   Mail,
   IdCard,
   FileText,
-  TrendingUp,
-  KanbanSquare,
   Calculator,
   Plus,
-  Sparkles,
-  ArrowRight,
-  Calendar,
   Search,
   FolderOpen,
 } from "lucide-react";
 import {
-  commissions,
   formatBRL,
   formatDateShort,
   type Policy,
@@ -35,8 +29,6 @@ import {
 } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
-import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
-import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import {
   getClientStats,
@@ -75,21 +67,11 @@ type Props = {
   onOpenPolicy?: (policy: Policy) => void;
 };
 
-type TimelineEvent = {
-  id: string;
-  date: string;
-  type: "policy" | "opportunity" | "quote" | "commission";
-  title: string;
-  meta: string;
-};
-
 export function ClientDetailDrawer({
   clientName,
   onOpenChange,
   onOpenPolicy,
 }: Props) {
-  const { opportunities } = usePipelineStore();
-  const { groups } = useQuoteStore();
   const { clients } = useClientStore();
   const { policies } = usePolicyStore();
   const { goTo } = useNavigation();
@@ -108,68 +90,7 @@ export function ClientDetailDrawer({
   );
 
 
-  const clientOpps = useMemo(
-    () =>
-      clientName
-        ? opportunities.filter(
-            (o) => o.clientName === clientName && o.stage !== "fechado" && o.stage !== "perdido",
-          )
-        : [],
-    [opportunities, clientName],
-  );
 
-  const clientGroups = useMemo(
-    () => (clientName ? groups.filter((g) => g.clientName === clientName).slice(0, 5) : []),
-    [groups, clientName],
-  );
-
-  const timeline = useMemo<TimelineEvent[]>(() => {
-    if (!clientName) return [];
-    const ev: TimelineEvent[] = [];
-    clientPolicies.forEach((p) =>
-      ev.push({
-        id: `pol-${p.id}`,
-        date: p.startDate,
-        type: "policy",
-        title: `Apólice ${p.number}`,
-        meta: `${p.branch} • ${p.insurer}`,
-      }),
-    );
-    opportunities
-      .filter((o) => o.clientName === clientName)
-      .forEach((o) =>
-        ev.push({
-          id: `opp-${o.id}`,
-          date: o.dueDate,
-          type: "opportunity",
-          title: o.title,
-          meta: `Oportunidade • ${o.stage}`,
-        }),
-      );
-    groups
-      .filter((g) => g.clientName === clientName)
-      .forEach((g) =>
-        ev.push({
-          id: `q-${g.groupId}`,
-          date: g.latest.createdAt.slice(0, 10),
-          type: "quote",
-          title: `Cotação ${g.branch}`,
-          meta: `v${g.latest.version} • ${g.status}`,
-        }),
-      );
-    commissions
-      .filter((c) => c.clientName === clientName)
-      .forEach((c) =>
-        ev.push({
-          id: `cm-${c.id}`,
-          date: c.dueDate,
-          type: "commission",
-          title: `Comissão ${formatBRL(c.amount)}`,
-          meta: `${c.insurer} • ${c.status}`,
-        }),
-      );
-    return ev.sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 10);
-  }, [clientName, clientPolicies, opportunities, groups]);
 
   const open = !!clientName && !!stats;
 
@@ -262,85 +183,8 @@ export function ClientDetailDrawer({
                 )}
               </Section>
 
-              {/* Pipeline & cotações */}
-              <Section title="Pipeline & cotações" count={clientOpps.length + clientGroups.length} icon={TrendingUp}>
-                {clientOpps.length === 0 && clientGroups.length === 0 ? (
-                  <Empty text="Sem oportunidades ou cotações em aberto" />
-                ) : (
-                  <div className="space-y-2">
-                    {clientOpps.map((o) => (
-                      <div
-                        key={o.id}
-                        className="bg-card border border-border rounded-xl p-3 flex items-center gap-3"
-                      >
-                        <KanbanSquare className="h-4 w-4 text-brand shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{o.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {o.branch} • {o.stage} • vence {formatDateShort(o.dueDate)}
-                          </div>
-                        </div>
-                        <div className="text-sm font-semibold">{formatBRL(o.estimatedValue)}</div>
-                      </div>
-                    ))}
-                    {clientGroups.map((g) => (
-                      <div
-                        key={g.groupId}
-                        className="bg-card border border-border rounded-xl p-3 flex items-center gap-3"
-                      >
-                        <Calculator className="h-4 w-4 text-brand shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">
-                            Cotação {g.branch} <span className="text-muted-foreground">v{g.latest.version}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {g.status} • {formatDateShort(g.latest.createdAt.slice(0, 10))}
-                          </div>
-                        </div>
-                        <div className="text-sm font-semibold">{formatBRL(g.latest.results[0]?.price ?? 0)}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {clientOpps.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2 h-8 text-xs rounded-lg"
-                    onClick={() => {
-                      onOpenChange(false);
-                      goTo("kanban");
-                    }}
-                  >
-                    Abrir no Quadro <ArrowRight className="ml-1 h-3 w-3" />
-                  </Button>
-                )}
-              </Section>
 
-              {/* Timeline */}
-              <Section title="Linha do tempo" count={timeline.length} icon={Sparkles}>
-                {timeline.length === 0 ? (
-                  <Empty text="Sem atividade registrada" />
-                ) : (
-                  <ol className="relative border-l border-border pl-4 space-y-3">
-                    {timeline.map((ev) => (
-                      <li key={ev.id} className="relative">
-                        <span className="absolute -left-[21px] top-1 flex h-3 w-3 items-center justify-center rounded-full bg-brand ring-4 ring-background" />
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium">{ev.title}</div>
-                            <div className="text-xs text-muted-foreground">{ev.meta}</div>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                            <Calendar className="h-3 w-3" />
-                            {formatDateShort(ev.date)}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </Section>
+
 
               {/* Footer actions */}
               <div className="flex flex-col sm:flex-row gap-2 pt-2">

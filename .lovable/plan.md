@@ -1,31 +1,15 @@
 ## Objetivo
+No `ClientDetailDrawer` (wrapper lateral do cliente), remover as seções **Pipeline & cotações** e **Linha do tempo**, mantendo Contato, KPIs, Apólices vinculadas e as ações de rodapé.
 
-Sinalizar que os módulos **Financeiro** e **Configurações** ainda estão em construção, adicionando um quadro com efeito glassmorphism e a frase "Em Breve" sobre o conteúdo atual de cada página.
+## Alterações em `src/components/portfolio/ClientDetailDrawer.tsx`
 
-## Mudanças
-
-### 1. Novo componente `src/components/shared/ComingSoonOverlay.tsx`
-Componente reutilizável que:
-- Envolve o conteúdo do módulo (`children`) num container `relative`.
-- Renderiza o conteúdo existente com `pointer-events-none` e leve `opacity` reduzida (preview borrado ao fundo).
-- Sobrepõe uma camada absoluta centralizada com um card glassmorphism contendo:
-  - Ícone (lucide `Construction` ou `Sparkles`).
-  - Título "Em Breve".
-  - Subtítulo curto: "Este módulo está em construção e estará disponível em breve."
-- Estilo glass usando tokens existentes:
-  - `bg-white/30 dark:bg-white/10`
-  - `backdrop-blur-xl`
-  - `border border-white/40`
-  - `shadow-xl`, `rounded-2xl`
-  - Sem `-webkit-backdrop-filter` manual (regra do Tailwind v4).
-
-### 2. `src/components/modules/FinancialModule.tsx`
-- Envolver o `return` (todo o conteúdo do módulo) com `<ComingSoonOverlay>`.
-
-### 3. `src/components/modules/SettingsModule.tsx`
-- Mesma alteração: envolver o conteúdo com `<ComingSoonOverlay>`.
+1. Remover do JSX a `<Section title="Pipeline & cotações" ...>` inteira (incluindo o botão "Abrir no Quadro").
+2. Remover do JSX a `<Section title="Linha do tempo" ...>` inteira.
+3. Limpar código não utilizado após a remoção:
+   - `useMemo` de `clientOpps`, `clientGroups`, `timeline`
+   - tipo `TimelineEvent`
+   - imports que ficarem sem uso: `usePipelineStore`, `useQuoteStore`, `commissions`, `useNavigation`, ícones `TrendingUp`, `KanbanSquare`, `Calculator` (verificar se `Calculator` ainda é usado no botão "Nova cotação" do rodapé — é, então manter), `Sparkles`, `ArrowRight`, `Calendar`
+   - `goTo` do `useNavigation` (manter pois é usado no botão "Nova cotação" do rodapé → manter `useNavigation`)
 
 ## Validação
-
-- Navegar para "Financeiro" e "Configurações" no preview: o conteúdo aparece desfocado/atenuado ao fundo, com o card glass "Em Breve" centralizado e legível.
-- Dashboard, Carteira, Kanban e Multicálculo continuam funcionando normalmente.
+Abrir o drawer de um cliente: devem aparecer apenas Contato, KPIs, Apólices vinculadas e botões "Nova oportunidade" / "Nova cotação". As duas seções removidas não aparecem mais.
