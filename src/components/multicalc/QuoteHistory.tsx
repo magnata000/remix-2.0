@@ -39,13 +39,15 @@ type Props = {
 };
 
 export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, onEditVersion, onRecalculate, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
-  const { groups, setStatus } = useQuoteStore();
-  const { byQuoteGroup, createFromQuote } = usePipelineStore();
+  const { groups, setStatus, deleteVersion, deleteGroup } = useQuoteStore();
+  const { byQuoteGroup, createFromQuote, unlinkQuoteGroup } = usePipelineStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [branchFilter, setBranchFilter] = useState<string>("todos");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lostDialog, setLostDialog] = useState<{ groupId: string } | null>(null);
+  const [versionToDelete, setVersionToDelete] = useState<QuoteRecord | null>(null);
+  const [groupToDelete, setGroupToDelete] = useState<{ groupId: string; clientName: string; count: number; hasLinkedOpp: boolean } | null>(null);
 
   // Auto-expand + scroll to focused group from cross-module navigation
   useEffect(() => {
