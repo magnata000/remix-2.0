@@ -332,6 +332,9 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
   const addScheduled = useCallback((s: Omit<ScheduledTask, "id">) => {
     setScheduled((arr) => [{ ...s, id: `sch${Date.now()}` }, ...arr]);
   }, []);
+  const updateScheduled = useCallback((id: string, patch: Partial<Omit<ScheduledTask, "id">>) => {
+    setScheduled((arr) => arr.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }, []);
   const removeScheduled = useCallback((id: string) => {
     setScheduled((arr) => arr.filter((s) => s.id !== id));
   }, []);
