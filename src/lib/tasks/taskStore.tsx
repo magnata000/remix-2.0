@@ -170,6 +170,7 @@ type Ctx = {
   recolorColumn: (id: string, color: string) => void;
   deleteColumn: (id: string) => void;
   addScheduled: (s: Omit<ScheduledTask, "id">) => void;
+  updateScheduled: (id: string, patch: Partial<Omit<ScheduledTask, "id">>) => void;
   removeScheduled: (id: string) => void;
 };
 
