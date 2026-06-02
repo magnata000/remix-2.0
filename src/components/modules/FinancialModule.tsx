@@ -204,5 +204,6 @@ export function FinancialModule() {
         )}
       </Card>
     </div>
+    </ComingSoonOverlay>
   );
 }
