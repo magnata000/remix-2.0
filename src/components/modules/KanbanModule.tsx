@@ -178,6 +178,13 @@ export function KanbanModule() {
           <TasksBoard />
         </TabsContent>
       </Tabs>
+
+      <LostReasonDialog
+        open={!!pendingLost}
+        onOpenChange={(o) => !o && setPendingLost(null)}
+        title="Mover para Perdido"
+        onConfirm={confirmLost}
+      />
     </div>
   );
 }
