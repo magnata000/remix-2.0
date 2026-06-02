@@ -255,7 +255,14 @@ function KanbanCardBody({
       </button>
 
       {task.stage === "perdido" && task.lostReason && (
-        <p className="mt-1.5 text-[11px] text-destructive">Motivo: {task.lostReason}</p>
+        <div className="mt-1.5 space-y-0.5">
+          <p className="text-[11px] text-destructive">Motivo: {lostReasonLabel[task.lostReason]}</p>
+          {task.lostNote && (
+            <p className="text-[11px] text-muted-foreground truncate" title={task.lostNote}>
+              {task.lostNote}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="mt-2 flex items-center justify-between">
