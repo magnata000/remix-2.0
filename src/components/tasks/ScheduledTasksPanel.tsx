@@ -178,7 +178,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
             ) : (
               <ul className="space-y-2">
                 {scheduled.map((s) => (
-                  <li key={s.id} className="rounded-xl border border-border p-3">
+                  <li key={s.id} className={cn("rounded-xl border border-border p-3", editingId === s.id && "ring-1 ring-brand/40")}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{s.title}</p>
@@ -187,7 +187,10 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
                       <Badge variant="outline" className="bg-muted border-0 text-[10px]">
                         {s.kind === "data" ? "Data" : "Semanal"}
                       </Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeScheduled(s.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => startEdit(s)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { if (editingId === s.id) resetForm(); removeScheduled(s.id); }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
