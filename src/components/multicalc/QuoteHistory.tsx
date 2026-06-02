@@ -135,6 +135,17 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
             <GitCompareArrows className="h-4 w-4 mr-2" />
             Comparar ({selected.length})
           </Button>
+          <Button
+            onClick={onNewQuote}
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            title="Nova cotação"
+          >
+            <span className="relative inline-flex mr-2">
+              <Calculator className="h-4 w-4" />
+              <Plus className="h-2.5 w-2.5 absolute -top-1 -left-1.5 bg-brand rounded-full p-px" strokeWidth={3} />
+            </span>
+            Nova cotação
+          </Button>
         </div>
         {selected.length > 0 && onClearSelection && (
           <button
