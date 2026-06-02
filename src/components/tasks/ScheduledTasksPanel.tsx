@@ -160,9 +160,16 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
             </div>
           )}
 
-          <Button className="w-full rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>
-            Programar tarefa
-          </Button>
+          <div className="flex gap-2">
+            <Button className="flex-1 rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>
+              {editingId ? "Salvar alterações" : "Programar tarefa"}
+            </Button>
+            {editingId && (
+              <Button variant="outline" className="rounded-xl" onClick={resetForm}>
+                Cancelar
+              </Button>
+            )}
+          </div>
 
           <div>
             <h4 className="text-sm font-semibold mt-4 mb-2">Tarefas programadas ativas</h4>
