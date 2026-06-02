@@ -315,28 +315,11 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
         })}
       </div>
 
-      <Dialog open={!!lostDialog} onOpenChange={(o) => !o && setLostDialog(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Marcar como perdida</DialogTitle></DialogHeader>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Motivo</Label>
-            <Select value={lostReason} onValueChange={(v) => setLostReason(v as LostReason)}>
-              <SelectTrigger className="rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="preco">Preço</SelectItem>
-                <SelectItem value="cobertura">Cobertura</SelectItem>
-                <SelectItem value="prazo">Prazo</SelectItem>
-                <SelectItem value="sem-retorno">Sem retorno</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" className="rounded-xl" onClick={() => setLostDialog(null)}>Cancelar</Button>
-            <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={confirmLost}>Confirmar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LostReasonDialog
+        open={!!lostDialog}
+        onOpenChange={(o) => !o && setLostDialog(null)}
+        onConfirm={confirmLost}
+      />
     </div>
   );
 }
