@@ -77,7 +77,9 @@ export function FinancialModule() {
   ];
 
   return (
+    <ComingSoonOverlay>
     <div className="space-y-5">
+
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Financeiro</h1>
         <p className="text-sm text-muted-foreground mt-1">Comissões, recebimentos e fluxo de caixa</p>
