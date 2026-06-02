@@ -95,7 +95,7 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
 
           <section className="flex flex-col overflow-hidden min-h-0 border-l border-border pl-4">
             <h3 className="text-sm font-semibold mb-2">Timeline</h3>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <div ref={timelineRef} className="flex-1 overflow-y-auto space-y-3 pr-2">
               {task.timeline.map((ev, i) => {
                 if (ev.kind === "created") return (<TimelineRow key={i} authorId={ev.by} at={ev.at}><em className="text-muted-foreground">criou a tarefa</em></TimelineRow>);
                 if (ev.kind === "moved") return (<TimelineRow key={i} authorId={ev.by} at={ev.at}><em className="text-muted-foreground">moveu de <strong>{ev.from}</strong> para <strong>{ev.to}</strong></em></TimelineRow>);
