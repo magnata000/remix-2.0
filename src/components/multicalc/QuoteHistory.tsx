@@ -41,7 +41,6 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersio
   const [branchFilter, setBranchFilter] = useState<string>("todos");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lostDialog, setLostDialog] = useState<{ groupId: string } | null>(null);
-  const [lostReason, setLostReason] = useState<LostReason>("preco");
 
   // Auto-expand + scroll to focused group from cross-module navigation
   useEffect(() => {
