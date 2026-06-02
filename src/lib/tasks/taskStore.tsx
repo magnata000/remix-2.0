@@ -45,8 +45,8 @@ export type TaskItem = {
   timeline: TaskTimelineEvent[];
 };
 
-export type ScheduledKind = "data" | "semana" | "periodo";
-export type PeriodKind = "mensal" | "bimestral" | "trimestral";
+export type ScheduledKind = "data" | "semana";
+export type PeriodKind = "mensal" | "bimestral" | "trimestral" | "semestral" | "anual";
 
 export type ScheduledTask = {
   id: string;
@@ -57,10 +57,9 @@ export type ScheduledTask = {
   // data (intervalo inicial → final; final = inicial quando único dia)
   startDate?: string;
   endDate?: string;
-  yearly?: boolean;
   // semana — 0=Dom..6=Sab
   weekdays?: number[];
-  // periodo
+  // recorrência opcional para kind === "data"
   period?: PeriodKind;
 };
 
