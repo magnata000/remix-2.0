@@ -11,6 +11,7 @@ type Ctx = {
   createFromQuote: (input: { clientName: string; branch: Branch; estimatedValue: number; quoteGroupId: string }) => Opportunity;
   createOpportunity: (input: { title: string; clientName: string; branch: Branch; estimatedValue: number; dueDate: string; assignee: string; stage: KanbanStage }) => Opportunity;
   setEstimatedValue: (id: string, value: number) => void;
+  unlinkQuoteGroup: (quoteGroupId: string) => void;
 };
 
 const PipelineContext = createContext<Ctx | null>(null);
