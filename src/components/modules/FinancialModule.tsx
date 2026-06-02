@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { Wallet, Clock, AlertCircle, BarChart3 } from "lucide-react";
 import { commissions, salesByMonth, formatBRL, formatDateShort } from "@/lib/mock/data";
+import { ComingSoonOverlay } from "@/components/shared/ComingSoonOverlay";
 
 const statusColor: Record<string, string> = {
   pago: "bg-success/15 text-success border-0",
@@ -76,7 +77,9 @@ export function FinancialModule() {
   ];
 
   return (
+    <ComingSoonOverlay>
     <div className="space-y-5">
+
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Financeiro</h1>
         <p className="text-sm text-muted-foreground mt-1">Comissões, recebimentos e fluxo de caixa</p>
@@ -201,5 +204,6 @@ export function FinancialModule() {
         )}
       </Card>
     </div>
+    </ComingSoonOverlay>
   );
 }
