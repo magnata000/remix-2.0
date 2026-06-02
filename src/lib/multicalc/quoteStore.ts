@@ -20,6 +20,7 @@ export type QuoteRecord = {
   createdBy: string;
   status: QuoteStatus;
   lostReason?: LostReason;
+  lostNote?: string;
   formData: QuoteFormData;
   results: Quote[];
   winnerInsurer: Insurer;
