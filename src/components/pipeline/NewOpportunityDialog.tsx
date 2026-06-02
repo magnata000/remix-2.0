@@ -78,14 +78,13 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
     if (!clientName.trim()) e.client = "Selecione ou informe o cliente";
     if (!title.trim()) e.title = "Informe um título";
     else if (title.length > 80) e.title = "Máx. 80 caracteres";
-    if (valueNum <= 0) e.value = "Valor deve ser maior que zero";
     if (!dueDate) e.date = "Selecione o prazo";
     else {
       const today = new Date(); today.setHours(0, 0, 0, 0);
       if (dueDate < today) e.date = "Prazo não pode ser anterior a hoje";
     }
     return e;
-  }, [clientName, title, valueNum, dueDate]);
+  }, [clientName, title, dueDate]);
 
   const valid = Object.keys(errors).length === 0;
 
