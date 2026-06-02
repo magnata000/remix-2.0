@@ -30,18 +30,23 @@ const stages: { key: KanbanStage; label: string; color: string }[] = [
 ];
 
 export function KanbanModule() {
-  const { opportunities, moveStage } = usePipelineStore();
+  const { opportunities, moveStage, setEstimatedValue } = usePipelineStore();
   const { groups } = useQuoteStore();
   const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
   const [openNew, setOpenNew] = useState(false);
   const [pendingLost, setPendingLost] = useState<{ id: string } | null>(null);
+  const [pendingClose, setPendingClose] = useState<{ id: string } | null>(null);
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
   const move = (id: string, stage: KanbanStage) => {
     if (stage === "perdido") {
       setPendingLost({ id });
+      return;
+    }
+    if (stage === "fechado") {
+      setPendingClose({ id });
       return;
     }
     moveStage(id, stage);
@@ -53,6 +58,16 @@ export function KanbanModule() {
     toast.success("Oportunidade marcada como Perdida");
     setPendingLost(null);
   };
+
+  const confirmClose = (closedValue: number) => {
+    if (!pendingClose) return;
+    setEstimatedValue(pendingClose.id, closedValue);
+    moveStage(pendingClose.id, "fechado");
+    toast.success("Oportunidade fechada");
+    setPendingClose(null);
+  };
+
+  const closingOpportunity = pendingClose ? opportunities.find((o) => o.id === pendingClose.id) ?? null : null;
 
   const byStage = (s: KanbanStage) => opportunities.filter((t) => t.stage === s);
 
