@@ -170,6 +170,7 @@ type Ctx = {
   recolorColumn: (id: string, color: string) => void;
   deleteColumn: (id: string) => void;
   addScheduled: (s: Omit<ScheduledTask, "id">) => void;
+  updateScheduled: (id: string, patch: Partial<Omit<ScheduledTask, "id">>) => void;
   removeScheduled: (id: string) => void;
 };
 
@@ -331,6 +332,9 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
   const addScheduled = useCallback((s: Omit<ScheduledTask, "id">) => {
     setScheduled((arr) => [{ ...s, id: `sch${Date.now()}` }, ...arr]);
   }, []);
+  const updateScheduled = useCallback((id: string, patch: Partial<Omit<ScheduledTask, "id">>) => {
+    setScheduled((arr) => arr.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }, []);
   const removeScheduled = useCallback((id: string) => {
     setScheduled((arr) => arr.filter((s) => s.id !== id));
   }, []);
@@ -356,8 +360,8 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     columns, tasks, scheduled, currentUserId,
     addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
-    addScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
+    addScheduled, updateScheduled, removeScheduled,
+  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }

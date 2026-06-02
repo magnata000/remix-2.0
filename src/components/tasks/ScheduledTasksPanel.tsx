@@ -10,7 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Trash2 } from "lucide-react";
+import { CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { team, formatDateShort } from "@/lib/mock/data";
 import { PeriodKind, Priority, ScheduledKind, useTaskStore } from "@/lib/tasks/taskStore";
@@ -30,7 +30,7 @@ const REPEAT_OPTIONS: { value: RepeatValue; label: string }[] = [
 ];
 
 export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { scheduled, addScheduled, removeScheduled } = useTaskStore();
+  const { scheduled, addScheduled, updateScheduled, removeScheduled } = useTaskStore();
   const [title, setTitle] = useState("");
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("media");
@@ -38,6 +38,33 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const [range, setRange] = useState<DateRange | undefined>();
   const [repeat, setRepeat] = useState<RepeatValue>("nenhuma");
   const [weekdays, setWeekdays] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setTitle("");
+    setAssigneeId(team[0]?.id ?? "");
+    setPriority("media");
+    setKind("data");
+    setRange(undefined);
+    setRepeat("nenhuma");
+    setWeekdays([]);
+    setEditingId(null);
+  };
+
+  const startEdit = (s: typeof scheduled[number]) => {
+    setEditingId(s.id);
+    setTitle(s.title);
+    setAssigneeId(s.assigneeId);
+    setPriority(s.priority);
+    setKind(s.kind);
+    setRepeat(s.period ?? "nenhuma");
+    setWeekdays(s.weekdays?.map(String) ?? []);
+    if (s.kind === "data" && s.startDate) {
+      setRange({ from: new Date(s.startDate), to: s.endDate ? new Date(s.endDate) : undefined });
+    } else {
+      setRange(undefined);
+    }
+  };
 
   const submit = () => {
     if (!title.trim()) { toast.error("Informe um título"); return; }
@@ -48,15 +75,21 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     if (kind === "semana" && weekdays.length === 0) { toast.error("Selecione ao menos um dia"); return; }
     const from = range?.from;
     const to = range?.to ?? range?.from;
-    addScheduled({
+    const payload = {
       title: title.trim(), assigneeId, priority, kind,
       startDate: kind === "data" ? from?.toISOString() : undefined,
       endDate: kind === "data" ? to?.toISOString() : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
       period: kind === "data" && repeat !== "nenhuma" ? repeat : undefined,
-    });
-    toast.success("Agendamento criado");
-    setTitle(""); setRepeat("nenhuma"); setWeekdays([]); setRange(undefined);
+    };
+    if (editingId) {
+      updateScheduled(editingId, payload);
+      toast.success("Agendamento atualizado");
+    } else {
+      addScheduled(payload);
+      toast.success("Agendamento criado");
+    }
+    resetForm();
   };
 
   return (
@@ -127,9 +160,16 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
             </div>
           )}
 
-          <Button className="w-full rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>
-            Programar tarefa
-          </Button>
+          <div className="flex gap-2">
+            <Button className="flex-1 rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>
+              {editingId ? "Salvar alterações" : "Programar tarefa"}
+            </Button>
+            {editingId && (
+              <Button variant="outline" className="rounded-xl" onClick={resetForm}>
+                Cancelar
+              </Button>
+            )}
+          </div>
 
           <div>
             <h4 className="text-sm font-semibold mt-4 mb-2">Tarefas programadas ativas</h4>
@@ -138,7 +178,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
             ) : (
               <ul className="space-y-2">
                 {scheduled.map((s) => (
-                  <li key={s.id} className="rounded-xl border border-border p-3">
+                  <li key={s.id} className={cn("rounded-xl border border-border p-3", editingId === s.id && "ring-1 ring-brand/40")}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{s.title}</p>
@@ -147,7 +187,10 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
                       <Badge variant="outline" className="bg-muted border-0 text-[10px]">
                         {s.kind === "data" ? "Data" : "Semanal"}
                       </Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeScheduled(s.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => startEdit(s)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { if (editingId === s.id) resetForm(); removeScheduled(s.id); }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>

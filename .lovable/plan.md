@@ -1,23 +1,25 @@
 ## Objetivo
-No painel "Tarefas agendadas" (`ScheduledTasksPanel`), remover a opção de recorrência **Períodos** e enriquecer a opção **Data específica (avulsa)** com uma sub-opção de recorrência: Nenhuma, Mensal, Bimestral, Trimestral, Semestral, Anual — apresentada de forma sutil na UI.
+No painel "Tarefas agendadas", habilitar **edição** (e manter exclusão) das tarefas programadas já criadas, listadas em "Tarefas programadas ativas".
 
 ## Alterações
 
 ### 1. `src/lib/tasks/taskStore.tsx`
-- Expandir `PeriodKind` para `"mensal" | "bimestral" | "trimestral" | "semestral" | "anual"`.
-- Remover `"periodo"` de `ScheduledKind` (passa a ser `"data" | "semana"`).
-- Em `ScheduledTask`: remover o campo `yearly` (substituído por `period`) e manter `period?: PeriodKind` agora associado ao tipo `"data"`.
-- Ajustar o seed (`sch1`) para usar `period: "anual"` em vez de `yearly: true`.
+- Adicionar ao contexto a função `updateScheduled(id: string, patch: Partial<Omit<ScheduledTask, "id">>): void` que aplica patch parcial sobre o item correspondente em `scheduled`.
+- Expor no `value`/tipos `Ctx` e incluir nas dependências do `useMemo`.
 
 ### 2. `src/components/tasks/ScheduledTasksPanel.tsx`
-- Remover o `RadioGroupItem` "Períodos (mensal/bimestral/trimestral)" e todo o bloco condicional `kind === "periodo"` (incluindo o `<DatePick>` de início e o `<Select>` de período).
-- Remover o estado `period` e `startDate` dedicados a "periodo".
-- Em `kind === "data"`:
-  - Substituir o checkbox "Repetir anualmente" por um seletor discreto de recorrência. Sugestão de UI sutil: uma linha pequena com label `Repetir` + um `Select` compacto (ou `ToggleGroup` pequeno) com as opções: **Não repetir, Mensal, Bimestral, Trimestral, Semestral, Anual**. Texto em `text-xs text-muted-foreground`, trigger com `h-8` e largura automática, alinhado à direita logo abaixo do seletor de data — sem destaque visual.
-  - Default: "Não repetir".
-- No `submit`, gravar `period` (quando ≠ "Não repetir") no `ScheduledTask`; remover `yearly`.
-- Em `describeSchedule`, substituir `s.yearly ? " · todo ano"` por mapeamento de `period` → " · mensal" / " · bimestral" / " · trimestral" / " · semestral" / " · anual". Remover o ramo `s.kind === "periodo"`.
-- No badge da lista de agendadas: remover o caso `"periodo"`; mostrar "Data" para `kind === "data"`.
+- Em cada `<li>` da lista de agendadas, adicionar um botão "Editar" (ícone `Pencil` do lucide) ao lado do botão de lixeira, com mesmo estilo `ghost` discreto.
+- Ao clicar em "Editar":
+  - Carregar os valores do item nos estados do formulário (`title`, `assigneeId`, `priority`, `kind`, `range` a partir de `startDate`/`endDate`, `repeat` a partir de `period` (`"nenhuma"` quando ausente), `weekdays` a partir de `weekdays.map(String)`).
+  - Entrar em modo de edição via novo estado local `editingId: string | null`.
+  - Rolar/focar topo do painel (opcional: `scrollIntoView` no título).
+- Quando `editingId` está setado:
+  - O botão principal passa a se chamar **"Salvar alterações"** e chama `updateScheduled(editingId, {...})` em vez de `addScheduled`.
+  - Mostrar um botão secundário **"Cancelar"** (variant `outline`, rounded-xl) ao lado, que limpa `editingId` e reseta o formulário ao estado vazio default.
+  - O `<SheetTitle>` ganha um pequeno sufixo "· editando" (sutil, `text-xs text-muted-foreground` ao lado), opcional — preferir mudar apenas o rótulo do botão para manter UI discreta.
+- Após salvar ou cancelar, limpar `editingId` e resetar o form (`title`, `range`, `weekdays`, `repeat`).
+- A função `submit` reúne a validação atual; reaproveitar a mesma validação para criação e edição. Em edição, montar o payload patch idêntico ao de criação (sem `id`).
+- O item atualmente em edição: destacar de forma sutil com `ring-1 ring-brand/40` na `<li>` quando `editingId === s.id`.
 
 ## Validação
-Abrir Tarefas agendadas: o radio "Períodos" não aparece. Em "Data específica", abaixo do seletor de intervalo há um pequeno controle "Repetir" com as 6 opções. Criar uma tarefa "Mensal" — aparece na lista com sufixo "· mensal". O seed "Felicitar aniversariantes" continua mostrando "· anual".
+Abrir Tarefas agendadas → clicar no ícone de lápis em "Felicitar aniversariantes do mês" → o formulário acima é preenchido com os dados existentes; alterar o título e a recorrência para "Mensal" → clicar "Salvar alterações" → o item na lista reflete as mudanças e o form retorna ao estado vazio. Clicar lápis novamente e em seguida "Cancelar" → form limpo, item inalterado. Exclusão pelo ícone de lixeira continua funcionando.
