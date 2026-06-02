@@ -373,6 +373,49 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
         onOpenChange={(o) => !o && setLostDialog(null)}
         onConfirm={confirmLost}
       />
+
+      <AlertDialog open={!!versionToDelete} onOpenChange={(o) => !o && setVersionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir versão v{versionToDelete?.version}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A versão será removida do histórico.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteVersion}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!groupToDelete} onOpenChange={(o) => !o && setGroupToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cotação de {groupToDelete?.clientName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {groupToDelete?.count === 1
+                ? "1 versão será removida permanentemente."
+                : `Todas as ${groupToDelete?.count} versões serão removidas permanentemente.`}
+              {groupToDelete?.hasLinkedOpp && " O card vinculado no Pipeline será desvinculado."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteGroup}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir cotação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
