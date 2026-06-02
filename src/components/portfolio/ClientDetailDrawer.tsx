@@ -16,18 +16,12 @@ import {
   Mail,
   IdCard,
   FileText,
-  TrendingUp,
-  KanbanSquare,
   Calculator,
   Plus,
-  Sparkles,
-  ArrowRight,
-  Calendar,
   Search,
   FolderOpen,
 } from "lucide-react";
 import {
-  commissions,
   formatBRL,
   formatDateShort,
   type Policy,
