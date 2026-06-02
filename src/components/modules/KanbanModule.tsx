@@ -17,6 +17,7 @@ import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
+import { CloseOpportunityDialog } from "@/components/pipeline/CloseOpportunityDialog";
 import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
 import { toast } from "sonner";
 
