@@ -34,7 +34,7 @@ type Props = {
   onClearFocus?: () => void;
 };
 
-export function QuoteHistory({ selected, onToggleSelect, onCompare, onEditVersion, onRecalculate, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
+export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, onEditVersion, onRecalculate, onClearSelection, onStatusChanged, onOpenPipeline, allowedBranch, mixedBranches, focusedGroupId, onClearFocus }: Props) {
   const { groups, setStatus } = useQuoteStore();
   const { byQuoteGroup, createFromQuote } = usePipelineStore();
   const [search, setSearch] = useState("");
