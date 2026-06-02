@@ -29,8 +29,6 @@ import {
 } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
-import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
-import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import {
   getClientStats,
