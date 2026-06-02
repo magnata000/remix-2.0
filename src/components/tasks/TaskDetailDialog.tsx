@@ -11,10 +11,11 @@ import { MentionInput, renderMentions } from "./MentionInput";
 const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const initialsOf = (id: string) => {
+  if (id === "all") return "TD";
   const m = team.find((x) => x.id === id);
   return m?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
 };
-const nameOf = (id: string) => team.find((x) => x.id === id)?.name ?? "—";
+const nameOf = (id: string) => (id === "all" ? "Todos" : team.find((x) => x.id === id)?.name ?? "—");
 const formatTime = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 const formatBytes = (n: number) => {
   if (n < 1024) return `${n} B`;
