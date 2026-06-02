@@ -10,7 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Trash2 } from "lucide-react";
+import { CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { team, formatDateShort } from "@/lib/mock/data";
 import { PeriodKind, Priority, ScheduledKind, useTaskStore } from "@/lib/tasks/taskStore";
