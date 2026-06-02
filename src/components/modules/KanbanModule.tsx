@@ -34,10 +34,24 @@ export function KanbanModule() {
   const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
   const [openNew, setOpenNew] = useState(false);
+  const [pendingLost, setPendingLost] = useState<{ id: string } | null>(null);
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
-  const move = (id: string, stage: KanbanStage) => moveStage(id, stage);
+  const move = (id: string, stage: KanbanStage) => {
+    if (stage === "perdido") {
+      setPendingLost({ id });
+      return;
+    }
+    moveStage(id, stage);
+  };
+
+  const confirmLost = (reason: LostReason, note?: string) => {
+    if (!pendingLost) return;
+    moveStage(pendingLost.id, "perdido", reason, note);
+    toast.success("Oportunidade marcada como Perdida");
+    setPendingLost(null);
+  };
 
   const byStage = (s: KanbanStage) => opportunities.filter((t) => t.stage === s);
 
