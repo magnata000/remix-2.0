@@ -75,9 +75,9 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
             </span>
           )}
         </div>
-        <Avatar className="h-6 w-6">
+        <Avatar className="h-6 w-6" title={isAll ? "Todos" : assignee?.name}>
           <AvatarFallback className="text-[10px] bg-brand-soft text-brand-foreground font-semibold">
-            {initials}
+            {isAll ? <Users className="h-3.5 w-3.5" /> : initials}
           </AvatarFallback>
         </Avatar>
       </div>
