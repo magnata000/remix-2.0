@@ -28,6 +28,16 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const timelineRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = timelineRef.current;
+    if (!el) return;
+    const id = requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [task?.id, task?.timeline.length]);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const column = useMemo(() => columns.find((c) => c.id === task?.columnId), [columns, task]);
