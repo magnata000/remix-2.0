@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, MessageSquare, Paperclip, Pencil, Trash2 } from "lucide-react";
+import { Calendar, MessageSquare, Paperclip, Pencil, Trash2, Users } from "lucide-react";
 import { formatDateShort } from "@/lib/mock/data";
 import { team } from "@/lib/mock/data";
 import { PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
@@ -13,6 +13,7 @@ type Props = {
 };
 
 export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
+  const isAll = task.assigneeId === "all";
   const assignee = team.find((m) => m.id === task.assigneeId);
   const initials = assignee?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
   const pr = PRIORITY_META[task.priority];
