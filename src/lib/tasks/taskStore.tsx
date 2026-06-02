@@ -360,8 +360,8 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     columns, tasks, scheduled, currentUserId,
     addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
-    addScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, removeScheduled]);
+    addScheduled, updateScheduled, removeScheduled,
+  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }
