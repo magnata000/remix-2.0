@@ -17,6 +17,13 @@ export type Policy = {
 };
 export type KanbanStage = "lead" | "cotacao" | "negociacao" | "fechado" | "perdido";
 export type LostReason = "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro";
+export const lostReasonLabel: Record<LostReason, string> = {
+  preco: "Preço",
+  cobertura: "Cobertura",
+  prazo: "Prazo",
+  "sem-retorno": "Sem retorno",
+  outro: "Outro",
+};
 export type Task = {
   id: string;
   title: string;
@@ -28,6 +35,7 @@ export type Task = {
   stage: KanbanStage;
   quoteGroupId?: string;
   lostReason?: LostReason;
+  lostNote?: string;
 };
 export type Quote = {
   insurer: Insurer;
