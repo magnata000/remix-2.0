@@ -252,6 +252,15 @@ export function QuoteHistory({ selected, onToggleSelect, onCompare, onNewQuote, 
                           Perdida
                         </Button>
                       )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        title="Excluir cotação completa"
+                        onClick={() => setGroupToDelete({ groupId: g.groupId, clientName: g.clientName, count: g.versions.length, hasLinkedOpp: !!linkedOpp })}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </button>
                 </CollapsibleTrigger>
