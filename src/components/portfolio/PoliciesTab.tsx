@@ -212,6 +212,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
       <PolicySheet
         policy={selected}
         onOpenChange={(o) => !o && setSelected(null)}
+        onSelectPolicy={(p) => setSelected(p)}
       />
 
       <NewPolicyDialog open={newOpen} onOpenChange={setNewOpen} />
