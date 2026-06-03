@@ -42,6 +42,27 @@ function toISO(masked: string): string | null {
   }
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
+function maskPhone(input: string): string {
+  const d = input.replace(/\D/g, "").slice(0, 11);
+  if (d.length === 0) return "";
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function maskCpfCnpj(input: string): string {
+  const d = input.replace(/\D/g, "").slice(0, 14);
+  if (d.length <= 11) {
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+    if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+  }
+  if (d.length <= 12) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
+
 
 export function NewClientDialog({ open, onOpenChange }: Props) {
   const { addClient, clients } = useClientStore();
@@ -108,12 +129,12 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Telefone *</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 90000-0000" className="mt-1.5 rounded-xl bg-muted border-0" />
+              <Input value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="numeric" maxLength={16} placeholder="(11) 90000-0000" className="mt-1.5 rounded-xl bg-muted border-0" />
               {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">CPF/CNPJ *</Label>
-              <Input value={document} onChange={(e) => setDocument(e.target.value)} placeholder="000.000.000-00" className="mt-1.5 rounded-xl bg-muted border-0" />
+              <Input value={document} onChange={(e) => setDocument(maskCpfCnpj(e.target.value))} inputMode="numeric" maxLength={18} placeholder="000.000.000-00" className="mt-1.5 rounded-xl bg-muted border-0" />
               {errors.document && <p className="text-xs text-destructive mt-1">{errors.document}</p>}
             </div>
           </div>
