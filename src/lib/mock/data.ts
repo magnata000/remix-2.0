@@ -14,6 +14,8 @@ export type Policy = {
   startDate: string;
   endDate: string;
   status: PolicyStatus;
+  renewedFromId?: string;
+  renewedToId?: string;
 };
 export type KanbanStage = "lead" | "cotacao" | "negociacao" | "fechado" | "perdido";
 export type LostReason = "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro";
