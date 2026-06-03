@@ -1,26 +1,22 @@
 ## Objetivo
-Adicionar **Data de Nascimento** ao cadastro de cliente e exibi-la no Drawer lateral junto com as informações cadastrais, com a **idade atual** ao lado de forma discreta.
+Substituir o `<Input type="date">` no formulário de Novo Cliente por um campo de texto com **máscara `dd/mm/aaaa`**, mantendo o armazenamento interno em ISO (`YYYY-MM-DD`).
 
 ## Alterações
 
-### 1. `src/lib/mock/data.ts`
-- Adicionar campo opcional `birthDate?: string` (ISO `YYYY-MM-DD`) ao tipo `Client`.
-- Popular `birthDate` no array `clients` gerado (datas distribuídas entre 1960–2000, derivadas do índice para serem determinísticas).
-
-### 2. `src/lib/portfolio/clientStore.tsx`
-- Nenhuma mudança estrutural — `AddClientInput = Omit<Client, "id">` já passa o novo campo automaticamente.
-
-### 3. `src/components/portfolio/NewClientDialog.tsx`
-- Adicionar campo `birthDate` no estado e no schema Zod (`z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")`, obrigatório).
-- Renderizar `<Input type="date" />` ao lado do CPF/CNPJ (mudar grid de 2 para 3 colunas ou criar nova linha) com label "Data de nascimento *".
-- Incluir `birthDate` no payload de `addClient`.
-- Resetar campo no `useEffect` de abertura.
-
-### 4. `src/components/portfolio/ClientDetailDrawer.tsx`
-- Criar helper local `calcAge(iso: string): number` (calcula idade considerando mês/dia atual).
-- Na seção "Contato" (grid 3 colunas), adicionar quarta linha/card `<ContactRow>` com ícone `Cake` (lucide) mostrando `formatDateShort(c.birthDate)` e, ao lado, `<span className="text-[11px] text-muted-foreground">· {idade} anos</span>` de forma sutil.
-- Ajustar grid para `sm:grid-cols-2 lg:grid-cols-4` para acomodar o novo item sem quebrar o layout.
-- Renderizar o card de nascimento somente se `c.birthDate` existir (compatibilidade com clientes sem data).
+### `src/components/portfolio/NewClientDialog.tsx`
+- Trocar o estado `birthDate` (ISO) por `birthDateMasked` (string no formato `dd/mm/aaaa` enquanto o usuário digita).
+- Criar helper local `maskDate(input: string): string` que:
+  - Remove tudo que não é dígito, limita a 8 dígitos.
+  - Insere as barras automaticamente: `dd`, `dd/mm`, `dd/mm/aaaa`.
+- Criar helper `toISO(masked: string): string | null` que converte `dd/mm/aaaa` para `YYYY-MM-DD` validando dia/mês/ano reais (usar `new Date(y, m-1, d)` e conferir se os componentes batem).
+- Atualizar o `<Input>`:
+  - `type="text"` com `inputMode="numeric"`, `placeholder="dd/mm/aaaa"`, `maxLength={10}`.
+  - `onChange` aplica `maskDate` antes de setar o estado.
+- Validação no `submit`:
+  - Converter `birthDateMasked` via `toISO`; se `null`, setar `errors.birthDate = "Data inválida"`.
+  - Schema Zod passa a validar o ISO resultante (mesma regex/refine de data não-futura já existente).
+- Resetar `birthDateMasked` para `""` no `useEffect` de abertura.
+- Mensagem de erro continua abaixo do input.
 
 ## Validação
-Abrir "Novo cliente" → preencher todos os campos incluindo data de nascimento → criar. Abrir o drawer do novo cliente → ver linha de Contato com Telefone, E-mail, Documento e Data de nascimento + idade calculada ao lado em cinza discreto. Clientes seed também exibem a data.
+Abrir "Novo cliente" → digitar `15081990` no campo de nascimento → ver `15/08/1990` aparecendo automaticamente. Digitar `32/13/2030` → ao submeter, erro "Data inválida". Submeter `15/08/1990` → cliente criado, drawer exibe `15/08/1990 · 35 anos` (ou idade correta).
