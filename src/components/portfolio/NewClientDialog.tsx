@@ -129,12 +129,12 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Telefone *</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 90000-0000" className="mt-1.5 rounded-xl bg-muted border-0" />
+              <Input value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="numeric" maxLength={16} placeholder="(11) 90000-0000" className="mt-1.5 rounded-xl bg-muted border-0" />
               {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">CPF/CNPJ *</Label>
-              <Input value={document} onChange={(e) => setDocument(e.target.value)} placeholder="000.000.000-00" className="mt-1.5 rounded-xl bg-muted border-0" />
+              <Input value={document} onChange={(e) => setDocument(maskCpfCnpj(e.target.value))} inputMode="numeric" maxLength={18} placeholder="000.000.000-00" className="mt-1.5 rounded-xl bg-muted border-0" />
               {errors.document && <p className="text-xs text-destructive mt-1">{errors.document}</p>}
             </div>
           </div>
