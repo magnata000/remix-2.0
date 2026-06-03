@@ -20,6 +20,7 @@ import {
   Plus,
   Search,
   FolderOpen,
+  Cake,
 } from "lucide-react";
 import {
   formatBRL,
