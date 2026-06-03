@@ -100,6 +100,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               <SelectItem value="ativa">Ativa</SelectItem>
               <SelectItem value="pendente">Pendente</SelectItem>
               <SelectItem value="vencida">Vencida</SelectItem>
+              <SelectItem value="renovada">Renovada</SelectItem>
               <SelectItem value="cancelada">Cancelada</SelectItem>
             </SelectContent>
           </Select>
