@@ -18,7 +18,8 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, FileText, Calendar, Building2, User, Plus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Search, FileText, Calendar, Building2, User, Plus, RotateCw } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
@@ -27,6 +28,7 @@ import {
 } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
+import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
 
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
@@ -36,6 +38,7 @@ const statusColor: Record<PolicyStatus, string> = {
   pendente: "bg-warning/15 text-warning border-0",
   vencida: "bg-destructive/15 text-destructive border-0",
   cancelada: "bg-muted text-muted-foreground border-0",
+  renovada: "bg-info/15 text-info border-0",
 };
 
 type Props = {
@@ -99,6 +102,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               <SelectItem value="ativa">Ativa</SelectItem>
               <SelectItem value="pendente">Pendente</SelectItem>
               <SelectItem value="vencida">Vencida</SelectItem>
+              <SelectItem value="renovada">Renovada</SelectItem>
               <SelectItem value="cancelada">Cancelada</SelectItem>
             </SelectContent>
           </Select>
@@ -208,6 +212,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
       <PolicySheet
         policy={selected}
         onOpenChange={(o) => !o && setSelected(null)}
+        onSelectPolicy={(p) => setSelected(p)}
       />
 
       <NewPolicyDialog open={newOpen} onOpenChange={setNewOpen} />
@@ -219,13 +224,28 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
 function PolicySheet({
   policy,
   onOpenChange,
+  onSelectPolicy,
 }: {
   policy: Policy | null;
   onOpenChange: (open: boolean) => void;
+  onSelectPolicy?: (p: Policy) => void;
 }) {
   const docStore = useDocumentStore();
+  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy } = usePolicyStore();
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
+  const [renewOpen, setRenewOpen] = useState(false);
+
+  const chainIndex = policy ? renewalIndexOf(policy.id) : -1;
+  const chain = policy ? renewalChainOf(policy.id) : [];
+  const previous = policy?.renewedFromId ? findPolicy(policy.renewedFromId) : undefined;
+  const next = policy?.renewedToId ? findPolicy(policy.renewedToId) : undefined;
+  const alreadyRenewed = policy ? isAlreadyRenewed(policy.id) : false;
+
+  const ordinalLabel = (i: number) => {
+    if (i <= 0) return null;
+    return `${i}ª renovação`;
+  };
 
   return (
     <Sheet open={!!policy} onOpenChange={onOpenChange}>
@@ -236,8 +256,39 @@ function PolicySheet({
               <SheetTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-brand" />
                 {policy.number}
+                {chain.length > 1 && ordinalLabel(chainIndex) && (
+                  <span className="ml-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-info/15 text-info">
+                    {ordinalLabel(chainIndex)}
+                  </span>
+                )}
               </SheetTitle>
-              <SheetDescription>Detalhes da apólice</SheetDescription>
+              <SheetDescription>
+                Detalhes da apólice
+                {previous && (
+                  <>
+                    {" • "}
+                    <button
+                      type="button"
+                      onClick={() => onSelectPolicy?.(previous)}
+                      className="text-xs hover:text-brand hover:underline font-mono"
+                    >
+                      Renovada de {previous.number}
+                    </button>
+                  </>
+                )}
+                {next && (
+                  <>
+                    {" • "}
+                    <button
+                      type="button"
+                      onClick={() => onSelectPolicy?.(next)}
+                      className="text-xs hover:text-brand hover:underline font-mono"
+                    >
+                      Renovada em {next.number}
+                    </button>
+                  </>
+                )}
+              </SheetDescription>
             </SheetHeader>
 
             <Tabs defaultValue="details" className="px-4 mt-6">
@@ -271,9 +322,27 @@ function PolicySheet({
                 </div>
 
                 <div className="flex gap-2">
-                  <Button className="flex-1 rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
-                    Renovar
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex-1">
+                          <Button
+                            onClick={() => setRenewOpen(true)}
+                            disabled={alreadyRenewed}
+                            className="w-full rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+                          >
+                            <RotateCw className="h-4 w-4" />
+                            Renovar
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {alreadyRenewed && next && (
+                        <TooltipContent>
+                          Já renovada em {next.number}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                   <Button variant="outline" className="flex-1 rounded-xl">
                     Imprimir
                   </Button>
@@ -290,6 +359,12 @@ function PolicySheet({
                 )}
               </TabsContent>
             </Tabs>
+
+            <RenewPolicyDialog
+              open={renewOpen}
+              onOpenChange={setRenewOpen}
+              sourcePolicy={policy}
+            />
           </>
         )}
       </SheetContent>

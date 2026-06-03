@@ -1,11 +1,17 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { policies as seedPolicies, type Policy } from "@/lib/mock/data";
 
-type AddPolicyInput = Omit<Policy, "id" | "number">;
+type AddPolicyInput = Omit<Policy, "id" | "number" | "renewedFromId" | "renewedToId">;
+type RenewPolicyInput = AddPolicyInput;
 
 type Ctx = {
   policies: Policy[];
   addPolicy: (input: AddPolicyInput) => Policy;
+  renewPolicy: (sourceId: string, input: RenewPolicyInput) => Policy;
+  isAlreadyRenewed: (policyId: string) => boolean;
+  renewalChainOf: (policyId: string) => Policy[];
+  renewalIndexOf: (policyId: string) => number;
+  findPolicy: (id: string) => Policy | undefined;
 };
 
 const PolicyCtx = createContext<Ctx | null>(null);
@@ -39,7 +45,79 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     return created;
   }, []);
 
-  const value = useMemo(() => ({ policies, addPolicy }), [policies, addPolicy]);
+  const renewPolicy = useCallback((sourceId: string, input: RenewPolicyInput) => {
+    let created!: Policy;
+    setPolicies((arr) => {
+      const source = arr.find((p) => p.id === sourceId);
+      if (!source) return arr;
+      const newId = `p${Date.now()}`;
+      created = {
+        id: newId,
+        number: nextPolicyNumber(arr),
+        ...input,
+        renewedFromId: sourceId,
+      };
+      return [
+        created,
+        ...arr.map((p) =>
+          p.id === sourceId
+            ? { ...p, status: "renovada" as const, renewedToId: newId }
+            : p,
+        ),
+      ];
+    });
+    return created;
+  }, []);
+
+  const findPolicy = useCallback(
+    (id: string) => policies.find((p) => p.id === id),
+    [policies],
+  );
+
+  const isAlreadyRenewed = useCallback(
+    (policyId: string) => policies.some((p) => p.renewedFromId === policyId),
+    [policies],
+  );
+
+  const renewalChainOf = useCallback(
+    (policyId: string): Policy[] => {
+      const byId = new Map(policies.map((p) => [p.id, p]));
+      // walk backwards to the original
+      let head = byId.get(policyId);
+      while (head?.renewedFromId && byId.get(head.renewedFromId)) {
+        head = byId.get(head.renewedFromId);
+      }
+      const chain: Policy[] = [];
+      let cur = head;
+      while (cur) {
+        chain.push(cur);
+        cur = cur.renewedToId ? byId.get(cur.renewedToId) : undefined;
+      }
+      return chain;
+    },
+    [policies],
+  );
+
+  const renewalIndexOf = useCallback(
+    (policyId: string) => {
+      const chain = renewalChainOf(policyId);
+      return chain.findIndex((p) => p.id === policyId);
+    },
+    [renewalChainOf],
+  );
+
+  const value = useMemo(
+    () => ({
+      policies,
+      addPolicy,
+      renewPolicy,
+      isAlreadyRenewed,
+      renewalChainOf,
+      renewalIndexOf,
+      findPolicy,
+    }),
+    [policies, addPolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
+  );
 
   return <PolicyCtx.Provider value={value}>{children}</PolicyCtx.Provider>;
 }
