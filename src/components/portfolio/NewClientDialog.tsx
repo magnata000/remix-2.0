@@ -14,14 +14,34 @@ const schema = z.object({
   email: z.string().trim().email("E-mail inválido").max(255),
   phone: z.string().trim().min(8, "Telefone obrigatório").max(30),
   document: z.string().trim().min(5, "Documento obrigatório").max(30),
-  birthDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
-    .refine((v) => {
-      const d = new Date(v);
-      return !isNaN(d.getTime()) && d.getTime() <= Date.now();
-    }, "Data inválida"),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
 });
+
+function maskDate(input: string): string {
+  const d = input.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
+function toISO(masked: string): string | null {
+  const m = masked.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  const d = new Date(year, month - 1, day);
+  if (
+    d.getFullYear() !== year ||
+    d.getMonth() !== month - 1 ||
+    d.getDate() !== day ||
+    d.getTime() > Date.now() ||
+    year < 1900
+  ) {
+    return null;
+  }
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
 
 export function NewClientDialog({ open, onOpenChange }: Props) {
   const { addClient, clients } = useClientStore();
@@ -29,17 +49,31 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
-  const [birthDate, setBirthDate] = useState("");
+  const [birthDateMasked, setBirthDateMasked] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (open) {
-      setName(""); setEmail(""); setPhone(""); setDocument(""); setBirthDate(""); setErrors({});
+      setName(""); setEmail(""); setPhone(""); setDocument(""); setBirthDateMasked(""); setErrors({});
     }
   }, [open]);
 
   const submit = () => {
-    const parsed = schema.safeParse({ name, email, phone, document, birthDate });
+    const iso = toISO(birthDateMasked);
+    if (!iso) {
+      const parsed = schema.safeParse({ name, email, phone, document, birthDate: "" });
+      const errs: Record<string, string> = {};
+      if (!parsed.success) {
+        parsed.error.issues.forEach((i) => {
+          const key = i.path[0] as string;
+          if (key !== "birthDate") errs[key] = i.message;
+        });
+      }
+      errs.birthDate = "Data inválida";
+      setErrors(errs);
+      return;
+    }
+    const parsed = schema.safeParse({ name, email, phone, document, birthDate: iso });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       parsed.error.issues.forEach((i) => { errs[i.path[0] as string] = i.message; });
@@ -85,7 +119,15 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Data de nascimento *</Label>
-            <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} className="mt-1.5 rounded-xl bg-muted border-0" />
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={birthDateMasked}
+              onChange={(e) => setBirthDateMasked(maskDate(e.target.value))}
+              placeholder="dd/mm/aaaa"
+              maxLength={10}
+              className="mt-1.5 rounded-xl bg-muted border-0"
+            />
             {errors.birthDate && <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>}
           </div>
         </div>
