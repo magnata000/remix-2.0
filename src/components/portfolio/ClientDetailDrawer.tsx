@@ -137,10 +137,17 @@ export function ClientDetailDrawer({
 
             <TabsContent value="overview" className="mt-5 pb-6 space-y-6">
               {/* Contato */}
-              <section className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
                 <ContactRow icon={Phone} value={c.phone} />
                 <ContactRow icon={Mail} value={c.email} />
                 <ContactRow icon={IdCard} value={c.document} />
+                {c.birthDate && (
+                  <ContactRow
+                    icon={Cake}
+                    value={formatDateShort(c.birthDate)}
+                    aside={`${calcAge(c.birthDate)} anos`}
+                  />
+                )}
               </section>
 
               {/* KPIs */}
