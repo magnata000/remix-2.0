@@ -68,13 +68,20 @@ const names = [
 const rand = <T,>(arr: T[], i: number) => arr[i % arr.length];
 const pad = (n: number) => String(n).padStart(4, "0");
 
-export const clients: Client[] = names.map((n, i) => ({
-  id: `c${i + 1}`,
-  name: n,
-  email: `${n.toLowerCase().replace(/\s+/g, ".")}@email.com`,
-  phone: `(11) 9${String(10000000 + i * 137).slice(0, 8)}`,
-  document: `${String(100000000 + i * 7919).slice(0, 9)}-${String((i * 31) % 100).padStart(2, "0")}`,
-}));
+export const clients: Client[] = names.map((n, i) => {
+  const year = 1960 + ((i * 13) % 41); // 1960..2000
+  const month = ((i * 7) % 12) + 1;
+  const day = ((i * 11) % 27) + 1;
+  const birthDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return {
+    id: `c${i + 1}`,
+    name: n,
+    email: `${n.toLowerCase().replace(/\s+/g, ".")}@email.com`,
+    phone: `(11) 9${String(10000000 + i * 137).slice(0, 8)}`,
+    document: `${String(100000000 + i * 7919).slice(0, 9)}-${String((i * 31) % 100).padStart(2, "0")}`,
+    birthDate,
+  };
+});
 
 const statuses: PolicyStatus[] = ["ativa", "ativa", "ativa", "pendente", "vencida", "cancelada"];
 
