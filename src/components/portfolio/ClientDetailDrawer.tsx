@@ -20,6 +20,7 @@ import {
   Plus,
   Search,
   FolderOpen,
+  Cake,
 } from "lucide-react";
 import {
   formatBRL,
@@ -136,10 +137,17 @@ export function ClientDetailDrawer({
 
             <TabsContent value="overview" className="mt-5 pb-6 space-y-6">
               {/* Contato */}
-              <section className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
                 <ContactRow icon={Phone} value={c.phone} />
                 <ContactRow icon={Mail} value={c.email} />
                 <ContactRow icon={IdCard} value={c.document} />
+                {c.birthDate && (
+                  <ContactRow
+                    icon={Cake}
+                    value={formatDateShort(c.birthDate)}
+                    aside={`${calcAge(c.birthDate)} anos`}
+                  />
+                )}
               </section>
 
               {/* KPIs */}
@@ -284,13 +292,23 @@ function ClientDocumentsPanel({ clientName }: { clientName: string }) {
   );
 }
 
-function ContactRow({ icon: Icon, value }: { icon: typeof Phone; value: string }) {
+function ContactRow({ icon: Icon, value, aside }: { icon: typeof Phone; value: string; aside?: string }) {
   return (
     <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2">
       <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
       <span className="text-xs truncate">{value}</span>
+      {aside && <span className="text-[11px] text-muted-foreground shrink-0">· {aside}</span>}
     </div>
   );
+}
+
+function calcAge(iso: string): number {
+  const b = new Date(iso);
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age;
 }
 
 function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {

@@ -14,6 +14,13 @@ const schema = z.object({
   email: z.string().trim().email("E-mail inválido").max(255),
   phone: z.string().trim().min(8, "Telefone obrigatório").max(30),
   document: z.string().trim().min(5, "Documento obrigatório").max(30),
+  birthDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+    .refine((v) => {
+      const d = new Date(v);
+      return !isNaN(d.getTime()) && d.getTime() <= Date.now();
+    }, "Data inválida"),
 });
 
 export function NewClientDialog({ open, onOpenChange }: Props) {
@@ -22,16 +29,17 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (open) {
-      setName(""); setEmail(""); setPhone(""); setDocument(""); setErrors({});
+      setName(""); setEmail(""); setPhone(""); setDocument(""); setBirthDate(""); setErrors({});
     }
   }, [open]);
 
   const submit = () => {
-    const parsed = schema.safeParse({ name, email, phone, document });
+    const parsed = schema.safeParse({ name, email, phone, document, birthDate });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       parsed.error.issues.forEach((i) => { errs[i.path[0] as string] = i.message; });
@@ -74,6 +82,11 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
               <Input value={document} onChange={(e) => setDocument(e.target.value)} placeholder="000.000.000-00" className="mt-1.5 rounded-xl bg-muted border-0" />
               {errors.document && <p className="text-xs text-destructive mt-1">{errors.document}</p>}
             </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Data de nascimento *</Label>
+            <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} className="mt-1.5 rounded-xl bg-muted border-0" />
+            {errors.birthDate && <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>}
           </div>
         </div>
 
