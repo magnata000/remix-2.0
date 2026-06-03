@@ -1,5 +1,5 @@
 // Mock data para vitrine TheInsuranceOS
-export type PolicyStatus = "ativa" | "vencida" | "pendente" | "cancelada";
+export type PolicyStatus = "ativa" | "vencida" | "pendente" | "cancelada" | "renovada";
 export type Branch = "Auto" | "Vida" | "Residencial" | "Empresarial" | "Saúde";
 export type Insurer = "Porto Seguro" | "Bradesco" | "SulAmérica" | "Allianz" | "Mapfre";
 
