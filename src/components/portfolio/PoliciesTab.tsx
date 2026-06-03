@@ -18,7 +18,8 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, FileText, Calendar, Building2, User, Plus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Search, FileText, Calendar, Building2, User, Plus, RotateCw } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
@@ -27,6 +28,7 @@ import {
 } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
+import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
 
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
