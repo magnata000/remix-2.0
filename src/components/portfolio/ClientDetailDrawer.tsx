@@ -60,6 +60,7 @@ const policyStatusColor: Record<PolicyStatus, string> = {
   pendente: "bg-warning/15 text-warning border-0",
   vencida: "bg-destructive/15 text-destructive border-0",
   cancelada: "bg-muted text-muted-foreground border-0",
+  renovada: "bg-info/15 text-info border-0",
 };
 
 type Props = {
