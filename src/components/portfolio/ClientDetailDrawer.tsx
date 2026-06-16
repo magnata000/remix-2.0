@@ -244,6 +244,7 @@ export function ClientDetailDrawer({
       </Sheet>
 
       <NewOpportunityDialog open={newOpp} onOpenChange={setNewOpp} defaultClientName={c.name} />
+      <EditClientDialog open={editOpen} onOpenChange={setEditOpen} client={c} />
     </>
   );
 }
