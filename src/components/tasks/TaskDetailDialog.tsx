@@ -1,11 +1,12 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText } from "lucide-react";
+import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText, Search, X, Pin } from "lucide-react";
 import { formatDateShort } from "@/lib/mock/data";
-import { PRIORITY_META, TaskAttachment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { MAX_PINNED_COMMENTS, PRIORITY_META, TaskAttachment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput } from "./MentionInput";
 import {
   AttachmentChip,
@@ -18,12 +19,30 @@ import {
 } from "@/components/shared/Timeline";
 
 
-export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null; onOpenChange: (v: boolean) => void }) {
-  const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, currentUserId } = useTaskStore();
+export function TaskDetailDialog({
+  task,
+  onOpenChange,
+  initialSearch,
+}: {
+  task: TaskItem | null;
+  onOpenChange: (v: boolean) => void;
+  initialSearch?: string;
+}) {
+  const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (task && initialSearch) {
+      setSearchOpen(true);
+      setSearchTerm(initialSearch);
+    }
+  }, [task?.id, initialSearch]);
+
 
   useLayoutEffect(() => {
     if (!task) return;
@@ -44,6 +63,19 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
   const column = useMemo(() => columns.find((c) => c.id === task?.columnId), [columns, task]);
   if (!task) return null;
   const pr = PRIORITY_META[task.priority];
+  const pinnedComments = task.comments.filter((c) => c.pinned);
+  const canPinMore = pinnedComments.length < MAX_PINNED_COMMENTS;
+  const term = searchTerm.trim().toLowerCase();
+  const matchesTerm = (c: { text: string; attachmentIds?: string[] }) => {
+    if (!term) return true;
+    if (c.text.toLowerCase().includes(term)) return true;
+    const atts = (c.attachmentIds ?? [])
+      .map((id) => task.attachments.find((a) => a.id === id))
+      .filter((a): a is TaskAttachment => !!a);
+    return atts.some((a) => a.name.toLowerCase().includes(term));
+  };
+  const attachmentMatches = (name: string) => !term || name.toLowerCase().includes(term);
+
 
   const canSend = text.trim().length > 0 || pending.length > 0;
 
@@ -95,14 +127,83 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
           </aside>
 
           <section className="flex flex-col overflow-hidden min-h-0 border-l border-border pl-4">
-            <h3 className="text-sm font-semibold mb-2">Timeline</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold">Timeline</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => { setSearchOpen((v) => !v); if (searchOpen) setSearchTerm(""); }}
+                aria-label="Buscar"
+              >
+                <Search className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {searchOpen && (
+              <div className="relative mb-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  autoFocus
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar mensagem ou documento…"
+                  className="h-8 pl-8 pr-8 rounded-lg text-xs"
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Limpar busca"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {pinnedComments.length > 0 && (() => {
+              const visiblePinned = pinnedComments.filter((c) => matchesTerm(c));
+              if (visiblePinned.length === 0) return null;
+              return (
+                <div className="mb-3 rounded-xl border border-border bg-muted/40 p-2 space-y-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                    <Pin className="h-3 w-3" /> Fixadas ({pinnedComments.length}/{MAX_PINNED_COMMENTS})
+                  </p>
+                  {visiblePinned.map((c) => {
+                    const atts = (c.attachmentIds ?? [])
+                      .map((id) => task.attachments.find((a) => a.id === id))
+                      .filter((a): a is TaskAttachment => !!a);
+                    return (
+                      <TimelineRow key={`pin-${c.id}`} authorId={c.authorId} at={c.createdAt}>
+                        <CommentBubble
+                          comment={c}
+                          attachments={atts}
+                          canEdit={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
+                          pinned
+                          canPin
+                          onTogglePin={() => togglePinComment(task.id, c.id)}
+                          onSaveText={(t) => editComment(task.id, c.id, t)}
+                          onRemoveAttachment={(aid) => removeCommentAttachment(task.id, c.id, aid)}
+                          onDelete={() => deleteComment(task.id, c.id)}
+                        />
+                      </TimelineRow>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             <div ref={timelineRef} className="flex-1 overflow-y-auto space-y-3 pr-2">
               {task.timeline.map((ev, i) => {
+                if (term && (ev.kind === "created" || ev.kind === "moved")) return null;
                 if (ev.kind === "created") return (<TimelineRow key={i} authorId={ev.by} at={ev.at}><em className="text-muted-foreground">criou a tarefa</em></TimelineRow>);
                 if (ev.kind === "moved") return (<TimelineRow key={i} authorId={ev.by} at={ev.at}><em className="text-muted-foreground">moveu de <strong>{ev.from}</strong> para <strong>{ev.to}</strong></em></TimelineRow>);
                 if (ev.kind === "comment") {
                   const c = task.comments.find((x) => x.id === ev.commentId);
                   if (!c) return null;
+                  if (!matchesTerm(c)) return null;
                   const atts = (c.attachmentIds ?? [])
                     .map((id) => task.attachments.find((a) => a.id === id))
                     .filter((a): a is TaskAttachment => !!a);
@@ -112,6 +213,9 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
                         comment={c}
                         attachments={atts}
                         canEdit={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
+                        pinned={!!c.pinned}
+                        canPin={canPinMore}
+                        onTogglePin={() => togglePinComment(task.id, c.id)}
                         onSaveText={(t) => editComment(task.id, c.id, t)}
                         onRemoveAttachment={(aid) => removeCommentAttachment(task.id, c.id, aid)}
                         onDelete={() => deleteComment(task.id, c.id)}
@@ -121,17 +225,19 @@ export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null
                 }
                 if (ev.kind === "attachment") {
                   const a = task.attachments.find((x) => x.id === ev.attachmentId);
-                  return a ? (
+                  if (!a || !attachmentMatches(a.name)) return null;
+                  return (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
                       <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-brand hover:underline">
                         <Paperclip className="h-3 w-3" />{a.name}
                       </a>
                     </TimelineRow>
-                  ) : null;
+                  );
                 }
                 return null;
               })}
             </div>
+
 
             <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}

@@ -3,7 +3,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, MessageSquare, Paperclip, Pencil, Trash2, Users } from "lucide-react";
 import { formatDateShort } from "@/lib/mock/data";
 import { team } from "@/lib/mock/data";
-import { PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
+import { MESSAGE_PREVIEW_LIMIT, PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
+import { nameOf } from "@/components/shared/Timeline";
+
 
 type Props = {
   task: TaskItem;
@@ -17,6 +19,16 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
   const assignee = team.find((m) => m.id === task.assigneeId);
   const initials = assignee?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
   const pr = PRIORITY_META[task.priority];
+  const lastComment = task.comments.length ? task.comments[task.comments.length - 1] : null;
+  const lastCommentAttCount = lastComment?.attachmentIds?.length ?? 0;
+  const lastCommentPreview = lastComment
+    ? (lastComment.text
+        ? (lastComment.text.length > MESSAGE_PREVIEW_LIMIT
+            ? lastComment.text.slice(0, MESSAGE_PREVIEW_LIMIT).trimEnd() + "…"
+            : lastComment.text)
+        : `📎 ${lastCommentAttCount} anexo${lastCommentAttCount === 1 ? "" : "s"}`)
+    : null;
+
 
   return (
     <div
@@ -56,6 +68,15 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
       {task.clientName && (
         <p className="text-xs text-muted-foreground mt-1 truncate">Cliente · {task.clientName}</p>
       )}
+      {lastComment && lastCommentPreview && (
+        <div className="mt-2 rounded-lg bg-muted/60 px-2 py-1.5">
+          <p className="text-[10px] text-muted-foreground font-medium">
+            {nameOf(lastComment.authorId)}
+          </p>
+          <p className="text-xs mt-0.5 break-words">{lastCommentPreview}</p>
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {task.dueDate && (

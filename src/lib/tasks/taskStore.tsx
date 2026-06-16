@@ -13,7 +13,12 @@ export type TaskComment = {
   editedAt?: string;
   editedBy?: string;
   attachmentIds?: string[];
+  pinned?: boolean;
 };
+
+export const MESSAGE_PREVIEW_LIMIT = 120;
+export const MAX_PINNED_COMMENTS = 3;
+
 
 export type TaskAttachment = {
   id: string;
@@ -164,6 +169,8 @@ type Ctx = {
   editComment: (taskId: string, commentId: string, text: string) => void;
   removeCommentAttachment: (taskId: string, commentId: string, attachmentId: string) => void;
   deleteComment: (taskId: string, commentId: string) => void;
+  togglePinComment: (taskId: string, commentId: string) => void;
+
   addAttachment: (taskId: string, file: File) => void;
   addColumn: (title: string, color: string) => void;
   renameColumn: (id: string, title: string) => void;
@@ -310,9 +317,24 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [currentUserId]);
 
+  const togglePinComment = useCallback((taskId: string, commentId: string) => {
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      const target = t.comments.find((c) => c.id === commentId);
+      if (!target) return t;
+      const pinnedCount = t.comments.filter((c) => c.pinned).length;
+      if (!target.pinned && pinnedCount >= MAX_PINNED_COMMENTS) return t;
+      return {
+        ...t,
+        comments: t.comments.map((c) => c.id === commentId ? { ...c, pinned: !c.pinned } : c),
+      };
+    }));
+  }, []);
+
   const addColumn = useCallback((title: string, color: string) => {
     setColumns((arr) => [...arr, { id: `c-${Date.now()}`, title: title.trim() || "Nova coluna", color }]);
   }, []);
+
   const renameColumn = useCallback((id: string, title: string) => {
     setColumns((arr) => arr.map((c) => c.id === id ? { ...c, title } : c));
   }, []);
@@ -358,10 +380,11 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment,
+    addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, updateScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
+
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }
