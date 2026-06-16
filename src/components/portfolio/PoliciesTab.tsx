@@ -236,6 +236,7 @@ function PolicySheet({
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
   const [renewOpen, setRenewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const chainIndex = policy ? renewalIndexOf(policy.id) : -1;
   const chain = policy ? renewalChainOf(policy.id) : [];
