@@ -9,7 +9,6 @@ import { usePipelineStore, stageLabels, type Opportunity } from "@/lib/pipeline/
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { MentionInput } from "@/components/tasks/MentionInput";
 import {
-  AttachmentChip,
   CommentBubble,
   EDIT_WINDOW_MS,
   PendingChip,
