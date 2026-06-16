@@ -121,13 +121,14 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       policies,
       addPolicy,
+      updatePolicy,
       renewPolicy,
       isAlreadyRenewed,
       renewalChainOf,
       renewalIndexOf,
       findPolicy,
     }),
-    [policies, addPolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
+    [policies, addPolicy, updatePolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
   );
 
   return <PolicyCtx.Provider value={value}>{children}</PolicyCtx.Provider>;
