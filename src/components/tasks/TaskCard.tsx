@@ -68,6 +68,15 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
       {task.clientName && (
         <p className="text-xs text-muted-foreground mt-1 truncate">Cliente · {task.clientName}</p>
       )}
+      {lastComment && lastCommentPreview && (
+        <div className="mt-2 rounded-lg bg-muted/60 px-2 py-1.5">
+          <p className="text-[10px] text-muted-foreground font-medium">
+            {nameOf(lastComment.authorId)}
+          </p>
+          <p className="text-xs mt-0.5 break-words">{lastCommentPreview}</p>
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {task.dueDate && (
