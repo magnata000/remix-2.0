@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal, Plus, GripVertical, Calendar, Trophy, Calculator, Link2 } from "lucide-react";
-import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type LostReason, type Task } from "@/lib/mock/data";
-import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type LostReason } from "@/lib/mock/data";
+import { usePipelineStore, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 import { CloseOpportunityDialog } from "@/components/pipeline/CloseOpportunityDialog";
+import { OpportunityDetailDialog } from "@/components/pipeline/OpportunityDetailDialog";
 import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
 import { toast } from "sonner";
 
@@ -37,6 +38,7 @@ export function KanbanModule() {
   const [openNew, setOpenNew] = useState(false);
   const [pendingLost, setPendingLost] = useState<{ id: string } | null>(null);
   const [pendingClose, setPendingClose] = useState<{ id: string } | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
@@ -133,7 +135,8 @@ export function KanbanModule() {
                   key={t.id}
                   draggable
                   onDragStart={() => setDragId(t.id)}
-                  className={`bg-card border rounded-xl p-3 cursor-grab active:cursor-grabbing hover:border-brand transition ${
+                  onClick={() => setDetailId(t.id)}
+                  className={`bg-card border rounded-xl p-3 cursor-pointer active:cursor-grabbing hover:border-brand transition ${
                     highlightId === t.id ? "border-brand ring-2 ring-brand/30" : "border-border"
                   }`}
                 >
@@ -142,6 +145,7 @@ export function KanbanModule() {
                     quoteSummary={groupFor(t.quoteGroupId)}
                     onMove={move}
                     onOpenQuote={() => openQuote(t.quoteGroupId)}
+                    onOpenDetails={() => setDetailId(t.id)}
                   />
                 </div>
               ))}
@@ -175,12 +179,13 @@ export function KanbanModule() {
               </Card>
             ) : (
               byStage(s.key).map((t) => (
-                <div key={t.id} className="bg-card border border-border rounded-xl p-3">
+                <div key={t.id} onClick={() => setDetailId(t.id)} className="bg-card border border-border rounded-xl p-3 cursor-pointer">
                   <KanbanCardBody
                     task={t}
                     quoteSummary={groupFor(t.quoteGroupId)}
                     onMove={move}
                     onOpenQuote={() => openQuote(t.quoteGroupId)}
+                    onOpenDetails={() => setDetailId(t.id)}
                   />
                 </div>
               ))
@@ -208,6 +213,12 @@ export function KanbanModule() {
         opportunity={closingOpportunity}
         onConfirm={confirmClose}
       />
+
+      <OpportunityDetailDialog
+        opportunity={detailId ? opportunities.find((o) => o.id === detailId) ?? null : null}
+        onOpenChange={(o) => !o && setDetailId(null)}
+        onOpenQuote={(gid) => { setDetailId(null); openQuote(gid); }}
+      />
     </div>
   );
 }
@@ -216,12 +227,13 @@ export function KanbanModule() {
 type GroupSummary = ReturnType<typeof useQuoteStore>["groups"][number];
 
 function KanbanCardBody({
-  task, quoteSummary, onMove, onOpenQuote,
+  task, quoteSummary, onMove, onOpenQuote, onOpenDetails,
 }: {
-  task: Task;
+  task: Opportunity;
   quoteSummary?: GroupSummary;
   onMove: (id: string, s: KanbanStage) => void;
   onOpenQuote: () => void;
+  onOpenDetails: () => void;
 }) {
   return (
     <>
@@ -235,11 +247,12 @@ function KanbanCardBody({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={(e) => e.stopPropagation()}>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={onOpenDetails}>Abrir detalhes</DropdownMenuItem>
             <DropdownMenuItem onClick={onOpenQuote}>
               {task.quoteGroupId ? "Abrir cotação" : "Nova cotação"}
             </DropdownMenuItem>
