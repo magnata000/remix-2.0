@@ -213,6 +213,12 @@ export function KanbanModule() {
         opportunity={closingOpportunity}
         onConfirm={confirmClose}
       />
+
+      <OpportunityDetailDialog
+        opportunity={detailId ? opportunities.find((o) => o.id === detailId) ?? null : null}
+        onOpenChange={(o) => !o && setDetailId(null)}
+        onOpenQuote={(gid) => { setDetailId(null); openQuote(gid); }}
+      />
     </div>
   );
 }
