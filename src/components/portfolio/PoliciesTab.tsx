@@ -263,6 +263,22 @@ function PolicySheet({
                     {ordinalLabel(chainIndex)}
                   </span>
                 )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 ml-1 text-muted-foreground hover:text-foreground"
+                        onClick={() => setEditOpen(true)}
+                        aria-label="Editar dados"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Editar dados</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </SheetTitle>
               <SheetDescription>
                 Detalhes da apólice
