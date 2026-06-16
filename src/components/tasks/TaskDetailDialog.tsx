@@ -63,6 +63,19 @@ export function TaskDetailDialog({
   const column = useMemo(() => columns.find((c) => c.id === task?.columnId), [columns, task]);
   if (!task) return null;
   const pr = PRIORITY_META[task.priority];
+  const pinnedComments = task.comments.filter((c) => c.pinned);
+  const canPinMore = pinnedComments.length < MAX_PINNED_COMMENTS;
+  const term = searchTerm.trim().toLowerCase();
+  const matchesTerm = (c: { text: string; attachmentIds?: string[] }) => {
+    if (!term) return true;
+    if (c.text.toLowerCase().includes(term)) return true;
+    const atts = (c.attachmentIds ?? [])
+      .map((id) => task.attachments.find((a) => a.id === id))
+      .filter((a): a is TaskAttachment => !!a);
+    return atts.some((a) => a.name.toLowerCase().includes(term));
+  };
+  const attachmentMatches = (name: string) => !term || name.toLowerCase().includes(term);
+
 
   const canSend = text.trim().length > 0 || pending.length > 0;
 
