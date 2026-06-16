@@ -20,7 +20,6 @@ const integrations = [
 
 export function SettingsModule() {
   return (
-    <ComingSoonOverlay>
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Configurações</h1>
