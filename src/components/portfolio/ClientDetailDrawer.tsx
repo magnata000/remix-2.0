@@ -21,7 +21,10 @@ import {
   Search,
   FolderOpen,
   Cake,
+  Pencil,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EditClientDialog } from "@/components/portfolio/EditClientDialog";
 import {
   formatBRL,
   formatDateShort,
