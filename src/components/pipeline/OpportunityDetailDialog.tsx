@@ -245,6 +245,3 @@ function Meta({ icon, label, children }: { icon: React.ReactNode; label: string;
     </div>
   );
 }
-
-// Re-export to avoid unused-import lint
-export { AttachmentChip };
