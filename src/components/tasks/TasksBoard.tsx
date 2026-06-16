@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Plus, Settings, CalendarClock, Search, X } from "lucide-react";
+import { Plus, Settings, CalendarClock, Search, X, MessageSquare, Paperclip } from "lucide-react";
 import { team, clients } from "@/lib/mock/data";
-import { Priority, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { searchTasks } from "@/lib/tasks/searchTasks";
 import { TaskCard } from "./TaskCard";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
@@ -16,6 +17,7 @@ import { ManageColumnsDialog } from "./ManageColumnsDialog";
 import { ScheduledTasksPanel } from "./ScheduledTasksPanel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+
 
 export function TasksBoard() {
   const { columns, tasks, moveTask, deleteTask } = useTaskStore();
@@ -25,7 +27,12 @@ export function TasksBoard() {
   const [manageOpen, setManageOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [detail, setDetail] = useState<TaskItem | null>(null);
+  const [detailInitialSearch, setDetailInitialSearch] = useState<string>("");
   const [dragId, setDragId] = useState<string | null>(null);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
+  const globalResults = useMemo(() => searchTasks(tasks, globalSearch), [tasks, globalSearch]);
+
 
   // filters
   const [fAssignee, setFAssignee] = useState<string>("todos");
