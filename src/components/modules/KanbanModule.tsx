@@ -179,12 +179,13 @@ export function KanbanModule() {
               </Card>
             ) : (
               byStage(s.key).map((t) => (
-                <div key={t.id} className="bg-card border border-border rounded-xl p-3">
+                <div key={t.id} onClick={() => setDetailId(t.id)} className="bg-card border border-border rounded-xl p-3 cursor-pointer">
                   <KanbanCardBody
                     task={t}
                     quoteSummary={groupFor(t.quoteGroupId)}
                     onMove={move}
                     onOpenQuote={() => openQuote(t.quoteGroupId)}
+                    onOpenDetails={() => setDetailId(t.id)}
                   />
                 </div>
               ))
