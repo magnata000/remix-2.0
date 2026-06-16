@@ -7,6 +7,7 @@ type RenewPolicyInput = AddPolicyInput;
 type Ctx = {
   policies: Policy[];
   addPolicy: (input: AddPolicyInput) => Policy;
+  updatePolicy: (id: string, patch: Partial<AddPolicyInput>) => void;
   renewPolicy: (sourceId: string, input: RenewPolicyInput) => Policy;
   isAlreadyRenewed: (policyId: string) => boolean;
   renewalChainOf: (policyId: string) => Policy[];
@@ -43,6 +44,16 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
       return [created, ...arr];
     });
     return created;
+  }, []);
+
+  const updatePolicy = useCallback((id: string, patch: Partial<AddPolicyInput>) => {
+    setPolicies((arr) =>
+      arr.map((p) =>
+        p.id === id
+          ? { ...p, ...patch, id: p.id, number: p.number, renewedFromId: p.renewedFromId, renewedToId: p.renewedToId }
+          : p,
+      ),
+    );
   }, []);
 
   const renewPolicy = useCallback((sourceId: string, input: RenewPolicyInput) => {
@@ -110,13 +121,14 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       policies,
       addPolicy,
+      updatePolicy,
       renewPolicy,
       isAlreadyRenewed,
       renewalChainOf,
       renewalIndexOf,
       findPolicy,
     }),
-    [policies, addPolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
+    [policies, addPolicy, updatePolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
   );
 
   return <PolicyCtx.Provider value={value}>{children}</PolicyCtx.Provider>;

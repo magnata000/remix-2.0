@@ -6,6 +6,7 @@ type AddClientInput = Omit<Client, "id">;
 type Ctx = {
   clients: Client[];
   addClient: (input: AddClientInput) => Client;
+  updateClient: (id: string, patch: Partial<AddClientInput>) => void;
   findByName: (name: string) => Client | undefined;
 };
 
@@ -20,13 +21,17 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
     return client;
   }, []);
 
+  const updateClient = useCallback((id: string, patch: Partial<AddClientInput>) => {
+    setClients((arr) => arr.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }, []);
+
   const findByName = useCallback(
     (name: string) => clients.find((c) => c.name === name),
     [clients],
   );
 
   return (
-    <ClientCtx.Provider value={{ clients, addClient, findByName }}>
+    <ClientCtx.Provider value={{ clients, addClient, updateClient, findByName }}>
       {children}
     </ClientCtx.Provider>
   );

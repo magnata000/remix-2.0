@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Search, FileText, Calendar, Building2, User, Plus, RotateCw } from "lucide-react";
+import { Search, FileText, Calendar, Building2, User, Plus, RotateCw, Pencil } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
@@ -29,6 +29,7 @@ import {
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
 import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
+import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
 
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
@@ -235,6 +236,7 @@ function PolicySheet({
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
   const [renewOpen, setRenewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const chainIndex = policy ? renewalIndexOf(policy.id) : -1;
   const chain = policy ? renewalChainOf(policy.id) : [];
@@ -261,6 +263,22 @@ function PolicySheet({
                     {ordinalLabel(chainIndex)}
                   </span>
                 )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 ml-1 text-muted-foreground hover:text-foreground"
+                        onClick={() => setEditOpen(true)}
+                        aria-label="Editar dados"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Editar dados</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </SheetTitle>
               <SheetDescription>
                 Detalhes da apólice
@@ -364,6 +382,11 @@ function PolicySheet({
               open={renewOpen}
               onOpenChange={setRenewOpen}
               sourcePolicy={policy}
+            />
+            <EditPolicyDialog
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              policy={policy}
             />
           </>
         )}

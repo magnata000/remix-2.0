@@ -21,7 +21,10 @@ import {
   Search,
   FolderOpen,
   Cake,
+  Pencil,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EditClientDialog } from "@/components/portfolio/EditClientDialog";
 import {
   formatBRL,
   formatDateShort,
@@ -80,6 +83,7 @@ export function ClientDetailDrawer({
   const docStore = useDocumentStore();
   const [newOpp, setNewOpp] = useState(false);
   const docCount = clientName ? docStore.countByClient(clientName) : 0;
+  const [editOpen, setEditOpen] = useState(false);
 
   const stats = useMemo(
     () => (clientName ? getClientStats(clientName, clients, policies) : null),
@@ -121,6 +125,22 @@ export function ClientDetailDrawer({
                 <div className="text-lg font-semibold">{c.name}</div>
                 <Badge className={statusColor[stats.status]}>{statusLabel[stats.status]}</Badge>
               </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground mr-8"
+                      onClick={() => setEditOpen(true)}
+                      aria-label="Editar dados"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Editar dados</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </SheetTitle>
             <SheetDescription className="sr-only">Visão 360° do cliente</SheetDescription>
           </SheetHeader>
@@ -224,6 +244,7 @@ export function ClientDetailDrawer({
       </Sheet>
 
       <NewOpportunityDialog open={newOpp} onOpenChange={setNewOpp} defaultClientName={c.name} />
+      <EditClientDialog open={editOpen} onOpenChange={setEditOpen} client={c} />
     </>
   );
 }
