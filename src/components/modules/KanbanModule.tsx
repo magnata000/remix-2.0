@@ -221,12 +221,13 @@ export function KanbanModule() {
 type GroupSummary = ReturnType<typeof useQuoteStore>["groups"][number];
 
 function KanbanCardBody({
-  task, quoteSummary, onMove, onOpenQuote,
+  task, quoteSummary, onMove, onOpenQuote, onOpenDetails,
 }: {
   task: Opportunity;
   quoteSummary?: GroupSummary;
   onMove: (id: string, s: KanbanStage) => void;
   onOpenQuote: () => void;
+  onOpenDetails: () => void;
 }) {
   return (
     <>
@@ -240,11 +241,12 @@ function KanbanCardBody({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={(e) => e.stopPropagation()}>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={onOpenDetails}>Abrir detalhes</DropdownMenuItem>
             <DropdownMenuItem onClick={onOpenQuote}>
               {task.quoteGroupId ? "Abrir cotação" : "Nova cotação"}
             </DropdownMenuItem>
