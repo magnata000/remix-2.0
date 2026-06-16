@@ -29,6 +29,7 @@ import {
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
 import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
+import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
 
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
