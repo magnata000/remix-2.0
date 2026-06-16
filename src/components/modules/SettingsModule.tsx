@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,8 +6,30 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Building2, Users, Plug, Bell, CreditCard, Check } from "lucide-react";
-import { team } from "@/lib/mock/data";
+import {
+  Building2,
+  Users,
+  Plug,
+  Bell,
+  CreditCard,
+  Check,
+  Pencil,
+  Trash2,
+  MailPlus,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useTeam, buildInviteLink, type Member } from "@/lib/team/teamStore";
+import { EditMemberDialog } from "@/components/settings/EditMemberDialog";
+import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
 import { toast } from "sonner";
 
 
