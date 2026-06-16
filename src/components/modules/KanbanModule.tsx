@@ -219,7 +219,7 @@ type GroupSummary = ReturnType<typeof useQuoteStore>["groups"][number];
 function KanbanCardBody({
   task, quoteSummary, onMove, onOpenQuote,
 }: {
-  task: Task;
+  task: Opportunity;
   quoteSummary?: GroupSummary;
   onMove: (id: string, s: KanbanStage) => void;
   onOpenQuote: () => void;
