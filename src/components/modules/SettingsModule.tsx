@@ -219,6 +219,41 @@ export function SettingsModule() {
           </Button>
         </div>
       </Section>
+
+      <EditMemberDialog
+        member={editing}
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+      />
+      <InviteMemberDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover colaborador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting
+                ? `${deleting.name} perderá o acesso à corretora. Esta ação não pode ser desfeita.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleting) {
+                  removeMember(deleting.id);
+                  toast.success("Colaborador removido");
+                  setDeleting(null);
+                }
+              }}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
