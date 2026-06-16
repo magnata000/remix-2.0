@@ -77,7 +77,6 @@ export function FinancialModule() {
   ];
 
   return (
-    <ComingSoonOverlay>
     <div className="space-y-5">
 
       <div>
