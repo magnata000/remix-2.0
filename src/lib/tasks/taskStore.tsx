@@ -169,6 +169,8 @@ type Ctx = {
   editComment: (taskId: string, commentId: string, text: string) => void;
   removeCommentAttachment: (taskId: string, commentId: string, attachmentId: string) => void;
   deleteComment: (taskId: string, commentId: string) => void;
+  togglePinComment: (taskId: string, commentId: string) => void;
+
   addAttachment: (taskId: string, file: File) => void;
   addColumn: (title: string, color: string) => void;
   renameColumn: (id: string, title: string) => void;
@@ -315,7 +317,20 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [currentUserId]);
 
-  const addColumn = useCallback((title: string, color: string) => {
+  const togglePinComment = useCallback((taskId: string, commentId: string) => {
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      const target = t.comments.find((c) => c.id === commentId);
+      if (!target) return t;
+      const pinnedCount = t.comments.filter((c) => c.pinned).length;
+      if (!target.pinned && pinnedCount >= MAX_PINNED_COMMENTS) return t;
+      return {
+        ...t,
+        comments: t.comments.map((c) => c.id === commentId ? { ...c, pinned: !c.pinned } : c),
+      };
+    }));
+  }, []);
+
     setColumns((arr) => [...arr, { id: `c-${Date.now()}`, title: title.trim() || "Nova coluna", color }]);
   }, []);
   const renameColumn = useCallback((id: string, title: string) => {
