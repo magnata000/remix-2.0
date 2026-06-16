@@ -13,7 +13,12 @@ export type TaskComment = {
   editedAt?: string;
   editedBy?: string;
   attachmentIds?: string[];
+  pinned?: boolean;
 };
+
+export const MESSAGE_PREVIEW_LIMIT = 120;
+export const MAX_PINNED_COMMENTS = 3;
+
 
 export type TaskAttachment = {
   id: string;
