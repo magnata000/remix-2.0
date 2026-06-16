@@ -3,26 +3,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText, Pencil, X, Trash2, Image as ImageIcon } from "lucide-react";
-import { team, formatDateShort } from "@/lib/mock/data";
-import { PRIORITY_META, TaskAttachment, TaskComment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
-import { MentionInput, renderMentions } from "./MentionInput";
+import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText } from "lucide-react";
+import { formatDateShort } from "@/lib/mock/data";
+import { PRIORITY_META, TaskAttachment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { MentionInput } from "./MentionInput";
+import {
+  AttachmentChip,
+  CommentBubble,
+  EDIT_WINDOW_MS,
+  PendingChip,
+  TimelineRow,
+  initialsOf,
+  nameOf,
+} from "@/components/shared/Timeline";
 
-const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-const initialsOf = (id: string) => {
-  if (id === "all") return "TD";
-  const m = team.find((x) => x.id === id);
-  return m?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
-};
-const nameOf = (id: string) => (id === "all" ? "Todos" : team.find((x) => x.id === id)?.name ?? "—");
-const formatTime = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-const formatBytes = (n: number) => {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / 1024 / 1024).toFixed(1)} MB`;
-};
-const isImage = (type: string) => type.startsWith("image/");
 
 export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null; onOpenChange: (v: boolean) => void }) {
   const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, currentUserId } = useTaskStore();
