@@ -383,6 +383,11 @@ function PolicySheet({
               onOpenChange={setRenewOpen}
               sourcePolicy={policy}
             />
+            <EditPolicyDialog
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              policy={policy}
+            />
           </>
         )}
       </SheetContent>
