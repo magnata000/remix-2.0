@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Search, FileText, Calendar, Building2, User, Plus, RotateCw } from "lucide-react";
+import { Search, FileText, Calendar, Building2, User, Plus, RotateCw, Pencil } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
