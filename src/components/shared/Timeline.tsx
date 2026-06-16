@@ -157,7 +157,20 @@ export function CommentBubble({
       <div className="flex items-start gap-1.5">
         <div className="flex-1 min-w-0 space-y-1.5">
           {comment.text && (
-            <span className="block whitespace-pre-wrap break-words">{renderMentions(comment.text)}</span>
+            <span className="block whitespace-pre-wrap break-words">
+              {renderMentions(displayText)}
+              {isLong && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="ml-1 inline-flex items-center gap-0.5 text-[11px] text-brand hover:underline align-middle"
+                  aria-label={expanded ? "Recolher mensagem" : "Expandir mensagem"}
+                >
+                  {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  {expanded ? "recolher" : "expandir"}
+                </button>
+              )}
+            </span>
           )}
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -165,14 +178,28 @@ export function CommentBubble({
             </div>
           )}
         </div>
-        {canEdit && (
-          <button type="button"
-            onClick={() => { setDraft(comment.text); setEditing(true); }}
-            className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-foreground shrink-0"
-            aria-label="Editar mensagem">
-            <Pencil className="h-3 w-3" />
-          </button>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {onTogglePin && (
+            <button
+              type="button"
+              onClick={onTogglePin}
+              disabled={!pinned && canPin === false}
+              title={pinned ? "Desafixar" : (canPin === false ? "Limite de 3 mensagens fixadas" : "Fixar mensagem")}
+              aria-label={pinned ? "Desafixar mensagem" : "Fixar mensagem"}
+              className={`transition shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${pinned ? "text-brand" : "opacity-0 group-hover/comment:opacity-100 text-muted-foreground hover:text-foreground"}`}
+            >
+              {pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+            </button>
+          )}
+          {canEdit && (
+            <button type="button"
+              onClick={() => { setDraft(comment.text); setEditing(true); }}
+              className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-foreground shrink-0"
+              aria-label="Editar mensagem">
+              <Pencil className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
       {comment.editedAt && comment.editedBy && (
         <span className="text-[10px] text-muted-foreground italic">
@@ -182,3 +209,4 @@ export function CommentBubble({
     </div>
   );
 }
+
