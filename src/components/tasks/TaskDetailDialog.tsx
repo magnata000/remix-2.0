@@ -1,11 +1,12 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText } from "lucide-react";
+import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText, Search, X, Pin } from "lucide-react";
 import { formatDateShort } from "@/lib/mock/data";
-import { PRIORITY_META, TaskAttachment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { MAX_PINNED_COMMENTS, PRIORITY_META, TaskAttachment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { MentionInput } from "./MentionInput";
 import {
   AttachmentChip,
@@ -18,12 +19,30 @@ import {
 } from "@/components/shared/Timeline";
 
 
-export function TaskDetailDialog({ task, onOpenChange }: { task: TaskItem | null; onOpenChange: (v: boolean) => void }) {
-  const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, currentUserId } = useTaskStore();
+export function TaskDetailDialog({
+  task,
+  onOpenChange,
+  initialSearch,
+}: {
+  task: TaskItem | null;
+  onOpenChange: (v: boolean) => void;
+  initialSearch?: string;
+}) {
+  const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (task && initialSearch) {
+      setSearchOpen(true);
+      setSearchTerm(initialSearch);
+    }
+  }, [task?.id, initialSearch]);
+
 
   useLayoutEffect(() => {
     if (!task) return;
