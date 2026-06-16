@@ -260,7 +260,12 @@ export function TasksBoard() {
       />
       <ManageColumnsDialog open={manageOpen} onOpenChange={setManageOpen} />
       <ScheduledTasksPanel open={scheduleOpen} onOpenChange={setScheduleOpen} />
-      <TaskDetailDialog task={currentDetail} onOpenChange={(v) => { if (!v) setDetail(null); }} />
+      <TaskDetailDialog
+        task={currentDetail}
+        initialSearch={detailInitialSearch}
+        onOpenChange={(v) => { if (!v) { setDetail(null); setDetailInitialSearch(""); } }}
+      />
+
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(v) => { if (!v) setConfirmDelete(null); }}>
         <AlertDialogContent>
