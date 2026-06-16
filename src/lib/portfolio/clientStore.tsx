@@ -6,6 +6,7 @@ type AddClientInput = Omit<Client, "id">;
 type Ctx = {
   clients: Client[];
   addClient: (input: AddClientInput) => Client;
+  updateClient: (id: string, patch: Partial<AddClientInput>) => void;
   findByName: (name: string) => Client | undefined;
 };
 
