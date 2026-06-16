@@ -74,9 +74,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <>
+    <TeamProvider>
       <Outlet />
       <Toaster position="top-right" />
-    </>
+    </TeamProvider>
   );
 }
