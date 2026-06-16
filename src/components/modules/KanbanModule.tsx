@@ -38,6 +38,7 @@ export function KanbanModule() {
   const [openNew, setOpenNew] = useState(false);
   const [pendingLost, setPendingLost] = useState<{ id: string } | null>(null);
   const [pendingClose, setPendingClose] = useState<{ id: string } | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
 
