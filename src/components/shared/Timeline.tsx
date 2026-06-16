@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { FileText, Image as ImageIcon, Pencil, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Image as ImageIcon, Pencil, Pin, PinOff, Trash2, X } from "lucide-react";
 import { team } from "@/lib/mock/data";
 import type { TaskAttachment, TaskComment } from "@/lib/tasks/taskStore";
+import { MESSAGE_PREVIEW_LIMIT } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "@/components/tasks/MentionInput";
+
 
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -90,17 +92,26 @@ export function AttachmentChip({ a, onRemove }: { a: TaskAttachment; onRemove?: 
 }
 
 export function CommentBubble({
-  comment, attachments, canEdit, onSaveText, onRemoveAttachment, onDelete,
+  comment, attachments, canEdit, pinned, canPin, onTogglePin, onSaveText, onRemoveAttachment, onDelete,
 }: {
   comment: TaskComment;
   attachments: TaskAttachment[];
   canEdit: boolean;
+  pinned?: boolean;
+  canPin?: boolean;
+  onTogglePin?: () => void;
   onSaveText: (text: string) => void;
   onRemoveAttachment: (attachmentId: string) => void;
   onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.text);
+  const [expanded, setExpanded] = useState(false);
+  const isLong = comment.text.length > MESSAGE_PREVIEW_LIMIT;
+  const displayText = !isLong || expanded
+    ? comment.text
+    : comment.text.slice(0, MESSAGE_PREVIEW_LIMIT).trimEnd() + "…";
+
 
   const save = () => {
     const clean = draft.trim();
