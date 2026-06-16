@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal, Plus, GripVertical, Calendar, Trophy, Calculator, Link2 } from "lucide-react";
-import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type LostReason, type Task } from "@/lib/mock/data";
-import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type LostReason } from "@/lib/mock/data";
+import { usePipelineStore, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 import { CloseOpportunityDialog } from "@/components/pipeline/CloseOpportunityDialog";
+import { OpportunityDetailDialog } from "@/components/pipeline/OpportunityDetailDialog";
 import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
 import { toast } from "sonner";
 
