@@ -46,6 +46,16 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     return created;
   }, []);
 
+  const updatePolicy = useCallback((id: string, patch: Partial<AddPolicyInput>) => {
+    setPolicies((arr) =>
+      arr.map((p) =>
+        p.id === id
+          ? { ...p, ...patch, id: p.id, number: p.number, renewedFromId: p.renewedFromId, renewedToId: p.renewedToId }
+          : p,
+      ),
+    );
+  }, []);
+
   const renewPolicy = useCallback((sourceId: string, input: RenewPolicyInput) => {
     let created!: Policy;
     setPolicies((arr) => {
