@@ -83,6 +83,7 @@ export function ClientDetailDrawer({
   const docStore = useDocumentStore();
   const [newOpp, setNewOpp] = useState(false);
   const docCount = clientName ? docStore.countByClient(clientName) : 0;
+  const [editOpen, setEditOpen] = useState(false);
 
   const stats = useMemo(
     () => (clientName ? getClientStats(clientName, clients, policies) : null),
