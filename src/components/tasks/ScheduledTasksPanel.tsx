@@ -106,7 +106,10 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
               <Label className="text-xs text-muted-foreground">Responsável</Label>
               <Select value={assigneeId} onValueChange={setAssigneeId}>
                 <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
-                <SelectContent>{team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  <SelectItem value="all">Todos os colaboradores</SelectItem>
+                  {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
             <div>
