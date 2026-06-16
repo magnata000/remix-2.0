@@ -135,7 +135,8 @@ export function KanbanModule() {
                   key={t.id}
                   draggable
                   onDragStart={() => setDragId(t.id)}
-                  className={`bg-card border rounded-xl p-3 cursor-grab active:cursor-grabbing hover:border-brand transition ${
+                  onClick={() => setDetailId(t.id)}
+                  className={`bg-card border rounded-xl p-3 cursor-pointer active:cursor-grabbing hover:border-brand transition ${
                     highlightId === t.id ? "border-brand ring-2 ring-brand/30" : "border-border"
                   }`}
                 >
@@ -144,6 +145,7 @@ export function KanbanModule() {
                     quoteSummary={groupFor(t.quoteGroupId)}
                     onMove={move}
                     onOpenQuote={() => openQuote(t.quoteGroupId)}
+                    onOpenDetails={() => setDetailId(t.id)}
                   />
                 </div>
               ))}
