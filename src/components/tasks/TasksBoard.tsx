@@ -123,6 +123,74 @@ export function TasksBoard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 ml-auto">
+            <Popover open={globalSearchOpen} onOpenChange={(v) => { setGlobalSearchOpen(v); if (!v) setGlobalSearch(""); }}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="rounded-xl" aria-label="Buscar mensagens e documentos">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[360px] p-0" align="end">
+                <div className="p-2 border-b border-border">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      autoFocus
+                      value={globalSearch}
+                      onChange={(e) => setGlobalSearch(e.target.value)}
+                      placeholder="Buscar mensagem ou documento…"
+                      className="h-8 pl-8 pr-8 rounded-lg text-xs"
+                    />
+                    {globalSearch && (
+                      <button type="button" onClick={() => setGlobalSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="max-h-[360px] overflow-y-auto">
+                  {!globalSearch.trim() && (
+                    <p className="p-4 text-xs text-muted-foreground text-center">Digite para buscar em mensagens e anexos.</p>
+                  )}
+                  {globalSearch.trim() && globalResults.length === 0 && (
+                    <p className="p-4 text-xs text-muted-foreground text-center">Nenhum resultado.</p>
+                  )}
+                  {globalResults.map(({ task: t, matches }) => {
+                    const col = columns.find((c) => c.id === t.columnId);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          setDetailInitialSearch(globalSearch);
+                          setDetail(t);
+                          setGlobalSearchOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-muted border-b border-border last:border-0"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ background: col?.color }} />
+                          <span className="text-xs font-semibold truncate flex-1">{t.title}</span>
+                          <span className="text-[10px] text-muted-foreground">{col?.title}</span>
+                        </div>
+                        <ul className="space-y-0.5">
+                          {matches.slice(0, 3).map((m) => (
+                            <li key={`${m.kind}-${m.id}`} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                              {m.kind === "comment"
+                                ? <MessageSquare className="h-3 w-3 mt-0.5 shrink-0" />
+                                : <Paperclip className="h-3 w-3 mt-0.5 shrink-0" />}
+                              <span className="break-words">{m.snippet}</span>
+                            </li>
+                          ))}
+                          {matches.length > 3 && (
+                            <li className="text-[10px] text-muted-foreground">+{matches.length - 3} resultado(s)</li>
+                          )}
+                        </ul>
+                      </button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button variant="outline" className="rounded-xl" onClick={() => setScheduleOpen(true)}>
               <CalendarClock className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Agendamentos</span>
             </Button>
@@ -133,6 +201,7 @@ export function TasksBoard() {
               <Plus className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Nova tarefa</span>
             </Button>
           </div>
+
         </div>
       </Card>
 
