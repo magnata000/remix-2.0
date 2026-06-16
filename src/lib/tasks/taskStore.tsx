@@ -331,8 +331,10 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const addColumn = useCallback((title: string, color: string) => {
     setColumns((arr) => [...arr, { id: `c-${Date.now()}`, title: title.trim() || "Nova coluna", color }]);
   }, []);
+
   const renameColumn = useCallback((id: string, title: string) => {
     setColumns((arr) => arr.map((c) => c.id === id ? { ...c, title } : c));
   }, []);
@@ -378,10 +380,11 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment,
+    addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, updateScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
+
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }
