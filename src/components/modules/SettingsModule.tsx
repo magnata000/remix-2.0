@@ -82,9 +82,9 @@ export function SettingsModule() {
       </Section>
 
       {/* Equipe */}
-      <Section icon={Users} title="Equipe" desc={`${team.length} membros ativos`}>
+      <Section icon={Users} title="Equipe" desc={`${members.length} membros ativos`}>
         <div className="space-y-2">
-          {team.map((m) => (
+          {members.map((m) => (
             <div
               key={m.id}
               className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-muted/40"
@@ -102,14 +102,55 @@ export function SettingsModule() {
                 <p className="font-semibold text-sm truncate">{m.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{m.email}</p>
               </div>
+              {m.status === "pending" && (
+                <Badge className="rounded-full text-xs bg-warning/15 text-warning border-0">
+                  Pendente
+                </Badge>
+              )}
               <Badge variant="outline" className="rounded-full text-xs hidden sm:inline-flex">
                 {m.role}
               </Badge>
+              <div className="flex items-center gap-1">
+                {m.status === "pending" && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 rounded-lg"
+                    onClick={() => handleResend(m)}
+                    aria-label="Reenviar convite"
+                    title="Reenviar convite"
+                  >
+                    <MailPlus className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-lg"
+                  onClick={() => setEditing(m)}
+                  aria-label="Editar"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-lg text-destructive hover:text-destructive"
+                  onClick={() => setDeleting(m)}
+                  aria-label="Remover"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
         <div className="mt-4 flex justify-end">
-          <Button variant="outline" className="rounded-xl">
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => setInviteOpen(true)}
+          >
             Convidar membro
           </Button>
         </div>
