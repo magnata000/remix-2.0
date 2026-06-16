@@ -125,6 +125,22 @@ export function ClientDetailDrawer({
                 <div className="text-lg font-semibold">{c.name}</div>
                 <Badge className={statusColor[stats.status]}>{statusLabel[stats.status]}</Badge>
               </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground mr-8"
+                      onClick={() => setEditOpen(true)}
+                      aria-label="Editar dados"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Editar dados</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </SheetTitle>
             <SheetDescription className="sr-only">Visão 360° do cliente</SheetDescription>
           </SheetHeader>
