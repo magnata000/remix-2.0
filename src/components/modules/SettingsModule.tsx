@@ -42,6 +42,20 @@ const integrations = [
 ];
 
 export function SettingsModule() {
+  const { members, removeMember, resendInvite } = useTeam();
+  const [editing, setEditing] = useState<Member | null>(null);
+  const [deleting, setDeleting] = useState<Member | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  const handleResend = (m: Member) => {
+    const updated = resendInvite(m.id);
+    if (updated?.inviteToken) {
+      const link = buildInviteLink(updated.inviteToken);
+      navigator.clipboard?.writeText(link).catch(() => {});
+      toast.success(`Convite reenviado — link copiado`);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div>
