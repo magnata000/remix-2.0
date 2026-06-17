@@ -66,7 +66,7 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
-  const [birthDateMasked, setBirthDateMasked] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
       setEmail(client.email);
       setPhone(maskPhone(client.phone));
       setDocument(maskCpfCnpj(client.document));
-      setBirthDateMasked(isoToMasked(client.birthDate));
+      setBirthDate(client.birthDate ?? "");
       setErrors({});
     }
   }, [open, client]);
@@ -82,8 +82,7 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
   if (!client) return null;
 
   const submit = () => {
-    const iso = toISO(birthDateMasked);
-    if (!iso) {
+    if (!isValidISODate(birthDate)) {
       const parsed = schema.safeParse({ email, phone, document, birthDate: "" });
       const errs: Record<string, string> = {};
       if (!parsed.success) {
@@ -96,7 +95,7 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
       setErrors(errs);
       return;
     }
-    const parsed = schema.safeParse({ email, phone, document, birthDate: iso });
+    const parsed = schema.safeParse({ email, phone, document, birthDate });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       parsed.error.issues.forEach((i) => { errs[i.path[0] as string] = i.message; });
