@@ -1,23 +1,26 @@
 
-# Destravar a atualização da aba Financeiro
+## Análise da redundância
 
-## Diagnóstico
+Sim, os dois indicadores se sobrepõem na prática:
+- **"Recebido no Mês"** (KPI antigo): soma de todas as comissões com status `pago` (na verdade é acumulado, mas com o rótulo "no Mês").
+- **"Entradas · {mês}"** (card de Resumo do mês): soma de Comissões pagas + Entradas manuais do mês selecionado — é a métrica correta e filtrável.
 
-- Os arquivos novos existem e estão corretos:
-  - `src/components/modules/FinancialModule.tsx` agora é um shell com `<Tabs>` (Caixa | Relatório).
-  - `src/components/financial/CaixaTab.tsx`, `ReportTab.tsx`, `NewExpenseSheet.tsx`, `NewIncomeDialog.tsx`, `RegisterEntryDialog.tsx`, `MovementDetailsSheet.tsx` foram criados.
-  - `src/lib/cash/cashStore.tsx` criado e `CashProvider` envolvendo o app em `src/routes/index.tsx`.
-- Logs do Vite (`/tmp/sandbox-state.db`) não mostram nenhum erro de transform/parse.
-- Os console logs do preview citam bundles antigos (`index-BzH0JRgI.js`, `main-DrBCm6LM.js`), o que indica que o iframe está servindo módulos antigos do gate HMR — o usuário não viu as novas abas porque o módulo `FinancialModule` não foi re-transformado no preview.
+O card "Entradas" do Resumo do Mês cumpre o mesmo papel de forma mais precisa, então remover o KPI evita duplicidade.
 
-## Plano (executar em build mode)
+## Mudanças
 
-1. Flush do gate HMR para forçar re-transform e reload do preview:
-   - `curl -sf -X POST http://localhost:8080/__hmr_flush`
-2. Abrir o preview em `view_preview`, navegar até a aba **Financeiro** (já é o módulo `financial` no `TopBar`) e tirar 1 screenshot para confirmar visualmente:
-   - TabsList com "Caixa" e "Relatório" visíveis.
-   - Em "Caixa": 4 KPIs + 3 cards de Resumo do mês + seção "Despesas cadastradas" com botão "Nova despesa" + tabela de Movimentações com Select de mês e botão "Nova entrada" + tabela de Comissões.
-   - Em "Relatório": LineChart "Fluxo de Caixa Mensal", "Receita vs Comissões", PieChart "Saídas por Categoria" e BarChart "Top por Receita".
-3. Caso o screenshot mostre qualquer divergência (componente não rendeu, erro em runtime), inspecionar `code--read_runtime_errors` e ajustar o ponto exato — sem reescrita.
+### 1. `src/components/financial/CaixaTab.tsx`
+- Remover o KPI **"Recebido no Mês"** do array `kpis`.
+- Remover também os outros 3 KPIs (**Comissões a Receber**, **Inadimplência**, **Ticket Médio**) e todo o bloco `<div className="grid ... xl:grid-cols-4">` que renderiza os KPIs.
+- Limpar imports não utilizados (`Wallet`, `Clock`, `AlertCircle`, `BarChart3`) e a constante `kpis` + cálculos `totalCom`, `pagoCom`, `pendenteCom`, `atrasadoCom` que ficam órfãos.
+- A aba Caixa passa a iniciar diretamente pelo bloco **Resumo do mês** (Entradas / Saídas / Saldo).
 
-Nenhuma mudança de código planejada nesta etapa; apenas destravar o preview e validar. Se a validação revelar bug real, abro um novo plano específico.
+### 2. `src/components/financial/ReportTab.tsx`
+- Adicionar no topo da página um grid de **3 KPIs** (`sm:grid-cols-3`), com o mesmo visual usado hoje na Caixa (Card arredondado, ícone em círculo colorido):
+  - **Comissões a Receber** → `pendenteCom` · ícone `Clock` · cor `warning` · highlight com `bg-brand/15`
+  - **Inadimplência** → `atrasadoCom` · ícone `AlertCircle` · cor `destructive`
+  - **Ticket Médio** → `totalCom / commissions.length` · ícone `BarChart3` · cor `brand`
+- Cálculos derivados de `commissions` (mock) — independem do mês selecionado, como hoje.
+- Renderizado **antes** do card "Fluxo de Caixa Mensal".
+
+Nenhuma alteração em store, tipos ou rotas. Apenas reorganização de UI.
