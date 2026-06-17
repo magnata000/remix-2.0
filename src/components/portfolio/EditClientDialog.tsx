@@ -140,12 +140,11 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
           <div>
             <Label className="text-xs text-muted-foreground">Data de nascimento *</Label>
             <Input
-              type="text"
-              inputMode="numeric"
-              value={birthDateMasked}
-              onChange={(e) => setBirthDateMasked(maskDate(e.target.value))}
-              placeholder="dd/mm/aaaa"
-              maxLength={10}
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              min="1900-01-01"
+              max={todayISO()}
               className="mt-1.5 rounded-xl bg-muted border-0"
             />
             {errors.birthDate && <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>}
