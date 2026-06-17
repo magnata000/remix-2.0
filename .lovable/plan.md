@@ -1,30 +1,18 @@
-# Corrigir datas aparecendo 1 dia antes
+# Corrigir edição da data de nascimento
 
-## O que está acontecendo (em linguagem simples)
+## Problema (em linguagem simples)
+O campo "Data de nascimento" usa uma máscara que, a cada tecla, pega só os dígitos e reformata `dd/mm/aaaa` da esquerda para a direita. Quando você apaga um número no meio (ex.: o "1" de `01/05/1960`), os dígitos da direita "sobem" para preencher o buraco — `0/05/1960` vira `00/51/960`. Isso obriga apagar tudo para alterar um único dígito.
 
-Datas como nascimento do cliente e vigência da apólice são salvas no formato `"AAAA-MM-DD"` (só a data, sem hora). Quando o navegador converte essa string em data com `new Date("2026-06-15")`, ele assume **meia-noite em UTC** (fuso 0). Como o Brasil está em UTC−3, ao mostrar essa data no fuso local, o relógio "volta" 3 horas e cai no **dia anterior** (14/06). Por isso a UI mostra um dia a menos do que foi digitado.
+## Solução
+Substituir o input mascarado por `<Input type="date">` (seletor nativo de data do navegador) em ambos os modais. Vantagens:
+- Edita qualquer dígito sem reflow.
+- Já valida formato e calendário.
+- Valor nativo é `AAAA-MM-DD`, exatamente o formato que o store espera — elimina as funções `maskDate`, `toISO`, `isoToMasked` desses arquivos.
+- Continua respeitando "não pode ser futura" via `max={today}` e ano mínimo via `min="1900-01-01"`.
 
-Esse bug afeta apenas valores salvos como data pura (`AAAA-MM-DD`): aniversário do cliente, `startDate`/`endDate` de apólice. Campos com data+hora (caixa, despesas) usam ISO completo com fuso e já estão corretos.
+## Arquivos a alterar
+- `src/components/portfolio/EditClientDialog.tsx` — estado `birthDate` direto em ISO; remover helpers de data; input `type="date"`.
+- `src/components/portfolio/NewClientDialog.tsx` — mesma mudança.
 
-## O que vou fazer
-
-Ajustar **um único ponto**: o formatador `formatDateShort` em `src/lib/mock/data.ts`. Ele vai detectar quando a string é só data (`AAAA-MM-DD`) e construir o `Date` usando os componentes locais (ano, mês, dia) — sem passar por UTC. Para ISOs com hora, mantém o comportamento atual.
-
-```ts
-export const formatDateShort = (iso: string) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  const d = m
-    ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-    : new Date(iso);
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
-```
-
-## Onde o efeito aparece
-
-- Portfólio → aniversário do cliente, vigência das apólices (listagem, drawer, edição).
-- Não toca em store, schemas, mocks, nem em datas com hora (Caixa/Relatório continuam iguais).
-
-## Arquivos alterados
-
-- `src/lib/mock/data.ts` — só a função `formatDateShort`.
+## Fora de escopo
+Nenhuma alteração em store, schemas, mocks, formatação de exibição ou outros campos (telefone/CPF mantêm máscara, pois não sofrem do mesmo problema de uso).
