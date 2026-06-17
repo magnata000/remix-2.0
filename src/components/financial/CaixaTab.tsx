@@ -36,18 +36,7 @@ export function CaixaTab() {
   const [registerFor, setRegisterFor] = useState<Expense | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
 
-  // KPIs originais (sobre o total das comissões — independem do mês selecionado)
-  const totalCom = commissions.reduce((s, c) => s + c.amount, 0);
-  const pagoCom = commissions.filter((c) => c.status === "pago").reduce((s, c) => s + c.amount, 0);
-  const pendenteCom = commissions.filter((c) => c.status === "pendente").reduce((s, c) => s + c.amount, 0);
-  const atrasadoCom = commissions.filter((c) => c.status === "atrasado").reduce((s, c) => s + c.amount, 0);
-
-  const kpis = [
-    { label: "Comissões a Receber", value: formatBRL(pendenteCom), icon: Clock, iconBg: "bg-warning/15", iconColor: "text-warning", highlight: true },
-    { label: "Recebido no Mês", value: formatBRL(pagoCom), icon: Wallet, iconBg: "bg-success/15", iconColor: "text-success" },
-    { label: "Inadimplência", value: formatBRL(atrasadoCom), icon: AlertCircle, iconBg: "bg-destructive/15", iconColor: "text-destructive" },
-    { label: "Ticket Médio", value: formatBRL(totalCom / commissions.length), icon: BarChart3, iconBg: "bg-brand/30", iconColor: "text-brand-foreground" },
-  ];
+  // (KPIs movidos para a aba Relatório)
 
   const inMonth = (iso: string) => {
     const d = new Date(iso);
