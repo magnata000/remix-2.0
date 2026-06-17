@@ -67,18 +67,17 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
-  const [birthDateMasked, setBirthDateMasked] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (open) {
-      setName(""); setEmail(""); setPhone(""); setDocument(""); setBirthDateMasked(""); setErrors({});
+      setName(""); setEmail(""); setPhone(""); setDocument(""); setBirthDate(""); setErrors({});
     }
   }, [open]);
 
   const submit = () => {
-    const iso = toISO(birthDateMasked);
-    if (!iso) {
+    if (!isValidISODate(birthDate)) {
       const parsed = schema.safeParse({ name, email, phone, document, birthDate: "" });
       const errs: Record<string, string> = {};
       if (!parsed.success) {
@@ -91,7 +90,7 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
       setErrors(errs);
       return;
     }
-    const parsed = schema.safeParse({ name, email, phone, document, birthDate: iso });
+    const parsed = schema.safeParse({ name, email, phone, document, birthDate });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       parsed.error.issues.forEach((i) => { errs[i.path[0] as string] = i.message; });
