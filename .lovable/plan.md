@@ -1,26 +1,30 @@
+# Corrigir datas aparecendo 1 dia antes
 
-## Análise da redundância
+## O que está acontecendo (em linguagem simples)
 
-Sim, os dois indicadores se sobrepõem na prática:
-- **"Recebido no Mês"** (KPI antigo): soma de todas as comissões com status `pago` (na verdade é acumulado, mas com o rótulo "no Mês").
-- **"Entradas · {mês}"** (card de Resumo do mês): soma de Comissões pagas + Entradas manuais do mês selecionado — é a métrica correta e filtrável.
+Datas como nascimento do cliente e vigência da apólice são salvas no formato `"AAAA-MM-DD"` (só a data, sem hora). Quando o navegador converte essa string em data com `new Date("2026-06-15")`, ele assume **meia-noite em UTC** (fuso 0). Como o Brasil está em UTC−3, ao mostrar essa data no fuso local, o relógio "volta" 3 horas e cai no **dia anterior** (14/06). Por isso a UI mostra um dia a menos do que foi digitado.
 
-O card "Entradas" do Resumo do Mês cumpre o mesmo papel de forma mais precisa, então remover o KPI evita duplicidade.
+Esse bug afeta apenas valores salvos como data pura (`AAAA-MM-DD`): aniversário do cliente, `startDate`/`endDate` de apólice. Campos com data+hora (caixa, despesas) usam ISO completo com fuso e já estão corretos.
 
-## Mudanças
+## O que vou fazer
 
-### 1. `src/components/financial/CaixaTab.tsx`
-- Remover o KPI **"Recebido no Mês"** do array `kpis`.
-- Remover também os outros 3 KPIs (**Comissões a Receber**, **Inadimplência**, **Ticket Médio**) e todo o bloco `<div className="grid ... xl:grid-cols-4">` que renderiza os KPIs.
-- Limpar imports não utilizados (`Wallet`, `Clock`, `AlertCircle`, `BarChart3`) e a constante `kpis` + cálculos `totalCom`, `pagoCom`, `pendenteCom`, `atrasadoCom` que ficam órfãos.
-- A aba Caixa passa a iniciar diretamente pelo bloco **Resumo do mês** (Entradas / Saídas / Saldo).
+Ajustar **um único ponto**: o formatador `formatDateShort` em `src/lib/mock/data.ts`. Ele vai detectar quando a string é só data (`AAAA-MM-DD`) e construir o `Date` usando os componentes locais (ano, mês, dia) — sem passar por UTC. Para ISOs com hora, mantém o comportamento atual.
 
-### 2. `src/components/financial/ReportTab.tsx`
-- Adicionar no topo da página um grid de **3 KPIs** (`sm:grid-cols-3`), com o mesmo visual usado hoje na Caixa (Card arredondado, ícone em círculo colorido):
-  - **Comissões a Receber** → `pendenteCom` · ícone `Clock` · cor `warning` · highlight com `bg-brand/15`
-  - **Inadimplência** → `atrasadoCom` · ícone `AlertCircle` · cor `destructive`
-  - **Ticket Médio** → `totalCom / commissions.length` · ícone `BarChart3` · cor `brand`
-- Cálculos derivados de `commissions` (mock) — independem do mês selecionado, como hoje.
-- Renderizado **antes** do card "Fluxo de Caixa Mensal".
+```ts
+export const formatDateShort = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const d = m
+    ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    : new Date(iso);
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+```
 
-Nenhuma alteração em store, tipos ou rotas. Apenas reorganização de UI.
+## Onde o efeito aparece
+
+- Portfólio → aniversário do cliente, vigência das apólices (listagem, drawer, edição).
+- Não toca em store, schemas, mocks, nem em datas com hora (Caixa/Relatório continuam iguais).
+
+## Arquivos alterados
+
+- `src/lib/mock/data.ts` — só a função `formatDateShort`.
