@@ -93,28 +93,24 @@ export function CashProvider({ children }: { children: ReactNode }) {
 
   const registerExpenseEntry = useCallback(
     (expenseId: string, input: { amount: number; paidAt?: string; notes?: string }) => {
-      let entry: ExpenseEntry | null = null;
-      setExpenses((prevExpenses) => {
-        const exp = prevExpenses.find((e) => e.id === expenseId);
-        if (!exp) return prevExpenses;
-        entry = {
-          id: newId(),
-          expenseId: exp.id,
-          description: exp.description,
-          category: exp.category,
-          amount: input.amount,
-          paidAt: input.paidAt ?? now(),
-          notes: input.notes,
-        };
-        setEntries((p) => [entry as ExpenseEntry, ...p]);
-        if (input.amount !== exp.amount) {
-          return prevExpenses.map((e) => (e.id === exp.id ? { ...e, amount: input.amount } : e));
-        }
-        return prevExpenses;
-      });
+      const exp = expenses.find((e) => e.id === expenseId);
+      if (!exp) return null;
+      const entry: ExpenseEntry = {
+        id: newId(),
+        expenseId: exp.id,
+        description: exp.description,
+        category: exp.category,
+        amount: input.amount,
+        paidAt: input.paidAt ?? now(),
+        notes: input.notes,
+      };
+      setEntries((p) => [entry, ...p]);
+      if (input.amount !== exp.amount) {
+        setExpenses((p) => p.map((e) => (e.id === exp.id ? { ...e, amount: input.amount } : e)));
+      }
       return entry;
     },
-    []
+    [expenses]
   );
 
   const addIncome = useCallback((data: Omit<ManualIncome, "id">) => {
