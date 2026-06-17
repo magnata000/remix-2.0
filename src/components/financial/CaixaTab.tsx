@@ -102,23 +102,6 @@ export function CaixaTab() {
 
   return (
     <div className="space-y-5">
-      {/* KPIs originais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {kpis.map((k) => (
-          <Card key={k.label} className={`p-5 rounded-2xl border-border shadow-none ${k.highlight ? "bg-brand/15 border-brand/30" : "bg-card"}`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">{k.label}</p>
-                <p className="mt-2 text-2xl font-bold tracking-tight">{k.value}</p>
-              </div>
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${k.iconBg}`}>
-                <k.icon className={`h-5 w-5 ${k.iconColor}`} />
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
       {/* Resumo do mês */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4 rounded-2xl border-border shadow-none bg-card">
