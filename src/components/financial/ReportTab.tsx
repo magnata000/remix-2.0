@@ -69,6 +69,16 @@ export function ReportTab() {
       .slice(0, 8);
   }, [topBy]);
 
+  // KPIs (movidos da aba Caixa)
+  const totalCom = commissions.reduce((s, c) => s + c.amount, 0);
+  const pendenteCom = commissions.filter((c) => c.status === "pendente").reduce((s, c) => s + c.amount, 0);
+  const atrasadoCom = commissions.filter((c) => c.status === "atrasado").reduce((s, c) => s + c.amount, 0);
+  const kpis = [
+    { label: "Comissões a Receber", value: formatBRL(pendenteCom), icon: Clock, iconBg: "bg-warning/15", iconColor: "text-warning", highlight: true },
+    { label: "Inadimplência", value: formatBRL(atrasadoCom), icon: AlertCircle, iconBg: "bg-destructive/15", iconColor: "text-destructive", highlight: false },
+    { label: "Ticket Médio", value: formatBRL(totalCom / commissions.length), icon: BarChart3, iconBg: "bg-brand/30", iconColor: "text-brand-foreground", highlight: false },
+  ];
+
   const tooltipStyle = {
     borderRadius: 12,
     border: "1px solid var(--border)",
@@ -78,6 +88,24 @@ export function ReportTab() {
 
   return (
     <div className="space-y-5">
+      {/* KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {kpis.map((k) => (
+          <Card key={k.label} className={`p-5 rounded-2xl border-border shadow-none ${k.highlight ? "bg-brand/15 border-brand/30" : "bg-card"}`}>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">{k.label}</p>
+                <p className="mt-2 text-2xl font-bold tracking-tight">{k.value}</p>
+              </div>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${k.iconBg}`}>
+                <k.icon className={`h-5 w-5 ${k.iconColor}`} />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+
       {/* 1) Fluxo de caixa full-width */}
       <Card className="p-5 rounded-2xl border-border shadow-none">
         <div className="mb-4">
