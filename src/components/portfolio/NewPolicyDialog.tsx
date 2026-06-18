@@ -9,15 +9,16 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, formatBRL, formatDateShort, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
+import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
+import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { toast } from "sonner";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; defaultClientName?: string };
 
-const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
+const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const STATUSES: { key: PolicyStatus; label: string }[] = [
   { key: "ativa", label: "Ativa" },
