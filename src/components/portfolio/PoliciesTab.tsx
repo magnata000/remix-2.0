@@ -151,7 +151,14 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               >
                 <div className="flex items-start justify-between">
                   <p className="font-mono text-xs text-muted-foreground">{p.number}</p>
-                  <Badge className={statusColor[p.status]}>{p.status}</Badge>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); cycleStatus(p.id, p.status); }}
+                    title="Clique para alterar o status"
+                    className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                  >
+                    <Badge className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}>{p.status}</Badge>
+                  </button>
                 </div>
                 <p className="mt-2 font-semibold">{p.clientName}</p>
                 <p className="text-xs text-muted-foreground">
