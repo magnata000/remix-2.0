@@ -4,6 +4,7 @@ import type { TaskAttachment, TaskComment, TaskTimelineEvent } from "@/lib/tasks
 
 export type Opportunity = Task & {
   createdAt: string;
+  closedAt?: string;
   comments: TaskComment[];
   attachments: TaskAttachment[];
   timeline: TaskTimelineEvent[];
