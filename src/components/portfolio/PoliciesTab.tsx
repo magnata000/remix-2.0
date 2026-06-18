@@ -214,7 +214,14 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                         {formatDateShort(p.endDate)}
                       </td>
                       <td className="px-5 py-3">
-                        <Badge className={statusColor[p.status]}>{p.status}</Badge>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); cycleStatus(p.id, p.status); }}
+                          title="Clique para alterar o status"
+                          className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                        >
+                          <Badge className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}>{p.status}</Badge>
+                        </button>
                       </td>
                     </tr>
                   ))}
