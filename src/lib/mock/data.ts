@@ -1,10 +1,21 @@
 // Mock data para vitrine TheInsuranceOS
 export type PolicyStatus = "ativa" | "vencida" | "pendente" | "cancelada" | "renovada";
-export type Branch = "Auto" | "Vida" | "Residencial" | "Empresarial" | "Saúde";
+export type Branch = "Auto" | "Vida" | "Residencial" | "Empresarial" | "Saúde" | "Consórcio";
 export type Insurer = "Porto Seguro" | "Bradesco" | "SulAmérica" | "Allianz" | "Mapfre";
 
 export type ClientStatus = "ativo" | "inativo" | "lead";
 export type Client = { id: string; name: string; email: string; phone: string; document: string; birthDate?: string; statusOverride?: ClientStatus };
+
+export type BeneficiaryTitle = "titular" | "conjuge" | "filho" | "pai_mae" | "irmao" | "parente" | "outro";
+export type Beneficiary = {
+  id: string;
+  title: BeneficiaryTitle;
+  titleCustom?: string;
+  name: string;
+  birthDate: string;
+  cpf: string;
+};
+
 export type Policy = {
   id: string;
   number: string;
@@ -17,7 +28,18 @@ export type Policy = {
   status: PolicyStatus;
   renewedFromId?: string;
   renewedToId?: string;
+  commissionPct?: number;
+  // Saúde
+  healthAnniversary?: string;
+  healthInitialValue?: number;
+  healthCategory?: string;
+  healthCoparticipation?: boolean;
+  beneficiaries?: Beneficiary[];
+  // Consórcio
+  consortiumGroup?: string;
+  consortiumQuota?: string;
 };
+
 export type KanbanStage = "lead" | "cotacao" | "negociacao" | "fechado" | "perdido";
 export type LostReason = "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro";
 export const lostReasonLabel: Record<LostReason, string> = {
