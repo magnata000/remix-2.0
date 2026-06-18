@@ -7,8 +7,10 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
-import { commissions, salesByMonth, formatBRL } from "@/lib/mock/data";
+import { commissions, formatBRL } from "@/lib/mock/data";
 import { useCashStore, MONTHS_PT } from "@/lib/cash/cashStore";
+import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { salesByMonthFromPipeline } from "@/lib/pipeline/salesStats";
 
 const PIE_COLORS = ["var(--brand)", "var(--warning)", "var(--success)", "var(--destructive)", "var(--primary)", "#8b5cf6", "#06b6d4"];
 
