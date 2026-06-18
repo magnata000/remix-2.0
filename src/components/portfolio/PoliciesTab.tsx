@@ -55,7 +55,9 @@ type Props = {
 };
 
 export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) {
-  const { policies } = usePolicyStore();
+  const { policies, updatePolicy } = usePolicyStore();
+  const cycleStatus = (id: string, current: PolicyStatus) =>
+    updatePolicy(id, { status: nextPolicyStatus(current) });
   const [q, setQ] = useState(initialClientFilter ?? "");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
