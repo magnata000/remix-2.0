@@ -18,6 +18,7 @@ const MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "S
 
 export function ReportTab() {
   const { entries, incomes } = useCashStore();
+  const { opportunities } = usePipelineStore();
   const currentYear = new Date().getFullYear();
   const [pieMonth, setPieMonth] = useState<number>(new Date().getMonth());
   const [topBy, setTopBy] = useState<"clientes" | "seguradoras">("clientes");
