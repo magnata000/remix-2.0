@@ -40,12 +40,16 @@ export function ReportTab() {
     });
   }, [entries, incomes, currentYear]);
 
-  // 2) Receita vs Comissões (migrado)
-  const lineData = salesByMonth.map((s) => ({
-    month: s.month,
-    receita: s.receita,
-    comissoes: Math.round(s.receita * 0.18),
-  }));
+  // 2) Receita vs Comissões — derivado das oportunidades em "Fechado"
+  const lineData = useMemo(
+    () =>
+      salesByMonthFromPipeline(opportunities, currentYear).map((s) => ({
+        month: s.month,
+        receita: s.receita,
+        comissoes: Math.round(s.receita * 0.18),
+      })),
+    [opportunities, currentYear],
+  );
 
   // 3) Saídas por categoria do mês
   const pieData = useMemo(() => {
