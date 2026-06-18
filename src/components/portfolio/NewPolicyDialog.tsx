@@ -48,11 +48,28 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
   const [touched, setTouched] = useState(false);
 
+  // Extras: commission
+  const [commissionStr, setCommissionStr] = useState("");
+  // Saúde
+  const [healthAnniversary, setHealthAnniversary] = useState("");
+  const [anniversaryTouched, setAnniversaryTouched] = useState(false);
+  const [healthInitialValue, setHealthInitialValue] = useState("");
+  const [healthCategory, setHealthCategory] = useState("");
+  const [healthCoparticipation, setHealthCoparticipation] = useState(false);
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
+  // Consórcio
+  const [consortiumGroup, setConsortiumGroup] = useState("");
+  const [consortiumQuota, setConsortiumQuota] = useState("");
+
   useEffect(() => {
     if (!open) return;
     setClientId(""); setClientName(""); setBranch("Auto"); setInsurer("Porto Seguro");
     setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
     setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
+    setCommissionStr("");
+    setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
+    setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
+    setConsortiumGroup(""); setConsortiumQuota("");
     if (defaultClientName) {
       const c = clients.find((x) => x.name === defaultClientName);
       if (c) { setClientId(c.id); setClientName(c.name); }
