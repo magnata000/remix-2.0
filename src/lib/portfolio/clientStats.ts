@@ -1,6 +1,6 @@
-import { clients as defaultClients, policies as defaultPolicies, tasks, commissions, type Client, type Branch, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { clients as defaultClients, policies as defaultPolicies, tasks, commissions, type Client, type ClientStatus, type Branch, type Policy, type PolicyStatus } from "@/lib/mock/data";
 
-export type ClientStatus = "ativo" | "inativo" | "lead";
+export type { ClientStatus };
 
 export type ClientStats = {
   client: Client;
