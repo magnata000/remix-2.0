@@ -396,12 +396,52 @@ function TreeNode({
   const hasChildren = children.length > 0;
   const isRoot = node.parentId === null;
 
+  const [dragOver, setDragOver] = useState(false);
+  const canBeDragged = !isRoot && !isRenaming;
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.setData("application/x-folder-id", node.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    const draggedId = e.dataTransfer.types.includes("application/x-folder-id");
+    if (!draggedId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    if (!dragOver) setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const draggedId = e.dataTransfer.getData("application/x-folder-id");
+    if (!draggedId || draggedId === node.id) return;
+    const moved = store.moveFolder(draggedId, node.id);
+    if (moved && !expanded.has(node.id)) onToggle(node.id);
+  };
+
   return (
     <li role="treeitem" aria-expanded={isOpen} aria-selected={isSelected}>
       <div
+        draggable={canBeDragged}
+        onDragStart={canBeDragged ? handleDragStart : undefined}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         className={cn(
-          "group flex items-center gap-1 rounded-lg px-1.5 py-1 cursor-pointer text-sm",
+          "group flex items-center gap-1 rounded-lg px-1.5 py-1 cursor-pointer text-sm transition-colors",
           isSelected ? "bg-brand/15 text-foreground" : "hover:bg-muted/60",
+          dragOver && "ring-2 ring-brand/60 bg-brand/10",
+          canBeDragged && "active:cursor-grabbing",
         )}
         style={{ paddingLeft: `${depth * 12 + 4}px` }}
         onClick={() => onSelect(node.id)}
