@@ -73,7 +73,7 @@ export function ReportTab() {
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
+      .slice(0, 10);
   }, [topBy]);
 
   // KPIs (movidos da aba Caixa)
@@ -204,7 +204,7 @@ export function ReportTab() {
               </TabsList>
             </Tabs>
           </div>
-          <div className="h-72">
+          <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topData} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
