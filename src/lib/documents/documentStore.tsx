@@ -310,6 +310,36 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const moveFolder = useCallback((id: string, newParentId: string): boolean => {
+    if (id === newParentId) return false;
+    let ok = false;
+    setFolders((arr) => {
+      const target = arr.find((f) => f.id === id);
+      const parent = arr.find((f) => f.id === newParentId);
+      if (!target || !parent) return arr;
+      if (target.parentId === null) return arr; // não mover raízes
+      if (target.clientName !== parent.clientName) return arr;
+      if ((target.policyId ?? null) !== (parent.policyId ?? null)) return arr;
+      if (target.parentId === newParentId) return arr;
+      // impedir ciclo: newParent não pode ser descendente do target
+      const descendants = new Set<string>([id]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        arr.forEach((f) => {
+          if (f.parentId && descendants.has(f.parentId) && !descendants.has(f.id)) {
+            descendants.add(f.id);
+            changed = true;
+          }
+        });
+      }
+      if (descendants.has(newParentId)) return arr;
+      ok = true;
+      return arr.map((f) => (f.id === id ? { ...f, parentId: newParentId } : f));
+    });
+    return ok;
+  }, []);
+
   const addFile = useCallback(
     (input: { name: string; folderId: string; mime?: string; sizeKB?: number }) => {
       const folder = folders.find((f) => f.id === input.folderId);
