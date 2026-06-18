@@ -50,8 +50,10 @@ type Props = {
 };
 
 export function ClientsTab({ onSelectClient }: Props) {
-  const { clients } = useClientStore();
+  const { clients, setClientStatus } = useClientStore();
   const { policies } = usePolicyStore();
+  const cycleStatus = (id: string, current: ClientStatus) =>
+    setClientStatus(id, nextClientStatus(current));
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
