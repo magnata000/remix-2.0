@@ -43,9 +43,21 @@ function withDefaults(t: Task, daysAgo = 5): Opportunity {
   const created = new Date();
   created.setDate(created.getDate() - daysAgo);
   const at = created.toISOString();
+  // Backfill closedAt para oportunidades já fechadas no seed,
+  // espalhando ao longo do ano corrente para alimentar gráficos.
+  let closedAt: string | undefined;
+  if (t.stage === "fechado") {
+    const seed = (t.id.charCodeAt(t.id.length - 1) ?? 0) + t.estimatedValue;
+    const monthsAgo = seed % 12;
+    const d = new Date();
+    d.setMonth(d.getMonth() - monthsAgo);
+    d.setDate(1 + (seed % 27));
+    closedAt = d.toISOString();
+  }
   return {
     ...t,
     createdAt: at,
+    closedAt,
     comments: [],
     attachments: [],
     timeline: [{ kind: "created", at, by: me }],
