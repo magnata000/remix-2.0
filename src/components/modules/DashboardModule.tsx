@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
-import { policies, salesByMonth, formatBRL, formatDateShort } from "@/lib/mock/data";
+import { policies, formatBRL } from "@/lib/mock/data";
+import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { salesByMonthFromPipeline, revenueInMonth } from "@/lib/pipeline/salesStats";
 
 type Kpi = {
   label: string;
