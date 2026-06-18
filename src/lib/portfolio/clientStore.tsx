@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { clients as seedClients, type Client } from "@/lib/mock/data";
+import { clients as seedClients, type Client, type ClientStatus } from "@/lib/mock/data";
 
 type AddClientInput = Omit<Client, "id">;
 
@@ -7,6 +7,7 @@ type Ctx = {
   clients: Client[];
   addClient: (input: AddClientInput) => Client;
   updateClient: (id: string, patch: Partial<AddClientInput>) => void;
+  setClientStatus: (id: string, status: ClientStatus) => void;
   findByName: (name: string) => Client | undefined;
 };
 
