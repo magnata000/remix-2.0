@@ -7,8 +7,10 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
-import { commissions, salesByMonth, formatBRL } from "@/lib/mock/data";
+import { commissions, formatBRL } from "@/lib/mock/data";
 import { useCashStore, MONTHS_PT } from "@/lib/cash/cashStore";
+import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { salesByMonthFromPipeline } from "@/lib/pipeline/salesStats";
 
 const PIE_COLORS = ["var(--brand)", "var(--warning)", "var(--success)", "var(--destructive)", "var(--primary)", "#8b5cf6", "#06b6d4"];
 
@@ -16,6 +18,7 @@ const MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "S
 
 export function ReportTab() {
   const { entries, incomes } = useCashStore();
+  const { opportunities } = usePipelineStore();
   const currentYear = new Date().getFullYear();
   const [pieMonth, setPieMonth] = useState<number>(new Date().getMonth());
   const [topBy, setTopBy] = useState<"clientes" | "seguradoras">("clientes");
@@ -37,12 +40,16 @@ export function ReportTab() {
     });
   }, [entries, incomes, currentYear]);
 
-  // 2) Receita vs Comissões (migrado)
-  const lineData = salesByMonth.map((s) => ({
-    month: s.month,
-    receita: s.receita,
-    comissoes: Math.round(s.receita * 0.18),
-  }));
+  // 2) Receita vs Comissões — derivado das oportunidades em "Fechado"
+  const lineData = useMemo(
+    () =>
+      salesByMonthFromPipeline(opportunities, currentYear).map((s) => ({
+        month: s.month,
+        receita: s.receita,
+        comissoes: Math.round(s.receita * 0.18),
+      })),
+    [opportunities, currentYear],
+  );
 
   // 3) Saídas por categoria do mês
   const pieData = useMemo(() => {

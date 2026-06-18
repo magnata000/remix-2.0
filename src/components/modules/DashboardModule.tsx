@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
-import { policies, salesByMonth, formatBRL, formatDateShort } from "@/lib/mock/data";
+import { policies, formatBRL } from "@/lib/mock/data";
+import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
+import { salesByMonthFromPipeline, revenueInMonth } from "@/lib/pipeline/salesStats";
 
 type Kpi = {
   label: string;
@@ -36,45 +38,47 @@ type Kpi = {
   highlight?: boolean;
 };
 
-const kpis: Kpi[] = [
-  {
-    label: "Apólices Ativas",
-    value: "1.284",
-    change: "+8,2%",
-    positive: true,
-    icon: ShieldCheck,
-    iconBg: "bg-brand",
-    iconColor: "text-brand-foreground",
-    highlight: true,
-  },
-  {
-    label: "Novos Clientes",
-    value: "112",
-    change: "+12,4%",
-    positive: true,
-    icon: UserPlus,
-    iconBg: "bg-warning/15",
-    iconColor: "text-warning",
-  },
-  {
-    label: "Sinistros Abertos",
-    value: "23",
-    change: "-4,1%",
-    positive: false,
-    icon: AlertTriangle,
-    iconBg: "bg-info/15",
-    iconColor: "text-info",
-  },
-  {
-    label: "Receita do Mês",
-    value: formatBRL(184320),
-    change: "+15,6%",
-    positive: true,
-    icon: TrendingUp,
-    iconBg: "bg-success/15",
-    iconColor: "text-success",
-  },
-];
+function buildKpis(receitaMes: number, vendasMes: number): Kpi[] {
+  return [
+    {
+      label: "Apólices Ativas",
+      value: "1.284",
+      change: "+8,2%",
+      positive: true,
+      icon: ShieldCheck,
+      iconBg: "bg-brand",
+      iconColor: "text-brand-foreground",
+      highlight: true,
+    },
+    {
+      label: "Novos Clientes",
+      value: "112",
+      change: "+12,4%",
+      positive: true,
+      icon: UserPlus,
+      iconBg: "bg-warning/15",
+      iconColor: "text-warning",
+    },
+    {
+      label: "Sinistros Abertos",
+      value: "23",
+      change: "-4,1%",
+      positive: false,
+      icon: AlertTriangle,
+      iconBg: "bg-info/15",
+      iconColor: "text-info",
+    },
+    {
+      label: "Receita do Mês",
+      value: formatBRL(receitaMes),
+      change: `${vendasMes} vendas`,
+      positive: true,
+      icon: TrendingUp,
+      iconBg: "bg-success/15",
+      iconColor: "text-success",
+    },
+  ];
+}
 
 const statusColor: Record<string, string> = {
   ativa: "bg-success/15 text-success border-0",
@@ -85,6 +89,19 @@ const statusColor: Record<string, string> = {
 
 export function DashboardModule() {
   const [loading, setLoading] = useState(true);
+  const { opportunities } = usePipelineStore();
+  const now = new Date();
+  const salesData = useMemo(
+    () => salesByMonthFromPipeline(opportunities, now.getFullYear()),
+    [opportunities, now.getFullYear()],
+  );
+  const receitaMes = useMemo(
+    () => revenueInMonth(opportunities, now.getMonth(), now.getFullYear()),
+    [opportunities, now.getMonth(), now.getFullYear()],
+  );
+  const vendasMes = salesData[now.getMonth()]?.vendas ?? 0;
+  const kpis = useMemo(() => buildKpis(receitaMes, vendasMes), [receitaMes, vendasMes]);
+  const currentMonthIdx = now.getMonth();
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(t);
@@ -166,7 +183,7 @@ export function DashboardModule() {
           ) : (
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesByMonth} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <BarChart data={salesData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
                   <YAxis tickLine={false} axisLine={false} fontSize={12} />
@@ -181,10 +198,10 @@ export function DashboardModule() {
                     formatter={(v: number) => formatBRL(v)}
                   />
                   <Bar dataKey="receita" radius={[8, 8, 0, 0]}>
-                    {salesByMonth.map((_, i) => (
+                    {salesData.map((_, i) => (
                       <Cell
                         key={i}
-                        fill={i === 7 ? "var(--brand)" : "var(--muted)"}
+                        fill={i === currentMonthIdx ? "var(--brand)" : "var(--muted)"}
                       />
                     ))}
                   </Bar>

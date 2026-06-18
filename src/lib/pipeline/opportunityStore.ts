@@ -4,6 +4,7 @@ import type { TaskAttachment, TaskComment, TaskTimelineEvent } from "@/lib/tasks
 
 export type Opportunity = Task & {
   createdAt: string;
+  closedAt?: string;
   comments: TaskComment[];
   attachments: TaskAttachment[];
   timeline: TaskTimelineEvent[];
@@ -42,9 +43,21 @@ function withDefaults(t: Task, daysAgo = 5): Opportunity {
   const created = new Date();
   created.setDate(created.getDate() - daysAgo);
   const at = created.toISOString();
+  // Backfill closedAt para oportunidades já fechadas no seed,
+  // espalhando ao longo do ano corrente para alimentar gráficos.
+  let closedAt: string | undefined;
+  if (t.stage === "fechado") {
+    const seed = (t.id.charCodeAt(t.id.length - 1) ?? 0) + t.estimatedValue;
+    const monthsAgo = seed % 12;
+    const d = new Date();
+    d.setMonth(d.getMonth() - monthsAgo);
+    d.setDate(1 + (seed % 27));
+    closedAt = d.toISOString();
+  }
   return {
     ...t,
     createdAt: at,
+    closedAt,
     comments: [],
     attachments: [],
     timeline: [{ kind: "created", at, by: me }],
@@ -68,12 +81,14 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       }
       const from = stageLabels[t.stage];
       const to = stageLabels[stage];
+      const nowIso = new Date().toISOString();
       return {
         ...t,
         stage,
+        closedAt: stage === "fechado" ? nowIso : t.closedAt,
         lostReason: stage === "perdido" ? (lostReason ?? t.lostReason) : undefined,
         lostNote: stage === "perdido" ? (lostNote ?? t.lostNote) : undefined,
-        timeline: [...t.timeline, { kind: "moved", at: new Date().toISOString(), by: me, from, to }],
+        timeline: [...t.timeline, { kind: "moved", at: nowIso, by: me, from, to }],
       };
     }));
   }, []);
