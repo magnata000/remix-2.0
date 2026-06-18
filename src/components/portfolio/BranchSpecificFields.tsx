@@ -194,7 +194,7 @@ export function BranchSpecificFields(p: Props) {
                           selected={bd}
                           onSelect={(d) => update({ birthDate: d ? d.toISOString().slice(0, 10) : "" })}
                           initialFocus
-                          captionLayout="dropdown-buttons"
+                          captionLayout="dropdown"
                           fromYear={1920}
                           toYear={new Date().getFullYear()}
                           className={cn("p-3 pointer-events-auto")}
