@@ -387,6 +387,7 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
 
     renameFolder,
     deleteFolder,
+    moveFolder,
     addFile,
     renameFile,
     deleteFile,
