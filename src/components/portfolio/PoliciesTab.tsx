@@ -42,6 +42,13 @@ const statusColor: Record<PolicyStatus, string> = {
   renovada: "bg-info/15 text-info border-0",
 };
 
+const POLICY_STATUS_CYCLE: PolicyStatus[] = ["ativa", "pendente", "vencida", "cancelada"];
+function nextPolicyStatus(current: PolicyStatus): PolicyStatus {
+  const idx = POLICY_STATUS_CYCLE.indexOf(current);
+  if (idx === -1) return POLICY_STATUS_CYCLE[0];
+  return POLICY_STATUS_CYCLE[(idx + 1) % POLICY_STATUS_CYCLE.length];
+}
+
 type Props = {
   initialClientFilter?: string;
   onClientClick?: (clientName: string) => void;
