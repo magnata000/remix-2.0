@@ -227,7 +227,14 @@ export function ClientsTab({ onSelectClient }: Props) {
                         {s.lastActivity ? formatDateShort(s.lastActivity) : "—"}
                       </td>
                       <td className="px-5 py-3">
-                        <Badge className={statusColor[s.status]}>{statusLabel[s.status]}</Badge>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); cycleStatus(s.client.id, s.status); }}
+                          title="Clique para alterar o status"
+                          className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                        >
+                          <Badge className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}>{statusLabel[s.status]}</Badge>
+                        </button>
                       </td>
                     </tr>
                   ))}
