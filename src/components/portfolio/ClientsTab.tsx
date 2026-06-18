@@ -39,6 +39,12 @@ const statusLabel: Record<ClientStatus, string> = {
   lead: "Lead",
 };
 
+const CLIENT_STATUS_CYCLE: ClientStatus[] = ["ativo", "inativo", "lead"];
+function nextClientStatus(current: ClientStatus): ClientStatus {
+  const idx = CLIENT_STATUS_CYCLE.indexOf(current);
+  return CLIENT_STATUS_CYCLE[(idx + 1) % CLIENT_STATUS_CYCLE.length];
+}
+
 type Props = {
   onSelectClient: (clientName: string) => void;
 };
