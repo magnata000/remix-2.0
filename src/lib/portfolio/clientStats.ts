@@ -53,6 +53,7 @@ function computeStats(client: Client, policiesArr: Policy[]): ClientStats {
   let status: ClientStatus = "inativo";
   if (activePolicies.length > 0) status = "ativo";
   else if (myPolicies.length === 0 && openOpportunities > 0) status = "lead";
+  if (client.statusOverride) status = client.statusOverride;
 
   return {
     client,
