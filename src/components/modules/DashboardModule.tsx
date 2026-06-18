@@ -89,6 +89,19 @@ const statusColor: Record<string, string> = {
 
 export function DashboardModule() {
   const [loading, setLoading] = useState(true);
+  const { opportunities } = usePipelineStore();
+  const now = new Date();
+  const salesData = useMemo(
+    () => salesByMonthFromPipeline(opportunities, now.getFullYear()),
+    [opportunities, now.getFullYear()],
+  );
+  const receitaMes = useMemo(
+    () => revenueInMonth(opportunities, now.getMonth(), now.getFullYear()),
+    [opportunities, now.getMonth(), now.getFullYear()],
+  );
+  const vendasMes = salesData[now.getMonth()]?.vendas ?? 0;
+  const kpis = useMemo(() => buildKpis(receitaMes, vendasMes), [receitaMes, vendasMes]);
+  const currentMonthIdx = now.getMonth();
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(t);
