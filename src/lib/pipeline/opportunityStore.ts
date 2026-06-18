@@ -81,12 +81,14 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       }
       const from = stageLabels[t.stage];
       const to = stageLabels[stage];
+      const nowIso = new Date().toISOString();
       return {
         ...t,
         stage,
+        closedAt: stage === "fechado" ? nowIso : t.closedAt,
         lostReason: stage === "perdido" ? (lostReason ?? t.lostReason) : undefined,
         lostNote: stage === "perdido" ? (lostNote ?? t.lostNote) : undefined,
-        timeline: [...t.timeline, { kind: "moved", at: new Date().toISOString(), by: me, from, to }],
+        timeline: [...t.timeline, { kind: "moved", at: nowIso, by: me, from, to }],
       };
     }));
   }, []);
