@@ -38,45 +38,47 @@ type Kpi = {
   highlight?: boolean;
 };
 
-const kpis: Kpi[] = [
-  {
-    label: "Apólices Ativas",
-    value: "1.284",
-    change: "+8,2%",
-    positive: true,
-    icon: ShieldCheck,
-    iconBg: "bg-brand",
-    iconColor: "text-brand-foreground",
-    highlight: true,
-  },
-  {
-    label: "Novos Clientes",
-    value: "112",
-    change: "+12,4%",
-    positive: true,
-    icon: UserPlus,
-    iconBg: "bg-warning/15",
-    iconColor: "text-warning",
-  },
-  {
-    label: "Sinistros Abertos",
-    value: "23",
-    change: "-4,1%",
-    positive: false,
-    icon: AlertTriangle,
-    iconBg: "bg-info/15",
-    iconColor: "text-info",
-  },
-  {
-    label: "Receita do Mês",
-    value: formatBRL(184320),
-    change: "+15,6%",
-    positive: true,
-    icon: TrendingUp,
-    iconBg: "bg-success/15",
-    iconColor: "text-success",
-  },
-];
+function buildKpis(receitaMes: number, vendasMes: number): Kpi[] {
+  return [
+    {
+      label: "Apólices Ativas",
+      value: "1.284",
+      change: "+8,2%",
+      positive: true,
+      icon: ShieldCheck,
+      iconBg: "bg-brand",
+      iconColor: "text-brand-foreground",
+      highlight: true,
+    },
+    {
+      label: "Novos Clientes",
+      value: "112",
+      change: "+12,4%",
+      positive: true,
+      icon: UserPlus,
+      iconBg: "bg-warning/15",
+      iconColor: "text-warning",
+    },
+    {
+      label: "Sinistros Abertos",
+      value: "23",
+      change: "-4,1%",
+      positive: false,
+      icon: AlertTriangle,
+      iconBg: "bg-info/15",
+      iconColor: "text-info",
+    },
+    {
+      label: "Receita do Mês",
+      value: formatBRL(receitaMes),
+      change: `${vendasMes} vendas`,
+      positive: true,
+      icon: TrendingUp,
+      iconBg: "bg-success/15",
+      iconColor: "text-success",
+    },
+  ];
+}
 
 const statusColor: Record<string, string> = {
   ativa: "bg-success/15 text-success border-0",
