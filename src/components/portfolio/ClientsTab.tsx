@@ -158,7 +158,22 @@ export function ClientsTab({ onSelectClient }: Props) {
                     <p className="font-semibold truncate">{s.client.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{s.client.email}</p>
                   </div>
-                  <Badge className={statusColor[s.status]}>{statusLabel[s.status]}</Badge>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); cycleStatus(s.client.id, s.status); }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        cycleStatus(s.client.id, s.status);
+                      }
+                    }}
+                    title="Clique para alterar o status"
+                    className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                  >
+                    <Badge className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}>{statusLabel[s.status]}</Badge>
+                  </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span>{s.activePolicies} apólice{s.activePolicies === 1 ? "" : "s"} ativa{s.activePolicies === 1 ? "" : "s"}</span>
