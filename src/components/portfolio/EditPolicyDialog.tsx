@@ -8,13 +8,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { toast } from "sonner";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; policy: Policy | null };
 
-const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
+const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const BASE_STATUSES: { key: PolicyStatus; label: string }[] = [
   { key: "ativa", label: "Ativa" },
@@ -34,28 +35,51 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
   const [status, setStatus] = useState<PolicyStatus>("ativa");
   const [touched, setTouched] = useState(false);
 
+  const [commissionStr, setCommissionStr] = useState("");
+  const [healthAnniversary, setHealthAnniversary] = useState("");
+  const [anniversaryTouched, setAnniversaryTouched] = useState(false);
+  const [healthInitialValue, setHealthInitialValue] = useState("");
+  const [healthCategory, setHealthCategory] = useState("");
+  const [healthCoparticipation, setHealthCoparticipation] = useState(false);
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
+  const [consortiumGroup, setConsortiumGroup] = useState("");
+  const [consortiumQuota, setConsortiumQuota] = useState("");
+
   useEffect(() => {
     if (open && policy) {
       setBranch(policy.branch);
       setInsurer(policy.insurer);
       setPremium(formatBRL(policy.premium));
-      setStartDate(new Date(policy.startDate));
-      setEndDate(new Date(policy.endDate));
+      setStartDate(policy.startDate ? new Date(policy.startDate) : undefined);
+      setEndDate(policy.endDate ? new Date(policy.endDate) : undefined);
       setStatus(policy.status);
       setTouched(false);
+      setCommissionStr(policy.commissionPct != null ? String(policy.commissionPct).replace(".", ",") : "");
+      setHealthAnniversary(policy.healthAnniversary ?? "");
+      setAnniversaryTouched(!!policy.healthAnniversary);
+      setHealthInitialValue(policy.healthInitialValue ? formatBRL(policy.healthInitialValue) : "");
+      setHealthCategory(policy.healthCategory ?? "");
+      setHealthCoparticipation(!!policy.healthCoparticipation);
+      setBeneficiaries(policy.beneficiaries ?? []);
+      setConsortiumGroup(policy.consortiumGroup ?? "");
+      setConsortiumQuota(policy.consortiumQuota ?? "");
     }
   }, [open, policy]);
 
   const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
+  const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
+
+  const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (premiumNum <= 0) e.premium = "Prêmio deve ser maior que zero";
     if (!startDate) e.startDate = "Selecione a data de início";
-    if (!endDate) e.endDate = "Selecione a data de fim";
-    if (startDate && endDate && endDate <= startDate) e.endDate = "Fim deve ser após início";
+    if (endDateRequired && !endDate) e.endDate = "Selecione a data de fim";
+    if (endDateRequired && startDate && endDate && endDate <= startDate) e.endDate = "Fim deve ser após início";
     return e;
-  }, [premiumNum, startDate, endDate]);
+  }, [premiumNum, startDate, endDate, endDateRequired]);
 
   const valid = Object.keys(errors).length === 0;
 
@@ -68,18 +92,27 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
 
   const submit = () => {
     setTouched(true);
-    if (!valid || !startDate || !endDate) {
+    if (!valid || !startDate) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
+    const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
     updatePolicy(policy.id, {
       clientName: policy.clientName,
       branch,
       insurer,
       premium: premiumNum,
       startDate: startDate.toISOString().slice(0, 10),
-      endDate: endDate.toISOString().slice(0, 10),
+      endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
+      commissionPct: commissionPct || undefined,
+      healthAnniversary: branch === "Saúde" ? (healthAnniversary || undefined) : undefined,
+      healthInitialValue: branch === "Saúde" ? (healthInitialNum || undefined) : undefined,
+      healthCategory: branch === "Saúde" ? (healthCategory || undefined) : undefined,
+      healthCoparticipation: branch === "Saúde" ? healthCoparticipation : undefined,
+      beneficiaries: branch === "Saúde" && beneficiaries.length ? beneficiaries : undefined,
+      consortiumGroup: branch === "Consórcio" ? (consortiumGroup || undefined) : undefined,
+      consortiumQuota: branch === "Consórcio" ? (consortiumQuota || undefined) : undefined,
     });
     toast.success(`Apólice ${policy.number} atualizada`);
     onOpenChange(false);
@@ -160,20 +193,60 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
               </Popover>
               {showErr("startDate") && <p className="text-xs text-destructive mt-1">{errors.startDate}</p>}
             </div>
+            {endDateRequired && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Fim vigência *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !endDate && "text-muted-foreground")}>
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+                {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
+              </div>
+            )}
+          </div>
+
+          <BranchSpecificFields
+            branch={branch}
+            startDate={startDate}
+            healthAnniversary={healthAnniversary}
+            setHealthAnniversary={setHealthAnniversary}
+            anniversaryTouched={anniversaryTouched}
+            setAnniversaryTouched={setAnniversaryTouched}
+            healthInitialValue={healthInitialValue}
+            setHealthInitialValue={setHealthInitialValue}
+            healthCategory={healthCategory}
+            setHealthCategory={setHealthCategory}
+            healthCoparticipation={healthCoparticipation}
+            setHealthCoparticipation={setHealthCoparticipation}
+            beneficiaries={beneficiaries}
+            setBeneficiaries={setBeneficiaries}
+            consortiumGroup={consortiumGroup}
+            setConsortiumGroup={setConsortiumGroup}
+            consortiumQuota={consortiumQuota}
+            setConsortiumQuota={setConsortiumQuota}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Fim vigência *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !endDate && "text-muted-foreground")}>
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus className={cn("p-3 pointer-events-auto")} />
-                </PopoverContent>
-              </Popover>
-              {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
+              <Label className="text-xs text-muted-foreground">Comissão (%)</Label>
+              <Input
+                inputMode="decimal"
+                value={commissionStr}
+                onChange={(e) => setCommissionStr(maskPercentInput(e.target.value))}
+                placeholder="0"
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Valor da comissão</Label>
+              <Input value={formatBRL(commissionValue)} disabled className="mt-1.5 rounded-xl bg-muted border-0" />
             </div>
           </div>
         </div>
