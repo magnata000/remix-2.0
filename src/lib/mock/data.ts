@@ -81,7 +81,7 @@ export type Commission = {
 export type TeamMember = { id: string; name: string; role: string; email: string };
 
 const insurers: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
-const branches: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
+const branches: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const names = [
   "Ana Souza", "Carlos Lima", "Mariana Alves", "João Pereira", "Beatriz Costa",
   "Rafael Mendes", "Juliana Rocha", "Pedro Henrique", "Larissa Dias", "Bruno Carvalho",
