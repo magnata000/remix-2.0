@@ -228,7 +228,10 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
                   <Calendar
                     mode="single"
                     selected={startDate}
-                    onSelect={(d) => { setStartDate(d); if (d) setEndDate(addYears(d, 1)); }}
+                    onSelect={(d) => {
+                      setStartDate(d);
+                      if (d && branch !== "Saúde") setEndDate(addYears(d, 1));
+                    }}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                   />
@@ -236,28 +239,51 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               </Popover>
               {showErr("startDate") && <p className="text-xs text-destructive mt-1">{errors.startDate}</p>}
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Fim vigência *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !endDate && "text-muted-foreground")}>
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-              {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
-            </div>
+            {endDateRequired && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Fim vigência *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !endDate && "text-muted-foreground")}>
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
+              </div>
+            )}
           </div>
+
+          <BranchSpecificFields
+            branch={branch}
+            startDate={startDate}
+            healthAnniversary={healthAnniversary}
+            setHealthAnniversary={setHealthAnniversary}
+            anniversaryTouched={anniversaryTouched}
+            setAnniversaryTouched={setAnniversaryTouched}
+            healthInitialValue={healthInitialValue}
+            setHealthInitialValue={setHealthInitialValue}
+            healthCategory={healthCategory}
+            setHealthCategory={setHealthCategory}
+            healthCoparticipation={healthCoparticipation}
+            setHealthCoparticipation={setHealthCoparticipation}
+            beneficiaries={beneficiaries}
+            setBeneficiaries={setBeneficiaries}
+            consortiumGroup={consortiumGroup}
+            setConsortiumGroup={setConsortiumGroup}
+            consortiumQuota={consortiumQuota}
+            setConsortiumQuota={setConsortiumQuota}
+          />
 
           <div>
             <Label className="text-xs text-muted-foreground">Vendedor</Label>
@@ -270,7 +296,29 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               </SelectContent>
             </Select>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Comissão (%)</Label>
+              <Input
+                inputMode="decimal"
+                value={commissionStr}
+                onChange={(e) => setCommissionStr(maskPercentInput(e.target.value))}
+                placeholder="0"
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Valor da comissão</Label>
+              <Input
+                value={formatBRL(commissionValue)}
+                disabled
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+            </div>
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
