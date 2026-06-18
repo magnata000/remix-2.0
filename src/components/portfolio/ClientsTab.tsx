@@ -39,13 +39,21 @@ const statusLabel: Record<ClientStatus, string> = {
   lead: "Lead",
 };
 
+const CLIENT_STATUS_CYCLE: ClientStatus[] = ["ativo", "inativo", "lead"];
+function nextClientStatus(current: ClientStatus): ClientStatus {
+  const idx = CLIENT_STATUS_CYCLE.indexOf(current);
+  return CLIENT_STATUS_CYCLE[(idx + 1) % CLIENT_STATUS_CYCLE.length];
+}
+
 type Props = {
   onSelectClient: (clientName: string) => void;
 };
 
 export function ClientsTab({ onSelectClient }: Props) {
-  const { clients } = useClientStore();
+  const { clients, setClientStatus } = useClientStore();
   const { policies } = usePolicyStore();
+  const cycleStatus = (id: string, current: ClientStatus) =>
+    setClientStatus(id, nextClientStatus(current));
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
@@ -150,7 +158,22 @@ export function ClientsTab({ onSelectClient }: Props) {
                     <p className="font-semibold truncate">{s.client.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{s.client.email}</p>
                   </div>
-                  <Badge className={statusColor[s.status]}>{statusLabel[s.status]}</Badge>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); cycleStatus(s.client.id, s.status); }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        cycleStatus(s.client.id, s.status);
+                      }
+                    }}
+                    title="Clique para alterar o status"
+                    className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                  >
+                    <Badge className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}>{statusLabel[s.status]}</Badge>
+                  </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span>{s.activePolicies} apólice{s.activePolicies === 1 ? "" : "s"} ativa{s.activePolicies === 1 ? "" : "s"}</span>
@@ -204,7 +227,14 @@ export function ClientsTab({ onSelectClient }: Props) {
                         {s.lastActivity ? formatDateShort(s.lastActivity) : "—"}
                       </td>
                       <td className="px-5 py-3">
-                        <Badge className={statusColor[s.status]}>{statusLabel[s.status]}</Badge>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); cycleStatus(s.client.id, s.status); }}
+                          title="Clique para alterar o status"
+                          className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                        >
+                          <Badge className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}>{statusLabel[s.status]}</Badge>
+                        </button>
                       </td>
                     </tr>
                   ))}

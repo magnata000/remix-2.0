@@ -42,13 +42,22 @@ const statusColor: Record<PolicyStatus, string> = {
   renovada: "bg-info/15 text-info border-0",
 };
 
+const POLICY_STATUS_CYCLE: PolicyStatus[] = ["ativa", "pendente", "vencida", "cancelada"];
+function nextPolicyStatus(current: PolicyStatus): PolicyStatus {
+  const idx = POLICY_STATUS_CYCLE.indexOf(current);
+  if (idx === -1) return POLICY_STATUS_CYCLE[0];
+  return POLICY_STATUS_CYCLE[(idx + 1) % POLICY_STATUS_CYCLE.length];
+}
+
 type Props = {
   initialClientFilter?: string;
   onClientClick?: (clientName: string) => void;
 };
 
 export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) {
-  const { policies } = usePolicyStore();
+  const { policies, updatePolicy } = usePolicyStore();
+  const cycleStatus = (id: string, current: PolicyStatus) =>
+    updatePolicy(id, { status: nextPolicyStatus(current) });
   const [q, setQ] = useState(initialClientFilter ?? "");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
@@ -142,7 +151,14 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               >
                 <div className="flex items-start justify-between">
                   <p className="font-mono text-xs text-muted-foreground">{p.number}</p>
-                  <Badge className={statusColor[p.status]}>{p.status}</Badge>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); cycleStatus(p.id, p.status); }}
+                    title="Clique para alterar o status"
+                    className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                  >
+                    <Badge className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}>{p.status}</Badge>
+                  </button>
                 </div>
                 <p className="mt-2 font-semibold">{p.clientName}</p>
                 <p className="text-xs text-muted-foreground">
@@ -198,7 +214,14 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                         {formatDateShort(p.endDate)}
                       </td>
                       <td className="px-5 py-3">
-                        <Badge className={statusColor[p.status]}>{p.status}</Badge>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); cycleStatus(p.id, p.status); }}
+                          title="Clique para alterar o status"
+                          className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                        >
+                          <Badge className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}>{p.status}</Badge>
+                        </button>
                       </td>
                     </tr>
                   ))}

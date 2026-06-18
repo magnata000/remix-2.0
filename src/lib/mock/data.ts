@@ -3,7 +3,8 @@ export type PolicyStatus = "ativa" | "vencida" | "pendente" | "cancelada" | "ren
 export type Branch = "Auto" | "Vida" | "Residencial" | "Empresarial" | "Saúde";
 export type Insurer = "Porto Seguro" | "Bradesco" | "SulAmérica" | "Allianz" | "Mapfre";
 
-export type Client = { id: string; name: string; email: string; phone: string; document: string; birthDate?: string };
+export type ClientStatus = "ativo" | "inativo" | "lead";
+export type Client = { id: string; name: string; email: string; phone: string; document: string; birthDate?: string; statusOverride?: ClientStatus };
 export type Policy = {
   id: string;
   number: string;
