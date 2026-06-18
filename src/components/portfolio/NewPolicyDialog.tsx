@@ -83,33 +83,50 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   };
 
   const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
+  const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
+
+  const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!clientId) e.client = "Selecione um cliente";
     if (premiumNum <= 0) e.premium = "Prêmio deve ser maior que zero";
     if (!startDate) e.startDate = "Selecione a data de início";
-    if (!endDate) e.endDate = "Selecione a data de fim";
-    if (startDate && endDate && endDate <= startDate) e.endDate = "Fim deve ser após início";
+    if (endDateRequired && !endDate) e.endDate = "Selecione a data de fim";
+    if (endDateRequired && startDate && endDate && endDate <= startDate) e.endDate = "Fim deve ser após início";
     return e;
-  }, [clientId, premiumNum, startDate, endDate]);
+  }, [clientId, premiumNum, startDate, endDate, endDateRequired]);
 
   const valid = Object.keys(errors).length === 0;
 
   const submit = () => {
     setTouched(true);
-    if (!valid || !startDate || !endDate) {
+    if (!valid || !startDate) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
+    const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
     const created = addPolicy({
       clientName,
       branch,
       insurer,
       premium: premiumNum,
       startDate: startDate.toISOString().slice(0, 10),
-      endDate: endDate.toISOString().slice(0, 10),
+      endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
+      commissionPct: commissionPct || undefined,
+      ...(branch === "Saúde" && {
+        healthAnniversary: healthAnniversary || undefined,
+        healthInitialValue: healthInitialNum || undefined,
+        healthCategory: healthCategory || undefined,
+        healthCoparticipation,
+        beneficiaries: beneficiaries.length ? beneficiaries : undefined,
+      }),
+      ...(branch === "Consórcio" && {
+        consortiumGroup: consortiumGroup || undefined,
+        consortiumQuota: consortiumQuota || undefined,
+      }),
     });
     ensurePolicyRoots({
       policyId: created.id,
@@ -120,6 +137,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     toast.success(`Apólice ${created.number} criada`);
     onOpenChange(false);
   };
+
 
   const showErr = (key: string) => touched && errors[key];
 
