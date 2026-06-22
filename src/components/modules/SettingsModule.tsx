@@ -195,6 +195,9 @@ export function SettingsModule() {
         </div>
       </Section>
 
+      {/* Comissionamento */}
+      <CommissionConfigSection>
+
       {/* Preferências */}
       <Section icon={Bell} title="Preferências" desc="Notificações e alertas">
         <div className="space-y-3">
