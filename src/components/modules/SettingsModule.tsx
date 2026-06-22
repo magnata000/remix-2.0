@@ -196,7 +196,7 @@ export function SettingsModule() {
       </Section>
 
       {/* Comissionamento */}
-      <CommissionConfigSection>
+      <CommissionConfigSection />
 
       {/* Preferências */}
       <Section icon={Bell} title="Preferências" desc="Notificações e alertas">
