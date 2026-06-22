@@ -13,6 +13,7 @@ import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type I
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { toast } from "sonner";
 
@@ -35,6 +36,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const { clients } = useClientStore();
   const { addPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
+  const { generateForPolicy } = useCommissionStore();
 
   const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
@@ -50,6 +52,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
 
   // Extras: commission
   const [commissionStr, setCommissionStr] = useState("");
+  const [autoScheme, setAutoScheme] = useState<"esgotamento" | "parcela">("esgotamento");
+  const [autoInstallments, setAutoInstallments] = useState("10");
   // Saúde
   const [healthAnniversary, setHealthAnniversary] = useState("");
   const [anniversaryTouched, setAnniversaryTouched] = useState(false);
@@ -66,7 +70,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setClientId(""); setClientName(""); setBranch("Auto"); setInsurer("Porto Seguro");
     setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
     setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
-    setCommissionStr("");
+    setCommissionStr(""); setAutoScheme("esgotamento"); setAutoInstallments("10");
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
     setConsortiumGroup(""); setConsortiumQuota("");
@@ -107,6 +111,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       return;
     }
     const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
+    const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     const created = addPolicy({
       clientName,
       branch,
@@ -116,16 +121,22 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
       commissionPct: commissionPct || undefined,
+      ...(isAutoLike && {
+        commissionScheme: autoScheme,
+        commissionInstallments: autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
+      }),
       ...(branch === "Saúde" && {
         healthAnniversary: healthAnniversary || undefined,
         healthInitialValue: healthInitialNum || undefined,
         healthCategory: healthCategory || undefined,
         healthCoparticipation,
         beneficiaries: beneficiaries.length ? beneficiaries : undefined,
+        commissionScheme: "agenciamento" as const,
       }),
       ...(branch === "Consórcio" && {
         consortiumGroup: consortiumGroup || undefined,
         consortiumQuota: consortiumQuota || undefined,
+        commissionScheme: "unica" as const,
       }),
     });
     ensurePolicyRoots({
@@ -134,7 +145,12 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       branch: created.branch,
       clientName: created.clientName,
     });
-    toast.success(`Apólice ${created.number} criada`);
+    const gerados = generateForPolicy(created);
+    toast.success(
+      gerados.length > 0
+        ? `Apólice ${created.number} criada · ${gerados.length} parcela(s) de comissão geradas`
+        : `Apólice ${created.number} criada`,
+    );
     onOpenChange(false);
   };
 
@@ -317,6 +333,44 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               />
             </div>
           </div>
+
+          {!["Saúde", "Consórcio"].includes(branch) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Forma de pagamento da comissão</Label>
+                <Select value={autoScheme} onValueChange={(v) => setAutoScheme(v as typeof autoScheme)}>
+                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="esgotamento">Esgotamento (antecipada)</SelectItem>
+                    <SelectItem value="parcela">Por parcela</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {autoScheme === "parcela" && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Número de parcelas</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={autoInstallments}
+                    onChange={(e) => setAutoInstallments(e.target.value.replace(/\D/g, ""))}
+                    placeholder="10"
+                    className="mt-1.5 rounded-xl bg-muted border-0"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          {branch === "Saúde" && (
+            <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
+              Comissão de Saúde segue o padrão <strong>Agenciamento + Recorrência</strong> da seguradora.
+              As parcelas iniciais serão geradas automaticamente e a recorrência mensal aparece mês a mês.
+            </div>
+          )}
+          {branch === "Consórcio" && (
+            <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
+              Modelo provisório: 1 comissão única (% sobre o valor do crédito).
+            </div>
+          )}
         </div>
 
 

@@ -16,6 +16,7 @@ import {
   type Expense,
 } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 import { NewExpenseSheet } from "@/components/financial/NewExpenseSheet";
 import { NewIncomeDialog } from "@/components/financial/NewIncomeDialog";
 import { RegisterEntryDialog } from "@/components/financial/RegisterEntryDialog";
@@ -42,14 +43,20 @@ export function CaixaTab() {
 
   // Movimentações unificadas — TODAS as comissões (qualquer status) entram
   const movements = useMemo<Movement[]>(() => {
-    const inFromCommissions: Movement[] = commissions.map((c) => ({
-      id: `com-${c.id}`,
-      kind: "entrada",
-      date: c.dueDate,
-      description: `Comissão · ${c.clientName} · ${c.insurer}`,
-      amount: c.amount,
-      details: { kind: "comissao", commission: c },
-    }));
+    const inFromCommissions: Movement[] = commissions.map((c) => {
+      const kindLbl = commissionKindLabel(c.kind);
+      const inst = c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
+        ? ` ${c.installmentIndex}/${c.installmentTotal}`
+        : "";
+      return {
+        id: `com-${c.id}`,
+        kind: "entrada",
+        date: c.dueDate,
+        description: `Comissão · ${c.clientName} · ${c.policyNumber} (${kindLbl}${inst})`,
+        amount: c.amount,
+        details: { kind: "comissao", commission: c },
+      };
+    });
     const inFromManual: Movement[] = incomes.map((i) => ({
       id: `inc-${i.id}`,
       kind: "entrada",

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { formatBRL, formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { toast } from "sonner";
 
 type Props = {
@@ -33,6 +34,7 @@ const addYears = (d: Date, n: number) => {
 export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
   const { renewPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
+  const { generateForPolicy } = useCommissionStore();
 
   const [branch, setBranch] = useState<Branch>("Auto");
   const [insurer, setInsurer] = useState<Insurer>("Porto Seguro");
@@ -88,6 +90,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
       branch: created.branch,
       clientName: created.clientName,
     });
+    generateForPolicy(created);
     toast.success(`Renovação ${created.number} criada`);
     onOpenChange(false);
   };

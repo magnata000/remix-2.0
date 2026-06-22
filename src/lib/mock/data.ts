@@ -16,6 +16,9 @@ export type Beneficiary = {
   cpf: string;
 };
 
+export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica";
+export type CommissionKind = "agenciamento" | "recorrencia" | "esgotamento" | "parcela" | "unica";
+
 export type Policy = {
   id: string;
   number: string;
@@ -29,6 +32,13 @@ export type Policy = {
   renewedFromId?: string;
   renewedToId?: string;
   commissionPct?: number;
+  // Comissionamento (overrides do padrão da seguradora)
+  commissionScheme?: CommissionScheme;
+  commissionInstallments?: number;     // p/ scheme "parcela" (Auto)
+  agenciamentoSchedule?: number[];     // p/ Saúde (ex: [1, 0.5, 0.3, 0.2])
+  recorrenciaPct?: number;             // p/ Saúde (ex: 0.03)
+  comissaoLiquida?: boolean;           // override por apólice
+  taxaImposto?: number;
   // Saúde
   healthAnniversary?: string;
   healthInitialValue?: number;
@@ -77,6 +87,10 @@ export type Commission = {
   amount: number;
   dueDate: string;
   status: "pago" | "pendente" | "atrasado";
+  policyId?: string;
+  kind?: CommissionKind;
+  installmentIndex?: number;
+  installmentTotal?: number;
 };
 export type TeamMember = { id: string; name: string; role: string; email: string };
 
@@ -110,22 +124,102 @@ export const clients: Client[] = names.map((n, i) => {
 
 const statuses: PolicyStatus[] = ["ativa", "ativa", "ativa", "pendente", "vencida", "cancelada"];
 
-export const policies: Policy[] = Array.from({ length: 24 }, (_, i) => {
+// Helpers para o seed
+const today = new Date();
+const ymd = (d: Date) => d.toISOString().slice(0, 10);
+const monthsAgo = (n: number) => { const d = new Date(today); d.setMonth(d.getMonth() - n); return d; };
+
+// Apólices "curadas" que demonstram os 3 modelos de comissionamento
+const curatedPolicies: Policy[] = [
+  // 1) Saúde — agenciamento em andamento (começou há 2 meses)
+  {
+    id: "p-saude-1",
+    number: "APO-2026-0001",
+    clientName: "Mariana Alves",
+    branch: "Saúde",
+    insurer: "SulAmérica",
+    premium: 14400, // 1.200/mês x 12
+    startDate: ymd(monthsAgo(2)),
+    endDate: "",
+    status: "ativa",
+    healthInitialValue: 1200,
+    healthCategory: "Enfermaria",
+    healthCoparticipation: true,
+    commissionScheme: "agenciamento",
+    agenciamentoSchedule: [1.0, 0.5, 0.3, 0.2],
+    recorrenciaPct: 0.03,
+    comissaoLiquida: false,
+  },
+  // 2) Auto — Esgotamento (à vista, comissão antecipada)
+  {
+    id: "p-auto-1",
+    number: "APO-2026-0002",
+    clientName: "João Pereira",
+    branch: "Auto",
+    insurer: "Porto Seguro",
+    premium: 3200,
+    startDate: ymd(monthsAgo(3)),
+    endDate: ymd(new Date(today.getFullYear() + 1, today.getMonth() - 3, today.getDate())),
+    status: "ativa",
+    commissionPct: 18,
+    commissionScheme: "esgotamento",
+    comissaoLiquida: false,
+  },
+  // 3) Auto — Por parcela (10x)
+  {
+    id: "p-auto-2",
+    number: "APO-2026-0003",
+    clientName: "Beatriz Costa",
+    branch: "Auto",
+    insurer: "Bradesco",
+    premium: 4800,
+    startDate: ymd(monthsAgo(4)),
+    endDate: ymd(new Date(today.getFullYear() + 1, today.getMonth() - 4, today.getDate())),
+    status: "ativa",
+    commissionPct: 20,
+    commissionScheme: "parcela",
+    commissionInstallments: 10,
+    comissaoLiquida: false,
+  },
+  // 4) Consórcio — modelo simples
+  {
+    id: "p-cons-1",
+    number: "APO-2026-0004",
+    clientName: "Rafael Mendes",
+    branch: "Consórcio",
+    insurer: "Bradesco",
+    premium: 60000,
+    startDate: ymd(monthsAgo(1)),
+    endDate: ymd(new Date(today.getFullYear() + 5, today.getMonth() - 1, today.getDate())),
+    status: "ativa",
+    commissionPct: 1.5,
+    commissionScheme: "unica",
+  },
+];
+
+// Apólices extras genéricas (para completar a vitrine)
+const extraPolicies: Policy[] = Array.from({ length: 20 }, (_, i) => {
   const start = new Date(2025, (i * 2) % 12, 1 + (i % 27));
   const end = new Date(start);
   end.setFullYear(end.getFullYear() + 1);
+  const branch = rand(branches, i);
   return {
-    id: `p${i + 1}`,
-    number: `APO-2026-${pad(i + 1)}`,
+    id: `p${i + 5}`,
+    number: `APO-2026-${pad(i + 5)}`,
     clientName: rand(names, i),
-    branch: rand(branches, i),
+    branch,
     insurer: rand(insurers, i + 2),
     premium: 800 + (i * 137) % 5400,
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10),
     status: rand(statuses, i),
+    commissionPct: 15 + (i % 10),
+    commissionScheme: branch === "Saúde" ? "agenciamento" : branch === "Consórcio" ? "unica" : "esgotamento",
   };
 });
+
+export const policies: Policy[] = [...curatedPolicies, ...extraPolicies];
+
 
 const stages: KanbanStage[] = ["lead", "cotacao", "negociacao", "fechado"];
 
@@ -183,19 +277,47 @@ export const quotes: Quote[] = insurers.map((ins, i) => ({
   rating: 4 + ((i * 17) % 10) / 10,
 }));
 
-export const commissions: Commission[] = Array.from({ length: 18 }, (_, i) => {
-  const due = new Date();
-  due.setDate(due.getDate() + (i * 5 - 30));
-  return {
-    id: `cm${i + 1}`,
-    policyNumber: `APO-2026-${pad((i % 24) + 1)}`,
-    clientName: rand(names, i),
-    insurer: rand(insurers, i),
-    amount: 180 + (i * 73) % 1400,
-    dueDate: due.toISOString().slice(0, 10),
-    status: rand(["pago", "pago", "pendente", "atrasado"] as const, i),
-  };
-});
+// Comissões seed — refletem os 3 modelos de comissionamento das apólices curadas
+const startMonth = (offset: number) => {
+  // Vencimento = data início + N meses
+  const d = monthsAgo(2 - offset); // p-saude-1 começou há 2 meses
+  return ymd(d);
+};
+const monthFromAuto1 = (offset: number) => ymd(monthsAgo(3 - offset));
+const monthFromAuto2 = (offset: number) => ymd(monthsAgo(4 - offset));
+
+export const commissions: Commission[] = [
+  // ----- Saúde (agenciamento, mensalidade 1.200) -----
+  { id: "cm-saude-ag1", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 1200, dueDate: startMonth(0), status: "pago", kind: "agenciamento", installmentIndex: 1, installmentTotal: 4 },
+  { id: "cm-saude-ag2", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 600,  dueDate: startMonth(1), status: "pago", kind: "agenciamento", installmentIndex: 2, installmentTotal: 4 },
+  { id: "cm-saude-ag3", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 360,  dueDate: startMonth(2), status: "pendente", kind: "agenciamento", installmentIndex: 3, installmentTotal: 4 },
+  { id: "cm-saude-ag4", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 240,  dueDate: startMonth(3), status: "pendente", kind: "agenciamento", installmentIndex: 4, installmentTotal: 4 },
+
+  // ----- Auto Esgotamento (prêmio 3.200 × 18% = 576) -----
+  { id: "cm-auto1-es", policyId: "p-auto-1", policyNumber: "APO-2026-0002", clientName: "João Pereira", insurer: "Porto Seguro", amount: 576, dueDate: monthFromAuto1(0), status: "pago", kind: "esgotamento", installmentIndex: 1, installmentTotal: 1 },
+
+  // ----- Auto Parcela 10x (prêmio 4.800 × 20% = 960 / 10 = 96) -----
+  ...Array.from({ length: 10 }, (_, i) => {
+    const status: Commission["status"] = i < 3 ? "pago" : i === 3 ? "atrasado" : "pendente";
+    return {
+      id: `cm-auto2-p${i + 1}`,
+      policyId: "p-auto-2",
+      policyNumber: "APO-2026-0003",
+      clientName: "Beatriz Costa",
+      insurer: "Bradesco" as Insurer,
+      amount: 96,
+      dueDate: monthFromAuto2(i),
+      status,
+      kind: "parcela" as CommissionKind,
+      installmentIndex: i + 1,
+      installmentTotal: 10,
+    };
+  }),
+
+  // ----- Consórcio (60.000 × 1.5% = 900) -----
+  { id: "cm-cons1-un", policyId: "p-cons-1", policyNumber: "APO-2026-0004", clientName: "Rafael Mendes", insurer: "Bradesco", amount: 900, dueDate: ymd(monthsAgo(0)), status: "pendente", kind: "unica", installmentIndex: 1, installmentTotal: 1 },
+];
+
 
 export const team: TeamMember[] = [
   { id: "u1", name: "Ana Souza", role: "Sócia / Corretora", email: "ana@insuranceos.com" },

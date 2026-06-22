@@ -1,9 +1,11 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { formatBRL } from "@/lib/mock/data";
+import { formatBRL, formatDateShort } from "@/lib/mock/data";
 import { formatDateTimeBR, type Expense, type ExpenseEntry, type ManualIncome } from "@/lib/cash/cashStore";
 import type { Commission } from "@/lib/mock/data";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
@@ -31,8 +33,12 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
+  const { scheduleOfPolicy } = useCommissionStore();
   if (!movement) return null;
   const isEntry = movement.kind === "entrada";
+  const schedule = movement.details.kind === "comissao" && movement.details.commission.policyId
+    ? scheduleOfPolicy(movement.details.commission.policyId)
+    : [];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -68,12 +74,16 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                 : c.status === "pendente"
                 ? "bg-warning/15 text-warning border-0"
                 : "bg-destructive/15 text-destructive border-0";
+            const instLabel = c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
+              ? `${c.installmentIndex}/${c.installmentTotal}`
+              : "—";
             return (
               <>
-                <Row label="Tipo" value="Comissão de apólice" />
+                <Row label="Tipo" value={`Comissão · ${commissionKindLabel(c.kind)}`} />
                 <Row label="Cliente" value={c.clientName} />
                 <Row label="Seguradora" value={c.insurer} />
                 <Row label="Apólice" value={<span className="font-mono text-xs">{c.policyNumber}</span>} />
+                <Row label="Parcela" value={instLabel} />
                 <Row label="Status" value={<Badge className={statusClass}>{c.status}</Badge>} />
               </>
             );
@@ -108,6 +118,34 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
             </>
           )}
         </div>
+
+        {schedule.length > 1 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold mb-2">Cronograma da apólice</h3>
+            <div className="rounded-xl border border-border divide-y divide-border text-xs">
+              {schedule.map((s) => {
+                const isCurrent = movement.details.kind === "comissao" && movement.details.commission.id === s.id;
+                const statusClr =
+                  s.status === "pago" ? "text-success" : s.status === "atrasado" ? "text-destructive" : "text-warning";
+                return (
+                  <div key={s.id} className={`flex items-center justify-between gap-3 px-3 py-2 ${isCurrent ? "bg-muted/50" : ""}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-muted-foreground">{commissionKindLabel(s.kind)}</span>
+                      {s.installmentTotal && s.installmentTotal > 1 && (
+                        <span className="text-muted-foreground">{s.installmentIndex}/{s.installmentTotal}</span>
+                      )}
+                      <span className="text-muted-foreground">· {formatDateShort(s.dueDate)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`uppercase text-[10px] ${statusClr}`}>{s.status}</span>
+                      <span className="font-mono">{formatBRL(s.amount)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
