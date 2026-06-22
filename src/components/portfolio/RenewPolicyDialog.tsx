@@ -90,6 +90,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
       branch: created.branch,
       clientName: created.clientName,
     });
+    generateForPolicy(created);
     toast.success(`Renovação ${created.number} criada`);
     onOpenChange(false);
   };
