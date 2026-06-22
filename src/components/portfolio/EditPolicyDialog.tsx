@@ -256,6 +256,15 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
               <Input value={formatBRL(commissionValue)} disabled className="mt-1.5 rounded-xl bg-muted border-0" />
             </div>
           </div>
+
+          <PolicyTaxOverrideFields
+            branch={branch}
+            insurer={insurer}
+            comissaoLiquida={comissaoLiquida}
+            setComissaoLiquida={setComissaoLiquida}
+            taxaImposto={taxaImposto}
+            setTaxaImposto={setTaxaImposto}
+          />
         </div>
 
         <DialogFooter>
