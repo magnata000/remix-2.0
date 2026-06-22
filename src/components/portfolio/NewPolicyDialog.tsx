@@ -333,6 +333,44 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               />
             </div>
           </div>
+
+          {!["Saúde", "Consórcio"].includes(branch) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Forma de pagamento da comissão</Label>
+                <Select value={autoScheme} onValueChange={(v) => setAutoScheme(v as typeof autoScheme)}>
+                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="esgotamento">Esgotamento (antecipada)</SelectItem>
+                    <SelectItem value="parcela">Por parcela</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {autoScheme === "parcela" && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Número de parcelas</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={autoInstallments}
+                    onChange={(e) => setAutoInstallments(e.target.value.replace(/\D/g, ""))}
+                    placeholder="10"
+                    className="mt-1.5 rounded-xl bg-muted border-0"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          {branch === "Saúde" && (
+            <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
+              Comissão de Saúde segue o padrão <strong>Agenciamento + Recorrência</strong> da seguradora.
+              As parcelas iniciais serão geradas automaticamente e a recorrência mensal aparece mês a mês.
+            </div>
+          )}
+          {branch === "Consórcio" && (
+            <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
+              Modelo provisório: 1 comissão única (% sobre o valor do crédito).
+            </div>
+          )}
         </div>
 
 
