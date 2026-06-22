@@ -16,6 +16,7 @@ import {
   type Expense,
 } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 import { NewExpenseSheet } from "@/components/financial/NewExpenseSheet";
 import { NewIncomeDialog } from "@/components/financial/NewIncomeDialog";
 import { RegisterEntryDialog } from "@/components/financial/RegisterEntryDialog";
