@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { formatBRL, formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { toast } from "sonner";
 
 type Props = {
