@@ -78,6 +78,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
     setConsortiumGroup(""); setConsortiumQuota("");
+    setComissaoLiquida(undefined); setTaxaImposto(undefined);
     if (defaultClientName) {
       const c = clients.find((x) => x.name === defaultClientName);
       if (c) { setClientId(c.id); setClientName(c.name); }
