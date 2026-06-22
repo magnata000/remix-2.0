@@ -61,6 +61,7 @@ type Ctx = {
     policyNumber: string;
     branch: string;
     clientName: string;
+    startDate?: string;
   }) => void;
   renameFolder: (id: string, name: string) => void;
   deleteFolder: (id: string) => void;
