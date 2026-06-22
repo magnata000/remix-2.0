@@ -73,6 +73,23 @@ export function CaixaTab() {
 
   const monthMovements = movements.filter((m) => inMonth(m.date));
 
+  const filteredMonthMovements = useMemo(() => {
+    return monthMovements.filter((m) => {
+      if (typeFilter !== "all" && m.kind !== typeFilter) return false;
+      if (statusFilter !== "all") {
+        if (statusFilter === "none") {
+          if (m.details.kind === "comissao") return false;
+        } else {
+          if (m.details.kind !== "comissao") return false;
+          if (m.details.commission.status !== statusFilter) return false;
+        }
+      }
+      return true;
+    });
+  }, [monthMovements, typeFilter, statusFilter]);
+
+  const filtersActive = typeFilter !== "all" || statusFilter !== "all";
+
   // KPIs do mês: comissões só contam como entrada se status === "pago"
   const summary = useMemo(() => {
     const income = monthMovements
