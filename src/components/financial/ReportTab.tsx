@@ -7,8 +7,9 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
-import { commissions, formatBRL } from "@/lib/mock/data";
+import { formatBRL } from "@/lib/mock/data";
 import { useCashStore, MONTHS_PT } from "@/lib/cash/cashStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { salesByMonthFromPipeline } from "@/lib/pipeline/salesStats";
 
