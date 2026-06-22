@@ -52,6 +52,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
 
   // Extras: commission
   const [commissionStr, setCommissionStr] = useState("");
+  const [autoScheme, setAutoScheme] = useState<"esgotamento" | "parcela">("esgotamento");
+  const [autoInstallments, setAutoInstallments] = useState("10");
   // Saúde
   const [healthAnniversary, setHealthAnniversary] = useState("");
   const [anniversaryTouched, setAnniversaryTouched] = useState(false);
