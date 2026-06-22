@@ -124,22 +124,102 @@ export const clients: Client[] = names.map((n, i) => {
 
 const statuses: PolicyStatus[] = ["ativa", "ativa", "ativa", "pendente", "vencida", "cancelada"];
 
-export const policies: Policy[] = Array.from({ length: 24 }, (_, i) => {
+// Helpers para o seed
+const today = new Date();
+const ymd = (d: Date) => d.toISOString().slice(0, 10);
+const monthsAgo = (n: number) => { const d = new Date(today); d.setMonth(d.getMonth() - n); return d; };
+
+// Apólices "curadas" que demonstram os 3 modelos de comissionamento
+const curatedPolicies: Policy[] = [
+  // 1) Saúde — agenciamento em andamento (começou há 2 meses)
+  {
+    id: "p-saude-1",
+    number: "APO-2026-0001",
+    clientName: "Mariana Alves",
+    branch: "Saúde",
+    insurer: "SulAmérica",
+    premium: 14400, // 1.200/mês x 12
+    startDate: ymd(monthsAgo(2)),
+    endDate: "",
+    status: "ativa",
+    healthInitialValue: 1200,
+    healthCategory: "Enfermaria",
+    healthCoparticipation: true,
+    commissionScheme: "agenciamento",
+    agenciamentoSchedule: [1.0, 0.5, 0.3, 0.2],
+    recorrenciaPct: 0.03,
+    comissaoLiquida: false,
+  },
+  // 2) Auto — Esgotamento (à vista, comissão antecipada)
+  {
+    id: "p-auto-1",
+    number: "APO-2026-0002",
+    clientName: "João Pereira",
+    branch: "Auto",
+    insurer: "Porto Seguro",
+    premium: 3200,
+    startDate: ymd(monthsAgo(3)),
+    endDate: ymd(new Date(today.getFullYear() + 1, today.getMonth() - 3, today.getDate())),
+    status: "ativa",
+    commissionPct: 18,
+    commissionScheme: "esgotamento",
+    comissaoLiquida: false,
+  },
+  // 3) Auto — Por parcela (10x)
+  {
+    id: "p-auto-2",
+    number: "APO-2026-0003",
+    clientName: "Beatriz Costa",
+    branch: "Auto",
+    insurer: "Bradesco",
+    premium: 4800,
+    startDate: ymd(monthsAgo(4)),
+    endDate: ymd(new Date(today.getFullYear() + 1, today.getMonth() - 4, today.getDate())),
+    status: "ativa",
+    commissionPct: 20,
+    commissionScheme: "parcela",
+    commissionInstallments: 10,
+    comissaoLiquida: false,
+  },
+  // 4) Consórcio — modelo simples
+  {
+    id: "p-cons-1",
+    number: "APO-2026-0004",
+    clientName: "Rafael Mendes",
+    branch: "Consórcio",
+    insurer: "Bradesco",
+    premium: 60000,
+    startDate: ymd(monthsAgo(1)),
+    endDate: ymd(new Date(today.getFullYear() + 5, today.getMonth() - 1, today.getDate())),
+    status: "ativa",
+    commissionPct: 1.5,
+    commissionScheme: "unica",
+  },
+];
+
+// Apólices extras genéricas (para completar a vitrine)
+const extraPolicies: Policy[] = Array.from({ length: 20 }, (_, i) => {
   const start = new Date(2025, (i * 2) % 12, 1 + (i % 27));
   const end = new Date(start);
   end.setFullYear(end.getFullYear() + 1);
+  const branch = rand(branches, i);
   return {
-    id: `p${i + 1}`,
-    number: `APO-2026-${pad(i + 1)}`,
+    id: `p${i + 5}`,
+    number: `APO-2026-${pad(i + 5)}`,
     clientName: rand(names, i),
-    branch: rand(branches, i),
+    branch,
     insurer: rand(insurers, i + 2),
     premium: 800 + (i * 137) % 5400,
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10),
     status: rand(statuses, i),
+    commissionPct: 15 + (i % 10),
+    commissionScheme: branch === "Saúde" ? "agenciamento" : branch === "Consórcio" ? "unica" : "esgotamento",
   };
 });
+
+export const policies: Policy[] = [...curatedPolicies, ...extraPolicies];
+
 
 const stages: KanbanStage[] = ["lead", "cotacao", "negociacao", "fechado"];
 
