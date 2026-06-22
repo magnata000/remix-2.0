@@ -44,6 +44,8 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
   const [endDate, setEndDate] = useState<Date | undefined>(addYears(new Date(), 1));
   const [status, setStatus] = useState<PolicyStatus>("ativa");
   const [touched, setTouched] = useState(false);
+  const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
+  const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!open || !sourcePolicy) return;
