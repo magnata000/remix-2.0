@@ -111,6 +111,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       return;
     }
     const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
+    const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     const created = addPolicy({
       clientName,
       branch,
@@ -120,16 +121,22 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
       commissionPct: commissionPct || undefined,
+      ...(isAutoLike && {
+        commissionScheme: autoScheme,
+        commissionInstallments: autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
+      }),
       ...(branch === "Saúde" && {
         healthAnniversary: healthAnniversary || undefined,
         healthInitialValue: healthInitialNum || undefined,
         healthCategory: healthCategory || undefined,
         healthCoparticipation,
         beneficiaries: beneficiaries.length ? beneficiaries : undefined,
+        commissionScheme: "agenciamento" as const,
       }),
       ...(branch === "Consórcio" && {
         consortiumGroup: consortiumGroup || undefined,
         consortiumQuota: consortiumQuota || undefined,
+        commissionScheme: "unica" as const,
       }),
     });
     ensurePolicyRoots({
