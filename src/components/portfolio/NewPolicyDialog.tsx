@@ -126,6 +126,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
       commissionPct: commissionPct || undefined,
+      comissaoLiquida,
+      taxaImposto,
       ...(isAutoLike && {
         commissionScheme: autoScheme,
         commissionInstallments: autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
