@@ -16,6 +16,9 @@ export type Beneficiary = {
   cpf: string;
 };
 
+export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica";
+export type CommissionKind = "agenciamento" | "recorrencia" | "esgotamento" | "parcela" | "unica";
+
 export type Policy = {
   id: string;
   number: string;
@@ -29,6 +32,13 @@ export type Policy = {
   renewedFromId?: string;
   renewedToId?: string;
   commissionPct?: number;
+  // Comissionamento (overrides do padrão da seguradora)
+  commissionScheme?: CommissionScheme;
+  commissionInstallments?: number;     // p/ scheme "parcela" (Auto)
+  agenciamentoSchedule?: number[];     // p/ Saúde (ex: [1, 0.5, 0.3, 0.2])
+  recorrenciaPct?: number;             // p/ Saúde (ex: 0.03)
+  comissaoLiquida?: boolean;           // override por apólice
+  taxaImposto?: number;
   // Saúde
   healthAnniversary?: string;
   healthInitialValue?: number;
@@ -77,6 +87,10 @@ export type Commission = {
   amount: number;
   dueDate: string;
   status: "pago" | "pendente" | "atrasado";
+  policyId?: string;
+  kind?: CommissionKind;
+  installmentIndex?: number;
+  installmentTotal?: number;
 };
 export type TeamMember = { id: string; name: string; role: string; email: string };
 
