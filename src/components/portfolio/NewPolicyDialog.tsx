@@ -70,7 +70,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setClientId(""); setClientName(""); setBranch("Auto"); setInsurer("Porto Seguro");
     setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
     setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
-    setCommissionStr("");
+    setCommissionStr(""); setAutoScheme("esgotamento"); setAutoInstallments("10");
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
     setConsortiumGroup(""); setConsortiumQuota("");
