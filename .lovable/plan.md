@@ -1,74 +1,56 @@
-# Campos condicionais por ramo + Comissão em apólices
+# Centralizar comissões em Movimentações
 
-Acrescentar campos extras nos formulários de apólice (Nova e Editar) sem alterar a estrutura atual. Os campos comuns continuam idênticos; os novos aparecem condicionalmente.
+## Objetivo
+A tabela **Movimentações** (Financeiro > Caixa) passa a ser o único lugar onde se vê movimento financeiro. Toda comissão aparece ali com seu status (pago/pendente/atrasado) e o status é editável clicando no badge — mesmo padrão usado hoje na Carteira. A tabela "Comissões" duplicada é removida.
 
-## 1. Modelo de dados (`src/lib/mock/data.ts`)
+## Mudanças visíveis
 
-- Adicionar `"Consórcio"` ao tipo `Branch` e ao array `branches`.
-- Estender `Policy` com campos opcionais (todos `?` para não quebrar dados existentes):
-  - `commissionPct?: number` — % comissão (0–100).
-  - **Saúde**: `healthAnniversary?: string` (dd/mm), `healthInitialValue?: number`, `healthCategory?: string`, `healthCoparticipation?: boolean`, `beneficiaries?: Beneficiary[]`.
-  - **Consórcio**: `consortiumGroup?: string`, `consortiumQuota?: string`.
-- Novo tipo `Beneficiary = { id; title: "titular"|"conjuge"|"filho"|"pai_mae"|"irmao"|"parente"|"outro"; titleCustom?: string; name; birthDate; cpf }`.
+### 1. Tabela Movimentações ganha coluna Status
+Nova ordem de colunas: **Data/Hora · Tipo · Descrição · Status · Valor**.
 
-## 2. Componente compartilhado: `BranchSpecificFields`
+- Status fica imediatamente à esquerda de Valor (mantém Valor na borda direita, alinhamento numérico limpo).
+- Apenas linhas de comissão exibem o badge (`pago` verde / `pendente` amarelo / `atrasado` vermelho).
+- Saídas e entradas manuais exibem `—` na célula.
 
-Novo arquivo `src/components/portfolio/BranchSpecificFields.tsx` reusável por `NewPolicyDialog` e `EditPolicyDialog`. Recebe `branch`, `status`, valores e setters.
+### 2. Comissões — todas aparecem, não só as pagas
+Hoje só comissões `pago` viram movimentação. Passamos a listar **todas** as comissões (pago, pendente, atrasado) como linhas de "Entrada" na tabela Movimentações, filtradas pelo mês selecionado usando `dueDate`.
 
-Renderiza:
+- **Resumo do mês (KPI Entradas/Saldo)**: continua contando apenas comissões com status `pago` — pendente/atrasado não entram no saldo realizado.
+- Visualmente a linha de comissão pendente/atrasada aparece, mas o valor não soma no KPI (apenas as pagas somam).
 
-### Quando `branch === "Saúde"`
-- **Valor inicial (contratação)** — input BRL com mesma máscara do prêmio.
-- **Aniversário do plano** — input `dd/mm` editável; **pré-preenchido** a partir do `startDate` (dia/mês), recalculado se startDate mudar e o usuário ainda não tiver editado manualmente (flag `anniversaryTouched`).
-- **Categoria contratada** — input de texto livre.
-- **Coparticipação** — `Switch` Sim/Não.
-- **Beneficiários** — lista dinâmica com botão "Adicionar beneficiário":
-  - Linha por beneficiário: Select de Título + (campo texto extra quando Título = `parente` ou `outro`) + Nome + Data nascimento (Popover Calendar) com **idade calculada** exibida ao lado (`X anos`) + CPF (máscara `000.000.000-00`) + botão remover.
+### 3. Badge de status clicável (replicar padrão da Carteira)
+Clicar no badge de status em uma linha de comissão abre um `DropdownMenu` com as três opções (pago / pendente / atrasado), igual ao que existe em PoliciesTab.
 
-### Quando `branch === "Consórcio"`
-- **Número do grupo** — input texto.
-- **Número da cota** — input texto.
+Regras de transição:
+- **pendente/atrasado → pago**: gera automaticamente a entrada no caixa do mês corrente (já é o comportamento implícito hoje quando `status === "pago"`).
+- **pago → pendente/atrasado**: reverte a entrada (a comissão deixa de contar como entrada realizada no KPI e a linha continua visível, mas com novo status).
+- Toast confirmando a mudança.
+- O clique no badge **não** abre o `MovementDetailsSheet` (stopPropagation).
 
-### Comportamento de Fim de vigência (apenas Saúde)
-- Em Saúde, ocultar/desabilitar o campo `Fim vigência` do formulário **a menos que** `status === "cancelada"`. Quando cancelada, torna-se obrigatório.
-- Remover a obrigatoriedade de `endDate` na validação quando `branch === "Saúde" && status !== "cancelada"`.
-- O padrão do `NewPolicyDialog` de auto-setar `endDate = startDate + 1 ano` ao escolher início **não se aplica** a Saúde.
-
-## 3. Campo Comissão (em todos os ramos)
-
-Em ambos os diálogos, adicionar bloco abaixo de "Vendedor":
-- Input `Comissão (%)` com máscara percentual (aceita inteiros e decimais, ex.: `12,5`).
-- Ao lado (read-only): `Valor da comissão = prêmio × %` formatado em BRL, atualizado em tempo real.
-
-## 4. Integração nos diálogos
-
-### `NewPolicyDialog.tsx`
-- Adicionar estados para todos os campos novos (commission, health*, consortium*, beneficiaries).
-- Inserir `<BranchSpecificFields />` após o grid principal e antes do bloco Vendedor.
-- Inserir bloco Comissão após Vendedor.
-- Ajustar `addPolicy` para receber os novos campos.
-- Ajustar validação de `endDate` conforme regra Saúde acima.
-
-### `EditPolicyDialog.tsx`
-- Mesmos estados + hidratação a partir de `policy` no `useEffect`.
-- Mesmo `<BranchSpecificFields />` e bloco Comissão.
-- Mesma regra de `endDate`.
-- `updatePolicy` recebe os novos campos.
-
-### `policyStore.tsx`
-- Tipos `AddPolicyInput`/`Partial<AddPolicyInput>` já são `Omit<Policy, ...>`, então os novos campos opcionais passam automaticamente — sem mudança de lógica.
-
-## 5. Fora de escopo
-
-- Exibição dos novos campos em `ClientDetailDrawer`, tabela de apólices, drawer da apólice — apenas captura/edição agora.
-- Cálculo de comissão em relatórios financeiros (`ReportTab`, `salesStats`) — fica para uma próxima iteração.
-- Persistência além do store em memória já existente.
-- Validações específicas de CPF (apenas máscara; sem verificar dígito verificador).
+### 4. Remover a tabela "Comissões" separada
+O Card "Comissões" abaixo de Movimentações é removido. Toda a informação agora vive na tabela centralizada.
 
 ## Detalhes técnicos
 
-- Máscara percentual: input controlado que aceita só dígitos e uma vírgula/ponto, normaliza para `number` interno.
-- Idade: `Math.floor((Date.now() - birthDate) / 31557600000)`.
-- Aniversário do plano: derivado via `useEffect` com guarda `anniversaryTouched` para não sobrescrever edição manual.
-- `Beneficiary.id` via `crypto.randomUUID()`.
-- Sem migrations (mock store), sem alterações em rotas, sem novos pacotes.
+### Store de comissões (`src/lib/financial/commissionStore.tsx`)
+Já estava planejado para a próxima etapa — antecipamos a criação porque precisamos de um único lugar com `updateCommissionStatus(id, newStatus)`.
+
+- Provider no root, seed a partir de `commissions` do mock.
+- Métodos: `addCommissionFromPolicy(policy)` (próxima etapa), `updateCommissionStatus(id, status)`.
+- `CaixaTab` e `ReportTab` passam a ler de `useCommissionStore()` em vez do mock estático.
+
+### CaixaTab.tsx
+- Import de `commissions` removido, troca por `useCommissionStore()`.
+- `movements` agora inclui **todas** as comissões (não só `pago`), cada uma carregando `commission` em `details` para o badge clicável.
+- `summary.income` filtra `movements` somando apenas: entradas manuais + comissões cujo `commission.status === "pago"`.
+- Nova coluna Status na `<Table>` com `<CommissionStatusMenu commission={...} />` para linhas de comissão e `—` para o resto.
+- Card "Comissões" inteiro removido (junto com `statusColor` se não for mais usado em outro lugar do arquivo).
+
+### Componente novo: `CommissionStatusMenu`
+Pequeno componente local (ou em `src/components/financial/`) que renderiza o `Badge` dentro de um `DropdownMenu`, espelhando o padrão já existente em `PoliciesTab` para status de apólice. Chama `updateCommissionStatus` no store e dispara toast.
+
+### Fora de escopo desta etapa
+- Geração automática de comissão ao criar/renovar apólice (próxima etapa, já discutida).
+- Permitir status para saídas/entradas manuais.
+- Edição/exclusão de comissão pela UI.
+- Mudança de regras nos KPIs do `ReportTab` (continua lendo do mesmo store).
