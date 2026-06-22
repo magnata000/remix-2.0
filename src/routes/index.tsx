@@ -14,6 +14,7 @@ import { DocumentStoreProvider } from "@/lib/documents/documentStore";
 import { ClientStoreProvider } from "@/lib/portfolio/clientStore";
 import { PolicyStoreProvider } from "@/lib/portfolio/policyStore";
 import { CashProvider } from "@/lib/cash/cashStore";
+import { CommissionStoreProvider } from "@/lib/financial/commissionStore";
 
 import { NavigationProvider } from "@/lib/navigation";
 
@@ -47,19 +48,21 @@ function AppShell() {
             <PolicyStoreProvider>
               <DocumentStoreProvider>
                 <CashProvider>
-                  <NavigationProvider active={active} setActive={setActive}>
-                    <div className="min-h-screen bg-background">
-                      <TopBar active={active} onChange={setActive} />
-                      <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
-                        {active === "dashboard" && <DashboardModule />}
-                        {active === "policies" && <PortfolioModule />}
-                        {active === "kanban" && <KanbanModule />}
-                        {active === "multicalc" && <MulticalcModule />}
-                        {active === "financial" && <FinancialModule />}
-                        {active === "settings" && <SettingsModule />}
-                      </main>
-                    </div>
-                  </NavigationProvider>
+                  <CommissionStoreProvider>
+                    <NavigationProvider active={active} setActive={setActive}>
+                      <div className="min-h-screen bg-background">
+                        <TopBar active={active} onChange={setActive} />
+                        <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
+                          {active === "dashboard" && <DashboardModule />}
+                          {active === "policies" && <PortfolioModule />}
+                          {active === "kanban" && <KanbanModule />}
+                          {active === "multicalc" && <MulticalcModule />}
+                          {active === "financial" && <FinancialModule />}
+                          {active === "settings" && <SettingsModule />}
+                        </main>
+                      </div>
+                    </NavigationProvider>
+                  </CommissionStoreProvider>
                 </CashProvider>
               </DocumentStoreProvider>
             </PolicyStoreProvider>

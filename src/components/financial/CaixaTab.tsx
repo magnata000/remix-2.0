@@ -10,25 +10,22 @@ import {
   ArrowDownCircle, ArrowUpCircle,
   Plus, Receipt, Trash2, TrendingUp, TrendingDown, Scale,
 } from "lucide-react";
-import { commissions, formatBRL } from "@/lib/mock/data";
+import { formatBRL } from "@/lib/mock/data";
 import {
   useCashStore, formatDateTimeBR, MONTHS_PT,
-  type Expense, type ExpenseEntry,
+  type Expense,
 } from "@/lib/cash/cashStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { NewExpenseSheet } from "@/components/financial/NewExpenseSheet";
 import { NewIncomeDialog } from "@/components/financial/NewIncomeDialog";
 import { RegisterEntryDialog } from "@/components/financial/RegisterEntryDialog";
 import { MovementDetailsSheet, type Movement } from "@/components/financial/MovementDetailsSheet";
+import { CommissionStatusMenu } from "@/components/financial/CommissionStatusMenu";
 import { toast } from "sonner";
-
-const statusColor: Record<string, string> = {
-  pago: "bg-success/15 text-success border-0",
-  pendente: "bg-warning/15 text-warning border-0",
-  atrasado: "bg-destructive/15 text-destructive border-0",
-};
 
 export function CaixaTab() {
   const { expenses, entries, incomes, removeExpense } = useCashStore();
+  const { commissions } = useCommissionStore();
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [openExpense, setOpenExpense] = useState(false);
@@ -36,25 +33,21 @@ export function CaixaTab() {
   const [registerFor, setRegisterFor] = useState<Expense | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
 
-  // (KPIs movidos para a aba Relatório)
-
   const inMonth = (iso: string) => {
     const d = new Date(iso);
     return d.getMonth() === selectedMonth && d.getFullYear() === currentYear;
   };
 
-  // Movimentações unificadas
+  // Movimentações unificadas — TODAS as comissões (qualquer status) entram
   const movements = useMemo<Movement[]>(() => {
-    const inFromCommissions: Movement[] = commissions
-      .filter((c) => c.status === "pago")
-      .map((c) => ({
-        id: `com-${c.id}`,
-        kind: "entrada",
-        date: c.dueDate,
-        description: `Comissão · ${c.clientName} · ${c.insurer}`,
-        amount: c.amount,
-        details: { kind: "comissao", commission: c },
-      }));
+    const inFromCommissions: Movement[] = commissions.map((c) => ({
+      id: `com-${c.id}`,
+      kind: "entrada",
+      date: c.dueDate,
+      description: `Comissão · ${c.clientName} · ${c.insurer}`,
+      amount: c.amount,
+      details: { kind: "comissao", commission: c },
+    }));
     const inFromManual: Movement[] = incomes.map((i) => ({
       id: `inc-${i.id}`,
       kind: "entrada",
@@ -74,12 +67,19 @@ export function CaixaTab() {
     return [...inFromCommissions, ...inFromManual, ...out].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [incomes, entries, expenses]);
+  }, [commissions, incomes, entries, expenses]);
 
   const monthMovements = movements.filter((m) => inMonth(m.date));
 
+  // KPIs do mês: comissões só contam como entrada se status === "pago"
   const summary = useMemo(() => {
-    const income = monthMovements.filter((m) => m.kind === "entrada").reduce((s, m) => s + m.amount, 0);
+    const income = monthMovements
+      .filter((m) => {
+        if (m.kind !== "entrada") return false;
+        if (m.details.kind === "comissao") return m.details.commission.status === "pago";
+        return true;
+      })
+      .reduce((s, m) => s + m.amount, 0);
     const expense = monthMovements.filter((m) => m.kind === "saida").reduce((s, m) => s + m.amount, 0);
     return { income, expense, balance: income - expense };
   }, [monthMovements]);
@@ -210,65 +210,52 @@ export function CaixaTab() {
                   <TableHead className="text-xs">Data/Hora</TableHead>
                   <TableHead className="text-xs">Tipo</TableHead>
                   <TableHead className="text-xs">Descrição</TableHead>
+                  <TableHead className="text-xs">Status</TableHead>
                   <TableHead className="text-xs text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {monthMovements.map((m) => (
-                  <TableRow key={m.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedMovement(m)}>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDateTimeBR(m.date)}</TableCell>
-                    <TableCell>
-                      {m.kind === "entrada" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-xs">
-                          <ArrowDownCircle className="h-3.5 w-3.5" /> Entrada
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/15 text-destructive text-xs">
-                          <ArrowUpCircle className="h-3.5 w-3.5" /> Saída
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">{m.description}</TableCell>
-                    <TableCell className={`text-right font-semibold ${m.kind === "entrada" ? "text-success" : "text-destructive"}`}>
-                      {m.kind === "entrada" ? "+" : "−"} {formatBRL(m.amount)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {monthMovements.map((m) => {
+                  const isCommission = m.details.kind === "comissao";
+                  const isUnpaidCommission = isCommission && m.details.kind === "comissao" && m.details.commission.status !== "pago";
+                  return (
+                    <TableRow key={m.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedMovement(m)}>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDateTimeBR(m.date)}</TableCell>
+                      <TableCell>
+                        {m.kind === "entrada" ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-xs">
+                            <ArrowDownCircle className="h-3.5 w-3.5" /> Entrada
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/15 text-destructive text-xs">
+                            <ArrowUpCircle className="h-3.5 w-3.5" /> Saída
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">{m.description}</TableCell>
+                      <TableCell>
+                        {m.details.kind === "comissao" ? (
+                          <CommissionStatusMenu commission={m.details.commission} />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right font-semibold ${
+                          m.kind === "entrada"
+                            ? isUnpaidCommission ? "text-muted-foreground" : "text-success"
+                            : "text-destructive"
+                        }`}
+                      >
+                        {m.kind === "entrada" ? "+" : "−"} {formatBRL(m.amount)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         )}
-      </Card>
-
-      {/* Comissões (preservado) */}
-      <Card className="rounded-2xl border-border shadow-none overflow-hidden">
-        <div className="p-5 pb-3">
-          <h2 className="text-lg font-semibold">Comissões</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-muted-foreground border-y border-border bg-muted/40">
-                <th className="px-5 py-3 font-medium">Apólice</th>
-                <th className="px-5 py-3 font-medium">Cliente</th>
-                <th className="px-5 py-3 font-medium hidden md:table-cell">Seguradora</th>
-                <th className="px-5 py-3 font-medium">Valor</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {commissions.map((c) => (
-                <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                  <td className="px-5 py-3 font-mono text-xs">{c.policyNumber}</td>
-                  <td className="px-5 py-3 font-medium">{c.clientName}</td>
-                  <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{c.insurer}</td>
-                  <td className="px-5 py-3 font-semibold">{formatBRL(c.amount)}</td>
-                  <td className="px-5 py-3"><Badge className={statusColor[c.status]}>{c.status}</Badge></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </Card>
 
       <NewExpenseSheet open={openExpense} onOpenChange={setOpenExpense} />

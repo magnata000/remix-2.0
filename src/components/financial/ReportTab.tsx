@@ -7,8 +7,9 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
-import { commissions, formatBRL } from "@/lib/mock/data";
+import { formatBRL } from "@/lib/mock/data";
 import { useCashStore, MONTHS_PT } from "@/lib/cash/cashStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { salesByMonthFromPipeline } from "@/lib/pipeline/salesStats";
 
@@ -18,6 +19,7 @@ const MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "S
 
 export function ReportTab() {
   const { entries, incomes } = useCashStore();
+  const { commissions } = useCommissionStore();
   const { opportunities } = usePipelineStore();
   const currentYear = new Date().getFullYear();
   const [pieMonth, setPieMonth] = useState<number>(new Date().getMonth());
@@ -38,7 +40,7 @@ export function ReportTab() {
       const entradas = comIn + manualIn;
       return { month: label, entradas, saidas: out, saldo: entradas - out };
     });
-  }, [entries, incomes, currentYear]);
+  }, [entries, incomes, commissions, currentYear]);
 
   // 2) Receita vs Comissões — derivado das oportunidades em "Fechado"
   const lineData = useMemo(
@@ -74,7 +76,7 @@ export function ReportTab() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
-  }, [topBy]);
+  }, [topBy, commissions]);
 
   // KPIs (movidos da aba Caixa)
   const totalCom = commissions.reduce((s, c) => s + c.amount, 0);
