@@ -118,6 +118,34 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
             </>
           )}
         </div>
+
+        {schedule.length > 1 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold mb-2">Cronograma da apólice</h3>
+            <div className="rounded-xl border border-border divide-y divide-border text-xs">
+              {schedule.map((s) => {
+                const isCurrent = movement.details.kind === "comissao" && movement.details.commission.id === s.id;
+                const statusClr =
+                  s.status === "pago" ? "text-success" : s.status === "atrasado" ? "text-destructive" : "text-warning";
+                return (
+                  <div key={s.id} className={`flex items-center justify-between gap-3 px-3 py-2 ${isCurrent ? "bg-muted/50" : ""}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-muted-foreground">{commissionKindLabel(s.kind)}</span>
+                      {s.installmentTotal && s.installmentTotal > 1 && (
+                        <span className="text-muted-foreground">{s.installmentIndex}/{s.installmentTotal}</span>
+                      )}
+                      <span className="text-muted-foreground">· {formatDateShort(s.dueDate)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`uppercase text-[10px] ${statusClr}`}>{s.status}</span>
+                      <span className="font-mono">{formatBRL(s.amount)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
