@@ -151,6 +151,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       policyNumber: created.number,
       branch: created.branch,
       clientName: created.clientName,
+      startDate: created.startDate,
     });
     const gerados = generateForPolicy(created);
     toast.success(

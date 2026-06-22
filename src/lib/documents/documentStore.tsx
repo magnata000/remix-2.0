@@ -61,6 +61,7 @@ type Ctx = {
     policyNumber: string;
     branch: string;
     clientName: string;
+    startDate?: string;
   }) => void;
   renameFolder: (id: string, name: string) => void;
   deleteFolder: (id: string) => void;
@@ -75,10 +76,84 @@ const DocCtx = createContext<Ctx | null>(null);
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+type ProductKind = "Saúde" | "Seguros" | "Consórcio";
+
+function productOf(branch: string): ProductKind {
+  if (branch === "Saúde") return "Saúde";
+  if (branch === "Consórcio") return "Consórcio";
+  return "Seguros";
+}
+
+function rootNameFor(branch: string, policyNumber: string): string {
+  return `${productOf(branch)} · Apólice ${policyNumber} — ${branch}`;
+}
+
+function yearOf(iso?: string): string {
+  if (iso && /^\d{4}/.test(iso)) return iso.slice(0, 4);
+  return String(new Date().getFullYear());
+}
+
+/**
+ * Template tree (sub-folders only — root already exists).
+ * Each item: [name, children]. ID is composed by caller.
+ */
+type TreeNode = [string, TreeNode[]];
+
+const SAUDE_TREE: TreeNode[] = [
+  ["Documentação Preliminar", [
+    ["Empresa", []],
+    ["Titular", []],
+    ["Beneficiários", []],
+    ["Cartas de Permanência e Carteirinhas", []],
+    ["Documentação Complementar", []],
+    ["Informações Pessoais", []],
+  ]],
+  ["Pós-venda", [
+    ["Acesso", []],
+    ["Cotações", []],
+    ["Proposta Contratada", []],
+    ["Demonstrativos", []],
+    ["Outros", []],
+  ]],
+];
+
+const SEGUROS_YEAR_TREE: TreeNode[] = [
+  ["Boletos", []],
+  ["Cotações", []],
+  ["Endossos", []],
+  ["Proposta Contratada", []],
+];
+
+const CONSORCIO_TREE: TreeNode[] = [
+  ["Geral", []],
+];
+
+function expandTree(
+  nodes: TreeNode[],
+  parentId: string,
+  ctx: { policyId: string; clientName: string; createdAt: string; prefix: string },
+): DocFolder[] {
+  const out: DocFolder[] = [];
+  nodes.forEach(([name, children], i) => {
+    const id = `${ctx.prefix}-${i}-${name.replace(/[^a-z0-9]+/gi, "").slice(0, 12)}`;
+    out.push({
+      id,
+      name,
+      parentId,
+      policyId: ctx.policyId,
+      clientName: ctx.clientName,
+      createdAt: ctx.createdAt,
+    });
+    if (children.length) {
+      out.push(...expandTree(children, id, { ...ctx, prefix: id }));
+    }
+  });
+  return out;
+}
+
 function seed(): { folders: DocFolder[]; files: DocFile[] } {
   const folders: DocFolder[] = [];
   const files: DocFile[] = [];
-  const defaults = ["Proposta", "Boletos", "Endossos"];
 
   // 1) "Geral do Cliente" para cada cliente único
   const clientsSeen = new Set<string>();
@@ -96,43 +171,66 @@ function seed(): { folders: DocFolder[]; files: DocFile[] } {
     });
   });
 
-  // 2) raiz por apólice + subpastas default + arquivos fake
+  // 2) raiz por apólice + template específico do produto
   policies.forEach((p, idx) => {
     const rootId = `f-root-${p.id}`;
     folders.push({
       id: rootId,
-      name: `Apólice ${p.number} — ${p.branch}`,
+      name: rootNameFor(p.branch, p.number),
       parentId: null,
       policyId: p.id,
       clientName: p.clientName,
       createdAt: p.startDate,
     });
-    defaults.forEach((name, j) => {
-      const fid = `f-${p.id}-${j}`;
-      folders.push({
-        id: fid,
-        name,
+
+    const product = productOf(p.branch);
+    const ctxBase = {
+      policyId: p.id,
+      clientName: p.clientName,
+      createdAt: p.startDate,
+    };
+
+    let subfolders: DocFolder[] = [];
+    if (product === "Saúde") {
+      subfolders = expandTree(SAUDE_TREE, rootId, { ...ctxBase, prefix: `f-${p.id}` });
+    } else if (product === "Consórcio") {
+      subfolders = expandTree(CONSORCIO_TREE, rootId, { ...ctxBase, prefix: `f-${p.id}` });
+    } else {
+      // Seguros: pasta do ano vigente com subpastas
+      const year = yearOf(p.startDate);
+      const yearId = `f-${p.id}-${year}`;
+      subfolders.push({
+        id: yearId,
+        name: year,
         parentId: rootId,
         policyId: p.id,
         clientName: p.clientName,
         createdAt: p.startDate,
       });
-      if (idx < 8) {
-        const n = (idx + j) % 2 === 0 ? 2 : 1;
-        for (let k = 0; k < n; k++) {
-          files.push({
-            id: `file-${p.id}-${j}-${k}`,
-            name: `${name.toLowerCase()}_${p.number}_${k + 1}.pdf`,
-            folderId: fid,
-            policyId: p.id,
-            clientName: p.clientName,
-            mime: "application/pdf",
-            sizeKB: 120 + ((idx * 31 + j * 17 + k * 7) % 800),
-            uploadedAt: p.startDate,
-          });
-        }
-      }
-    });
+      subfolders.push(
+        ...expandTree(SEGUROS_YEAR_TREE, yearId, { ...ctxBase, prefix: yearId }),
+      );
+    }
+    folders.push(...subfolders);
+
+    // arquivos fake leves nas folhas das primeiras apólices
+    if (idx < 6) {
+      const leaves = subfolders.filter(
+        (f) => !subfolders.some((c) => c.parentId === f.id),
+      );
+      leaves.slice(0, 2).forEach((leaf, k) => {
+        files.push({
+          id: `file-${p.id}-${leaf.id}-${k}`,
+          name: `${leaf.name.toLowerCase().replace(/\s+/g, "_")}_${p.number}.pdf`,
+          folderId: leaf.id,
+          policyId: p.id,
+          clientName: p.clientName,
+          mime: "application/pdf",
+          sizeKB: 120 + ((idx * 31 + k * 17) % 800),
+          uploadedAt: p.startDate,
+        });
+      });
+    }
   });
   return { folders, files };
 }
@@ -232,7 +330,13 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const ensurePolicyRoots = useCallback(
-    (input: { policyId: string; policyNumber: string; branch: string; clientName: string }) => {
+    (input: {
+      policyId: string;
+      policyNumber: string;
+      branch: string;
+      clientName: string;
+      startDate?: string;
+    }) => {
       setFolders((arr) => {
         const next = [...arr];
         const hasClientRoot = next.some((f) => f.isClientRoot && f.clientName === input.clientName);
@@ -247,33 +351,72 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
             isClientRoot: true,
           });
         }
-        const hasPolicyRoot = next.some((f) => f.parentId === null && f.policyId === input.policyId);
-        if (!hasPolicyRoot) {
-          const rootId = `f-root-${input.policyId}`;
+
+        const product = productOf(input.branch);
+        const createdAt = today();
+        const ctxBase = {
+          policyId: input.policyId,
+          clientName: input.clientName,
+          createdAt,
+        };
+
+        let rootId = next.find(
+          (f) => f.parentId === null && f.policyId === input.policyId,
+        )?.id;
+
+        if (!rootId) {
+          rootId = `f-root-${input.policyId}`;
           next.push({
             id: rootId,
-            name: `Apólice ${input.policyNumber} — ${input.branch}`,
+            name: rootNameFor(input.branch, input.policyNumber),
             parentId: null,
             policyId: input.policyId,
             clientName: input.clientName,
-            createdAt: today(),
+            createdAt,
           });
-          ["Proposta", "Boletos", "Endossos"].forEach((name, j) => {
+
+          if (product === "Saúde") {
+            next.push(...expandTree(SAUDE_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }));
+          } else if (product === "Consórcio") {
+            next.push(...expandTree(CONSORCIO_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }));
+          } else {
+            const year = yearOf(input.startDate);
+            const yearId = `f-${input.policyId}-${year}`;
             next.push({
-              id: `f-${input.policyId}-${j}`,
-              name,
+              id: yearId,
+              name: year,
               parentId: rootId,
               policyId: input.policyId,
               clientName: input.clientName,
-              createdAt: today(),
+              createdAt,
             });
-          });
+            next.push(...expandTree(SEGUROS_YEAR_TREE, yearId, { ...ctxBase, prefix: yearId }));
+          }
+        } else if (product === "Seguros") {
+          // Renovação: adicionar pasta do ano vigente se ainda não existir
+          const year = yearOf(input.startDate);
+          const hasYear = next.some(
+            (f) => f.parentId === rootId && f.policyId === input.policyId && f.name === year,
+          );
+          if (!hasYear) {
+            const yearId = `f-${input.policyId}-${year}-${Date.now()}`;
+            next.push({
+              id: yearId,
+              name: year,
+              parentId: rootId,
+              policyId: input.policyId,
+              clientName: input.clientName,
+              createdAt,
+            });
+            next.push(...expandTree(SEGUROS_YEAR_TREE, yearId, { ...ctxBase, prefix: yearId }));
+          }
         }
         return next;
       });
     },
     [],
   );
+
 
 
 
