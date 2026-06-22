@@ -1,9 +1,11 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { formatBRL } from "@/lib/mock/data";
+import { formatBRL, formatDateShort } from "@/lib/mock/data";
 import { formatDateTimeBR, type Expense, type ExpenseEntry, type ManualIncome } from "@/lib/cash/cashStore";
 import type { Commission } from "@/lib/mock/data";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
