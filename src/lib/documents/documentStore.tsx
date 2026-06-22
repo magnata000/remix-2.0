@@ -330,7 +330,13 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const ensurePolicyRoots = useCallback(
-    (input: { policyId: string; policyNumber: string; branch: string; clientName: string }) => {
+    (input: {
+      policyId: string;
+      policyNumber: string;
+      branch: string;
+      clientName: string;
+      startDate?: string;
+    }) => {
       setFolders((arr) => {
         const next = [...arr];
         const hasClientRoot = next.some((f) => f.isClientRoot && f.clientName === input.clientName);
@@ -345,33 +351,72 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
             isClientRoot: true,
           });
         }
-        const hasPolicyRoot = next.some((f) => f.parentId === null && f.policyId === input.policyId);
-        if (!hasPolicyRoot) {
-          const rootId = `f-root-${input.policyId}`;
+
+        const product = productOf(input.branch);
+        const createdAt = today();
+        const ctxBase = {
+          policyId: input.policyId,
+          clientName: input.clientName,
+          createdAt,
+        };
+
+        let rootId = next.find(
+          (f) => f.parentId === null && f.policyId === input.policyId,
+        )?.id;
+
+        if (!rootId) {
+          rootId = `f-root-${input.policyId}`;
           next.push({
             id: rootId,
-            name: `Apólice ${input.policyNumber} — ${input.branch}`,
+            name: rootNameFor(input.branch, input.policyNumber),
             parentId: null,
             policyId: input.policyId,
             clientName: input.clientName,
-            createdAt: today(),
+            createdAt,
           });
-          ["Proposta", "Boletos", "Endossos"].forEach((name, j) => {
+
+          if (product === "Saúde") {
+            next.push(...expandTree(SAUDE_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }));
+          } else if (product === "Consórcio") {
+            next.push(...expandTree(CONSORCIO_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }));
+          } else {
+            const year = yearOf(input.startDate);
+            const yearId = `f-${input.policyId}-${year}`;
             next.push({
-              id: `f-${input.policyId}-${j}`,
-              name,
+              id: yearId,
+              name: year,
               parentId: rootId,
               policyId: input.policyId,
               clientName: input.clientName,
-              createdAt: today(),
+              createdAt,
             });
-          });
+            next.push(...expandTree(SEGUROS_YEAR_TREE, yearId, { ...ctxBase, prefix: yearId }));
+          }
+        } else if (product === "Seguros") {
+          // Renovação: adicionar pasta do ano vigente se ainda não existir
+          const year = yearOf(input.startDate);
+          const hasYear = next.some(
+            (f) => f.parentId === rootId && f.policyId === input.policyId && f.name === year,
+          );
+          if (!hasYear) {
+            const yearId = `f-${input.policyId}-${year}-${Date.now()}`;
+            next.push({
+              id: yearId,
+              name: year,
+              parentId: rootId,
+              policyId: input.policyId,
+              clientName: input.clientName,
+              createdAt,
+            });
+            next.push(...expandTree(SEGUROS_YEAR_TREE, yearId, { ...ctxBase, prefix: yearId }));
+          }
         }
         return next;
       });
     },
     [],
   );
+
 
 
 
