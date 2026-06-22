@@ -32,6 +32,8 @@ export function CaixaTab() {
   const [openIncome, setOpenIncome] = useState(false);
   const [registerFor, setRegisterFor] = useState<Expense | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
+  const [typeFilter, setTypeFilter] = useState<"all" | "entrada" | "saida">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pago" | "pendente" | "atrasado" | "none">("all");
 
   const inMonth = (iso: string) => {
     const d = new Date(iso);
