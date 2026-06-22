@@ -45,6 +45,8 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [consortiumGroup, setConsortiumGroup] = useState("");
   const [consortiumQuota, setConsortiumQuota] = useState("");
+  const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
+  const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (open && policy) {
