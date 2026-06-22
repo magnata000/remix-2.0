@@ -136,7 +136,12 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       branch: created.branch,
       clientName: created.clientName,
     });
-    toast.success(`Apólice ${created.number} criada`);
+    const gerados = generateForPolicy(created);
+    toast.success(
+      gerados.length > 0
+        ? `Apólice ${created.number} criada · ${gerados.length} parcela(s) de comissão geradas`
+        : `Apólice ${created.number} criada`,
+    );
     onOpenChange(false);
   };
 
