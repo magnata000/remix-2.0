@@ -34,6 +34,7 @@ const addYears = (d: Date, n: number) => {
 export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
   const { renewPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
+  const { generateForPolicy } = useCommissionStore();
 
   const [branch, setBranch] = useState<Branch>("Auto");
   const [insurer, setInsurer] = useState<Insurer>("Porto Seguro");
