@@ -12,6 +12,7 @@ import { formatBRL, formatDateShort, type Branch, type Insurer, type Policy, typ
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
 type Props = {
