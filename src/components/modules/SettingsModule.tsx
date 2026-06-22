@@ -30,6 +30,7 @@ import {
 import { useTeam, buildInviteLink, type Member } from "@/lib/team/teamStore";
 import { EditMemberDialog } from "@/components/settings/EditMemberDialog";
 import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
+import { CommissionConfigSection } from "@/components/settings/CommissionConfigSection";
 import { toast } from "sonner";
 
 
@@ -193,6 +194,9 @@ export function SettingsModule() {
           ))}
         </div>
       </Section>
+
+      {/* Comissionamento */}
+      <CommissionConfigSection />
 
       {/* Preferências */}
       <Section icon={Bell} title="Preferências" desc="Notificações e alertas">

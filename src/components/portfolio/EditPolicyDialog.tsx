@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
+import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; policy: Policy | null };
@@ -44,6 +45,8 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [consortiumGroup, setConsortiumGroup] = useState("");
   const [consortiumQuota, setConsortiumQuota] = useState("");
+  const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
+  const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (open && policy) {
@@ -63,6 +66,8 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setBeneficiaries(policy.beneficiaries ?? []);
       setConsortiumGroup(policy.consortiumGroup ?? "");
       setConsortiumQuota(policy.consortiumQuota ?? "");
+      setComissaoLiquida(policy.comissaoLiquida);
+      setTaxaImposto(policy.taxaImposto);
     }
   }, [open, policy]);
 
@@ -106,6 +111,8 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
       commissionPct: commissionPct || undefined,
+      comissaoLiquida,
+      taxaImposto,
       healthAnniversary: branch === "Saúde" ? (healthAnniversary || undefined) : undefined,
       healthInitialValue: branch === "Saúde" ? (healthInitialNum || undefined) : undefined,
       healthCategory: branch === "Saúde" ? (healthCategory || undefined) : undefined,
@@ -249,6 +256,15 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
               <Input value={formatBRL(commissionValue)} disabled className="mt-1.5 rounded-xl bg-muted border-0" />
             </div>
           </div>
+
+          <PolicyTaxOverrideFields
+            branch={branch}
+            insurer={insurer}
+            comissaoLiquida={comissaoLiquida}
+            setComissaoLiquida={setComissaoLiquida}
+            taxaImposto={taxaImposto}
+            setTaxaImposto={setTaxaImposto}
+          />
         </div>
 
         <DialogFooter>

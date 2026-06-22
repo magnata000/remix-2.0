@@ -15,6 +15,7 @@ import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
+import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; defaultClientName?: string };
@@ -64,6 +65,9 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   // Consórcio
   const [consortiumGroup, setConsortiumGroup] = useState("");
   const [consortiumQuota, setConsortiumQuota] = useState("");
+  // Imposto (override por apólice; undefined = herda da seguradora)
+  const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
+  const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -74,6 +78,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
     setConsortiumGroup(""); setConsortiumQuota("");
+    setComissaoLiquida(undefined); setTaxaImposto(undefined);
     if (defaultClientName) {
       const c = clients.find((x) => x.name === defaultClientName);
       if (c) { setClientId(c.id); setClientName(c.name); }
@@ -121,6 +126,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
       commissionPct: commissionPct || undefined,
+      comissaoLiquida,
+      taxaImposto,
       ...(isAutoLike && {
         commissionScheme: autoScheme,
         commissionInstallments: autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
@@ -371,6 +378,15 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               Modelo provisório: 1 comissão única (% sobre o valor do crédito).
             </div>
           )}
+
+          <PolicyTaxOverrideFields
+            branch={branch}
+            insurer={insurer}
+            comissaoLiquida={comissaoLiquida}
+            setComissaoLiquida={setComissaoLiquida}
+            taxaImposto={taxaImposto}
+            setTaxaImposto={setTaxaImposto}
+          />
         </div>
 
 

@@ -12,6 +12,7 @@ import { formatBRL, formatDateShort, type Branch, type Insurer, type Policy, typ
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
 type Props = {
@@ -43,6 +44,8 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
   const [endDate, setEndDate] = useState<Date | undefined>(addYears(new Date(), 1));
   const [status, setStatus] = useState<PolicyStatus>("ativa");
   const [touched, setTouched] = useState(false);
+  const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
+  const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!open || !sourcePolicy) return;
@@ -54,6 +57,8 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     setEndDate(addYears(newStart, 1));
     setStatus("ativa");
     setTouched(false);
+    setComissaoLiquida(sourcePolicy.comissaoLiquida);
+    setTaxaImposto(sourcePolicy.taxaImposto);
   }, [open, sourcePolicy]);
 
   const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
@@ -83,6 +88,8 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate.toISOString().slice(0, 10),
       status,
+      comissaoLiquida,
+      taxaImposto,
     });
     ensurePolicyRoots({
       policyId: created.id,
@@ -198,6 +205,15 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
               {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
             </div>
           </div>
+
+          <PolicyTaxOverrideFields
+            branch={branch}
+            insurer={insurer}
+            comissaoLiquida={comissaoLiquida}
+            setComissaoLiquida={setComissaoLiquida}
+            taxaImposto={taxaImposto}
+            setTaxaImposto={setTaxaImposto}
+          />
         </div>
 
         <DialogFooter>
