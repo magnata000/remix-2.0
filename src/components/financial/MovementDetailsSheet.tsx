@@ -33,8 +33,12 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
+  const { scheduleOfPolicy } = useCommissionStore();
   if (!movement) return null;
   const isEntry = movement.kind === "entrada";
+  const schedule = movement.details.kind === "comissao" && movement.details.commission.policyId
+    ? scheduleOfPolicy(movement.details.commission.policyId)
+    : [];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
