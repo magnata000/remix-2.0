@@ -66,6 +66,8 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setBeneficiaries(policy.beneficiaries ?? []);
       setConsortiumGroup(policy.consortiumGroup ?? "");
       setConsortiumQuota(policy.consortiumQuota ?? "");
+      setComissaoLiquida(policy.comissaoLiquida);
+      setTaxaImposto(policy.taxaImposto);
     }
   }, [open, policy]);
 
