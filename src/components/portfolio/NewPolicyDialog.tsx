@@ -378,6 +378,15 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               Modelo provisório: 1 comissão única (% sobre o valor do crédito).
             </div>
           )}
+
+          <PolicyTaxOverrideFields
+            branch={branch}
+            insurer={insurer}
+            comissaoLiquida={comissaoLiquida}
+            setComissaoLiquida={setComissaoLiquida}
+            taxaImposto={taxaImposto}
+            setTaxaImposto={setTaxaImposto}
+          />
         </div>
 
 
