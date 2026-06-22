@@ -32,6 +32,8 @@ export function CaixaTab() {
   const [openIncome, setOpenIncome] = useState(false);
   const [registerFor, setRegisterFor] = useState<Expense | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
+  const [typeFilter, setTypeFilter] = useState<"all" | "entrada" | "saida">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pago" | "pendente" | "atrasado" | "none">("all");
 
   const inMonth = (iso: string) => {
     const d = new Date(iso);
@@ -70,6 +72,23 @@ export function CaixaTab() {
   }, [commissions, incomes, entries, expenses]);
 
   const monthMovements = movements.filter((m) => inMonth(m.date));
+
+  const filteredMonthMovements = useMemo(() => {
+    return monthMovements.filter((m) => {
+      if (typeFilter !== "all" && m.kind !== typeFilter) return false;
+      if (statusFilter !== "all") {
+        if (statusFilter === "none") {
+          if (m.details.kind === "comissao") return false;
+        } else {
+          if (m.details.kind !== "comissao") return false;
+          if (m.details.commission.status !== statusFilter) return false;
+        }
+      }
+      return true;
+    });
+  }, [monthMovements, typeFilter, statusFilter]);
+
+  const filtersActive = typeFilter !== "all" || statusFilter !== "all";
 
   // KPIs do mês: comissões só contam como entrada se status === "pago"
   const summary = useMemo(() => {
@@ -192,14 +211,48 @@ export function CaixaTab() {
               </SelectContent>
             </Select>
           </div>
-          <Button size="sm" variant="outline" className="rounded-full" onClick={() => setOpenIncome(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Nova entrada
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}>
+              <SelectTrigger className="h-8 w-auto rounded-full text-xs gap-1 px-3">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="entrada">Entradas</SelectItem>
+                <SelectItem value="saida">Saídas</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+              <SelectTrigger className="h-8 w-auto rounded-full text-xs gap-1 px-3">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="atrasado">Atrasado</SelectItem>
+                <SelectItem value="none">Sem status</SelectItem>
+              </SelectContent>
+            </Select>
+            {filtersActive && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 rounded-full text-xs text-muted-foreground"
+                onClick={() => { setTypeFilter("all"); setStatusFilter("all"); }}
+              >
+                Limpar
+              </Button>
+            )}
+            <Button size="sm" variant="outline" className="rounded-full" onClick={() => setOpenIncome(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Nova entrada
+            </Button>
+          </div>
         </div>
-        {monthMovements.length === 0 ? (
+        {filteredMonthMovements.length === 0 ? (
           <div className="px-5 pb-5">
             <div className="text-sm text-muted-foreground py-8 text-center bg-muted/30 rounded-xl">
-              Nenhuma movimentação neste mês.
+              {monthMovements.length === 0 ? "Nenhuma movimentação neste mês." : "Nenhuma movimentação corresponde aos filtros."}
             </div>
           </div>
         ) : (
@@ -215,7 +268,7 @@ export function CaixaTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {monthMovements.map((m) => {
+                {filteredMonthMovements.map((m) => {
                   const isCommission = m.details.kind === "comissao";
                   const isUnpaidCommission = isCommission && m.details.kind === "comissao" && m.details.commission.status !== "pago";
                   return (
