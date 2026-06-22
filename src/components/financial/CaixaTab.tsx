@@ -272,9 +272,6 @@ export function CaixaTab() {
                   const isCommission = m.details.kind === "comissao";
                   const isUnpaidCommission = isCommission && m.details.kind === "comissao" && m.details.commission.status !== "pago";
                   return (
-                  const isCommission = m.details.kind === "comissao";
-                  const isUnpaidCommission = isCommission && m.details.kind === "comissao" && m.details.commission.status !== "pago";
-                  return (
                     <TableRow key={m.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedMovement(m)}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDateTimeBR(m.date)}</TableCell>
                       <TableCell>
