@@ -1,55 +1,73 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { commissions as seedCommissions, type Commission, type Policy } from "@/lib/mock/data";
+import {
+  generateCommissionSchedule,
+  expectedRecurrencesUntil,
+  branchToProduct,
+} from "@/lib/financial/commissionEngine";
+import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
 
 export type CommissionStatus = Commission["status"];
-
-const newId = () =>
-  typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
-
-const addDaysIso = (iso: string, n: number) => {
-  const d = new Date(iso);
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-};
 
 type Ctx = {
   commissions: Commission[];
   updateCommissionStatus: (id: string, status: CommissionStatus) => void;
-  addCommissionFromPolicy: (policy: Policy) => Commission | null;
+  generateForPolicy: (policy: Policy) => Commission[];
+  /** retorna todas as comissões de uma apólice (cronograma) */
+  scheduleOfPolicy: (policyId: string) => Commission[];
 };
 
 const CommissionContext = createContext<Ctx | null>(null);
 
 export function CommissionStoreProvider({ children }: { children: ReactNode }) {
   const [commissions, setCommissions] = useState<Commission[]>(seedCommissions);
+  const { configForPolicy } = useCommissionConfigStore();
+  const { policies } = usePolicyStore();
 
   const updateCommissionStatus = useCallback((id: string, status: CommissionStatus) => {
     setCommissions((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)));
   }, []);
 
-  const addCommissionFromPolicy = useCallback((policy: Policy): Commission | null => {
-    // Rules: cancelada/vencida → não gera; ativa e demais → pendente
-    if (policy.status === "cancelada" || policy.status === "vencida") return null;
-    const pct = policy.commissionPct ?? 0;
-    const amount = Math.round(policy.premium * (pct / 100));
-    const commission: Commission = {
-      id: `c-${policy.id}-${newId().slice(0, 6)}`,
-      policyNumber: policy.number,
-      clientName: policy.clientName,
-      insurer: policy.insurer,
-      amount,
-      dueDate: addDaysIso(policy.startDate, 30),
-      status: "pendente",
-    };
-    setCommissions((prev) => [commission, ...prev]);
-    return commission;
-  }, []);
+  const generateForPolicy = useCallback(
+    (policy: Policy): Commission[] => {
+      const config = configForPolicy(policy);
+      const created = generateCommissionSchedule(policy, config);
+      if (created.length === 0) return [];
+      setCommissions((prev) => [...created, ...prev]);
+      return created;
+    },
+    [configForPolicy],
+  );
+
+  // Efeito: garantir recorrências mensais para apólices Saúde até o mês corrente
+  useEffect(() => {
+    const reference = new Date();
+    setCommissions((prev) => {
+      const additions: Commission[] = [];
+      for (const policy of policies) {
+        if (branchToProduct(policy.branch) !== "saude") continue;
+        const existing = prev.filter((c) => c.policyId === policy.id && c.kind === "recorrencia");
+        const existingDates = new Set(existing.map((c) => c.dueDate));
+        const config = configForPolicy(policy);
+        const novos = expectedRecurrencesUntil(policy, config, reference, existingDates);
+        additions.push(...novos);
+      }
+      return additions.length ? [...additions, ...prev] : prev;
+    });
+  }, [policies, configForPolicy]);
+
+  const scheduleOfPolicy = useCallback(
+    (policyId: string) =>
+      commissions
+        .filter((c) => c.policyId === policyId)
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
+    [commissions],
+  );
 
   const value = useMemo<Ctx>(
-    () => ({ commissions, updateCommissionStatus, addCommissionFromPolicy }),
-    [commissions, updateCommissionStatus, addCommissionFromPolicy],
+    () => ({ commissions, updateCommissionStatus, generateForPolicy, scheduleOfPolicy }),
+    [commissions, updateCommissionStatus, generateForPolicy, scheduleOfPolicy],
   );
 
   return <CommissionContext.Provider value={value}>{children}</CommissionContext.Provider>;
