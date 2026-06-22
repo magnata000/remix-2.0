@@ -205,6 +205,15 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
               {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
             </div>
           </div>
+
+          <PolicyTaxOverrideFields
+            branch={branch}
+            insurer={insurer}
+            comissaoLiquida={comissaoLiquida}
+            setComissaoLiquida={setComissaoLiquida}
+            taxaImposto={taxaImposto}
+            setTaxaImposto={setTaxaImposto}
+          />
         </div>
 
         <DialogFooter>
