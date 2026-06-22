@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
+import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; policy: Policy | null };
