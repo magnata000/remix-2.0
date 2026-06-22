@@ -40,7 +40,7 @@ export function ReportTab() {
       const entradas = comIn + manualIn;
       return { month: label, entradas, saidas: out, saldo: entradas - out };
     });
-  }, [entries, incomes, currentYear]);
+  }, [entries, incomes, commissions, currentYear]);
 
   // 2) Receita vs Comissões — derivado das oportunidades em "Fechado"
   const lineData = useMemo(
