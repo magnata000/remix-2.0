@@ -74,12 +74,16 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                 : c.status === "pendente"
                 ? "bg-warning/15 text-warning border-0"
                 : "bg-destructive/15 text-destructive border-0";
+            const instLabel = c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
+              ? `${c.installmentIndex}/${c.installmentTotal}`
+              : "—";
             return (
               <>
-                <Row label="Tipo" value="Comissão de apólice" />
+                <Row label="Tipo" value={`Comissão · ${commissionKindLabel(c.kind)}`} />
                 <Row label="Cliente" value={c.clientName} />
                 <Row label="Seguradora" value={c.insurer} />
                 <Row label="Apólice" value={<span className="font-mono text-xs">{c.policyNumber}</span>} />
+                <Row label="Parcela" value={instLabel} />
                 <Row label="Status" value={<Badge className={statusClass}>{c.status}</Badge>} />
               </>
             );
