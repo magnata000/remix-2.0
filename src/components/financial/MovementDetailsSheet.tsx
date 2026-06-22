@@ -60,15 +60,24 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
         </div>
 
         <div className="mt-5">
-          {movement.details.kind === "comissao" && (
-            <>
-              <Row label="Tipo" value="Comissão de apólice" />
-              <Row label="Cliente" value={movement.details.commission.clientName} />
-              <Row label="Seguradora" value={movement.details.commission.insurer} />
-              <Row label="Apólice" value={<span className="font-mono text-xs">{movement.details.commission.policyNumber}</span>} />
-              <Row label="Status" value={<Badge className="bg-success/15 text-success border-0">pago</Badge>} />
-            </>
-          )}
+          {movement.details.kind === "comissao" && (() => {
+            const c = movement.details.commission;
+            const statusClass =
+              c.status === "pago"
+                ? "bg-success/15 text-success border-0"
+                : c.status === "pendente"
+                ? "bg-warning/15 text-warning border-0"
+                : "bg-destructive/15 text-destructive border-0";
+            return (
+              <>
+                <Row label="Tipo" value="Comissão de apólice" />
+                <Row label="Cliente" value={c.clientName} />
+                <Row label="Seguradora" value={c.insurer} />
+                <Row label="Apólice" value={<span className="font-mono text-xs">{c.policyNumber}</span>} />
+                <Row label="Status" value={<Badge className={statusClass}>{c.status}</Badge>} />
+              </>
+            );
+          })()}
           {movement.details.kind === "manual" && (
             <>
               <Row label="Tipo" value="Entrada manual" />
