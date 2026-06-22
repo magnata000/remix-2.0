@@ -111,6 +111,8 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
       commissionPct: commissionPct || undefined,
+      comissaoLiquida,
+      taxaImposto,
       healthAnniversary: branch === "Saúde" ? (healthAnniversary || undefined) : undefined,
       healthInitialValue: branch === "Saúde" ? (healthInitialNum || undefined) : undefined,
       healthCategory: branch === "Saúde" ? (healthCategory || undefined) : undefined,
