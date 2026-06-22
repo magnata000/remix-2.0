@@ -88,6 +88,8 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate.toISOString().slice(0, 10),
       status,
+      comissaoLiquida,
+      taxaImposto,
     });
     ensurePolicyRoots({
       policyId: created.id,
