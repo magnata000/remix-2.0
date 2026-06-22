@@ -76,7 +76,7 @@ export function ReportTab() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
-  }, [topBy]);
+  }, [topBy, commissions]);
 
   // KPIs (movidos da aba Caixa)
   const totalCom = commissions.reduce((s, c) => s + c.amount, 0);
