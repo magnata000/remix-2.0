@@ -65,6 +65,9 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   // Consórcio
   const [consortiumGroup, setConsortiumGroup] = useState("");
   const [consortiumQuota, setConsortiumQuota] = useState("");
+  // Imposto (override por apólice; undefined = herda da seguradora)
+  const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
+  const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
