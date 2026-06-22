@@ -14,6 +14,7 @@ import { DocumentStoreProvider } from "@/lib/documents/documentStore";
 import { ClientStoreProvider } from "@/lib/portfolio/clientStore";
 import { PolicyStoreProvider } from "@/lib/portfolio/policyStore";
 import { CashProvider } from "@/lib/cash/cashStore";
+import { CommissionStoreProvider } from "@/lib/financial/commissionStore";
 
 import { NavigationProvider } from "@/lib/navigation";
 
