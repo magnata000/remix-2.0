@@ -33,6 +33,7 @@ import {
 } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { useNavigation } from "@/lib/navigation";
 import {
   getClientStats,
@@ -79,6 +80,7 @@ export function ClientDetailDrawer({
 }: Props) {
   const { clients } = useClientStore();
   const { policies } = usePolicyStore();
+  const { commissions } = useCommissionStore();
   const { goTo } = useNavigation();
   const docStore = useDocumentStore();
   const [newOpp, setNewOpp] = useState(false);
@@ -86,8 +88,8 @@ export function ClientDetailDrawer({
   const [editOpen, setEditOpen] = useState(false);
 
   const stats = useMemo(
-    () => (clientName ? getClientStats(clientName, clients, policies) : null),
-    [clientName, clients, policies],
+    () => (clientName ? getClientStats(clientName, clients, policies, commissions) : null),
+    [clientName, clients, policies, commissions],
   );
 
   const clientPolicies = useMemo(

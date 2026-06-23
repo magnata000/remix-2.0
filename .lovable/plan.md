@@ -1,84 +1,72 @@
-## Feedback — entendi o pedido
+## Auditoria — único consumidor estático restante
 
-Os documentos de cada apólice hoje são criados com 3 subpastas genéricas (`Proposta`, `Boletos`, `Endossos`) e uma raiz nomeada `Apólice {número} — {ramo}`. Você quer dois ajustes:
+Varri todo o `src/` por imports de `commissions` do mock e por call sites de `getClientStats` / `listClientsWithStats`:
 
-1. **Hierarquia específica por tipo de produto** ao criar a apólice (Saúde, Seguros, Consórcio), substituindo o template genérico atual.
-2. **Prefixo do tipo de produto no nome da raiz** na aba Documentos do drawer de Clientes — por exemplo `Seguros · Apólice 12345 — Auto` em vez de só `Apólice 12345 — Auto`.
+| Local | Lê comissões do… | Status |
+|---|---|---|
+| `commissionStore.tsx` | mock (seed inicial) | ✅ correto — é o seed |
+| `clientStats.ts` (linhas 1 e 43) | **mock estático** | ❌ precisa migrar |
+| `CaixaTab`, `ReportTab`, `MovementDetailsSheet` | `useCommissionStore()` | ✅ |
+| `NewPolicyDialog`, `RenewPolicyDialog` | `useCommissionStore()` | ✅ |
+| `DashboardModule`, `Timeline`, `ClientDetailDrawer` (corpo) | **não usam comissões diretamente** | ✅ nada a fazer |
 
-Mapeamento de ramo → produto:
-- `Saúde` → **Saúde**
-- `Consórcio` → **Consórcio**
-- `Auto`, `Vida`, `Residencial`, `Empresarial` → **Seguros**
+→ O `ClientDetailDrawer` consome comissões só indiretamente via `getClientStats(clientName, clients, policies)`. Basta corrigir a fonte.
 
----
-
-## Templates de pasta
-
-**Saúde** (estrutura fixa, criada uma vez por apólice)
-```text
-Saúde
-├── Documentação Preliminar
-│   ├── Empresa
-│   ├── Titular
-│   ├── Beneficiários
-│   ├── Cartas de Permanência e Carteirinhas
-│   ├── Documentação Complementar
-│   └── Informações Pessoais
-└── Pós-venda
-    ├── Acesso
-    ├── Cotações
-    ├── Proposta Contratada
-    ├── Demonstrativos
-    └── Outros
-```
-
-**Seguros** (estrutura por ano vigente — novo ano a cada renovação)
-```text
-{Ramo}  (ex.: Auto, Vida, Residencial, Empresarial)
-└── {Ano vigente}   (ex.: 2026)
-    ├── Boletos
-    ├── Cotações
-    ├── Endossos
-    └── Proposta Contratada
-```
-
-**Consórcio**
-```text
-Consórcio
-└── Geral
-```
+Status inicial das comissões geradas (`pendente` mesmo em renovação): mantido como está.
 
 ---
 
-## Mudanças técnicas
+## Mudança a implementar
 
-### `src/lib/documents/documentStore.tsx`
+### 1. `src/lib/portfolio/clientStats.ts`
 
-- Novo helper `productOf(branch)` → `"Saúde" | "Seguros" | "Consórcio"`.
-- Nova função `buildPolicyTree(rootId, policyId, clientName, branch, year)` que devolve a árvore de subpastas conforme o produto.
-- `ensurePolicyRoots` passa a aceitar `startDate` (para extrair o ano) e:
-  - cria a raiz da apólice com nome `"{Produto} · Apólice {número} — {ramo}"` (ex.: `Seguros · Apólice 12345 — Auto`, `Saúde · Apólice 9988 — Saúde`, `Consórcio · Apólice 7777 — Consórcio`);
-  - aplica o template correto a partir do produto;
-  - para **Seguros**, se a raiz já existe (renovação), apenas adiciona uma nova subárvore do ano vigente caso ainda não exista — mantendo os anos anteriores intactos.
-- `seed()` reescrita: ao gerar fixtures, usar o template novo por produto (em vez do array `["Proposta", "Boletos", "Endossos"]`) e o novo nome de raiz com prefixo.
+- Remover o import estático de `commissions` do mock.
+- Adicionar `commissionsArr: Commission[]` como 4º parâmetro de `getClientStats` e 3º de `listClientsWithStats` (sem default — força call site a passar do store).
+- `computeStats` passa a receber `commissionsArr` e usa-o no filtro `myCommissions`.
 
-### `src/components/portfolio/RenewPolicyDialog.tsx`
+```ts
+import { type Commission, ... } from "@/lib/mock/data";
 
-- Continuar chamando `ensurePolicyRoots` passando o `startDate` da nova vigência para que, em Seguros, a nova pasta de ano seja adicionada à raiz existente.
+export function getClientStats(
+  clientName: string,
+  clientsArr: Client[],
+  policiesArr: Policy[],
+  commissionsArr: Commission[],
+): ClientStats | null { ... }
 
-### `src/components/portfolio/NewPolicyDialog.tsx`
+export function listClientsWithStats(
+  clientsArr: Client[],
+  policiesArr: Policy[],
+  commissionsArr: Commission[],
+): ClientStats[] { ... }
+```
 
-- Passar `startDate` no `ensurePolicyRoots` (já tem o dado).
+### 2. Call sites — passar `commissions` do store
 
-### Sem alterações
+- **`src/components/portfolio/ClientsTab.tsx`** (linha 62):
+  ```ts
+  const { commissions } = useCommissionStore();
+  const all = useMemo(
+    () => listClientsWithStats(clients, policies, commissions),
+    [clients, policies, commissions],
+  );
+  ```
+- **`src/components/portfolio/ClientDetailDrawer.tsx`** (linha 89):
+  ```ts
+  const { commissions } = useCommissionStore();
+  // ...
+  () => (clientName ? getClientStats(clientName, clients, policies, commissions) : null),
+  // deps: [clientName, clients, policies, commissions]
+  ```
 
-- `FolderTree.tsx`, `ClientDetailDrawer.tsx`, `PoliciesTab.tsx` — a UI já é genérica e renderiza qualquer hierarquia.
-- Tipos de `DocFolder` permanecem iguais (a árvore é só dado).
+### 3. Sem outras alterações
+
+Dashboard, Timeline, ReportTab, CaixaTab já consomem o store. Engine e config permanecem intactos.
 
 ---
 
 ## Fora de escopo
 
-- Bloquear renomear/excluir as subpastas do template (continua livre como hoje, exceto raízes).
-- Migrar dados reais de apólices que já existiam antes desta mudança (apenas o seed é regenerado).
-- Aplicar o prefixo de produto fora da aba Documentos (ex.: na lista de Apólices).
+- Refatorar `clientStats` para virar hook.
+- Persistência das comissões geradas.
+- Mexer em estatísticas que não envolvem comissões.

@@ -1,4 +1,4 @@
-import { clients as defaultClients, policies as defaultPolicies, tasks, commissions, type Client, type ClientStatus, type Branch, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { tasks, type Client, type ClientStatus, type Branch, type Commission, type Policy, type PolicyStatus } from "@/lib/mock/data";
 
 export type { ClientStatus };
 
@@ -18,29 +18,31 @@ const isActiveStatus = (s: PolicyStatus) => s === "ativa" || s === "pendente";
 
 export function getClientStats(
   clientName: string,
-  clientsArr: Client[] = defaultClients,
-  policiesArr: Policy[] = defaultPolicies,
+  clientsArr: Client[],
+  policiesArr: Policy[],
+  commissionsArr: Commission[],
 ): ClientStats | null {
   const client = clientsArr.find((c) => c.name === clientName);
   if (!client) return null;
-  return computeStats(client, policiesArr);
+  return computeStats(client, policiesArr, commissionsArr);
 }
 
 export function listClientsWithStats(
-  clientsArr: Client[] = defaultClients,
-  policiesArr: Policy[] = defaultPolicies,
+  clientsArr: Client[],
+  policiesArr: Policy[],
+  commissionsArr: Commission[],
 ): ClientStats[] {
-  return clientsArr.map((c) => computeStats(c, policiesArr));
+  return clientsArr.map((c) => computeStats(c, policiesArr, commissionsArr));
 }
 
-function computeStats(client: Client, policiesArr: Policy[]): ClientStats {
+function computeStats(client: Client, policiesArr: Policy[], commissionsArr: Commission[]): ClientStats {
   const myPolicies = policiesArr.filter((p) => p.clientName === client.name);
   const activePolicies = myPolicies.filter((p) => isActiveStatus(p.status));
   const annualPremium = activePolicies.reduce((sum, p) => sum + p.premium, 0);
   const ltv = myPolicies.reduce((sum, p) => sum + p.premium, 0);
   const myTasks = tasks.filter((t) => t.clientName === client.name);
   const openOpportunities = myTasks.filter((t) => t.stage !== "fechado" && t.stage !== "perdido").length;
-  const myCommissions = commissions.filter((cm) => cm.clientName === client.name);
+  const myCommissions = commissionsArr.filter((cm) => cm.clientName === client.name);
   const branches = Array.from(new Set(myPolicies.map((p) => p.branch))) as Branch[];
 
   const dates: string[] = [
