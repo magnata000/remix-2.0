@@ -40,37 +40,47 @@ export function CommissionConfigSection() {
 
   return (
     <Card className="p-5 rounded-2xl border-border shadow-none">
-      <div className="flex items-start gap-3 mb-4">
-        <div className="h-10 w-10 rounded-full bg-brand-soft flex items-center justify-center">
-          <Calculator className="h-5 w-5 text-brand-foreground" />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold">Comissionamento</h2>
-          <p className="text-xs text-muted-foreground">
-            Regras padrão por seguradora e produto. Alterações aplicam-se apenas a novas apólices.
-          </p>
-        </div>
-      </div>
+      <Collapsible defaultOpen={false} className="group/collap">
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex items-start gap-3 w-full text-left cursor-pointer"
+          >
+            <div className="h-10 w-10 rounded-full bg-brand-soft flex items-center justify-center shrink-0">
+              <Calculator className="h-5 w-5 text-brand-foreground" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold">Comissionamento</h2>
+              <p className="text-xs text-muted-foreground">
+                Regras padrão por seguradora e produto. Alterações aplicam-se apenas a novas apólices.
+              </p>
+            </div>
+            <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]/collap:rotate-180" />
+          </button>
+        </CollapsibleTrigger>
 
-      <Tabs defaultValue="auto" className="w-full">
-        <TabsList className="rounded-xl">
-          {products.map((p) => (
-            <TabsTrigger key={p} value={p} className="rounded-lg">
-              {PRODUCT_LABEL[p]}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {products.map((product) => (
-          <TabsContent key={product} value={product} className="mt-4 space-y-3">
-            {configs
-              .filter((c) => c.product === product)
-              .map((c) => (
-                <ConfigCard key={`${c.insurer}-${c.product}`} config={c} />
+        <CollapsibleContent className="mt-4">
+          <Tabs defaultValue="auto" className="w-full">
+            <TabsList className="rounded-xl">
+              {products.map((p) => (
+                <TabsTrigger key={p} value={p} className="rounded-lg">
+                  {PRODUCT_LABEL[p]}
+                </TabsTrigger>
               ))}
-          </TabsContent>
-        ))}
-      </Tabs>
+            </TabsList>
+
+            {products.map((product) => (
+              <TabsContent key={product} value={product} className="mt-4 space-y-3">
+                {configs
+                  .filter((c) => c.product === product)
+                  .map((c) => (
+                    <ConfigCard key={`${c.insurer}-${c.product}`} config={c} />
+                  ))}
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
