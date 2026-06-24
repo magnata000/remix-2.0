@@ -48,6 +48,8 @@ export type TaskItem = {
   comments: TaskComment[];
   attachments: TaskAttachment[];
   timeline: TaskTimelineEvent[];
+  /** Identificador opaco usado por workflows automáticos para dedupe. */
+  sourceKey?: string;
 };
 
 export type ScheduledKind = "data" | "semana";
@@ -56,6 +58,7 @@ export type PeriodKind = "mensal" | "bimestral" | "trimestral" | "semestral" | "
 export type ScheduledTask = {
   id: string;
   title: string;
+  description?: string;
   assigneeId: string;
   priority: Priority;
   kind: ScheduledKind;
