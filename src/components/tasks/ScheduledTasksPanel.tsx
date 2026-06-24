@@ -107,6 +107,10 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
             <Label className="text-xs text-muted-foreground">Título</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Felicitar aniversariantes" className="mt-1.5 rounded-xl bg-muted border-0" />
           </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Descrição</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Detalhes da tarefa (opcional)" className="mt-1.5 rounded-xl bg-muted border-0 resize-none" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Responsável</Label>
