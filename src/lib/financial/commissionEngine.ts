@@ -47,8 +47,8 @@ const newId = () =>
     : Math.random().toString(36).slice(2, 10);
 
 function applyTax(value: number, config: CommissionConfig): number {
-  if (!config.comissaoLiquida) return Math.round(value);
-  return Math.round(value * (1 - config.taxaImposto));
+  const v = config.comissaoLiquida ? value * (1 - config.taxaImposto) : value;
+  return Math.round(v * 100) / 100;
 }
 
 export type GenerateOpts = {
