@@ -234,6 +234,20 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const togglePinComment = useCallback((id: string, commentId: string) => {
+    setOpportunities((arr) => arr.map((t) => {
+      if (t.id !== id) return t;
+      const target = t.comments.find((c) => c.id === commentId);
+      if (!target) return t;
+      const pinnedCount = t.comments.filter((c) => c.pinned).length;
+      if (!target.pinned && pinnedCount >= MAX_PINNED_COMMENTS) return t;
+      return {
+        ...t,
+        comments: t.comments.map((c) => c.id === commentId ? { ...c, pinned: !c.pinned } : c),
+      };
+    }));
+  }, []);
+
   const indexByGroup = useMemo(() => {
     const m = new Map<string, Opportunity>();
     opportunities.forEach((o) => { if (o.quoteGroupId) m.set(o.quoteGroupId, o); });
@@ -244,7 +258,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
 
   const value: Ctx = {
     opportunities, currentUserId: me, byQuoteGroup, moveStage, linkQuoteGroup, createFromQuote, createOpportunity,
-    setEstimatedValue, unlinkQuoteGroup, addMessage, editComment, deleteComment, removeCommentAttachment, addAttachment,
+    setEstimatedValue, unlinkQuoteGroup, addMessage, editComment, deleteComment, removeCommentAttachment, addAttachment, togglePinComment,
   };
   return createElement(PipelineContext.Provider, { value }, children);
 }
