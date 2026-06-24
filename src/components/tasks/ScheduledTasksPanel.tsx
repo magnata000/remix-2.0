@@ -33,6 +33,7 @@ const REPEAT_OPTIONS: { value: RepeatValue; label: string }[] = [
 export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { scheduled, addScheduled, updateScheduled, removeScheduled } = useTaskStore();
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("media");
   const [kind, setKind] = useState<ScheduledKind>("data");
@@ -43,6 +44,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
 
   const resetForm = () => {
     setTitle("");
+    setDescription("");
     setAssigneeId(team[0]?.id ?? "");
     setPriority("media");
     setKind("data");
@@ -55,6 +57,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const startEdit = (s: typeof scheduled[number]) => {
     setEditingId(s.id);
     setTitle(s.title);
+    setDescription(s.description ?? "");
     setAssigneeId(s.assigneeId);
     setPriority(s.priority);
     setKind(s.kind);
@@ -77,7 +80,9 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     const from = range?.from;
     const to = range?.to ?? range?.from;
     const payload = {
-      title: title.trim(), assigneeId, priority, kind,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      assigneeId, priority, kind,
       startDate: kind === "data" ? from?.toISOString() : undefined,
       endDate: kind === "data" ? to?.toISOString() : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
