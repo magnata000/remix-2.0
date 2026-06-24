@@ -38,12 +38,6 @@ function isValidISODate(iso: string): boolean {
   );
 }
 
-const todayISO = () => {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mm}-${dd}`;
-};
 function maskPhone(input: string): string {
   const d = input.replace(/\D/g, "").slice(0, 11);
   if (d.length === 0) return "";
