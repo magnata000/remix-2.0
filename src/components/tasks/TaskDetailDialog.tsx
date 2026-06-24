@@ -214,6 +214,7 @@ export function TaskDetailDialog({
                         comment={c}
                         attachments={atts}
                         canEdit={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
+                        canDelete={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
                         pinned={!!c.pinned}
                         canPin={canPinMore}
                         onTogglePin={() => togglePinComment(task.id, c.id)}
