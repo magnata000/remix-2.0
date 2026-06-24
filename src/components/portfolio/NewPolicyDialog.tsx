@@ -65,6 +65,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   // Consórcio
   const [consortiumGroup, setConsortiumGroup] = useState("");
   const [consortiumQuota, setConsortiumQuota] = useState("");
+  const [consortiumType, setConsortiumType] = useState<"Imóvel" | "Auto" | undefined>(undefined);
   // Imposto (override por apólice; undefined = herda da seguradora)
   const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
   const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
@@ -77,7 +78,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setCommissionStr(""); setAutoScheme("esgotamento"); setAutoInstallments("10");
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
-    setConsortiumGroup(""); setConsortiumQuota("");
+    setConsortiumGroup(""); setConsortiumQuota(""); setConsortiumType(undefined);
     setComissaoLiquida(undefined); setTaxaImposto(undefined);
     if (defaultClientName) {
       const c = clients.find((x) => x.name === defaultClientName);
@@ -143,6 +144,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       ...(branch === "Consórcio" && {
         consortiumGroup: consortiumGroup || undefined,
         consortiumQuota: consortiumQuota || undefined,
+        consortiumType,
         commissionScheme: "unica" as const,
       }),
     });
@@ -182,7 +184,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command>
                   <CommandInput placeholder="Digite o nome..." />
-                  <CommandList>
+                  <CommandList className="max-h-[280px] overflow-y-auto">
                     <CommandEmpty>Nenhum cliente.</CommandEmpty>
                     <CommandGroup>
                       {clients.map((c) => (
@@ -218,7 +220,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Prêmio anual *</Label>
+              <Label className="text-xs text-muted-foreground">{branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}</Label>
               <Input
                 inputMode="numeric"
                 value={premium}
@@ -307,6 +309,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
             setConsortiumGroup={setConsortiumGroup}
             consortiumQuota={consortiumQuota}
             setConsortiumQuota={setConsortiumQuota}
+            consortiumType={consortiumType}
+            setConsortiumType={setConsortiumType}
           />
 
           <div>

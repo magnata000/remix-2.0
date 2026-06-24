@@ -56,6 +56,8 @@ type Props = {
   setConsortiumGroup: (v: string) => void;
   consortiumQuota: string;
   setConsortiumQuota: (v: string) => void;
+  consortiumType?: "Imóvel" | "Auto";
+  setConsortiumType?: (v: "Imóvel" | "Auto" | undefined) => void;
 };
 
 export function BranchSpecificFields(p: Props) {
@@ -251,6 +253,21 @@ export function BranchSpecificFields(p: Props) {
               onChange={(e) => p.setConsortiumQuota(e.target.value)}
               className="mt-1.5 rounded-xl bg-muted border-0"
             />
+          </div>
+          <div className="col-span-2">
+            <Label className="text-xs text-muted-foreground">Tipo</Label>
+            <Select
+              value={p.consortiumType ?? ""}
+              onValueChange={(v) => p.setConsortiumType?.(v as "Imóvel" | "Auto")}
+            >
+              <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                <SelectValue placeholder="Selecionar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Imóvel">Imóvel</SelectItem>
+                <SelectItem value="Auto">Auto</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -33,17 +33,28 @@ export function PolicyTaxOverrideFields({
   const effectiveTaxa = taxaImposto ?? defaults.taxaImposto;
   const overriding = comissaoLiquida !== undefined || taxaImposto !== undefined;
 
-  const taxaStr = useMemo(
-    () => (effectiveTaxa * 100).toString().replace(".", ","),
-    [effectiveTaxa],
+  // Estado local do input para permitir apagar livremente sem voltar pro padrão
+  const [taxaDraft, setTaxaDraft] = useState<string>(() =>
+    (effectiveTaxa * 100).toString().replace(".", ","),
   );
 
+  // Sincroniza quando override é resetado externamente (Usar padrão)
+  useEffect(() => {
+    if (taxaImposto === undefined) {
+      setTaxaDraft((defaults.taxaImposto * 100).toString().replace(".", ","));
+    }
+  }, [taxaImposto, defaults.taxaImposto]);
+
   const handleTaxaChange = (s: string) => {
-    const n = parseFloat(s.replace(",", "."));
-    if (!isFinite(n)) {
-      setTaxaImposto(undefined);
+    setTaxaDraft(s);
+    const trimmed = s.trim();
+    if (trimmed === "") {
+      // permite apagar; não cai pro padrão silenciosamente
+      setTaxaImposto(0);
       return;
     }
+    const n = parseFloat(trimmed.replace(",", "."));
+    if (!isFinite(n)) return;
     setTaxaImposto(n / 100);
   };
 
@@ -53,48 +64,47 @@ export function PolicyTaxOverrideFields({
   };
 
   return (
-    <div className="rounded-xl border border-dashed border-border p-3 space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <Label className="text-sm font-medium">Imposto sobre comissão</Label>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Padrão {insurer}:{" "}
-            {defaults.comissaoLiquida
-              ? `líquida (-${(defaults.taxaImposto * 100).toFixed(1)}%)`
-              : "bruta (sem débito)"}
-            {overriding && " · sobrescrito nesta apólice"}
-          </p>
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Switch
+            checked={effectiveLiquida}
+            onCheckedChange={(v) => setComissaoLiquida(v)}
+            id="comissao-liquida"
+          />
+          <Label htmlFor="comissao-liquida" className="text-sm cursor-pointer">
+            Comissão líquida
+          </Label>
         </div>
+        {effectiveLiquida && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Input
+              inputMode="decimal"
+              value={taxaDraft}
+              onChange={(e) => handleTaxaChange(e.target.value)}
+              className="h-8 w-20 rounded-lg bg-muted border-0 text-right"
+            />
+            <span className="text-xs text-muted-foreground">%</span>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground pl-[3.25rem]">
+        <span>
+          Padrão {insurer} ·{" "}
+          {defaults.comissaoLiquida
+            ? `${(defaults.taxaImposto * 100).toFixed(1).replace(".", ",")}%`
+            : "sem imposto"}
+        </span>
         {overriding && (
           <button
             type="button"
             onClick={resetToDefault}
-            className="text-[11px] text-brand hover:underline whitespace-nowrap"
+            className="text-brand hover:underline"
           >
             Usar padrão
           </button>
         )}
       </div>
-
-      <div className="flex items-center justify-between">
-        <Label className="text-sm">Comissão líquida (imposto debitado)</Label>
-        <Switch
-          checked={effectiveLiquida}
-          onCheckedChange={(v) => setComissaoLiquida(v)}
-        />
-      </div>
-
-      {effectiveLiquida && (
-        <div>
-          <Label className="text-xs text-muted-foreground">Taxa de imposto (%)</Label>
-          <Input
-            inputMode="decimal"
-            value={taxaStr}
-            onChange={(e) => handleTaxaChange(e.target.value)}
-            className="mt-1.5 rounded-xl bg-muted border-0"
-          />
-        </div>
-      )}
     </div>
   );
 }

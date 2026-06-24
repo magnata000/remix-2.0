@@ -1,97 +1,94 @@
-## Feedback geral
+## Observação
 
-A maioria das mudanças se encaixa em padrões já existentes (CommentBubble, Timeline, ScheduledTasksPanel), então o esforço é baixo e bem contido. O ponto mais sensível é o engine de workflows: como não temos backend, ele roda no client ao montar a aba Tarefas, com dedupe por `policyId + tipo + data-alvo` para não duplicar cards entre sessões.
-
-Ressalva importante: como o estado das tarefas é apenas em memória (sem persistência), os cards gerados desaparecem ao recarregar a página e serão recriados. Se isso te incomodar, dá pra adicionar `localStorage` em uma etapa futura — fora do escopo deste plano.
+Você escreveu "Página Kanban" no título, mas todos os itens são da **Página Carteira** — vou tratar como Carteira.
 
 ---
 
-## 1. Pin de mensagens no Pipeline de Vendas
+## 1. Scroll na lista de clientes — Nova Apólice
 
-**Arquivos:** `src/lib/pipeline/opportunityStore.ts`, `src/components/pipeline/OpportunityDetailDialog.tsx`
+**Arquivo:** `src/components/portfolio/NewPolicyDialog.tsx`
 
-- Adicionar `togglePinComment(opportunityId, commentId)` no store, idêntico ao de tarefas (respeita `MAX_PINNED_COMMENTS = 3`).
-- No `OpportunityDetailDialog`, replicar o bloco "Fixadas" do `TaskDetailDialog` acima da timeline (mesmo visual, mesmo `Pin` icon, mesmo limite).
-- Passar `pinned`, `canPin`, `onTogglePin` ao `CommentBubble`.
+O `CommandList` dentro do `Popover` não tem altura máxima definida, então cresce até estourar. Adicionar `className="max-h-[280px] overflow-y-auto"` no `CommandList` para habilitar scroll quando a lista de clientes ficar longa.
 
-## 2. Exclusão de mensagem em até 24h (Pipeline + Tarefas)
+## 2. Sub-tipo de Consórcio: Imóvel ou Auto
 
-**Arquivos:** `src/components/shared/Timeline.tsx`
+**Arquivos:** `src/lib/mock/data.ts`, `src/components/portfolio/BranchSpecificFields.tsx`, `src/components/portfolio/NewPolicyDialog.tsx`, `src/components/portfolio/EditPolicyDialog.tsx`
 
-Hoje o `CommentBubble` só mostra o botão "Excluir" no modo de edição e quando `draft.trim()` está vazio (truque oculto). Vamos tornar explícito:
+- Adicionar em `Policy`: `consortiumType?: "Imóvel" | "Auto"`.
+- Em `BranchSpecificFields` (bloco Consórcio), adicionar um `Select` "Tipo" com opções `Imóvel` / `Auto`, ao lado de Grupo/Cota.
+- Propagar estado `consortiumType` no `NewPolicyDialog` (e `EditPolicyDialog`) e incluir no `addPolicy(...)`/`updatePolicy(...)`.
 
-- Adicionar prop `canDelete: boolean` ao `CommentBubble`.
-- Mostrar um botão de lixeira (`Trash2`) ao lado do lápis (mesmo padrão `opacity-0 group-hover/comment:opacity-100`) quando `canDelete` for true.
-- Confirmação inline simples (`window.confirm` ou um `AlertDialog`).
-- Nos dois dialogs (Tarefas e Pipeline), passar `canDelete = c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS` (24h, já definido).
-- O atalho de "esvaziar o texto p/ excluir" em modo edição continua existindo para não quebrar o fluxo atual.
+## 3. Saúde: trocar label "Prêmio anual" → "Prêmio mensal"
 
-## 3. Busca unificada (Clientes + Mensagens + Documentos) na aba Tarefas
+**Arquivo:** `src/components/portfolio/NewPolicyDialog.tsx`
 
-**Arquivos:** `src/components/tasks/TasksBoard.tsx`, `src/lib/tasks/searchTasks.ts`
+- Quando `branch === "Saúde"`, renderizar o campo com label **"Prêmio mensal *"** e placeholder mensal; nos demais ramos continua "Prêmio anual *".
+- O valor segue salvo em `premium` (sem multiplicar por 12) — modelo recorrente mês a mês, conforme você confirmou. Aplicar a mesma troca de label no `EditPolicyDialog.tsx`.
+- Não altero engine de comissões nem relatórios (fora de escopo). Aviso: relatórios anuais existentes vão considerar esse valor como anual — caso queira ajustar depois, é outra rodada.
 
-- Remover o `Popover` do ícone de lupa (à direita) e o input "Buscar cliente..." (à esquerda).
-- Substituir por **um único** campo de busca à esquerda com `Popover` que mostra, conforme o termo:
-  - Lista de **clientes** que casam (filtra o board por `clientName`, como o input atual).
-  - Lista de **tarefas** com matches em comentários/anexos (via `searchTasks`), com snippet — abre o `TaskDetailDialog` com `initialSearch` preenchido (lógica atual do globalResults).
-- Estado consolidado em um `query` único; resultados agrupados por seção ("Clientes", "Mensagens e documentos") usando `Command` / `CommandGroup`.
-- Selecionar cliente → seta `fClient` (mantém filtro do board). Selecionar tarefa → abre detalhe.
+## 4. Campo "Taxa de imposto" — permitir apagar sem voltar pro padrão
 
-## 4. Campo "Descrição" no formulário de Agendamentos
+**Arquivo:** `src/components/portfolio/PolicyTaxOverrideFields.tsx`
 
-**Arquivos:** `src/lib/tasks/taskStore.tsx`, `src/components/tasks/ScheduledTasksPanel.tsx`
+Hoje `handleTaxaChange` faz `parseFloat` e, se der `NaN` (campo vazio), seta `taxaImposto = undefined`, o que faz o `effectiveTaxa` voltar pro padrão da seguradora (11,5). Mudanças:
 
-- Adicionar `description?: string` em `ScheduledTask`.
-- No `ScheduledTasksPanel`, novo `<Textarea>` "Descrição" abaixo do título (mesmo estilo do `NewTaskDialog`).
-- Incluir `description` no `payload` de `addScheduled`/`updateScheduled` e em `startEdit`/`resetForm`.
+- Introduzir estado local `taxaDraft: string` espelhando o input; quando o usuário digita, atualizamos `taxaDraft` livremente (inclusive vazio).
+- `setTaxaImposto` só dispara em valores válidos `> 0`; vazio mantém `taxaImposto = undefined` mas o input mostra string vazia (não 11,5).
+- No `submit` do `NewPolicyDialog`/`EditPolicyDialog`, se `effectiveLiquida === true` e `(taxaImposto ?? defaults.taxaImposto) <= 0`, bloquear com erro "Taxa de imposto deve ser maior que zero".
 
-## 5. Alinhamento dos ícones na lista de tarefas programadas
+## 5. Redesign clean do bloco "Imposto sobre comissão"
 
-**Arquivos:** `src/components/tasks/ScheduledTasksPanel.tsx` (linhas ~184-199)
+**Arquivo:** `src/components/portfolio/PolicyTaxOverrideFields.tsx`
 
-Hoje o `<li>` usa um único flex row com `gap-2` entre título, badge, editar e excluir — quando o título é curto (caso do mock "Felicitar aniversariantes"), os botões ficam próximos do título; quando o título é longo (ou existe descrição), o `min-w-0 flex-1` empurra os botões para a direita, deixando-os "afastados".
+Reduzir ruído visual:
 
-- Reorganizar o `<li>` em duas colunas: `[conteúdo flex-1 min-w-0] [ações shrink-0 flex items-center gap-1]`.
-- Badge entra no bloco de conteúdo (abaixo da descrição, como meta) ou ao lado do título com `shrink-0`.
-- Botões de editar/excluir sempre encostados no canto direito do card, mesmo espaçamento independente do título.
+- Remover a borda tracejada e o card externo; usar uma única linha compacta com `Switch` "Comissão líquida" + label.
+- Quando ligado, mostrar inline à direita um input pequeno (`w-24`) com sufixo "%" para a taxa.
+- Remover o texto longo "Padrão {seguradora}: ..."; substituir por um helper minúsculo abaixo: `Padrão {insurer} · 11,5%` (apenas o essencial).
+- Mover o "Usar padrão" para um pequeno botão-link só visível quando `overriding`.
 
-## 6. Workflows automáticos (cards na aba Tarefas)
+Resultado: 1 linha principal + 1 sub-linha de helper.
 
-**Novo arquivo:** `src/lib/tasks/workflowEngine.ts`
-**Arquivos editados:** `src/lib/tasks/taskStore.tsx`, `src/components/tasks/TasksBoard.tsx`
+## 6. Datepicker de nascimento — Novo Cliente
 
-### Engine
-Função `runWorkflows({ policies, existingTasks, now })` que retorna `Omit<TaskItem,...>[]` para criar. Regras:
+**Arquivo:** `src/components/portfolio/NewClientDialog.tsx`
 
-| Workflow | Condição | Data-alvo | Origem |
-|---|---|---|---|
-| Vigência | `branch ≠ "Saúde"` e `endDate` está entre `now` e `now+10d` | `endDate` | `policy` |
-| Reajuste Saúde | `branch === "Saúde"` e `healthAnniversary` (mês/dia) cai entre `now` e `now+30d` | próxima ocorrência do aniversário | `policy` |
-| Faixa etária | para cada beneficiário, próximo aniversário que completa idade ANS (19,24,29,34,39,44,49,54,59) em até 30d | data do aniversário | `policy + beneficiary` |
+Substituir o `<Input type="date">` pelo mesmo padrão usado em `BranchSpecificFields` (campo Nascimento dos Beneficiários):
+- `Popover` + `Calendar` (`mode="single"`, `captionLayout="dropdown"`, `fromYear={1920}`, `toYear={ano atual}`, `pointer-events-auto`).
+- Trigger com `Button variant="outline"` exibindo a data no formato `dd/mm/aaaa` (via `formatDateShort`) ou "Selecionar".
+- Estado continua ISO `yyyy-mm-dd` para o schema Zod existente.
 
-Dedupe: cada card recebe `sourceKey = "wf:<tipo>:<policyId>[:<beneficiaryId>]:<yyyy-mm-dd da data-alvo>"`. Engine ignora se já existir tarefa com mesmo `sourceKey`.
+## 7. Drawer do cliente → abrir Drawer da apólice ao clicar
 
-### Estrutura do card gerado
-- `columnId`: primeira coluna ("Demanda" — `c-demanda` no seed).
-- `priority`: `"alta"`.
-- `assigneeId`: `"all"`.
-- `clientName`: do `policy`.
-- `dueDate`: data-alvo (ISO).
-- `title` / `description` por tipo:
-  - **Vigência:** "Renovação {branch} — {cliente} (vence {dd/mm})" / "Apólice {número} vence em {dd/mm/yyyy}. Confirmar coberturas e enviar proposta de renovação."
-  - **Reajuste Saúde:** "Reajuste Saúde — {cliente} ({dd/mm})" / "Aniversário da apólice {número} em {dd/mm/yyyy}. Revisar reajuste anual e comunicar o cliente."
-  - **Faixa etária:** "Faixa etária — {beneficiárioNome} faz {idade} em {dd/mm}" / "Beneficiário da apólice {número} ({titularNome}) completa {idade} anos em {dd/mm/yyyy} — possível mudança de faixa etária."
+**Arquivos:** `src/components/modules/PortfolioModule.tsx`, `src/components/portfolio/ClientDetailDrawer.tsx`, `src/components/portfolio/PoliciesTab.tsx`
 
-### Integração
-- `TaskItem` ganha campo opcional `sourceKey?: string` (só para dedupe; não exibido).
-- `useTaskStore` expõe `bulkAddTasks(records)` que aceita já com `sourceKey` e ignora os que já existem.
-- Em `TasksBoard.tsx`, `useEffect` único no mount: importa `policies` de `usePolicyStore`, roda `runWorkflows`, chama `bulkAddTasks`. Roda só uma vez por montagem da aba.
+Hoje `ClientDetailDrawer` já aceita `onOpenPolicy` mas o `PortfolioModule` não passa. O `PolicySheet` (drawer das apólices) está privado dentro do `PoliciesTab`.
+
+- Extrair `PolicySheet` de `PoliciesTab.tsx` para um arquivo próprio `src/components/portfolio/PolicyDetailDrawer.tsx` (mesma implementação, prop `policy | null`).
+- `PoliciesTab` passa a importar de lá.
+- `PortfolioModule` controla um novo estado `selectedPolicy: Policy | null`, renderiza `<PolicyDetailDrawer />` no nível do módulo e passa `onOpenPolicy={(p) => { setSelectedClient(null); setSelectedPolicy(p); }}` para o `ClientDetailDrawer`.
+- Ao fechar o policy drawer, limpa o estado. Clique do cliente dentro do policy drawer (já existe via `Row "Cliente"`?) pode ser estendido depois se quiser bidirecional.
+
+## 8. Novos campos no Drawer das Apólices (Saúde e Consórcio)
+
+**Arquivo:** `src/components/portfolio/PolicyDetailDrawer.tsx` (após extração no item 7)
+
+Na aba **Detalhes**, abaixo do bloco existente, renderizar condicionalmente:
+
+**Quando `policy.branch === "Saúde"`:**
+- `Row` "Categoria do plano" → `policy.healthCategory` (ou "—").
+- `Row` "Coparticipação" → "Sim" / "Não" (a partir de `policy.healthCoparticipation`).
+- Sub-bloco "Beneficiários" listando cada `policy.beneficiaries[]` em cards compactos (Nome · Título · Nascimento + idade · CPF). Reusar `calcAge` do ClientDetailDrawer.
+
+**Quando `policy.branch === "Consórcio"`:**
+- `Row` "Grupo" → `policy.consortiumGroup`.
+- `Row` "Cota" → `policy.consortiumQuota`.
+- `Row` "Tipo" → `policy.consortiumType` (novo campo do item 2).
 
 ---
 
 ## Fora de escopo
 
-- Persistência (`localStorage`) das tarefas geradas.
-- Notificações/badge na sidebar quando workflow cria card.
-- Workflow para "Auto/Vida/Residencial/Empresarial/Consórcio" diferenciado — tratamos todos como "Seguros" exceto Saúde.
-- Materializar `ScheduledTask` em `TaskItem` (a descrição apenas fica salva no agendamento).
+- Recalcular relatórios anuais existentes em função do prêmio mensal de Saúde (item 3).
+- Refatorar `commissionEngine` para o novo `consortiumType`.
+- Edição inline desses novos campos no drawer (segue pelo `EditPolicyDialog`).

@@ -3,6 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { formatDateShort } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -33,12 +38,6 @@ function isValidISODate(iso: string): boolean {
   );
 }
 
-const todayISO = () => {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mm}-${dd}`;
-};
 function maskPhone(input: string): string {
   const d = input.replace(/\D/g, "").slice(0, 11);
   if (d.length === 0) return "";
@@ -136,14 +135,33 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Data de nascimento *</Label>
-            <Input
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              min="1900-01-01"
-              max={todayISO()}
-              className="mt-1.5 rounded-xl bg-muted border-0"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                    !birthDate && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  {birthDate ? formatDateShort(birthDate) : "Selecionar"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={birthDate ? new Date(birthDate) : undefined}
+                  onSelect={(d) => setBirthDate(d ? d.toISOString().slice(0, 10) : "")}
+                  initialFocus
+                  captionLayout="dropdown"
+                  fromYear={1920}
+                  toYear={new Date().getFullYear()}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
             {errors.birthDate && <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>}
           </div>
         </div>

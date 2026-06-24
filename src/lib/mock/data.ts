@@ -48,6 +48,7 @@ export type Policy = {
   // Consórcio
   consortiumGroup?: string;
   consortiumQuota?: string;
+  consortiumType?: "Imóvel" | "Auto";
 };
 
 export type KanbanStage = "lead" | "cotacao" | "negociacao" | "fechado" | "perdido";
