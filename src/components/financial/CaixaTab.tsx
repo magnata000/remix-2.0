@@ -8,11 +8,11 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowDownCircle, ArrowUpCircle,
-  Plus, Receipt, Trash2, TrendingUp, TrendingDown, Scale,
+  Plus, Receipt, Trash2, TrendingUp, TrendingDown, Scale, FileSpreadsheet,
 } from "lucide-react";
 import { formatBRL } from "@/lib/mock/data";
 import {
-  useCashStore, formatDateTimeBR, MONTHS_PT,
+  useCashStore, formatDateTimeBR, formatDateBR, MONTHS_PT,
   type Expense,
 } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
@@ -22,7 +22,10 @@ import { NewIncomeDialog } from "@/components/financial/NewIncomeDialog";
 import { RegisterEntryDialog } from "@/components/financial/RegisterEntryDialog";
 import { MovementDetailsSheet, type Movement } from "@/components/financial/MovementDetailsSheet";
 import { CommissionStatusMenu } from "@/components/financial/CommissionStatusMenu";
+import { ReconcileSheet } from "@/components/financial/ReconcileSheet";
 import { toast } from "sonner";
+
+type StatusFilter = "all" | "pago" | "pendente" | "atrasado" | "devolvido" | "cancelada" | "none";
 
 export function CaixaTab() {
   const { expenses, entries, incomes, removeExpense } = useCashStore();
@@ -31,54 +34,75 @@ export function CaixaTab() {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
+  const [openReconcile, setOpenReconcile] = useState(false);
   const [registerFor, setRegisterFor] = useState<Expense | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
   const [typeFilter, setTypeFilter] = useState<"all" | "entrada" | "saida">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pago" | "pendente" | "atrasado" | "none">("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const inMonth = (iso: string) => {
     const d = new Date(iso);
     return d.getMonth() === selectedMonth && d.getFullYear() === currentYear;
   };
 
-  // Movimentações unificadas — TODAS as comissões (qualquer status) entram
+  // Movimentações unificadas — comissões devolvidas viram SAÍDA
   const movements = useMemo<Movement[]>(() => {
-    const inFromCommissions: Movement[] = commissions.map((c) => {
+    const fromCommissions: Movement[] = commissions.map((c) => {
       const kindLbl = commissionKindLabel(c.kind);
       const inst = c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
         ? ` ${c.installmentIndex}/${c.installmentTotal}`
         : "";
+      const prefix = c.status === "devolvido" ? "Devolução · " : "Comissão · ";
+      // Data exibida: paidAt para pagas; refundedAt para devolvidas; senão dueDate (parseado em local)
+      const displayDate = c.status === "pago" && c.paidAt
+        ? formatDateTimeBR(c.paidAt)
+        : c.status === "devolvido" && c.refundedAt
+        ? formatDateTimeBR(c.refundedAt)
+        : formatDateBR(c.dueDate);
+      // Mês de classificação: usa paidAt/refundedAt quando existir, senão dueDate.
+      const sortIso = c.status === "pago" && c.paidAt
+        ? c.paidAt
+        : c.status === "devolvido" && c.refundedAt
+        ? c.refundedAt
+        : `${c.dueDate}T00:00:00`;
       return {
         id: `com-${c.id}`,
-        kind: "entrada",
-        date: c.dueDate,
-        description: `Comissão · ${c.clientName} · ${c.policyNumber} (${kindLbl}${inst})`,
+        kind: c.status === "devolvido" ? "saida" : "entrada",
+        date: displayDate,
         amount: c.amount,
+        description: `${prefix}${c.clientName} · ${c.policyNumber} (${kindLbl}${inst})`,
         details: { kind: "comissao", commission: c },
-      };
+        _sortIso: sortIso,
+      } as Movement & { _sortIso: string };
     });
-    const inFromManual: Movement[] = incomes.map((i) => ({
+    const fromManual: Movement[] = incomes.map((i) => ({
       id: `inc-${i.id}`,
       kind: "entrada",
-      date: i.receivedAt,
+      date: formatDateTimeBR(i.receivedAt),
       description: i.description,
       amount: i.amount,
       details: { kind: "manual", income: i },
+      // @ts-expect-error sort helper
+      _sortIso: i.receivedAt,
     }));
     const out: Movement[] = entries.map((e) => ({
       id: `out-${e.id}`,
       kind: "saida",
-      date: e.paidAt,
+      date: formatDateTimeBR(e.paidAt),
       description: e.description,
       amount: e.amount,
       details: { kind: "saida", entry: e, expense: expenses.find((x) => x.id === e.expenseId) },
+      // @ts-expect-error sort helper
+      _sortIso: e.paidAt,
     }));
-    return [...inFromCommissions, ...inFromManual, ...out].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    return [...fromCommissions, ...fromManual, ...out].sort(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (a: any, b: any) => new Date(b._sortIso).getTime() - new Date(a._sortIso).getTime()
     );
   }, [commissions, incomes, entries, expenses]);
 
-  const monthMovements = movements.filter((m) => inMonth(m.date));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const monthMovements = movements.filter((m: any) => inMonth(m._sortIso));
 
   const filteredMonthMovements = useMemo(() => {
     return monthMovements.filter((m) => {
@@ -97,16 +121,20 @@ export function CaixaTab() {
 
   const filtersActive = typeFilter !== "all" || statusFilter !== "all";
 
-  // KPIs do mês: comissões só contam como entrada se status === "pago"
+  // KPIs: comissões pagas = entrada, devolvidas = saída, demais = ignoradas
   const summary = useMemo(() => {
-    const income = monthMovements
-      .filter((m) => {
-        if (m.kind !== "entrada") return false;
-        if (m.details.kind === "comissao") return m.details.commission.status === "pago";
-        return true;
-      })
-      .reduce((s, m) => s + m.amount, 0);
-    const expense = monthMovements.filter((m) => m.kind === "saida").reduce((s, m) => s + m.amount, 0);
+    let income = 0;
+    let expense = 0;
+    monthMovements.forEach((m) => {
+      if (m.details.kind === "comissao") {
+        const s = m.details.commission.status;
+        if (s === "pago") income += m.amount;
+        else if (s === "devolvido") expense += m.amount;
+        return;
+      }
+      if (m.kind === "entrada") income += m.amount;
+      else expense += m.amount;
+    });
     return { income, expense, balance: income - expense };
   }, [monthMovements]);
 
@@ -229,7 +257,7 @@ export function CaixaTab() {
                 <SelectItem value="saida">Saídas</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
               <SelectTrigger className="h-8 w-auto rounded-full text-xs gap-1 px-3">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -238,6 +266,8 @@ export function CaixaTab() {
                 <SelectItem value="pago">Pago</SelectItem>
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="atrasado">Atrasado</SelectItem>
+                <SelectItem value="devolvido">Devolvido</SelectItem>
+                <SelectItem value="cancelada">Cancelada</SelectItem>
                 <SelectItem value="none">Sem status</SelectItem>
               </SelectContent>
             </Select>
@@ -251,6 +281,9 @@ export function CaixaTab() {
                 Limpar
               </Button>
             )}
+            <Button size="sm" variant="outline" className="rounded-full" onClick={() => setOpenReconcile(true)}>
+              <FileSpreadsheet className="h-4 w-4 mr-1" /> Conciliar mês
+            </Button>
             <Button size="sm" variant="outline" className="rounded-full" onClick={() => setOpenIncome(true)}>
               <Plus className="h-4 w-4 mr-1" /> Nova entrada
             </Button>
@@ -277,10 +310,12 @@ export function CaixaTab() {
               <TableBody>
                 {filteredMonthMovements.map((m) => {
                   const isCommission = m.details.kind === "comissao";
-                  const isUnpaidCommission = isCommission && m.details.kind === "comissao" && m.details.commission.status !== "pago";
+                  const cStatus = isCommission && m.details.kind === "comissao" ? m.details.commission.status : null;
+                  const isCancelled = cStatus === "cancelada";
+                  const isUnpaid = isCommission && cStatus !== "pago" && cStatus !== "devolvido" && cStatus !== "cancelada";
                   return (
-                    <TableRow key={m.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedMovement(m)}>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDateTimeBR(m.date)}</TableCell>
+                    <TableRow key={m.id} className={`cursor-pointer hover:bg-muted/40 ${isCancelled ? "opacity-60" : ""}`} onClick={() => setSelectedMovement(m)}>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{m.date}</TableCell>
                       <TableCell>
                         {m.kind === "entrada" ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-xs">
@@ -292,7 +327,7 @@ export function CaixaTab() {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">{m.description}</TableCell>
+                      <TableCell className={`text-sm ${isCancelled ? "line-through" : ""}`}>{m.description}</TableCell>
                       <TableCell>
                         {m.details.kind === "comissao" ? (
                           <CommissionStatusMenu commission={m.details.commission} />
@@ -302,8 +337,10 @@ export function CaixaTab() {
                       </TableCell>
                       <TableCell
                         className={`text-right font-semibold ${
-                          m.kind === "entrada"
-                            ? isUnpaidCommission ? "text-muted-foreground" : "text-success"
+                          isCancelled
+                            ? "text-muted-foreground line-through"
+                            : m.kind === "entrada"
+                            ? isUnpaid ? "text-muted-foreground" : "text-success"
                             : "text-destructive"
                         }`}
                       >
@@ -322,6 +359,7 @@ export function CaixaTab() {
       <NewIncomeDialog open={openIncome} onOpenChange={setOpenIncome} />
       <RegisterEntryDialog expense={registerFor} open={registerFor !== null} onOpenChange={(o) => !o && setRegisterFor(null)} />
       <MovementDetailsSheet movement={selectedMovement} open={selectedMovement !== null} onOpenChange={(o) => !o && setSelectedMovement(null)} />
+      <ReconcileSheet open={openReconcile} onOpenChange={setOpenReconcile} month={selectedMonth} year={currentYear} />
     </div>
   );
 }
