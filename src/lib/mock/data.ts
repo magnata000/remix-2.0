@@ -358,6 +358,10 @@ export const insurerLogos: Record<Insurer, string> = {
 export const formatBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** BRL sem centavos — usado em inputs que trabalham com reais inteiros. */
+export const formatBRLInt = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
 export const formatDateShort = (iso: string) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   const d = m
