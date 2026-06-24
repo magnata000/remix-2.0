@@ -221,7 +221,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
       )}
 
       {/* Drawer de detalhes */}
-      <PolicySheet
+      <PolicyDetailDrawer
         policy={selected}
         onOpenChange={(o) => !o && setSelected(null)}
         onSelectPolicy={(p) => setSelected(p)}
