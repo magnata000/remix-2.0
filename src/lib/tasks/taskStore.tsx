@@ -205,6 +205,28 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     return rec;
   }, [currentUserId]);
 
+  const bulkAddTasks = useCallback<Ctx["bulkAddTasks"]>((records) => {
+    if (!records.length) return;
+    setTasks((arr) => {
+      const existingKeys = new Set(arr.map((t) => t.sourceKey).filter((k): k is string => !!k));
+      const toAdd: TaskItem[] = [];
+      records.forEach((r, i) => {
+        if (r.sourceKey && existingKeys.has(r.sourceKey)) return;
+        if (r.sourceKey) existingKeys.add(r.sourceKey);
+        const at = new Date().toISOString();
+        toAdd.push({
+          ...r,
+          id: `tk${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+          createdAt: at,
+          comments: [],
+          attachments: [],
+          timeline: [{ kind: "created", at, by: currentUserId }],
+        });
+      });
+      return toAdd.length ? [...toAdd, ...arr] : arr;
+    });
+  }, [currentUserId]);
+
   const moveTask = useCallback((id: string, columnId: string) => {
     setTasks((arr) => arr.map((t) => {
       if (t.id !== id || t.columnId === columnId) return t;
