@@ -126,6 +126,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
+      assigneeId: assigneeId || undefined,
       commissionPct: commissionPct || undefined,
       comissaoLiquida,
       taxaImposto,
