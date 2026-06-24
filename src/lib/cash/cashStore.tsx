@@ -146,6 +146,13 @@ export const formatDateTimeBR = (iso: string) =>
     minute: "2-digit",
   });
 
+/** Formata "YYYY-MM-DD" ou ISO usando timezone LOCAL (evita o off-by-one do UTC). */
+export const formatDateBR = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(iso);
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
 export const MONTHS_PT = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",

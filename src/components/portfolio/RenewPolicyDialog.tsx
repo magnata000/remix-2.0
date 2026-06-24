@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { formatBRL, formatBRLInt, formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
@@ -51,7 +51,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     if (!open || !sourcePolicy) return;
     setBranch(sourcePolicy.branch);
     setInsurer(sourcePolicy.insurer);
-    setPremium(formatBRL(sourcePolicy.premium));
+    setPremium(formatBRLInt(sourcePolicy.premium));
     const newStart = new Date(sourcePolicy.endDate);
     setStartDate(newStart);
     setEndDate(addYears(newStart, 1));
@@ -147,7 +147,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                 inputMode="numeric"
                 value={premium}
                 onChange={(e) => setPremium(e.target.value.replace(/\D/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRL(premiumNum)); }}
+                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLInt(premiumNum)); }}
                 onFocus={() => setPremium(String(premiumNum || ""))}
                 placeholder="R$ 0"
                 className="mt-1.5 rounded-xl bg-muted border-0"

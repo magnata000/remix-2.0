@@ -1,11 +1,12 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL, formatDateShort } from "@/lib/mock/data";
-import { formatDateTimeBR, type Expense, type ExpenseEntry, type ManualIncome } from "@/lib/cash/cashStore";
+import { formatDateTimeBR, formatDateBR, type Expense, type ExpenseEntry, type ManualIncome } from "@/lib/cash/cashStore";
 import type { Commission } from "@/lib/mock/data";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { commissionKindLabel } from "@/lib/financial/commissionEngine";
+import { commissionStatusColor } from "@/components/financial/CommissionStatusMenu";
 
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
@@ -62,18 +63,13 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
           <div className={`text-3xl font-bold ${isEntry ? "text-success" : "text-destructive"}`}>
             {isEntry ? "+" : "−"} {formatBRL(movement.amount)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">{formatDateTimeBR(movement.date)}</div>
+          <div className="text-xs text-muted-foreground mt-1">{movement.date}</div>
         </div>
 
         <div className="mt-5">
           {movement.details.kind === "comissao" && (() => {
             const c = movement.details.commission;
-            const statusClass =
-              c.status === "pago"
-                ? "bg-success/15 text-success border-0"
-                : c.status === "pendente"
-                ? "bg-warning/15 text-warning border-0"
-                : "bg-destructive/15 text-destructive border-0";
+            const statusClass = commissionStatusColor[c.status];
             const instLabel = c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
               ? `${c.installmentIndex}/${c.installmentTotal}`
               : "—";
@@ -84,6 +80,10 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                 <Row label="Seguradora" value={c.insurer} />
                 <Row label="Apólice" value={<span className="font-mono text-xs">{c.policyNumber}</span>} />
                 <Row label="Parcela" value={instLabel} />
+                <Row label="Vencimento" value={formatDateBR(c.dueDate)} />
+                {c.paidAt && <Row label="Pago em" value={formatDateTimeBR(c.paidAt)} />}
+                {c.refundedAt && <Row label="Devolvida em" value={formatDateTimeBR(c.refundedAt)} />}
+                {c.refundReason && <Row label="Motivo" value={c.refundReason} />}
                 <Row label="Status" value={<Badge className={statusClass}>{c.status}</Badge>} />
               </>
             );
@@ -95,7 +95,7 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
               {movement.details.income.notes && <Row label="Observações" value={movement.details.income.notes} />}
             </>
           )}
-          {movement.details.kind === "saida" && (
+          {movement.details.kind === "saida" && movement.details.entry && (
             <>
               <Row label="Tipo" value="Pagamento de despesa" />
               <Row label="Categoria" value={<Badge className="bg-muted text-muted-foreground border-0">{movement.details.entry.category}</Badge>} />
@@ -126,7 +126,11 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
               {schedule.map((s) => {
                 const isCurrent = movement.details.kind === "comissao" && movement.details.commission.id === s.id;
                 const statusClr =
-                  s.status === "pago" ? "text-success" : s.status === "atrasado" ? "text-destructive" : "text-warning";
+                  s.status === "pago" ? "text-success"
+                  : s.status === "atrasado" ? "text-destructive"
+                  : s.status === "devolvido" ? "text-destructive"
+                  : s.status === "cancelada" ? "text-muted-foreground line-through"
+                  : "text-warning";
                 return (
                   <div key={s.id} className={`flex items-center justify-between gap-3 px-3 py-2 ${isCurrent ? "bg-muted/50" : ""}`}>
                     <div className="flex items-center gap-2 min-w-0">
@@ -138,7 +142,7 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`uppercase text-[10px] ${statusClr}`}>{s.status}</span>
-                      <span className="font-mono">{formatBRL(s.amount)}</span>
+                      <span className={`font-mono ${s.status === "cancelada" ? "line-through text-muted-foreground" : ""}`}>{formatBRL(s.amount)}</span>
                     </div>
                   </div>
                 );

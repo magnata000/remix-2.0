@@ -1,94 +1,102 @@
-## Observação
+# Plano — Página Financeiro
 
-Você escreveu "Página Kanban" no título, mas todos os itens são da **Página Carteira** — vou tratar como Carteira.
+## 1. Bug de data/hora nas Movimentações (comissões)
 
----
+**Causa:** `Commission.dueDate` é `"YYYY-MM-DD"`. `new Date("2025-03-10")` é interpretado como UTC 00:00 → em BR (UTC-3) vira 09/03 21:00. Mostrar hora não faz sentido em comissões (não há hora real).
 
-## 1. Scroll na lista de clientes — Nova Apólice
+**Solução:**
+- Tornar `Commission` opcional `paidAt?: string` (ISO completo). Quando `CommissionStatusMenu` muda status para "pago", grava `paidAt = new Date().toISOString()`.
+- `MovementDetailsSheet` e coluna "Data/Hora" da tabela:
+  - Comissão paga → exibir `formatDateTimeBR(paidAt)`.
+  - Demais (pendente/atrasado/devolvido) → exibir só a data, usando parser local: `parseLocalISO("YYYY-MM-DD")` → `new Date(y, m-1, d)` (sem deslocamento de timezone).
+- Adicionar helper `formatDateBR` em `cashStore.tsx` que usa o parser local. Reusar `formatDateShort` se equivalente.
 
-**Arquivo:** `src/components/portfolio/NewPolicyDialog.tsx`
+## 2. Valores com 2 casas decimais
 
-O `CommandList` dentro do `Popover` não tem altura máxima definida, então cresce até estourar. Adicionar `className="max-h-[280px] overflow-y-auto"` no `CommandList` para habilitar scroll quando a lista de clientes ficar longa.
+**Causa:** `formatBRL` usa `maximumFractionDigits: 0`; `generateCommissionSchedule` e `expectedRecurrencesUntil` arredondam com `Math.round`.
 
-## 2. Sub-tipo de Consórcio: Imóvel ou Auto
+**Solução:**
+- `formatBRL`: passar a usar `minimumFractionDigits: 2, maximumFractionDigits: 2`. Verificar uso em KPIs/Dashboard/Pipeline — atualmente todos exibem moeda; 2 casas é o padrão BR e não quebra nada visual.
+- `commissionEngine.ts`: substituir `Math.round(value)` por `Math.round(value * 100) / 100` nas funções `applyTax`, agenciamento e recorrência. Mantém precisão em parcelas pequenas (ex: R$ 14,50).
+- Sem mudança em valores já mockados (são inteiros e seguem renderizando como `X,00`).
 
-**Arquivos:** `src/lib/mock/data.ts`, `src/components/portfolio/BranchSpecificFields.tsx`, `src/components/portfolio/NewPolicyDialog.tsx`, `src/components/portfolio/EditPolicyDialog.tsx`
+## 3. Status "devolvido" + lógica de cancelamento de apólice
 
-- Adicionar em `Policy`: `consortiumType?: "Imóvel" | "Auto"`.
-- Em `BranchSpecificFields` (bloco Consórcio), adicionar um `Select` "Tipo" com opções `Imóvel` / `Auto`, ao lado de Grupo/Cota.
-- Propagar estado `consortiumType` no `NewPolicyDialog` (e `EditPolicyDialog`) e incluir no `addPolicy(...)`/`updatePolicy(...)`.
+**Tipo:** `Commission.status` passa a aceitar `"pago" | "pendente" | "atrasado" | "devolvido" | "cancelada"`.
+- `"devolvido"`: comissão que já tinha sido paga e teve de retornar à seguradora → conta como **saída** no caixa.
+- `"cancelada"`: parcela futura que não vai mais ocorrer → some dos KPIs, fica visível na tabela com badge cinza, valor riscado.
 
-## 3. Saúde: trocar label "Prêmio anual" → "Prêmio mensal"
+**Gatilho:** quando uma `Policy` muda para `status === "cancelada"` (via `updatePolicy` em `policyStore`):
+1. Para cada comissão da apólice (`scheduleOfPolicy(id)`):
+   - `status === "pago"` → vira `"devolvido"`, grava `refundedAt = now()`.
+   - `status in ("pendente","atrasado")` → vira `"cancelada"`.
+   - `status in ("devolvido","cancelada")` → ignora (idempotente).
+2. Emite toast: "X parcelas devolvidas · Y parcelas canceladas".
 
-**Arquivo:** `src/components/portfolio/NewPolicyDialog.tsx`
+**UI — `CaixaTab` / tabela Movimentações:**
+- Filtro Status ganha "Devolvido" e "Cancelada".
+- `CommissionStatusMenu`: inclui as duas novas opções. "Devolvido" só selecionável a partir de "pago"; "Cancelada" só a partir de pendente/atrasado (regras enforced no menu, mas livres se forçado manualmente — usuário tem controle total, requisito da conciliação).
+- Devolvido renderiza como **saída** (linha vermelha, ícone ↑) e entra em `summary.expense`; comissão cancelada não entra em nenhum total e aparece com classe `line-through text-muted-foreground`.
+- `MovementDetailsSheet`: linha "Status" mostra novos badges; em "Devolvido", adiciona Row "Motivo: Cancelamento da apólice ANT-XXXX".
 
-- Quando `branch === "Saúde"`, renderizar o campo com label **"Prêmio mensal *"** e placeholder mensal; nos demais ramos continua "Prêmio anual *".
-- O valor segue salvo em `premium` (sem multiplicar por 12) — modelo recorrente mês a mês, conforme você confirmou. Aplicar a mesma troca de label no `EditPolicyDialog.tsx`.
-- Não altero engine de comissões nem relatórios (fora de escopo). Aviso: relatórios anuais existentes vão considerar esse valor como anual — caso queira ajustar depois, é outra rodada.
+**Fora de escopo desta etapa:** pró-rata (devolução proporcional ao tempo restante). Hoje é tudo ou nada; documentamos como item futuro.
 
-## 4. Campo "Taxa de imposto" — permitir apagar sem voltar pro padrão
+## 4. Nova aba **Repasses de vendedores**
 
-**Arquivo:** `src/components/portfolio/PolicyTaxOverrideFields.tsx`
+Persistência: adicionar `assigneeId?: string` em `Policy` (UI já tem o campo "Vendedor" em `NewPolicyDialog`/`EditPolicyDialog`; hoje não é salvo no objeto). Propagar para `addPolicy`/`updatePolicy`.
 
-Hoje `handleTaxaChange` faz `parseFloat` e, se der `NaN` (campo vazio), seta `taxaImposto = undefined`, o que faz o `effectiveTaxa` voltar pro padrão da seguradora (11,5). Mudanças:
+**Novo store:** `src/lib/financial/sellerCommissionStore.tsx`
+- `SellerCommissionRate { memberId: string; branch: Branch; pct: number }`
+- Seed: para cada `TeamMember` com role `"Vendedor"`, gera entradas para cada `Branch` com `pct = 30` (default).
+- API: `getRate(memberId, branch)`, `updateRate(...)`, `computeSellerPayout(commission, policy)` → `commission.amount * pct / 100` (só para comissões `status === "pago"`).
 
-- Introduzir estado local `taxaDraft: string` espelhando o input; quando o usuário digita, atualizamos `taxaDraft` livremente (inclusive vazio).
-- `setTaxaImposto` só dispara em valores válidos `> 0`; vazio mantém `taxaImposto = undefined` mas o input mostra string vazia (não 11,5).
-- No `submit` do `NewPolicyDialog`/`EditPolicyDialog`, se `effectiveLiquida === true` e `(taxaImposto ?? defaults.taxaImposto) <= 0`, bloquear com erro "Taxa de imposto deve ser maior que zero".
+**Novo componente:** `src/components/financial/SellerCommissionsTab.tsx`
+- **Bloco 1 — Configuração de %**: tabela `Vendedor × Ramo` editável (input de % por célula). Botão "Salvar".
+- **Bloco 2 — Histórico por vendedor**: seletor de vendedor + seletor de mês. Lista todas as comissões pagas naquele mês cuja `policy.assigneeId === vendedor`, mostrando: data, cliente, apólice, ramo, valor comissão corretora, % aplicado, **valor repasse R$**. Total no rodapé.
+- **Bloco 3 — KPI**: total a repassar no mês selecionado, agrupado por vendedor (cards).
 
-## 5. Redesign clean do bloco "Imposto sobre comissão"
+**Wire-up:** `FinancialModule.tsx` ganha 3ª `TabsTrigger` "Repasses".
 
-**Arquivo:** `src/components/portfolio/PolicyTaxOverrideFields.tsx`
+## 5. Conciliação de comissões (upload mensal manual)
 
-Reduzir ruído visual:
+Mantém **controle total do usuário** (requisito explícito). RPA real de scraping fica como roadmap; entregamos o fluxo de upload + reconciliação assistida que a RPA alimentaria.
 
-- Remover a borda tracejada e o card externo; usar uma única linha compacta com `Switch` "Comissão líquida" + label.
-- Quando ligado, mostrar inline à direita um input pequeno (`w-24`) com sufixo "%" para a taxa.
-- Remover o texto longo "Padrão {seguradora}: ..."; substituir por um helper minúsculo abaixo: `Padrão {insurer} · 11,5%` (apenas o essencial).
-- Mover o "Usar padrão" para um pequeno botão-link só visível quando `overriding`.
+**Onde:** dentro da aba Caixa, novo botão `"Conciliar mês"` no header da tabela Movimentações. Abre `ReconcileSheet`.
 
-Resultado: 1 linha principal + 1 sub-linha de helper.
+**Fluxo do Sheet:**
+1. Seletor de seguradora + upload de planilha (`.csv`/`.xlsx`). Mock parseia em memória — sem backend. Schema esperado documentado no próprio sheet: `apolice, vencimento, valor`.
+2. Sistema casa cada linha da planilha contra `commissions` filtrando por `insurer + mês`:
+   - **Match exato** (apólice + valor) → marca para `status = "pago"`, `paidAt = data da planilha`.
+   - **Match por apólice, valor divergente** → linha amarela, mostra ambos os valores, usuário decide: aceitar valor da seguradora / manter atual / marcar como devolvido.
+   - **Na planilha mas não no sistema** → linha laranja, oferece "Criar entrada manual".
+   - **No sistema mas não na planilha** → linha cinza, oferece "Marcar como atrasado" ou "Ignorar".
+3. Resumo no rodapé (X matches, Y divergências, Z extras) + botão "Aplicar alterações".
 
-## 6. Datepicker de nascimento — Novo Cliente
+**Persistência:** registra `ReconciliationRun { id, insurer, month, createdAt, summary }` em store local; visível em painel "Conciliações deste mês" abaixo do botão, com link para reabrir.
 
-**Arquivo:** `src/components/portfolio/NewClientDialog.tsx`
+**Acionamento:** **manual** (todo mês o usuário clica). Não há agendamento automático nesta entrega.
 
-Substituir o `<Input type="date">` pelo mesmo padrão usado em `BranchSpecificFields` (campo Nascimento dos Beneficiários):
-- `Popover` + `Calendar` (`mode="single"`, `captionLayout="dropdown"`, `fromYear={1920}`, `toYear={ano atual}`, `pointer-events-auto`).
-- Trigger com `Button variant="outline"` exibindo a data no formato `dd/mm/aaaa` (via `formatDateShort`) ou "Selecionar".
-- Estado continua ISO `yyyy-mm-dd` para o schema Zod existente.
+## 6. Arquivos a tocar
 
-## 7. Drawer do cliente → abrir Drawer da apólice ao clicar
-
-**Arquivos:** `src/components/modules/PortfolioModule.tsx`, `src/components/portfolio/ClientDetailDrawer.tsx`, `src/components/portfolio/PoliciesTab.tsx`
-
-Hoje `ClientDetailDrawer` já aceita `onOpenPolicy` mas o `PortfolioModule` não passa. O `PolicySheet` (drawer das apólices) está privado dentro do `PoliciesTab`.
-
-- Extrair `PolicySheet` de `PoliciesTab.tsx` para um arquivo próprio `src/components/portfolio/PolicyDetailDrawer.tsx` (mesma implementação, prop `policy | null`).
-- `PoliciesTab` passa a importar de lá.
-- `PortfolioModule` controla um novo estado `selectedPolicy: Policy | null`, renderiza `<PolicyDetailDrawer />` no nível do módulo e passa `onOpenPolicy={(p) => { setSelectedClient(null); setSelectedPolicy(p); }}` para o `ClientDetailDrawer`.
-- Ao fechar o policy drawer, limpa o estado. Clique do cliente dentro do policy drawer (já existe via `Row "Cliente"`?) pode ser estendido depois se quiser bidirecional.
-
-## 8. Novos campos no Drawer das Apólices (Saúde e Consórcio)
-
-**Arquivo:** `src/components/portfolio/PolicyDetailDrawer.tsx` (após extração no item 7)
-
-Na aba **Detalhes**, abaixo do bloco existente, renderizar condicionalmente:
-
-**Quando `policy.branch === "Saúde"`:**
-- `Row` "Categoria do plano" → `policy.healthCategory` (ou "—").
-- `Row` "Coparticipação" → "Sim" / "Não" (a partir de `policy.healthCoparticipation`).
-- Sub-bloco "Beneficiários" listando cada `policy.beneficiaries[]` em cards compactos (Nome · Título · Nascimento + idade · CPF). Reusar `calcAge` do ClientDetailDrawer.
-
-**Quando `policy.branch === "Consórcio"`:**
-- `Row` "Grupo" → `policy.consortiumGroup`.
-- `Row` "Cota" → `policy.consortiumQuota`.
-- `Row` "Tipo" → `policy.consortiumType` (novo campo do item 2).
-
----
+```text
+src/lib/mock/data.ts                          tipo Commission + Policy.assigneeId + status novos
+src/lib/cash/cashStore.tsx                    helper formatDateBR (parser local)
+src/lib/financial/commissionEngine.ts         2 casas decimais
+src/lib/financial/commissionStore.tsx         paidAt, refundedAt, cascade on policy cancel
+src/lib/financial/sellerCommissionStore.tsx   NEW
+src/lib/portfolio/policyStore.tsx             observar transição p/ cancelada
+src/components/financial/CommissionStatusMenu.tsx   novos status
+src/components/financial/CaixaTab.tsx         filtros, devolvido como saída, botão Conciliar
+src/components/financial/MovementDetailsSheet.tsx   exibição data/hora condicional
+src/components/financial/SellerCommissionsTab.tsx   NEW
+src/components/financial/ReconcileSheet.tsx        NEW
+src/components/modules/FinancialModule.tsx    nova aba
+src/components/portfolio/NewPolicyDialog.tsx  persistir assigneeId
+src/components/portfolio/EditPolicyDialog.tsx persistir assigneeId
+```
 
 ## Fora de escopo
-
-- Recalcular relatórios anuais existentes em função do prêmio mensal de Saúde (item 3).
-- Refatorar `commissionEngine` para o novo `consortiumType`.
-- Edição inline desses novos campos no drawer (segue pelo `EditPolicyDialog`).
+- RPA real (scraping nos portais das seguradoras): documentar e adiar.
+- Devolução pró-rata.
+- Conciliação agendada/automática.
+- Relatório fiscal de repasses (export contábil).

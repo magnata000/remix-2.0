@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { formatBRL, formatBRLInt, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
@@ -53,7 +53,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     if (open && policy) {
       setBranch(policy.branch);
       setInsurer(policy.insurer);
-      setPremium(formatBRL(policy.premium));
+      setPremium(formatBRLInt(policy.premium));
       setStartDate(policy.startDate ? new Date(policy.startDate) : undefined);
       setEndDate(policy.endDate ? new Date(policy.endDate) : undefined);
       setStatus(policy.status);
@@ -61,7 +61,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setCommissionStr(policy.commissionPct != null ? String(policy.commissionPct).replace(".", ",") : "");
       setHealthAnniversary(policy.healthAnniversary ?? "");
       setAnniversaryTouched(!!policy.healthAnniversary);
-      setHealthInitialValue(policy.healthInitialValue ? formatBRL(policy.healthInitialValue) : "");
+      setHealthInitialValue(policy.healthInitialValue ? formatBRLInt(policy.healthInitialValue) : "");
       setHealthCategory(policy.healthCategory ?? "");
       setHealthCoparticipation(!!policy.healthCoparticipation);
       setBeneficiaries(policy.beneficiaries ?? []);
@@ -112,6 +112,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
+      assigneeId: policy.assigneeId,
       commissionPct: commissionPct || undefined,
       comissaoLiquida,
       taxaImposto,
@@ -171,7 +172,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
                 inputMode="numeric"
                 value={premium}
                 onChange={(e) => setPremium(e.target.value.replace(/\D/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRL(premiumNum)); }}
+                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLInt(premiumNum)); }}
                 onFocus={() => setPremium(String(premiumNum || ""))}
                 placeholder="R$ 0"
                 className="mt-1.5 rounded-xl bg-muted border-0"

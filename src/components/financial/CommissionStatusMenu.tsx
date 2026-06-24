@@ -5,24 +5,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCommissionStore, type CommissionStatus } from "@/lib/financial/commissionStore";
-import type { Commission } from "@/lib/mock/data";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
+import type { Commission, CommissionStatusValue } from "@/lib/mock/data";
 import { toast } from "sonner";
 
-const statusColor: Record<CommissionStatus, string> = {
+const statusColor: Record<CommissionStatusValue, string> = {
   pago: "bg-success/15 text-success border-0",
   pendente: "bg-warning/15 text-warning border-0",
   atrasado: "bg-destructive/15 text-destructive border-0",
+  devolvido: "bg-destructive/20 text-destructive border-0",
+  cancelada: "bg-muted text-muted-foreground border-0",
 };
 
-const STATUSES: CommissionStatus[] = ["pago", "pendente", "atrasado"];
+const STATUSES: CommissionStatusValue[] = ["pago", "pendente", "atrasado", "devolvido", "cancelada"];
 
 type Props = { commission: Commission };
 
 export function CommissionStatusMenu({ commission }: Props) {
   const { updateCommissionStatus } = useCommissionStore();
 
-  const handleChange = (next: CommissionStatus) => {
+  const handleChange = (next: CommissionStatusValue) => {
     if (next === commission.status) return;
     updateCommissionStatus(commission.id, next);
     toast.success(`Status alterado para "${next}"`);
@@ -59,3 +61,5 @@ export function CommissionStatusMenu({ commission }: Props) {
     </DropdownMenu>
   );
 }
+
+export { statusColor as commissionStatusColor };

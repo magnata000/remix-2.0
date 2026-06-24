@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatDateShort, type Beneficiary, type BeneficiaryTitle, type Branch } from "@/lib/mock/data";
+import { formatBRL, formatBRLInt, formatDateShort, type Beneficiary, type BeneficiaryTitle, type Branch } from "@/lib/mock/data";
 
 const TITLE_OPTIONS: { key: BeneficiaryTitle; label: string }[] = [
   { key: "titular", label: "Titular" },
@@ -84,7 +84,7 @@ export function BranchSpecificFields(p: Props) {
               inputMode="numeric"
               value={p.healthInitialValue}
               onChange={(e) => p.setHealthInitialValue(e.target.value.replace(/\D/g, ""))}
-              onBlur={() => { if (initialNum > 0) p.setHealthInitialValue(formatBRL(initialNum)); }}
+              onBlur={() => { if (initialNum > 0) p.setHealthInitialValue(formatBRLInt(initialNum)); }}
               onFocus={() => p.setHealthInitialValue(String(initialNum || ""))}
               placeholder="R$ 0"
               className="mt-1.5 rounded-xl bg-muted border-0"

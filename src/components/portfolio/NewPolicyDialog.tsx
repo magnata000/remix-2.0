@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
+import { team, formatBRL, formatBRLInt, formatDateShort, type Beneficiary, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
@@ -126,6 +126,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
+      assigneeId: assigneeId || undefined,
       commissionPct: commissionPct || undefined,
       comissaoLiquida,
       taxaImposto,
@@ -225,7 +226,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
                 inputMode="numeric"
                 value={premium}
                 onChange={(e) => setPremium(e.target.value.replace(/\D/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRL(premiumNum)); }}
+                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLInt(premiumNum)); }}
                 onFocus={() => setPremium(String(premiumNum || ""))}
                 placeholder="R$ 0"
                 className="mt-1.5 rounded-xl bg-muted border-0"

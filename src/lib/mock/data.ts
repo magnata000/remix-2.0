@@ -49,6 +49,7 @@ export type Policy = {
   consortiumGroup?: string;
   consortiumQuota?: string;
   consortiumType?: "Imóvel" | "Auto";
+  assigneeId?: string;
 };
 
 export type KanbanStage = "lead" | "cotacao" | "negociacao" | "fechado" | "perdido";
@@ -80,6 +81,7 @@ export type Quote = {
   coverages: string[];
   rating: number;
 };
+export type CommissionStatusValue = "pago" | "pendente" | "atrasado" | "devolvido" | "cancelada";
 export type Commission = {
   id: string;
   policyNumber: string;
@@ -87,11 +89,14 @@ export type Commission = {
   insurer: Insurer;
   amount: number;
   dueDate: string;
-  status: "pago" | "pendente" | "atrasado";
+  status: CommissionStatusValue;
   policyId?: string;
   kind?: CommissionKind;
   installmentIndex?: number;
   installmentTotal?: number;
+  paidAt?: string;
+  refundedAt?: string;
+  refundReason?: string;
 };
 export type TeamMember = { id: string; name: string; role: string; email: string };
 
@@ -351,6 +356,10 @@ export const insurerLogos: Record<Insurer, string> = {
 };
 
 export const formatBRL = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** BRL sem centavos — usado em inputs que trabalham com reais inteiros. */
+export const formatBRLInt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
 export const formatDateShort = (iso: string) => {
