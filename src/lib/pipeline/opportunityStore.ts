@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode, createElement } from "react";
 import { tasks as initialTasks, team, type Task, type KanbanStage, type LostReason, type Branch } from "@/lib/mock/data";
-import type { TaskAttachment, TaskComment, TaskTimelineEvent } from "@/lib/tasks/taskStore";
+import { MAX_PINNED_COMMENTS, type TaskAttachment, type TaskComment, type TaskTimelineEvent } from "@/lib/tasks/taskStore";
 
 export type Opportunity = Task & {
   createdAt: string;
@@ -25,6 +25,7 @@ type Ctx = {
   deleteComment: (id: string, commentId: string) => void;
   removeCommentAttachment: (id: string, commentId: string, attachmentId: string) => void;
   addAttachment: (id: string, file: File) => void;
+  togglePinComment: (id: string, commentId: string) => void;
 };
 
 const PipelineContext = createContext<Ctx | null>(null);
@@ -233,6 +234,20 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const togglePinComment = useCallback((id: string, commentId: string) => {
+    setOpportunities((arr) => arr.map((t) => {
+      if (t.id !== id) return t;
+      const target = t.comments.find((c) => c.id === commentId);
+      if (!target) return t;
+      const pinnedCount = t.comments.filter((c) => c.pinned).length;
+      if (!target.pinned && pinnedCount >= MAX_PINNED_COMMENTS) return t;
+      return {
+        ...t,
+        comments: t.comments.map((c) => c.id === commentId ? { ...c, pinned: !c.pinned } : c),
+      };
+    }));
+  }, []);
+
   const indexByGroup = useMemo(() => {
     const m = new Map<string, Opportunity>();
     opportunities.forEach((o) => { if (o.quoteGroupId) m.set(o.quoteGroupId, o); });
@@ -243,7 +258,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
 
   const value: Ctx = {
     opportunities, currentUserId: me, byQuoteGroup, moveStage, linkQuoteGroup, createFromQuote, createOpportunity,
-    setEstimatedValue, unlinkQuoteGroup, addMessage, editComment, deleteComment, removeCommentAttachment, addAttachment,
+    setEstimatedValue, unlinkQuoteGroup, addMessage, editComment, deleteComment, removeCommentAttachment, addAttachment, togglePinComment,
   };
   return createElement(PipelineContext.Provider, { value }, children);
 }

@@ -1,15 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Plus, Settings, CalendarClock, Search, X, MessageSquare, Paperclip } from "lucide-react";
+import { Plus, Settings, CalendarClock, Search, X, MessageSquare, Paperclip, User as UserIcon } from "lucide-react";
 import { team, clients } from "@/lib/mock/data";
 import { TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { searchTasks } from "@/lib/tasks/searchTasks";
+import { runWorkflows } from "@/lib/tasks/workflowEngine";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { TaskCard } from "./TaskCard";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
@@ -20,7 +21,8 @@ import { toast } from "sonner";
 
 
 export function TasksBoard() {
-  const { columns, tasks, moveTask, deleteTask } = useTaskStore();
+  const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
+  const { policies } = usePolicyStore();
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [editTask, setEditTask] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
@@ -29,17 +31,33 @@ export function TasksBoard() {
   const [detail, setDetail] = useState<TaskItem | null>(null);
   const [detailInitialSearch, setDetailInitialSearch] = useState<string>("");
   const [dragId, setDragId] = useState<string | null>(null);
-  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
-  const [globalSearch, setGlobalSearch] = useState("");
-  const globalResults = useMemo(() => searchTasks(tasks, globalSearch), [tasks, globalSearch]);
 
+  // Busca unificada (clientes + mensagens + documentos)
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // filters
   const [fAssignee, setFAssignee] = useState<string>("todos");
   const [fPriority, setFPriority] = useState<string[]>([]);
   const [fClient, setFClient] = useState<string>("");
-  const [clientOpen, setClientOpen] = useState(false);
   const [fSort, setFSort] = useState<"recent" | "old">("recent");
+
+  // Workflow engine — roda no mount da aba, dedupe via sourceKey
+  const defaultColumnId = columns[0]?.id;
+  useEffect(() => {
+    if (!defaultColumnId) return;
+    const created = runWorkflows({ policies, existingTasks: tasks, defaultColumnId });
+    if (created.length) bulkAddTasks(created);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const term = searchTerm.trim();
+  const clientMatches = useMemo(() => {
+    if (!term) return [];
+    const q = term.toLowerCase();
+    return clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 5);
+  }, [term]);
+  const taskMatches = useMemo(() => (term ? searchTasks(tasks, term) : []), [tasks, term]);
 
   const filtered = useMemo(() => {
     let list = [...tasks];
@@ -64,38 +82,100 @@ export function TasksBoard() {
       <Card className="p-3 rounded-2xl">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex flex-1 min-w-0 flex-wrap items-center gap-2">
-            <Popover open={clientOpen} onOpenChange={setClientOpen}>
+            <Popover open={searchOpen} onOpenChange={(v) => { setSearchOpen(v); if (!v) setSearchTerm(""); }}>
               <PopoverTrigger asChild>
-                <div className="relative w-full sm:w-56">
+                <div className="relative w-full sm:w-72">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    readOnly
-                    value={fClient}
-                    placeholder="Buscar cliente..."
-                    className="pl-9 rounded-xl bg-muted border-0 cursor-pointer"
-                    onClick={() => setClientOpen(true)}
+                    value={fClient || searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); if (!searchOpen) setSearchOpen(true); }}
+                    onFocus={() => setSearchOpen(true)}
+                    placeholder="Buscar cliente, mensagem ou documento…"
+                    className="pl-9 rounded-xl bg-muted border-0"
                   />
-                  {fClient && (
-                    <button onClick={(e) => { e.stopPropagation(); setFClient(""); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {(fClient || searchTerm) && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setFClient(""); setSearchTerm(""); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label="Limpar busca"
+                    >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Digite o nome..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhum cliente.</CommandEmpty>
-                    <CommandGroup>
-                      {clients.map((c) => (
-                        <CommandItem key={c.id} value={c.name} onSelect={() => { setFClient(c.name); setClientOpen(false); }}>
-                          {c.name}
-                        </CommandItem>
+              <PopoverContent
+                className="w-[--radix-popover-trigger-width] min-w-[320px] p-0"
+                align="start"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                <div className="max-h-[400px] overflow-y-auto">
+                  {!term && (
+                    <p className="p-4 text-xs text-muted-foreground text-center">
+                      Digite para buscar clientes, mensagens e anexos.
+                    </p>
+                  )}
+                  {term && clientMatches.length === 0 && taskMatches.length === 0 && (
+                    <p className="p-4 text-xs text-muted-foreground text-center">Nenhum resultado.</p>
+                  )}
+                  {clientMatches.length > 0 && (
+                    <div>
+                      <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40">Clientes</p>
+                      {clientMatches.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => { setFClient(c.name); setSearchTerm(""); setSearchOpen(false); }}
+                          className="w-full text-left px-3 py-2 hover:bg-muted border-b border-border last:border-0 flex items-center gap-2"
+                        >
+                          <UserIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-xs font-medium truncate">{c.name}</span>
+                        </button>
                       ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
+                    </div>
+                  )}
+                  {taskMatches.length > 0 && (
+                    <div>
+                      <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40">Mensagens e documentos</p>
+                      {taskMatches.map(({ task: t, matches }) => {
+                        const col = columns.find((c) => c.id === t.columnId);
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => {
+                              setDetailInitialSearch(term);
+                              setDetail(t);
+                              setSearchOpen(false);
+                              setSearchTerm("");
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-muted border-b border-border last:border-0"
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: col?.color }} />
+                              <span className="text-xs font-semibold truncate flex-1">{t.title}</span>
+                              <span className="text-[10px] text-muted-foreground shrink-0">{col?.title}</span>
+                            </div>
+                            <ul className="space-y-0.5">
+                              {matches.slice(0, 3).map((m) => (
+                                <li key={`${m.kind}-${m.id}`} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                                  {m.kind === "comment"
+                                    ? <MessageSquare className="h-3 w-3 mt-0.5 shrink-0" />
+                                    : <Paperclip className="h-3 w-3 mt-0.5 shrink-0" />}
+                                  <span className="break-words">{m.snippet}</span>
+                                </li>
+                              ))}
+                              {matches.length > 3 && (
+                                <li className="text-[10px] text-muted-foreground">+{matches.length - 3} resultado(s)</li>
+                              )}
+                            </ul>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </PopoverContent>
             </Popover>
 
@@ -123,74 +203,6 @@ export function TasksBoard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 ml-auto">
-            <Popover open={globalSearchOpen} onOpenChange={(v) => { setGlobalSearchOpen(v); if (!v) setGlobalSearch(""); }}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="rounded-xl" aria-label="Buscar mensagens e documentos">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[360px] p-0" align="end">
-                <div className="p-2 border-b border-border">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      autoFocus
-                      value={globalSearch}
-                      onChange={(e) => setGlobalSearch(e.target.value)}
-                      placeholder="Buscar mensagem ou documento…"
-                      className="h-8 pl-8 pr-8 rounded-lg text-xs"
-                    />
-                    {globalSearch && (
-                      <button type="button" onClick={() => setGlobalSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpar">
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="max-h-[360px] overflow-y-auto">
-                  {!globalSearch.trim() && (
-                    <p className="p-4 text-xs text-muted-foreground text-center">Digite para buscar em mensagens e anexos.</p>
-                  )}
-                  {globalSearch.trim() && globalResults.length === 0 && (
-                    <p className="p-4 text-xs text-muted-foreground text-center">Nenhum resultado.</p>
-                  )}
-                  {globalResults.map(({ task: t, matches }) => {
-                    const col = columns.find((c) => c.id === t.columnId);
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => {
-                          setDetailInitialSearch(globalSearch);
-                          setDetail(t);
-                          setGlobalSearchOpen(false);
-                        }}
-                        className="w-full text-left px-3 py-2 hover:bg-muted border-b border-border last:border-0"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="h-1.5 w-1.5 rounded-full" style={{ background: col?.color }} />
-                          <span className="text-xs font-semibold truncate flex-1">{t.title}</span>
-                          <span className="text-[10px] text-muted-foreground">{col?.title}</span>
-                        </div>
-                        <ul className="space-y-0.5">
-                          {matches.slice(0, 3).map((m) => (
-                            <li key={`${m.kind}-${m.id}`} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-                              {m.kind === "comment"
-                                ? <MessageSquare className="h-3 w-3 mt-0.5 shrink-0" />
-                                : <Paperclip className="h-3 w-3 mt-0.5 shrink-0" />}
-                              <span className="break-words">{m.snippet}</span>
-                            </li>
-                          ))}
-                          {matches.length > 3 && (
-                            <li className="text-[10px] text-muted-foreground">+{matches.length - 3} resultado(s)</li>
-                          )}
-                        </ul>
-                      </button>
-                    );
-                  })}
-                </div>
-              </PopoverContent>
-            </Popover>
             <Button variant="outline" className="rounded-xl" onClick={() => setScheduleOpen(true)}>
               <CalendarClock className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Agendamentos</span>
             </Button>

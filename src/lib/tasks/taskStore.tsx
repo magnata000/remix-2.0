@@ -48,6 +48,8 @@ export type TaskItem = {
   comments: TaskComment[];
   attachments: TaskAttachment[];
   timeline: TaskTimelineEvent[];
+  /** Identificador opaco usado por workflows automáticos para dedupe. */
+  sourceKey?: string;
 };
 
 export type ScheduledKind = "data" | "semana";
@@ -56,6 +58,7 @@ export type PeriodKind = "mensal" | "bimestral" | "trimestral" | "semestral" | "
 export type ScheduledTask = {
   id: string;
   title: string;
+  description?: string;
   assigneeId: string;
   priority: Priority;
   kind: ScheduledKind;
@@ -161,6 +164,7 @@ type Ctx = {
   scheduled: ScheduledTask[];
   currentUserId: string;
   addTask: (t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">) => TaskItem;
+  bulkAddTasks: (records: Array<Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">>) => void;
   moveTask: (id: string, columnId: string) => void;
   deleteTask: (id: string) => void;
   updateTaskFields: (id: string, patch: Partial<Pick<TaskItem, "title" | "description" | "dueDate" | "priority" | "assigneeId" | "clientName" | "columnId">>) => void;
@@ -199,6 +203,28 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     };
     setTasks((arr) => [rec, ...arr]);
     return rec;
+  }, [currentUserId]);
+
+  const bulkAddTasks = useCallback<Ctx["bulkAddTasks"]>((records) => {
+    if (!records.length) return;
+    setTasks((arr) => {
+      const existingKeys = new Set(arr.map((t) => t.sourceKey).filter((k): k is string => !!k));
+      const toAdd: TaskItem[] = [];
+      records.forEach((r, i) => {
+        if (r.sourceKey && existingKeys.has(r.sourceKey)) return;
+        if (r.sourceKey) existingKeys.add(r.sourceKey);
+        const at = new Date().toISOString();
+        toAdd.push({
+          ...r,
+          id: `tk${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+          createdAt: at,
+          comments: [],
+          attachments: [],
+          timeline: [{ kind: "created", at, by: currentUserId }],
+        });
+      });
+      return toAdd.length ? [...toAdd, ...arr] : arr;
+    });
   }, [currentUserId]);
 
   const moveTask = useCallback((id: string, columnId: string) => {
@@ -380,10 +406,10 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
+    addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, updateScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
 
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;

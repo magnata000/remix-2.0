@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,6 +33,7 @@ const REPEAT_OPTIONS: { value: RepeatValue; label: string }[] = [
 export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { scheduled, addScheduled, updateScheduled, removeScheduled } = useTaskStore();
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("media");
   const [kind, setKind] = useState<ScheduledKind>("data");
@@ -42,6 +44,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
 
   const resetForm = () => {
     setTitle("");
+    setDescription("");
     setAssigneeId(team[0]?.id ?? "");
     setPriority("media");
     setKind("data");
@@ -54,6 +57,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const startEdit = (s: typeof scheduled[number]) => {
     setEditingId(s.id);
     setTitle(s.title);
+    setDescription(s.description ?? "");
     setAssigneeId(s.assigneeId);
     setPriority(s.priority);
     setKind(s.kind);
@@ -76,7 +80,9 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     const from = range?.from;
     const to = range?.to ?? range?.from;
     const payload = {
-      title: title.trim(), assigneeId, priority, kind,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      assigneeId, priority, kind,
       startDate: kind === "data" ? from?.toISOString() : undefined,
       endDate: kind === "data" ? to?.toISOString() : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
@@ -100,6 +106,10 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
           <div>
             <Label className="text-xs text-muted-foreground">Título</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Felicitar aniversariantes" className="mt-1.5 rounded-xl bg-muted border-0" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Descrição</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Detalhes da tarefa (opcional)" className="mt-1.5 rounded-xl bg-muted border-0 resize-none" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -182,20 +192,27 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
               <ul className="space-y-2">
                 {scheduled.map((s) => (
                   <li key={s.id} className={cn("rounded-xl border border-border p-3", editingId === s.id && "ring-1 ring-brand/40")}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{s.title}</p>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold truncate flex-1 min-w-0">{s.title}</p>
+                          <Badge variant="outline" className="bg-muted border-0 text-[10px] shrink-0">
+                            {s.kind === "data" ? "Data" : "Semanal"}
+                          </Badge>
+                        </div>
                         <p className="text-xs text-muted-foreground">{describeSchedule(s)}</p>
+                        {s.description && (
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap break-words">{s.description}</p>
+                        )}
                       </div>
-                      <Badge variant="outline" className="bg-muted border-0 text-[10px]">
-                        {s.kind === "data" ? "Data" : "Semanal"}
-                      </Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => startEdit(s)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { if (editingId === s.id) resetForm(); removeScheduled(s.id); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => startEdit(s)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { if (editingId === s.id) resetForm(); removeScheduled(s.id); }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </li>
                 ))}

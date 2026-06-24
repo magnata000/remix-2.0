@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Send, Tag, Trophy, User, Wallet } from "lucide-react";
+import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trophy, User, Wallet } from "lucide-react";
 import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage } from "@/lib/mock/data";
 import { usePipelineStore, stageLabels, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
+import { MAX_PINNED_COMMENTS } from "@/lib/tasks/taskStore";
 import { MentionInput } from "@/components/tasks/MentionInput";
 import {
   CommentBubble,
@@ -30,7 +31,7 @@ type Props = {
 };
 
 export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote }: Props) {
-  const { addMessage, editComment, deleteComment, removeCommentAttachment, currentUserId } = usePipelineStore();
+  const { addMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, currentUserId } = usePipelineStore();
   const { groups } = useQuoteStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
@@ -139,6 +140,40 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
 
           <section className="flex flex-col overflow-hidden min-h-0 border-l border-border pl-4">
             <h3 className="text-sm font-semibold mb-2">Timeline</h3>
+            {(() => {
+              const pinned = o.comments.filter((c) => c.pinned);
+              if (pinned.length === 0) return null;
+              const canPinMore = pinned.length < MAX_PINNED_COMMENTS;
+              return (
+                <div className="mb-3 rounded-xl border border-border bg-muted/40 p-2 space-y-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                    <Pin className="h-3 w-3" /> Fixadas ({pinned.length}/{MAX_PINNED_COMMENTS})
+                  </p>
+                  {pinned.map((c) => {
+                    const atts = (c.attachmentIds ?? [])
+                      .map((id) => o.attachments.find((a) => a.id === id))
+                      .filter((a): a is NonNullable<typeof a> => !!a);
+                    const within24h = Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS;
+                    return (
+                      <TimelineRow key={`pin-${c.id}`} authorId={c.authorId} at={c.createdAt}>
+                        <CommentBubble
+                          comment={c}
+                          attachments={atts}
+                          canEdit={c.authorId === currentUserId && within24h}
+                          canDelete={c.authorId === currentUserId && within24h}
+                          pinned
+                          canPin={canPinMore}
+                          onTogglePin={() => togglePinComment(o.id, c.id)}
+                          onSaveText={(t) => editComment(o.id, c.id, t)}
+                          onRemoveAttachment={(aid) => removeCommentAttachment(o.id, c.id, aid)}
+                          onDelete={() => deleteComment(o.id, c.id)}
+                        />
+                      </TimelineRow>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             <div ref={timelineRef} className="flex-1 overflow-y-auto space-y-3 pr-2">
               {o.timeline.map((ev, i) => {
                 if (ev.kind === "created")
@@ -161,12 +196,18 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                   const atts = (c.attachmentIds ?? [])
                     .map((id) => o.attachments.find((a) => a.id === id))
                     .filter((a): a is NonNullable<typeof a> => !!a);
+                  const within24h = Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS;
+                  const pinnedCount = o.comments.filter((x) => x.pinned).length;
                   return (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
                       <CommentBubble
                         comment={c}
                         attachments={atts}
-                        canEdit={c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < EDIT_WINDOW_MS}
+                        canEdit={c.authorId === currentUserId && within24h}
+                        canDelete={c.authorId === currentUserId && within24h}
+                        pinned={!!c.pinned}
+                        canPin={pinnedCount < MAX_PINNED_COMMENTS}
+                        onTogglePin={() => togglePinComment(o.id, c.id)}
                         onSaveText={(t) => editComment(o.id, c.id, t)}
                         onRemoveAttachment={(aid) => removeCommentAttachment(o.id, c.id, aid)}
                         onDelete={() => deleteComment(o.id, c.id)}
