@@ -10,16 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Search, FileText, Calendar, Building2, User, Plus, RotateCw, Pencil } from "lucide-react";
+import { Search, FileText, Plus } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
@@ -28,11 +20,7 @@ import {
 } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
-import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
-import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
-
-import { useDocumentStore } from "@/lib/documents/documentStore";
-import { FolderTree } from "@/components/documents/FolderTree";
+import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
