@@ -25,6 +25,7 @@ type Ctx = {
   deleteComment: (id: string, commentId: string) => void;
   removeCommentAttachment: (id: string, commentId: string, attachmentId: string) => void;
   addAttachment: (id: string, file: File) => void;
+  togglePinComment: (id: string, commentId: string) => void;
 };
 
 const PipelineContext = createContext<Ctx | null>(null);
