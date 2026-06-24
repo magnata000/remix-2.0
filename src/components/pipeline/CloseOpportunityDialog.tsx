@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatBRL, formatDateShort } from "@/lib/mock/data";
+import { formatBRL, formatBRLInt, formatDateShort } from "@/lib/mock/data";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import type { Opportunity } from "@/lib/pipeline/opportunityStore";
 
@@ -98,7 +98,7 @@ export function CloseOpportunityDialog({ open, onOpenChange, opportunity, onConf
               inputMode="numeric"
               value={manualValue}
               onChange={(e) => setManualValue(e.target.value.replace(/\D/g, ""))}
-              onBlur={() => { if (numericValue > 0) setManualValue(formatBRL(numericValue)); }}
+              onBlur={() => { if (numericValue > 0) setManualValue(formatBRLInt(numericValue)); }}
               onFocus={() => setManualValue(String(numericValue || ""))}
               placeholder="R$ 0"
               className="mt-1.5 rounded-xl bg-muted border-0"
