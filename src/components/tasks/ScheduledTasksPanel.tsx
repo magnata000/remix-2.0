@@ -192,20 +192,27 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
               <ul className="space-y-2">
                 {scheduled.map((s) => (
                   <li key={s.id} className={cn("rounded-xl border border-border p-3", editingId === s.id && "ring-1 ring-brand/40")}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{s.title}</p>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold truncate flex-1 min-w-0">{s.title}</p>
+                          <Badge variant="outline" className="bg-muted border-0 text-[10px] shrink-0">
+                            {s.kind === "data" ? "Data" : "Semanal"}
+                          </Badge>
+                        </div>
                         <p className="text-xs text-muted-foreground">{describeSchedule(s)}</p>
+                        {s.description && (
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap break-words">{s.description}</p>
+                        )}
                       </div>
-                      <Badge variant="outline" className="bg-muted border-0 text-[10px]">
-                        {s.kind === "data" ? "Data" : "Semanal"}
-                      </Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => startEdit(s)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { if (editingId === s.id) resetForm(); removeScheduled(s.id); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => startEdit(s)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { if (editingId === s.id) resetForm(); removeScheduled(s.id); }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </li>
                 ))}
