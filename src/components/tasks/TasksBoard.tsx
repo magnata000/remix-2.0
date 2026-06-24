@@ -21,7 +21,8 @@ import { toast } from "sonner";
 
 
 export function TasksBoard() {
-  const { columns, tasks, moveTask, deleteTask } = useTaskStore();
+  const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
+  const { policies } = usePolicyStore();
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [editTask, setEditTask] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
@@ -30,17 +31,33 @@ export function TasksBoard() {
   const [detail, setDetail] = useState<TaskItem | null>(null);
   const [detailInitialSearch, setDetailInitialSearch] = useState<string>("");
   const [dragId, setDragId] = useState<string | null>(null);
-  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
-  const [globalSearch, setGlobalSearch] = useState("");
-  const globalResults = useMemo(() => searchTasks(tasks, globalSearch), [tasks, globalSearch]);
 
+  // Busca unificada (clientes + mensagens + documentos)
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // filters
   const [fAssignee, setFAssignee] = useState<string>("todos");
   const [fPriority, setFPriority] = useState<string[]>([]);
   const [fClient, setFClient] = useState<string>("");
-  const [clientOpen, setClientOpen] = useState(false);
   const [fSort, setFSort] = useState<"recent" | "old">("recent");
+
+  // Workflow engine — roda no mount da aba, dedupe via sourceKey
+  const defaultColumnId = columns[0]?.id;
+  useEffect(() => {
+    if (!defaultColumnId) return;
+    const created = runWorkflows({ policies, existingTasks: tasks, defaultColumnId });
+    if (created.length) bulkAddTasks(created);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const term = searchTerm.trim();
+  const clientMatches = useMemo(() => {
+    if (!term) return [];
+    const q = term.toLowerCase();
+    return clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 5);
+  }, [term]);
+  const taskMatches = useMemo(() => (term ? searchTasks(tasks, term) : []), [tasks, term]);
 
   const filtered = useMemo(() => {
     let list = [...tasks];
