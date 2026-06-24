@@ -164,6 +164,7 @@ type Ctx = {
   scheduled: ScheduledTask[];
   currentUserId: string;
   addTask: (t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">) => TaskItem;
+  bulkAddTasks: (records: Array<Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">>) => void;
   moveTask: (id: string, columnId: string) => void;
   deleteTask: (id: string) => void;
   updateTaskFields: (id: string, patch: Partial<Pick<TaskItem, "title" | "description" | "dueDate" | "priority" | "assigneeId" | "clientName" | "columnId">>) => void;
