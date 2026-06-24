@@ -45,6 +45,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [consortiumGroup, setConsortiumGroup] = useState("");
   const [consortiumQuota, setConsortiumQuota] = useState("");
+  const [consortiumType, setConsortiumType] = useState<"Imóvel" | "Auto" | undefined>(undefined);
   const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
   const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
@@ -66,6 +67,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setBeneficiaries(policy.beneficiaries ?? []);
       setConsortiumGroup(policy.consortiumGroup ?? "");
       setConsortiumQuota(policy.consortiumQuota ?? "");
+      setConsortiumType(policy.consortiumType);
       setComissaoLiquida(policy.comissaoLiquida);
       setTaxaImposto(policy.taxaImposto);
     }
@@ -120,6 +122,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       beneficiaries: branch === "Saúde" && beneficiaries.length ? beneficiaries : undefined,
       consortiumGroup: branch === "Consórcio" ? (consortiumGroup || undefined) : undefined,
       consortiumQuota: branch === "Consórcio" ? (consortiumQuota || undefined) : undefined,
+      consortiumType: branch === "Consórcio" ? consortiumType : undefined,
     });
     toast.success(`Apólice ${policy.number} atualizada`);
     onOpenChange(false);
@@ -163,7 +166,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
             </div>
 
             <div>
-              <Label className="text-xs text-muted-foreground">Prêmio anual *</Label>
+              <Label className="text-xs text-muted-foreground">{branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}</Label>
               <Input
                 inputMode="numeric"
                 value={premium}
@@ -238,6 +241,8 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
             setConsortiumGroup={setConsortiumGroup}
             consortiumQuota={consortiumQuota}
             setConsortiumQuota={setConsortiumQuota}
+            consortiumType={consortiumType}
+            setConsortiumType={setConsortiumType}
           />
 
           <div className="grid grid-cols-2 gap-3">
