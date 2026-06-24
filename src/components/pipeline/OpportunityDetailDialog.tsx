@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Send, Tag, Trophy, User, Wallet } from "lucide-react";
+import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trophy, User, Wallet } from "lucide-react";
 import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage } from "@/lib/mock/data";
 import { usePipelineStore, stageLabels, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
+import { MAX_PINNED_COMMENTS } from "@/lib/tasks/taskStore";
 import { MentionInput } from "@/components/tasks/MentionInput";
 import {
   CommentBubble,
