@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode, createElement } from "react";
 import { tasks as initialTasks, team, type Task, type KanbanStage, type LostReason, type Branch } from "@/lib/mock/data";
-import type { TaskAttachment, TaskComment, TaskTimelineEvent } from "@/lib/tasks/taskStore";
+import { MAX_PINNED_COMMENTS, type TaskAttachment, type TaskComment, type TaskTimelineEvent } from "@/lib/tasks/taskStore";
 
 export type Opportunity = Task & {
   createdAt: string;
