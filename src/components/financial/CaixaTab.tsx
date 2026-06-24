@@ -46,8 +46,8 @@ export function CaixaTab() {
   };
 
   // Movimentações unificadas — comissões devolvidas viram SAÍDA
-  const movements = useMemo<Movement[]>(() => {
-    const fromCommissions: Movement[] = commissions.map((c) => {
+  const movements = useMemo<(Movement & { _sortIso: string })[]>(() => {
+    const fromCommissions = commissions.map((c) => {
       const kindLbl = commissionKindLabel(c.kind);
       const inst = c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
         ? ` ${c.installmentIndex}/${c.installmentTotal}`
