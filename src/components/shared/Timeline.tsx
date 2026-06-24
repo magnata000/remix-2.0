@@ -92,11 +92,12 @@ export function AttachmentChip({ a, onRemove }: { a: TaskAttachment; onRemove?: 
 }
 
 export function CommentBubble({
-  comment, attachments, canEdit, pinned, canPin, onTogglePin, onSaveText, onRemoveAttachment, onDelete,
+  comment, attachments, canEdit, canDelete, pinned, canPin, onTogglePin, onSaveText, onRemoveAttachment, onDelete,
 }: {
   comment: TaskComment;
   attachments: TaskAttachment[];
   canEdit: boolean;
+  canDelete?: boolean;
   pinned?: boolean;
   canPin?: boolean;
   onTogglePin?: () => void;
@@ -117,6 +118,11 @@ export function CommentBubble({
     const clean = draft.trim();
     if (clean !== comment.text) onSaveText(clean);
     setEditing(false);
+  };
+
+  const handleDelete = () => {
+    if (typeof window !== "undefined" && !window.confirm("Excluir esta mensagem? Esta ação não pode ser desfeita.")) return;
+    onDelete();
   };
 
   const showDeleteAction = draft.trim().length === 0 && attachments.length <= 1;
@@ -197,6 +203,15 @@ export function CommentBubble({
               className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-foreground shrink-0"
               aria-label="Editar mensagem">
               <Pencil className="h-3 w-3" />
+            </button>
+          )}
+          {canDelete && (
+            <button type="button"
+              onClick={handleDelete}
+              className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-destructive shrink-0"
+              aria-label="Excluir mensagem"
+              title="Excluir mensagem">
+              <Trash2 className="h-3 w-3" />
             </button>
           )}
         </div>
