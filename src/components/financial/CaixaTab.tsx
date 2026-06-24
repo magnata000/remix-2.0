@@ -75,34 +75,30 @@ export function CaixaTab() {
         _sortIso: sortIso,
       } as Movement & { _sortIso: string };
     });
-    const fromManual: Movement[] = incomes.map((i) => ({
+    const fromManual = incomes.map((i) => ({
       id: `inc-${i.id}`,
-      kind: "entrada",
+      kind: "entrada" as const,
       date: formatDateTimeBR(i.receivedAt),
       description: i.description,
       amount: i.amount,
-      details: { kind: "manual", income: i },
-      // @ts-expect-error sort helper
+      details: { kind: "manual" as const, income: i },
       _sortIso: i.receivedAt,
     }));
-    const out: Movement[] = entries.map((e) => ({
+    const out = entries.map((e) => ({
       id: `out-${e.id}`,
-      kind: "saida",
+      kind: "saida" as const,
       date: formatDateTimeBR(e.paidAt),
       description: e.description,
       amount: e.amount,
-      details: { kind: "saida", entry: e, expense: expenses.find((x) => x.id === e.expenseId) },
-      // @ts-expect-error sort helper
+      details: { kind: "saida" as const, entry: e, expense: expenses.find((x) => x.id === e.expenseId) },
       _sortIso: e.paidAt,
     }));
     return [...fromCommissions, ...fromManual, ...out].sort(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (a: any, b: any) => new Date(b._sortIso).getTime() - new Date(a._sortIso).getTime()
+      (a, b) => new Date(b._sortIso).getTime() - new Date(a._sortIso).getTime()
     );
   }, [commissions, incomes, entries, expenses]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const monthMovements = movements.filter((m: any) => inMonth(m._sortIso));
+  const monthMovements = movements.filter((m) => inMonth(m._sortIso));
 
   const filteredMonthMovements = useMemo(() => {
     return monthMovements.filter((m) => {
