@@ -85,6 +85,8 @@ export function generateCommissionSchedule(
 
   // ---- Saúde: Agenciamento (recorrência é gerada à parte) ----
   if (product === "saude") {
+    // Vitalício: sem parcelas fixas — só recorrência a partir da parcela X (gerada à parte).
+    if (scheme === "vitalicio") return [];
     const schedule = policy.agenciamentoSchedule ?? config.agenciamento;
     const mensalidade = policy.healthInitialValue ?? Math.round(policy.premium / 12);
     return schedule.map((pct, i) => ({
