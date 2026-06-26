@@ -102,6 +102,23 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
 
   const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
 
+  // Limites por seguradora para Parcelado/Adiantamento (Seguros)
+  const autoConfig = useMemo(() => getConfig(insurer, "auto"), [getConfig, insurer]);
+  const installmentsNum = Math.max(1, Number(autoInstallments) || 1);
+  const minParcelado = autoConfig.parceladoMinInstallments ?? 5;
+  const maxAdiantamento = autoConfig.adiantamentoMaxInstallments ?? 4;
+  const parceladoAllowed = installmentsNum >= minParcelado;
+  const adiantamentoAllowed = installmentsNum <= maxAdiantamento;
+
+  // Se a seleção atual virar inválida, alterna para a outra opção (quando possível)
+  useEffect(() => {
+    if (autoScheme === "parcela" && !parceladoAllowed && adiantamentoAllowed) {
+      setAutoScheme("esgotamento");
+    } else if (autoScheme === "esgotamento" && !adiantamentoAllowed && parceladoAllowed) {
+      setAutoScheme("parcela");
+    }
+  }, [autoScheme, parceladoAllowed, adiantamentoAllowed]);
+
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!clientId) e.client = "Selecione um cliente";
