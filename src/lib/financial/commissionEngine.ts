@@ -167,14 +167,20 @@ export function expectedRecurrencesUntil(
   if (branchToProduct(policy.branch) !== "saude") return [];
   if (policy.status === "cancelada" || policy.status === "vencida") return [];
   const status = opts.initialStatus ?? "pendente";
+  const scheme: CommissionScheme = policy.commissionScheme ?? config.defaultScheme;
   const schedule = policy.agenciamentoSchedule ?? config.agenciamento;
   const recorrPct = policy.recorrenciaPct ?? config.recorrenciaPct;
   const mensalidade = policy.healthInitialValue ?? Math.round(policy.premium / 12);
   const amount = applyTax(mensalidade * recorrPct, config);
+  const isVitalicio = scheme === "vitalicio";
+  const startOffsetMonths = isVitalicio
+    ? Math.max(1, config.vitalicioStartInstallment ?? 13) - 1
+    : schedule.length;
+  const kind: Commission["kind"] = isVitalicio ? "vitalicio" : "recorrencia";
 
   const start = new Date(policy.startDate);
   const firstRecurrenceMonth = new Date(start);
-  firstRecurrenceMonth.setMonth(firstRecurrenceMonth.getMonth() + schedule.length);
+  firstRecurrenceMonth.setMonth(firstRecurrenceMonth.getMonth() + startOffsetMonths);
 
   const out: Commission[] = [];
   let cursor = new Date(firstRecurrenceMonth);
@@ -194,7 +200,7 @@ export function expectedRecurrencesUntil(
         amount,
         dueDate: due,
         status,
-        kind: "recorrencia",
+        kind,
         installmentIndex: i,
       });
     }
@@ -208,9 +214,11 @@ export function commissionKindLabel(kind?: Commission["kind"]): string {
   switch (kind) {
     case "agenciamento": return "Agenciamento";
     case "recorrencia": return "Recorrência";
-    case "esgotamento": return "Esgotamento";
-    case "parcela": return "Parcela";
+    case "vitalicio": return "Vitalício";
+    case "esgotamento": return "Adiantamento";
+    case "parcela": return "Parcelado";
     case "unica": return "Única";
     default: return "Comissão";
   }
 }
+
