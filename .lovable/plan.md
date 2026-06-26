@@ -1,102 +1,105 @@
-# Plano — Página Financeiro
+# Plano — Configurações > Comissionamento
 
-## 1. Bug de data/hora nas Movimentações (comissões)
+## 1. Renomeação de labels
 
-**Causa:** `Commission.dueDate` é `"YYYY-MM-DD"`. `new Date("2025-03-10")` é interpretado como UTC 00:00 → em BR (UTC-3) vira 09/03 21:00. Mostrar hora não faz sentido em comissões (não há hora real).
+Trocas apenas de texto na UI (sem mudança nos valores internos / chaves), em `CommissionConfigSection.tsx` e nos pontos que exibem essas opções (`NewPolicyDialog.tsx`, `EditPolicyDialog.tsx`, `RenewPolicyDialog.tsx`, `MovementDetailsSheet.tsx`, `commissionEngine.commissionKindLabel`).
 
-**Solução:**
-- Tornar `Commission` opcional `paidAt?: string` (ISO completo). Quando `CommissionStatusMenu` muda status para "pago", grava `paidAt = new Date().toISOString()`.
-- `MovementDetailsSheet` e coluna "Data/Hora" da tabela:
-  - Comissão paga → exibir `formatDateTimeBR(paidAt)`.
-  - Demais (pendente/atrasado/devolvido) → exibir só a data, usando parser local: `parseLocalISO("YYYY-MM-DD")` → `new Date(y, m-1, d)` (sem deslocamento de timezone).
-- Adicionar helper `formatDateBR` em `cashStore.tsx` que usa o parser local. Reusar `formatDateShort` se equivalente.
+| Atual | Novo |
+|---|---|
+| Auto / Seguros | Seguros |
+| Esgotamento (antecipada) | Adiantamento |
+| Por parcela | Parcelado |
+| Esquema padrão | Tipo |
 
-## 2. Valores com 2 casas decimais
+Chaves internas (`"esgotamento"`, `"parcela"`, `"agenciamento"`, `"unica"`, `product: "auto"`) permanecem inalteradas para não quebrar dados mockados nem o motor de comissão.
 
-**Causa:** `formatBRL` usa `maximumFractionDigits: 0`; `generateCommissionSchedule` e `expectedRecurrencesUntil` arredondam com `Math.round`.
+## 2. Seguros — limites de parcela por seguradora
 
-**Solução:**
-- `formatBRL`: passar a usar `minimumFractionDigits: 2, maximumFractionDigits: 2`. Verificar uso em KPIs/Dashboard/Pipeline — atualmente todos exibem moeda; 2 casas é o padrão BR e não quebra nada visual.
-- `commissionEngine.ts`: substituir `Math.round(value)` por `Math.round(value * 100) / 100` nas funções `applyTax`, agenciamento e recorrência. Mantém precisão em parcelas pequenas (ex: R$ 14,50).
-- Sem mudança em valores já mockados (são inteiros e seguem renderizando como `X,00`).
+Estender `CommissionConfig` (em `commissionEngine.ts`) com dois novos campos opcionais, válidos só quando `product === "auto"`:
 
-## 3. Status "devolvido" + lógica de cancelamento de apólice
+```ts
+parceladoMinInstallments?: number;   // “A partir de X parcelas”  (Tipo = Parcelado)
+adiantamentoMaxInstallments?: number; // “Até X parcelas”          (Tipo = Adiantamento)
+```
 
-**Tipo:** `Commission.status` passa a aceitar `"pago" | "pendente" | "atrasado" | "devolvido" | "cancelada"`.
-- `"devolvido"`: comissão que já tinha sido paga e teve de retornar à seguradora → conta como **saída** no caixa.
-- `"cancelada"`: parcela futura que não vai mais ocorrer → some dos KPIs, fica visível na tabela com badge cinza, valor riscado.
+Seed em `commissionConfigStore.tsx` (`baseAuto`): default `parceladoMinInstallments = 5`, `adiantamentoMaxInstallments = 4`.
 
-**Gatilho:** quando uma `Policy` muda para `status === "cancelada"` (via `updatePolicy` em `policyStore`):
-1. Para cada comissão da apólice (`scheduleOfPolicy(id)`):
-   - `status === "pago"` → vira `"devolvido"`, grava `refundedAt = now()`.
-   - `status in ("pendente","atrasado")` → vira `"cancelada"`.
-   - `status in ("devolvido","cancelada")` → ignora (idempotente).
-2. Emite toast: "X parcelas devolvidas · Y parcelas canceladas".
+UI (`CommissionConfigSection.ConfigCard`, bloco `isAuto`):
+- Quando `defaultScheme === "parcela"` exibe input **“A partir de X parcelas”**.
+- Quando `defaultScheme === "esgotamento"` exibe input **“Até X parcelas”**.
+- Ambos inteiros ≥ 1. Validação no `save()`.
 
-**UI — `CaixaTab` / tabela Movimentações:**
-- Filtro Status ganha "Devolvido" e "Cancelada".
-- `CommissionStatusMenu`: inclui as duas novas opções. "Devolvido" só selecionável a partir de "pago"; "Cancelada" só a partir de pendente/atrasado (regras enforced no menu, mas livres se forçado manualmente — usuário tem controle total, requisito da conciliação).
-- Devolvido renderiza como **saída** (linha vermelha, ícone ↑) e entra em `summary.expense`; comissão cancelada não entra em nenhum total e aparece com classe `line-through text-muted-foreground`.
-- `MovementDetailsSheet`: linha "Status" mostra novos badges; em "Devolvido", adiciona Row "Motivo: Cancelamento da apólice ANT-XXXX".
+Validação no cadastro/edição de apólice (`NewPolicyDialog.tsx`, `EditPolicyDialog.tsx`, `RenewPolicyDialog.tsx`) quando ramo ≠ Saúde/Consórcio:
+- Buscar `configForPolicy({ insurer, branch })`.
+- Construir lista de opções do select **Tipo** dinamicamente:
+  - **Parcelado** habilitado apenas se `commissionInstallments >= parceladoMinInstallments`.
+  - **Adiantamento** habilitado apenas se `commissionInstallments <= adiantamentoMaxInstallments`.
+- Opções desabilitadas aparecem com texto auxiliar (“min 5 parcelas”, “máx 4 parcelas”) e, se a seleção atual se tornar inválida, força fallback para a outra opção + toast.
 
-**Fora de escopo desta etapa:** pró-rata (devolução proporcional ao tempo restante). Hoje é tudo ou nada; documentamos como item futuro.
+## 3. Saúde — novo tipo Vitalício
 
-## 4. Nova aba **Repasses de vendedores**
+Adicionar `"vitalicio"` a `CommissionScheme` em `commissionEngine.ts`. Atualizar `SCHEMES_BY_PRODUCT.saude` em `CommissionConfigSection.tsx`:
+```
+{ value: "agenciamento", label: "Agenciamento + recorrência" }
+{ value: "vitalicio",    label: "Vitalício" }
+```
 
-Persistência: adicionar `assigneeId?: string` em `Policy` (UI já tem o campo "Vendedor" em `NewPolicyDialog`/`EditPolicyDialog`; hoje não é salvo no objeto). Propagar para `addPolicy`/`updatePolicy`.
+Novo campo em `CommissionConfig` (saúde):
+```ts
+vitalicioStartInstallment?: number; // "A partir da parcela"
+```
+Exibido no `ConfigCard` quando `product === "saude"` e `defaultScheme === "vitalicio"` (default 13).
 
-**Novo store:** `src/lib/financial/sellerCommissionStore.tsx`
-- `SellerCommissionRate { memberId: string; branch: Branch; pct: number }`
-- Seed: para cada `TeamMember` com role `"Vendedor"`, gera entradas para cada `Branch` com `pct = 30` (default).
-- API: `getRate(memberId, branch)`, `updateRate(...)`, `computeSellerPayout(commission, policy)` → `commission.amount * pct / 100` (só para comissões `status === "pago"`).
+Motor de comissão (`commissionEngine.ts`):
+- `generateCommissionSchedule` para Saúde + scheme `"vitalicio"`: gera as primeiras `vitalicioStartInstallment - 1` parcelas como `agenciamento` (usando schedule existente truncado/estendido — manter `agenciamento` como hoje; documentar como o usuário aciona — confirmar regra abaixo).
+- Nova função `expectedVitalicioUntil(policy, config, referenceMonth, existing)`: a partir do mês da parcela configurada, gera comissão mensal recorrente (`amount = mensalidade * recorrenciaPct`) enquanto a apólice estiver ativa. Reaproveita a infra de `expectedRecurrencesUntil` (`useEffect` em `commissionStore.tsx` chama o equivalente).
+- `kind` novo: `"vitalicio"`; label em `commissionKindLabel`.
 
-**Novo componente:** `src/components/financial/SellerCommissionsTab.tsx`
-- **Bloco 1 — Configuração de %**: tabela `Vendedor × Ramo` editável (input de % por célula). Botão "Salvar".
-- **Bloco 2 — Histórico por vendedor**: seletor de vendedor + seletor de mês. Lista todas as comissões pagas naquele mês cuja `policy.assigneeId === vendedor`, mostrando: data, cliente, apólice, ramo, valor comissão corretora, % aplicado, **valor repasse R$**. Total no rodapé.
-- **Bloco 3 — KPI**: total a repassar no mês selecionado, agrupado por vendedor (cards).
+A apólice mantém `commissionScheme` por apólice (override) — usuário pode escolher Vitalício no `NewPolicyDialog` para Saúde.
 
-**Wire-up:** `FinancialModule.tsx` ganha 3ª `TabsTrigger` "Repasses".
+## 4. Saúde — campo Malha por seguradora
 
-## 5. Conciliação de comissões (upload mensal manual)
+Adicionar tabela de **Malhas** ao store de configuração.
 
-Mantém **controle total do usuário** (requisito explícito). RPA real de scraping fica como roadmap; entregamos o fluxo de upload + reconciliação assistida que a RPA alimentaria.
+```ts
+// commissionEngine.ts
+type Malha = { id: string; insurer: Insurer; name: string; description?: string };
 
-**Onde:** dentro da aba Caixa, novo botão `"Conciliar mês"` no header da tabela Movimentações. Abre `ReconcileSheet`.
+// CommissionConfig (saúde)
+malhaId?: string; // malha vinculada à configuração atual
+```
 
-**Fluxo do Sheet:**
-1. Seletor de seguradora + upload de planilha (`.csv`/`.xlsx`). Mock parseia em memória — sem backend. Schema esperado documentado no próprio sheet: `apolice, vencimento, valor`.
-2. Sistema casa cada linha da planilha contra `commissions` filtrando por `insurer + mês`:
-   - **Match exato** (apólice + valor) → marca para `status = "pago"`, `paidAt = data da planilha`.
-   - **Match por apólice, valor divergente** → linha amarela, mostra ambos os valores, usuário decide: aceitar valor da seguradora / manter atual / marcar como devolvido.
-   - **Na planilha mas não no sistema** → linha laranja, oferece "Criar entrada manual".
-   - **No sistema mas não na planilha** → linha cinza, oferece "Marcar como atrasado" ou "Ignorar".
-3. Resumo no rodapé (X matches, Y divergências, Z extras) + botão "Aplicar alterações".
+Novo bloco no `commissionConfigStore.tsx`:
+- `malhas: Malha[]` (seed: 1 malha por seguradora, ex.: “Padrão”).
+- API: `listMalhas(insurer)`, `addMalha(insurer, name)`, `updateMalha`, `removeMalha`.
 
-**Persistência:** registra `ReconciliationRun { id, insurer, month, createdAt, summary }` em store local; visível em painel "Conciliações deste mês" abaixo do botão, com link para reabrir.
+UI no `ConfigCard` (Saúde):
+- Campo **Malha** (Select de malhas da seguradora + botão "Nova malha…") exibido apenas para `defaultScheme in {"agenciamento", "vitalicio"}`.
+- O Select edita `local.malhaId`. Persistido junto com o resto via `updateConfig`.
 
-**Acionamento:** **manual** (todo mês o usuário clica). Não há agendamento automático nesta entrega.
+Uso downstream:
+- `configForPolicy` injeta `malhaId` na config retornada para a apólice (sem alterar cálculo financeiro — Malha é metadado de classificação).
+- Exibir o nome da malha em `MovementDetailsSheet` e `PolicyDetailDrawer` (linha “Malha: <nome>”) quando comissão for de Saúde.
 
-## 6. Arquivos a tocar
+## 5. Arquivos a tocar
 
 ```text
-src/lib/mock/data.ts                          tipo Commission + Policy.assigneeId + status novos
-src/lib/cash/cashStore.tsx                    helper formatDateBR (parser local)
-src/lib/financial/commissionEngine.ts         2 casas decimais
-src/lib/financial/commissionStore.tsx         paidAt, refundedAt, cascade on policy cancel
-src/lib/financial/sellerCommissionStore.tsx   NEW
-src/lib/portfolio/policyStore.tsx             observar transição p/ cancelada
-src/components/financial/CommissionStatusMenu.tsx   novos status
-src/components/financial/CaixaTab.tsx         filtros, devolvido como saída, botão Conciliar
-src/components/financial/MovementDetailsSheet.tsx   exibição data/hora condicional
-src/components/financial/SellerCommissionsTab.tsx   NEW
-src/components/financial/ReconcileSheet.tsx        NEW
-src/components/modules/FinancialModule.tsx    nova aba
-src/components/portfolio/NewPolicyDialog.tsx  persistir assigneeId
-src/components/portfolio/EditPolicyDialog.tsx persistir assigneeId
+src/lib/financial/commissionEngine.ts          tipos: scheme "vitalicio", Malha, novos campos config, motor vitalicio
+src/lib/financial/commissionConfigStore.tsx    seed dos novos campos + CRUD de malhas
+src/lib/financial/commissionStore.tsx          ensureVitalicioForMonth (paralelo à recorrência)
+src/components/settings/CommissionConfigSection.tsx  renomes, novos inputs, select de malha
+src/components/portfolio/NewPolicyDialog.tsx   labels novos, tipo dinâmico p/ Seguros, opção Vitalício p/ Saúde
+src/components/portfolio/EditPolicyDialog.tsx  idem
+src/components/portfolio/RenewPolicyDialog.tsx idem
+src/components/financial/MovementDetailsSheet.tsx  label “Adiantamento/Parcelado/Vitalício” + Malha
 ```
 
 ## Fora de escopo
-- RPA real (scraping nos portais das seguradoras): documentar e adiar.
-- Devolução pró-rata.
-- Conciliação agendada/automática.
-- Relatório fiscal de repasses (export contábil).
+- Migração de dados antigos: mockados já caem nos defaults novos.
+- Recalcular comissões já geradas ao alterar `vitalicioStartInstallment` retroativamente.
+- Editor avançado de malhas (descrição rica, histórico) — só CRUD básico nome.
+
+## Perguntas (responda antes de implementar, se quiser ajustar)
+1. **Vitalício, parcelas iniciais:** as parcelas antes do "A partir da parcela X" continuam como **Agenciamento** usando a lista de % já existente (`agenciamento: number[]`), ou devem ser zero (sem comissão antes da parcela X)?
+2. **Malha — escopo:** Malha é apenas rótulo/classificação (sem impacto no cálculo), correto? Ou ela deve sobrescrever os % (agenciamento/recorrência) por malha?
+3. **Defaults sugeridos** (Parcelado ≥ 5, Adiantamento ≤ 4, Vitalício a partir da 13ª) — ok ou prefere outros?
