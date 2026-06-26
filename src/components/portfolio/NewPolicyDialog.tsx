@@ -79,6 +79,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
     setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
     setCommissionStr(""); setAutoScheme("esgotamento"); setAutoInstallments("10");
+    setHealthScheme("agenciamento");
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
     setConsortiumGroup(""); setConsortiumQuota(""); setConsortiumType(undefined);
