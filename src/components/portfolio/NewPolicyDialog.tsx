@@ -58,6 +58,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const [autoScheme, setAutoScheme] = useState<"esgotamento" | "parcela">("esgotamento");
   const [autoInstallments, setAutoInstallments] = useState("10");
   // Saúde
+  const [healthScheme, setHealthScheme] = useState<"agenciamento" | "vitalicio">("agenciamento");
   const [healthAnniversary, setHealthAnniversary] = useState("");
   const [anniversaryTouched, setAnniversaryTouched] = useState(false);
   const [healthInitialValue, setHealthInitialValue] = useState("");
