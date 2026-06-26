@@ -89,6 +89,7 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                 <Row label="Cliente" value={c.clientName} />
                 <Row label="Seguradora" value={c.insurer} />
                 <Row label="Apólice" value={<span className="font-mono text-xs">{c.policyNumber}</span>} />
+                {malhaName && <Row label="Malha" value={malhaName} />}
                 <Row label="Parcela" value={instLabel} />
                 <Row label="Vencimento" value={formatDateBR(c.dueDate)} />
                 {c.paidAt && <Row label="Pago em" value={formatDateTimeBR(c.paidAt)} />}
