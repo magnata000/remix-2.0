@@ -5,8 +5,10 @@ import { formatDateTimeBR, formatDateBR, type Expense, type ExpenseEntry, type M
 import type { Commission } from "@/lib/mock/data";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 import { commissionStatusColor } from "@/components/financial/CommissionStatusMenu";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
 
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
