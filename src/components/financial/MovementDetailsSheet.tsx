@@ -37,8 +37,16 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
   const { scheduleOfPolicy } = useCommissionStore();
+  const { findPolicy } = usePolicyStore();
+  const { configForPolicy, findMalha } = useCommissionConfigStore();
   if (!movement) return null;
   const isEntry = movement.kind === "entrada";
+  const policyForComm = movement.details.kind === "comissao" && movement.details.commission.policyId
+    ? findPolicy(movement.details.commission.policyId)
+    : undefined;
+  const malhaName = policyForComm && policyForComm.branch === "Saúde"
+    ? findMalha(configForPolicy(policyForComm).malhaId)?.name
+    : undefined;
   const schedule = movement.details.kind === "comissao" && movement.details.commission.policyId
     ? scheduleOfPolicy(movement.details.commission.policyId)
     : [];
