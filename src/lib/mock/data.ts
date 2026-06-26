@@ -16,8 +16,8 @@ export type Beneficiary = {
   cpf: string;
 };
 
-export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica";
-export type CommissionKind = "agenciamento" | "recorrencia" | "esgotamento" | "parcela" | "unica";
+export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica" | "vitalicio";
+export type CommissionKind = "agenciamento" | "recorrencia" | "esgotamento" | "parcela" | "unica" | "vitalicio";
 
 export type Policy = {
   id: string;
