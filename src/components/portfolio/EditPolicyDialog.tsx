@@ -39,6 +39,9 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
   const [touched, setTouched] = useState(false);
 
   const [commissionStr, setCommissionStr] = useState("");
+  const [autoScheme, setAutoScheme] = useState<"esgotamento" | "parcela">("esgotamento");
+  const [autoInstallments, setAutoInstallments] = useState("10");
+  const [healthScheme, setHealthScheme] = useState<"agenciamento" | "vitalicio">("agenciamento");
   const [healthAnniversary, setHealthAnniversary] = useState("");
   const [anniversaryTouched, setAnniversaryTouched] = useState(false);
   const [healthInitialValue, setHealthInitialValue] = useState("");
