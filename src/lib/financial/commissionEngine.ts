@@ -4,7 +4,9 @@
 import type { Commission, Insurer, Policy } from "@/lib/mock/data";
 
 export type CommissionProduct = "saude" | "auto" | "consorcio";
-export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica";
+export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica" | "vitalicio";
+
+export type Malha = { id: string; insurer: Insurer; name: string; description?: string };
 
 export type CommissionConfig = {
   insurer: Insurer;
@@ -14,9 +16,13 @@ export type CommissionConfig = {
   // Saúde
   agenciamento: number[];        // ex: [1.0, 0.5, 0.3, 0.2]
   recorrenciaPct: number;        // ex: 0.03
-  // Auto
+  vitalicioStartInstallment?: number; // p/ scheme "vitalicio" — a partir da parcela X
+  malhaId?: string;                   // p/ Saúde — classificação interna
+  // Auto / Seguros
   pctMin: number;                // ex: 0.10
   pctMax: number;                // ex: 0.25
+  parceladoMinInstallments?: number;   // "Parcelado" disponível a partir de X parcelas
+  adiantamentoMaxInstallments?: number; // "Adiantamento" disponível até X parcelas
   defaultScheme: CommissionScheme;
 };
 
@@ -79,6 +85,8 @@ export function generateCommissionSchedule(
 
   // ---- Saúde: Agenciamento (recorrência é gerada à parte) ----
   if (product === "saude") {
+    // Vitalício: sem parcelas fixas — só recorrência a partir da parcela X (gerada à parte).
+    if (scheme === "vitalicio") return [];
     const schedule = policy.agenciamentoSchedule ?? config.agenciamento;
     const mensalidade = policy.healthInitialValue ?? Math.round(policy.premium / 12);
     return schedule.map((pct, i) => ({
@@ -159,14 +167,20 @@ export function expectedRecurrencesUntil(
   if (branchToProduct(policy.branch) !== "saude") return [];
   if (policy.status === "cancelada" || policy.status === "vencida") return [];
   const status = opts.initialStatus ?? "pendente";
+  const scheme: CommissionScheme = policy.commissionScheme ?? config.defaultScheme;
   const schedule = policy.agenciamentoSchedule ?? config.agenciamento;
   const recorrPct = policy.recorrenciaPct ?? config.recorrenciaPct;
   const mensalidade = policy.healthInitialValue ?? Math.round(policy.premium / 12);
   const amount = applyTax(mensalidade * recorrPct, config);
+  const isVitalicio = scheme === "vitalicio";
+  const startOffsetMonths = isVitalicio
+    ? Math.max(1, config.vitalicioStartInstallment ?? 13) - 1
+    : schedule.length;
+  const kind: Commission["kind"] = isVitalicio ? "vitalicio" : "recorrencia";
 
   const start = new Date(policy.startDate);
   const firstRecurrenceMonth = new Date(start);
-  firstRecurrenceMonth.setMonth(firstRecurrenceMonth.getMonth() + schedule.length);
+  firstRecurrenceMonth.setMonth(firstRecurrenceMonth.getMonth() + startOffsetMonths);
 
   const out: Commission[] = [];
   let cursor = new Date(firstRecurrenceMonth);
@@ -186,7 +200,7 @@ export function expectedRecurrencesUntil(
         amount,
         dueDate: due,
         status,
-        kind: "recorrencia",
+        kind,
         installmentIndex: i,
       });
     }
@@ -200,9 +214,11 @@ export function commissionKindLabel(kind?: Commission["kind"]): string {
   switch (kind) {
     case "agenciamento": return "Agenciamento";
     case "recorrencia": return "Recorrência";
-    case "esgotamento": return "Esgotamento";
-    case "parcela": return "Parcela";
+    case "vitalicio": return "Vitalício";
+    case "esgotamento": return "Adiantamento";
+    case "parcela": return "Parcelado";
     case "unica": return "Única";
     default: return "Comissão";
   }
 }
+

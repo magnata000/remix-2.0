@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Minus, Calculator, ChevronDown } from "lucide-react";
+import { Plus, Minus, Calculator, ChevronDown, Trash2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import type { CommissionConfig, CommissionProduct, CommissionScheme } from "@/lib/financial/commissionEngine";
@@ -14,17 +14,20 @@ import type { Insurer } from "@/lib/mock/data";
 import { toast } from "sonner";
 
 const PRODUCT_LABEL: Record<CommissionProduct, string> = {
-  auto: "Auto / Seguros",
+  auto: "Seguros",
   saude: "Saúde",
   consorcio: "Consórcio",
 };
 
 const SCHEMES_BY_PRODUCT: Record<CommissionProduct, { value: CommissionScheme; label: string }[]> = {
   auto: [
-    { value: "esgotamento", label: "Esgotamento (antecipada)" },
-    { value: "parcela", label: "Por parcela" },
+    { value: "esgotamento", label: "Adiantamento" },
+    { value: "parcela", label: "Parcelado" },
   ],
-  saude: [{ value: "agenciamento", label: "Agenciamento + recorrência" }],
+  saude: [
+    { value: "agenciamento", label: "Agenciamento + recorrência" },
+    { value: "vitalicio", label: "Vitalício" },
+  ],
   consorcio: [{ value: "unica", label: "Comissão única" }],
 };
 
@@ -86,12 +89,14 @@ export function CommissionConfigSection() {
 }
 
 function ConfigCard({ config }: { config: CommissionConfig }) {
-  const { updateConfig } = useCommissionConfigStore();
+  const { updateConfig, listMalhas, addMalha, removeMalha } = useCommissionConfigStore();
   const [local, setLocal] = useState<CommissionConfig>(config);
+  const [newMalhaName, setNewMalhaName] = useState("");
 
   useEffect(() => setLocal(config), [config]);
 
   const dirty = useMemo(() => JSON.stringify(local) !== JSON.stringify(config), [local, config]);
+  const malhasForInsurer = listMalhas(config.insurer);
 
   const save = () => {
     if (local.pctMin > local.pctMax) {
@@ -101,6 +106,18 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
     if (local.taxaImposto < 0 || local.taxaImposto > 1) {
       toast.error("Taxa de imposto inválida");
       return;
+    }
+    if (local.product === "auto") {
+      if ((local.parceladoMinInstallments ?? 0) < 1 || (local.adiantamentoMaxInstallments ?? 0) < 1) {
+        toast.error("Limites de parcelas devem ser ≥ 1");
+        return;
+      }
+    }
+    if (local.product === "saude" && local.defaultScheme === "vitalicio") {
+      if ((local.vitalicioStartInstallment ?? 0) < 1) {
+        toast.error("Parcela inicial do Vitalício deve ser ≥ 1");
+        return;
+      }
     }
     updateConfig(config.insurer, config.product, local);
     toast.success(`${config.insurer} · ${PRODUCT_LABEL[config.product]} atualizado`);
@@ -116,8 +133,18 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
   const removeAg = (i: number) =>
     setLocal({ ...local, agenciamento: local.agenciamento.filter((_, idx) => idx !== i) });
 
+  const handleAddMalha = () => {
+    const name = newMalhaName.trim();
+    if (!name) return;
+    const m = addMalha(config.insurer, name);
+    setLocal({ ...local, malhaId: m.id });
+    setNewMalhaName("");
+    toast.success(`Malha "${m.name}" criada`);
+  };
+
   const isAuto = config.product === "auto";
   const isSaude = config.product === "saude";
+  const isVitalicio = isSaude && local.defaultScheme === "vitalicio";
 
   return (
     <Card className="p-4 rounded-xl border-border shadow-none bg-muted/30">
@@ -161,9 +188,9 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
           />
         )}
 
-        {/* Esquema padrão */}
+        {/* Tipo */}
         <div>
-          <Label className="text-xs text-muted-foreground">Esquema padrão</Label>
+          <Label className="text-xs text-muted-foreground">Tipo</Label>
           <Select
             value={local.defaultScheme}
             onValueChange={(v) => setLocal({ ...local, defaultScheme: v as CommissionScheme })}
@@ -183,21 +210,40 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
 
         {/* Auto: min/max */}
         {isAuto && (
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="% mínimo permitido"
-              value={pctToStr(local.pctMin)}
-              onChange={(v) => setLocal({ ...local, pctMin: strToPct(v) })}
-            />
-            <Field
-              label="% máximo permitido"
-              value={pctToStr(local.pctMax)}
-              onChange={(v) => setLocal({ ...local, pctMax: strToPct(v) })}
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="% mínimo permitido"
+                value={pctToStr(local.pctMin)}
+                onChange={(v) => setLocal({ ...local, pctMin: strToPct(v) })}
+              />
+              <Field
+                label="% máximo permitido"
+                value={pctToStr(local.pctMax)}
+                onChange={(v) => setLocal({ ...local, pctMax: strToPct(v) })}
+              />
+            </div>
+            {local.defaultScheme === "parcela" && (
+              <Field
+                label="A partir de X parcelas (Parcelado)"
+                value={String(local.parceladoMinInstallments ?? 5)}
+                onChange={(v) => setLocal({ ...local, parceladoMinInstallments: Math.max(1, parseInt(v, 10) || 1) })}
+              />
+            )}
+            {local.defaultScheme === "esgotamento" && (
+              <Field
+                label="Até X parcelas (Adiantamento)"
+                value={String(local.adiantamentoMaxInstallments ?? 4)}
+                onChange={(v) => setLocal({ ...local, adiantamentoMaxInstallments: Math.max(1, parseInt(v, 10) || 1) })}
+              />
+            )}
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              Define qual tipo fica disponível ao cadastrar a apólice conforme o número de parcelas.
+            </p>
+          </>
         )}
 
-        {/* Saúde: agenciamento + recorrência */}
+        {/* Saúde: agenciamento + recorrência + vitalicio + malha */}
         {isSaude && (
           <>
             <Field
@@ -205,6 +251,13 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
               value={pctToStr(local.recorrenciaPct)}
               onChange={(v) => setLocal({ ...local, recorrenciaPct: strToPct(v) })}
             />
+            {isVitalicio && (
+              <Field
+                label="A partir da parcela (Vitalício)"
+                value={String(local.vitalicioStartInstallment ?? 13)}
+                onChange={(v) => setLocal({ ...local, vitalicioStartInstallment: Math.max(1, parseInt(v, 10) || 1) })}
+              />
+            )}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <Label className="text-xs text-muted-foreground">
@@ -244,6 +297,60 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
               <p className="text-[11px] text-muted-foreground mt-1.5">
                 Ex.: 100, 50, 30, 20 = 1ª mensalidade integral, 2ª 50%, 3ª 30%, 4ª 20%.
               </p>
+            </div>
+
+            {/* Malha */}
+            <div>
+              <Label className="text-xs text-muted-foreground">Malha</Label>
+              <div className="mt-1.5 flex gap-2">
+                <Select
+                  value={local.malhaId ?? ""}
+                  onValueChange={(v) => setLocal({ ...local, malhaId: v || undefined })}
+                >
+                  <SelectTrigger className="rounded-lg bg-card flex-1">
+                    <SelectValue placeholder="Selecione uma malha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {malhasForInsurer.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {local.malhaId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="rounded-lg"
+                    onClick={() => {
+                      const id = local.malhaId!;
+                      removeMalha(id);
+                      setLocal({ ...local, malhaId: undefined });
+                    }}
+                    aria-label="Remover malha"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+              <div className="mt-2 flex gap-2">
+                <Input
+                  placeholder="Nova malha…"
+                  value={newMalhaName}
+                  onChange={(e) => setNewMalhaName(e.target.value)}
+                  className="rounded-lg bg-card"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddMalha(); } }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-lg"
+                  onClick={handleAddMalha}
+                  disabled={!newMalhaName.trim()}
+                >
+                  Adicionar
+                </Button>
+              </div>
             </div>
           </>
         )}

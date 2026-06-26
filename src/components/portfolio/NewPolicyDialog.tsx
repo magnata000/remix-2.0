@@ -16,6 +16,7 @@ import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
+import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { toast } from "sonner";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; defaultClientName?: string };
@@ -38,6 +39,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const { addPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
+  const { getConfig } = useCommissionConfigStore();
 
   const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
@@ -56,6 +58,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const [autoScheme, setAutoScheme] = useState<"esgotamento" | "parcela">("esgotamento");
   const [autoInstallments, setAutoInstallments] = useState("10");
   // Saúde
+  const [healthScheme, setHealthScheme] = useState<"agenciamento" | "vitalicio">("agenciamento");
   const [healthAnniversary, setHealthAnniversary] = useState("");
   const [anniversaryTouched, setAnniversaryTouched] = useState(false);
   const [healthInitialValue, setHealthInitialValue] = useState("");
@@ -76,6 +79,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
     setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
     setCommissionStr(""); setAutoScheme("esgotamento"); setAutoInstallments("10");
+    setHealthScheme("agenciamento");
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
     setConsortiumGroup(""); setConsortiumQuota(""); setConsortiumType(undefined);
@@ -97,6 +101,23 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
 
   const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
+
+  // Limites por seguradora para Parcelado/Adiantamento (Seguros)
+  const autoConfig = useMemo(() => getConfig(insurer, "auto"), [getConfig, insurer]);
+  const installmentsNum = Math.max(1, Number(autoInstallments) || 1);
+  const minParcelado = autoConfig.parceladoMinInstallments ?? 5;
+  const maxAdiantamento = autoConfig.adiantamentoMaxInstallments ?? 4;
+  const parceladoAllowed = installmentsNum >= minParcelado;
+  const adiantamentoAllowed = installmentsNum <= maxAdiantamento;
+
+  // Se a seleção atual virar inválida, alterna para a outra opção (quando possível)
+  useEffect(() => {
+    if (autoScheme === "parcela" && !parceladoAllowed && adiantamentoAllowed) {
+      setAutoScheme("esgotamento");
+    } else if (autoScheme === "esgotamento" && !adiantamentoAllowed && parceladoAllowed) {
+      setAutoScheme("parcela");
+    }
+  }, [autoScheme, parceladoAllowed, adiantamentoAllowed]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -140,7 +161,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
         healthCategory: healthCategory || undefined,
         healthCoparticipation,
         beneficiaries: beneficiaries.length ? beneficiaries : undefined,
-        commissionScheme: "agenciamento" as const,
+        commissionScheme: healthScheme,
       }),
       ...(branch === "Consórcio" && {
         consortiumGroup: consortiumGroup || undefined,
@@ -350,33 +371,49 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
           {!["Saúde", "Consórcio"].includes(branch) && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Forma de pagamento da comissão</Label>
+                <Label className="text-xs text-muted-foreground">Número de parcelas</Label>
+                <Input
+                  inputMode="numeric"
+                  value={autoInstallments}
+                  onChange={(e) => setAutoInstallments(e.target.value.replace(/\D/g, ""))}
+                  placeholder="10"
+                  className="mt-1.5 rounded-xl bg-muted border-0"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
                 <Select value={autoScheme} onValueChange={(v) => setAutoScheme(v as typeof autoScheme)}>
                   <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="esgotamento">Esgotamento (antecipada)</SelectItem>
-                    <SelectItem value="parcela">Por parcela</SelectItem>
+                    <SelectItem value="esgotamento" disabled={!adiantamentoAllowed}>
+                      Adiantamento{!adiantamentoAllowed ? ` (máx ${maxAdiantamento} parcelas)` : ""}
+                    </SelectItem>
+                    <SelectItem value="parcela" disabled={!parceladoAllowed}>
+                      Parcelado{!parceladoAllowed ? ` (mín ${minParcelado} parcelas)` : ""}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Adiantamento até {maxAdiantamento} · Parcelado a partir de {minParcelado}.
+                </p>
               </div>
-              {autoScheme === "parcela" && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Número de parcelas</Label>
-                  <Input
-                    inputMode="numeric"
-                    value={autoInstallments}
-                    onChange={(e) => setAutoInstallments(e.target.value.replace(/\D/g, ""))}
-                    placeholder="10"
-                    className="mt-1.5 rounded-xl bg-muted border-0"
-                  />
-                </div>
-              )}
             </div>
           )}
           {branch === "Saúde" && (
-            <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
-              Comissão de Saúde segue o padrão <strong>Agenciamento + Recorrência</strong> da seguradora.
-              As parcelas iniciais serão geradas automaticamente e a recorrência mensal aparece mês a mês.
+            <div>
+              <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
+              <Select value={healthScheme} onValueChange={(v) => setHealthScheme(v as typeof healthScheme)}>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agenciamento">Agenciamento + recorrência</SelectItem>
+                  <SelectItem value="vitalicio">Vitalício</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {healthScheme === "vitalicio"
+                  ? "Recorrência mensal a partir da parcela definida nas configurações."
+                  : "Parcelas iniciais geradas no cadastro; recorrência mensal aparece mês a mês."}
+              </p>
             </div>
           )}
           {branch === "Consórcio" && (

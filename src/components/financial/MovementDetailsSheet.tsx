@@ -5,8 +5,10 @@ import { formatDateTimeBR, formatDateBR, type Expense, type ExpenseEntry, type M
 import type { Commission } from "@/lib/mock/data";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 import { commissionStatusColor } from "@/components/financial/CommissionStatusMenu";
+import { usePolicyStore } from "@/lib/portfolio/policyStore";
 
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
@@ -35,8 +37,16 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
   const { scheduleOfPolicy } = useCommissionStore();
+  const { findPolicy } = usePolicyStore();
+  const { configForPolicy, findMalha } = useCommissionConfigStore();
   if (!movement) return null;
   const isEntry = movement.kind === "entrada";
+  const policyForComm = movement.details.kind === "comissao" && movement.details.commission.policyId
+    ? findPolicy(movement.details.commission.policyId)
+    : undefined;
+  const malhaName = policyForComm && policyForComm.branch === "Saúde"
+    ? findMalha(configForPolicy(policyForComm).malhaId)?.name
+    : undefined;
   const schedule = movement.details.kind === "comissao" && movement.details.commission.policyId
     ? scheduleOfPolicy(movement.details.commission.policyId)
     : [];
@@ -79,6 +89,7 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                 <Row label="Cliente" value={c.clientName} />
                 <Row label="Seguradora" value={c.insurer} />
                 <Row label="Apólice" value={<span className="font-mono text-xs">{c.policyNumber}</span>} />
+                {malhaName && <Row label="Malha" value={malhaName} />}
                 <Row label="Parcela" value={instLabel} />
                 <Row label="Vencimento" value={formatDateBR(c.dueDate)} />
                 {c.paidAt && <Row label="Pago em" value={formatDateTimeBR(c.paidAt)} />}
