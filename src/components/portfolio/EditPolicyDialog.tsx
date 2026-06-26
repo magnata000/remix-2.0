@@ -134,6 +134,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       return;
     }
     const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
+    const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     updatePolicy(policy.id, {
       clientName: policy.clientName,
       branch,
@@ -146,6 +147,11 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       commissionPct: commissionPct || undefined,
       comissaoLiquida,
       taxaImposto,
+      commissionScheme:
+        branch === "Saúde" ? healthScheme :
+        branch === "Consórcio" ? "unica" :
+        autoScheme,
+      commissionInstallments: isAutoLike && autoScheme === "parcela" ? installmentsNum : undefined,
       healthAnniversary: branch === "Saúde" ? (healthAnniversary || undefined) : undefined,
       healthInitialValue: branch === "Saúde" ? (healthInitialNum || undefined) : undefined,
       healthCategory: branch === "Saúde" ? (healthCategory || undefined) : undefined,
