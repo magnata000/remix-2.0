@@ -161,7 +161,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
         healthCategory: healthCategory || undefined,
         healthCoparticipation,
         beneficiaries: beneficiaries.length ? beneficiaries : undefined,
-        commissionScheme: "agenciamento" as const,
+        commissionScheme: healthScheme,
       }),
       ...(branch === "Consórcio" && {
         consortiumGroup: consortiumGroup || undefined,
