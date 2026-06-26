@@ -39,6 +39,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const { addPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
+  const { getConfig } = useCommissionConfigStore();
 
   const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
