@@ -64,6 +64,15 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setStatus(policy.status);
       setTouched(false);
       setCommissionStr(policy.commissionPct != null ? String(policy.commissionPct).replace(".", ",") : "");
+      const initialScheme = policy.commissionScheme;
+      if (policy.branch === "Saúde") {
+        setHealthScheme(initialScheme === "vitalicio" ? "vitalicio" : "agenciamento");
+        setAutoScheme("esgotamento");
+      } else if (policy.branch !== "Consórcio") {
+        setAutoScheme(initialScheme === "parcela" ? "parcela" : "esgotamento");
+        setHealthScheme("agenciamento");
+      }
+      setAutoInstallments(String(policy.commissionInstallments ?? 10));
       setHealthAnniversary(policy.healthAnniversary ?? "");
       setAnniversaryTouched(!!policy.healthAnniversary);
       setHealthInitialValue(policy.healthInitialValue ? formatBRLInt(policy.healthInitialValue) : "");
@@ -77,6 +86,22 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setTaxaImposto(policy.taxaImposto);
     }
   }, [open, policy]);
+
+  // Limites de parcelas (Seguros) por seguradora
+  const autoConfig = useMemo(() => getConfig(insurer, "auto"), [getConfig, insurer]);
+  const installmentsNum = Math.max(1, Number(autoInstallments) || 1);
+  const minParcelado = autoConfig.parceladoMinInstallments ?? 5;
+  const maxAdiantamento = autoConfig.adiantamentoMaxInstallments ?? 4;
+  const parceladoAllowed = installmentsNum >= minParcelado;
+  const adiantamentoAllowed = installmentsNum <= maxAdiantamento;
+
+  useEffect(() => {
+    if (autoScheme === "parcela" && !parceladoAllowed && adiantamentoAllowed) {
+      setAutoScheme("esgotamento");
+    } else if (autoScheme === "esgotamento" && !adiantamentoAllowed && parceladoAllowed) {
+      setAutoScheme("parcela");
+    }
+  }, [autoScheme, parceladoAllowed, adiantamentoAllowed]);
 
   const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
