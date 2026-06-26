@@ -371,33 +371,49 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
           {!["Saúde", "Consórcio"].includes(branch) && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Forma de pagamento da comissão</Label>
+                <Label className="text-xs text-muted-foreground">Número de parcelas</Label>
+                <Input
+                  inputMode="numeric"
+                  value={autoInstallments}
+                  onChange={(e) => setAutoInstallments(e.target.value.replace(/\D/g, ""))}
+                  placeholder="10"
+                  className="mt-1.5 rounded-xl bg-muted border-0"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
                 <Select value={autoScheme} onValueChange={(v) => setAutoScheme(v as typeof autoScheme)}>
                   <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="esgotamento">Esgotamento (antecipada)</SelectItem>
-                    <SelectItem value="parcela">Por parcela</SelectItem>
+                    <SelectItem value="esgotamento" disabled={!adiantamentoAllowed}>
+                      Adiantamento{!adiantamentoAllowed ? ` (máx ${maxAdiantamento} parcelas)` : ""}
+                    </SelectItem>
+                    <SelectItem value="parcela" disabled={!parceladoAllowed}>
+                      Parcelado{!parceladoAllowed ? ` (mín ${minParcelado} parcelas)` : ""}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Adiantamento até {maxAdiantamento} · Parcelado a partir de {minParcelado}.
+                </p>
               </div>
-              {autoScheme === "parcela" && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Número de parcelas</Label>
-                  <Input
-                    inputMode="numeric"
-                    value={autoInstallments}
-                    onChange={(e) => setAutoInstallments(e.target.value.replace(/\D/g, ""))}
-                    placeholder="10"
-                    className="mt-1.5 rounded-xl bg-muted border-0"
-                  />
-                </div>
-              )}
             </div>
           )}
           {branch === "Saúde" && (
-            <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
-              Comissão de Saúde segue o padrão <strong>Agenciamento + Recorrência</strong> da seguradora.
-              As parcelas iniciais serão geradas automaticamente e a recorrência mensal aparece mês a mês.
+            <div>
+              <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
+              <Select value={healthScheme} onValueChange={(v) => setHealthScheme(v as typeof healthScheme)}>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agenciamento">Agenciamento + recorrência</SelectItem>
+                  <SelectItem value="vitalicio">Vitalício</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {healthScheme === "vitalicio"
+                  ? "Recorrência mensal a partir da parcela definida nas configurações."
+                  : "Parcelas iniciais geradas no cadastro; recorrência mensal aparece mês a mês."}
+              </p>
             </div>
           )}
           {branch === "Consórcio" && (
