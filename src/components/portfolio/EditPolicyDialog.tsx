@@ -28,6 +28,7 @@ const BASE_STATUSES: { key: PolicyStatus; label: string }[] = [
 
 export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
   const { updatePolicy } = usePolicyStore();
+  const { getConfig } = useCommissionConfigStore();
 
   const [branch, setBranch] = useState<Branch>("Auto");
   const [insurer, setInsurer] = useState<Insurer>("Porto Seguro");
