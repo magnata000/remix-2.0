@@ -4,7 +4,9 @@
 import type { Commission, Insurer, Policy } from "@/lib/mock/data";
 
 export type CommissionProduct = "saude" | "auto" | "consorcio";
-export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica";
+export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica" | "vitalicio";
+
+export type Malha = { id: string; insurer: Insurer; name: string; description?: string };
 
 export type CommissionConfig = {
   insurer: Insurer;
@@ -14,9 +16,13 @@ export type CommissionConfig = {
   // Saúde
   agenciamento: number[];        // ex: [1.0, 0.5, 0.3, 0.2]
   recorrenciaPct: number;        // ex: 0.03
-  // Auto
+  vitalicioStartInstallment?: number; // p/ scheme "vitalicio" — a partir da parcela X
+  malhaId?: string;                   // p/ Saúde — classificação interna
+  // Auto / Seguros
   pctMin: number;                // ex: 0.10
   pctMax: number;                // ex: 0.25
+  parceladoMinInstallments?: number;   // "Parcelado" disponível a partir de X parcelas
+  adiantamentoMaxInstallments?: number; // "Adiantamento" disponível até X parcelas
   defaultScheme: CommissionScheme;
 };
 
