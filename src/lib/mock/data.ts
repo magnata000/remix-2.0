@@ -148,6 +148,7 @@ const curatedPolicies: Policy[] = [
     startDate: ymd(monthsAgo(2)),
     endDate: "",
     status: "ativa",
+    assigneeId: "u2",
     healthInitialValue: 1200,
     healthCategory: "Enfermaria",
     healthCoparticipation: true,
@@ -167,6 +168,7 @@ const curatedPolicies: Policy[] = [
     startDate: ymd(monthsAgo(3)),
     endDate: ymd(new Date(today.getFullYear() + 1, today.getMonth() - 3, today.getDate())),
     status: "ativa",
+    assigneeId: "u2",
     commissionPct: 18,
     commissionScheme: "esgotamento",
     comissaoLiquida: false,
@@ -182,6 +184,7 @@ const curatedPolicies: Policy[] = [
     startDate: ymd(monthsAgo(4)),
     endDate: ymd(new Date(today.getFullYear() + 1, today.getMonth() - 4, today.getDate())),
     status: "ativa",
+    assigneeId: "u2",
     commissionPct: 20,
     commissionScheme: "parcela",
     commissionInstallments: 10,
@@ -198,10 +201,14 @@ const curatedPolicies: Policy[] = [
     startDate: ymd(monthsAgo(1)),
     endDate: ymd(new Date(today.getFullYear() + 5, today.getMonth() - 1, today.getDate())),
     status: "ativa",
+    assigneeId: "u2",
     commissionPct: 1.5,
     commissionScheme: "unica",
   },
 ];
+
+// Rotação determinística entre membros do time para apólices genéricas
+const teamRotation = ["u2", "u1", "u4", "u2"];
 
 // Apólices extras genéricas (para completar a vitrine)
 const extraPolicies: Policy[] = Array.from({ length: 20 }, (_, i) => {
@@ -219,6 +226,7 @@ const extraPolicies: Policy[] = Array.from({ length: 20 }, (_, i) => {
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10),
     status: rand(statuses, i),
+    assigneeId: teamRotation[i % teamRotation.length],
     commissionPct: 15 + (i % 10),
     commissionScheme: branch === "Saúde" ? "agenciamento" : branch === "Consórcio" ? "unica" : "esgotamento",
   };
@@ -294,17 +302,18 @@ const monthFromAuto2 = (offset: number) => ymd(monthsAgo(4 - offset));
 
 export const commissions: Commission[] = [
   // ----- Saúde (agenciamento, mensalidade 1.200) -----
-  { id: "cm-saude-ag1", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 1200, dueDate: startMonth(0), status: "pago", kind: "agenciamento", installmentIndex: 1, installmentTotal: 4 },
-  { id: "cm-saude-ag2", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 600,  dueDate: startMonth(1), status: "pago", kind: "agenciamento", installmentIndex: 2, installmentTotal: 4 },
+  { id: "cm-saude-ag1", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 1200, dueDate: startMonth(0), paidAt: startMonth(0), status: "pago", kind: "agenciamento", installmentIndex: 1, installmentTotal: 4 },
+  { id: "cm-saude-ag2", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 600,  dueDate: startMonth(1), paidAt: startMonth(1), status: "pago", kind: "agenciamento", installmentIndex: 2, installmentTotal: 4 },
   { id: "cm-saude-ag3", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 360,  dueDate: startMonth(2), status: "pendente", kind: "agenciamento", installmentIndex: 3, installmentTotal: 4 },
   { id: "cm-saude-ag4", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 240,  dueDate: startMonth(3), status: "pendente", kind: "agenciamento", installmentIndex: 4, installmentTotal: 4 },
 
   // ----- Auto Esgotamento (prêmio 3.200 × 18% = 576) -----
-  { id: "cm-auto1-es", policyId: "p-auto-1", policyNumber: "APO-2026-0002", clientName: "João Pereira", insurer: "Porto Seguro", amount: 576, dueDate: monthFromAuto1(0), status: "pago", kind: "esgotamento", installmentIndex: 1, installmentTotal: 1 },
+  { id: "cm-auto1-es", policyId: "p-auto-1", policyNumber: "APO-2026-0002", clientName: "João Pereira", insurer: "Porto Seguro", amount: 576, dueDate: monthFromAuto1(0), paidAt: monthFromAuto1(0), status: "pago", kind: "esgotamento", installmentIndex: 1, installmentTotal: 1 },
 
   // ----- Auto Parcela 10x (prêmio 4.800 × 20% = 960 / 10 = 96) -----
   ...Array.from({ length: 10 }, (_, i) => {
     const status: Commission["status"] = i < 3 ? "pago" : i === 3 ? "atrasado" : "pendente";
+    const due = monthFromAuto2(i);
     return {
       id: `cm-auto2-p${i + 1}`,
       policyId: "p-auto-2",
@@ -312,7 +321,8 @@ export const commissions: Commission[] = [
       clientName: "Beatriz Costa",
       insurer: "Bradesco" as Insurer,
       amount: 96,
-      dueDate: monthFromAuto2(i),
+      dueDate: due,
+      paidAt: status === "pago" ? due : undefined,
       status,
       kind: "parcela" as CommissionKind,
       installmentIndex: i + 1,
