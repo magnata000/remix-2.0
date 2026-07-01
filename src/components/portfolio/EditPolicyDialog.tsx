@@ -75,7 +75,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setAutoInstallments(String(policy.commissionInstallments ?? 10));
       setHealthAnniversary(policy.healthAnniversary ?? "");
       setAnniversaryTouched(!!policy.healthAnniversary);
-      setHealthInitialValue(policy.healthInitialValue ? formatBRLInt(policy.healthInitialValue) : "");
+      setHealthInitialValue(policy.healthInitialValue ? formatBRLDecimal(policy.healthInitialValue) : "");
       setHealthCategory(policy.healthCategory ?? "");
       setHealthCoparticipation(!!policy.healthCoparticipation);
       setBeneficiaries(policy.beneficiaries ?? []);
