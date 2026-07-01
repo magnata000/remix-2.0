@@ -69,6 +69,8 @@ type Ctx = {
   addFile: (input: { name: string; folderId: string; mime?: string; sizeKB?: number }) => DocFile | null;
   renameFile: (id: string, name: string) => void;
   deleteFile: (id: string) => void;
+  moveFile: (id: string, newFolderId: string) => boolean;
+  deleteByPolicy: (policyId: string) => void;
 };
 
 
