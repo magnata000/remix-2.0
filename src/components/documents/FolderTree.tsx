@@ -224,7 +224,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
           ) : (
             <ul className="divide-y divide-border">
               {selectedFiles.map((file) => (
-                <FileRow key={file.id} file={file} />
+                <FileRow key={file.id} file={file} onRequestDelete={() => setConfirmDeleteFile(file)} />
               ))}
             </ul>
           )}
