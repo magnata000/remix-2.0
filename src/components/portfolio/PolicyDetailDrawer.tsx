@@ -288,6 +288,29 @@ export function PolicyDetailDrawer({
               sourcePolicy={policy}
             />
             <EditPolicyDialog open={editOpen} onOpenChange={setEditOpen} policy={policy} />
+
+            <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir apólice?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A apólice <span className="font-medium font-mono">{policy.number}</span> de{" "}
+                    <span className="font-medium">{policy.clientName}</span> será removida
+                    permanentemente, junto com suas comissões e documentos vinculados. Esta ação
+                    não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={handleDelete}
+                  >
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         )}
       </SheetContent>
