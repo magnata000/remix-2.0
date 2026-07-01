@@ -11,12 +11,23 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   FileText,
   Calendar,
   Building2,
   User,
   RotateCw,
   Pencil,
+  Trash2,
   Users,
 } from "lucide-react";
 import {
@@ -28,10 +39,12 @@ import {
   type PolicyStatus,
 } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
 import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
+import { toast } from "sonner";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
