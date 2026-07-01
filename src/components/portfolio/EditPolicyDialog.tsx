@@ -205,12 +205,12 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
             <div>
               <Label className="text-xs text-muted-foreground">{branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}</Label>
               <Input
-                inputMode="numeric"
+                inputMode="decimal"
                 value={premium}
-                onChange={(e) => setPremium(e.target.value.replace(/\D/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLInt(premiumNum)); }}
-                onFocus={() => setPremium(String(premiumNum || ""))}
-                placeholder="R$ 0"
+                onChange={(e) => setPremium(e.target.value.replace(/[^\d.,]/g, ""))}
+                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum)); }}
+                onFocus={() => setPremium(premiumNum ? String(premiumNum).replace(".", ",") : "")}
+                placeholder="R$ 0,00"
                 className="mt-1.5 rounded-xl bg-muted border-0"
               />
               {showErr("premium") && <p className="text-xs text-destructive mt-1">{errors.premium}</p>}
