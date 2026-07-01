@@ -560,6 +560,8 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     addFile,
     renameFile,
     deleteFile,
+    moveFile,
+    deleteByPolicy,
   };
 
   return <DocCtx.Provider value={value}>{children}</DocCtx.Provider>;
