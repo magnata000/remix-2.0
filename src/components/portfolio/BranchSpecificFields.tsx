@@ -8,7 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatBRLInt, formatDateShort, type Beneficiary, type BeneficiaryTitle, type Branch } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Beneficiary, type BeneficiaryTitle, type Branch } from "@/lib/mock/data";
+import { parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 
 const TITLE_OPTIONS: { key: BeneficiaryTitle; label: string }[] = [
   { key: "titular", label: "Titular" },
@@ -72,7 +73,7 @@ export function BranchSpecificFields(p: Props) {
   }, [p.branch, p.startDate, p.anniversaryTouched]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (p.branch === "Saúde") {
-    const initialNum = Number(p.healthInitialValue.replace(/\D/g, "")) || 0;
+    const initialNum = parseMoneyInput(p.healthInitialValue);
     return (
       <div className="space-y-4 rounded-xl border border-border/60 p-4">
         <p className="text-xs font-medium text-muted-foreground">Detalhes do plano de saúde</p>
@@ -81,12 +82,12 @@ export function BranchSpecificFields(p: Props) {
           <div>
             <Label className="text-xs text-muted-foreground">Valor inicial (contratação)</Label>
             <Input
-              inputMode="numeric"
+              inputMode="decimal"
               value={p.healthInitialValue}
-              onChange={(e) => p.setHealthInitialValue(e.target.value.replace(/\D/g, ""))}
-              onBlur={() => { if (initialNum > 0) p.setHealthInitialValue(formatBRLInt(initialNum)); }}
-              onFocus={() => p.setHealthInitialValue(String(initialNum || ""))}
-              placeholder="R$ 0"
+              onChange={(e) => p.setHealthInitialValue(e.target.value.replace(/[^\d.,]/g, ""))}
+              onBlur={() => { if (initialNum > 0) p.setHealthInitialValue(formatBRLDecimal(initialNum)); }}
+              onFocus={() => p.setHealthInitialValue(initialNum ? String(initialNum).replace(".", ",") : "")}
+              placeholder="R$ 0,00"
               className="mt-1.5 rounded-xl bg-muted border-0"
             />
           </div>

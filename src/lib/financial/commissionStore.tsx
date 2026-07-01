@@ -17,6 +17,7 @@ type Ctx = {
   patchCommission: (id: string, patch: Partial<Commission>) => void;
   generateForPolicy: (policy: Policy) => Commission[];
   scheduleOfPolicy: (policyId: string) => Commission[];
+  deleteByPolicy: (policyId: string) => void;
 };
 
 const CommissionContext = createContext<Ctx | null>(null);
@@ -124,9 +125,13 @@ export function CommissionStoreProvider({ children }: { children: ReactNode }) {
     [commissions],
   );
 
+  const deleteByPolicy = useCallback((policyId: string) => {
+    setCommissions((prev) => prev.filter((c) => c.policyId !== policyId));
+  }, []);
+
   const value = useMemo<Ctx>(
-    () => ({ commissions, updateCommissionStatus, patchCommission, generateForPolicy, scheduleOfPolicy }),
-    [commissions, updateCommissionStatus, patchCommission, generateForPolicy, scheduleOfPolicy],
+    () => ({ commissions, updateCommissionStatus, patchCommission, generateForPolicy, scheduleOfPolicy, deleteByPolicy }),
+    [commissions, updateCommissionStatus, patchCommission, generateForPolicy, scheduleOfPolicy, deleteByPolicy],
   );
 
   return <CommissionContext.Provider value={value}>{children}</CommissionContext.Provider>;

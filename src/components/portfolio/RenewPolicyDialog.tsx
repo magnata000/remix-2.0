@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatBRL, formatBRLInt, formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
+import { formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
@@ -51,7 +51,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     if (!open || !sourcePolicy) return;
     setBranch(sourcePolicy.branch);
     setInsurer(sourcePolicy.insurer);
-    setPremium(formatBRLInt(sourcePolicy.premium));
+    setPremium(formatBRLDecimal(sourcePolicy.premium));
     const newStart = new Date(sourcePolicy.endDate);
     setStartDate(newStart);
     setEndDate(addYears(newStart, 1));
@@ -61,7 +61,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     setTaxaImposto(sourcePolicy.taxaImposto);
   }, [open, sourcePolicy]);
 
-  const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -144,12 +144,12 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
             <div>
               <Label className="text-xs text-muted-foreground">Prêmio anual *</Label>
               <Input
-                inputMode="numeric"
+                inputMode="decimal"
                 value={premium}
-                onChange={(e) => setPremium(e.target.value.replace(/\D/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLInt(premiumNum)); }}
-                onFocus={() => setPremium(String(premiumNum || ""))}
-                placeholder="R$ 0"
+                onChange={(e) => setPremium(e.target.value.replace(/[^\d.,]/g, ""))}
+                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum)); }}
+                onFocus={() => setPremium(premiumNum ? String(premiumNum).replace(".", ",") : "")}
+                placeholder="R$ 0,00"
                 className="mt-1.5 rounded-xl bg-muted border-0"
               />
               {showErr("premium") && <p className="text-xs text-destructive mt-1">{errors.premium}</p>}

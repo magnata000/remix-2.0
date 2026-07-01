@@ -49,8 +49,14 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
   const [q, setQ] = useState(initialClientFilter ?? "");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
+  const [insurer, setInsurer] = useState<string>("all");
   const [selected, setSelected] = useState<Policy | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+
+  const insurers = useMemo(
+    () => Array.from(new Set(policies.map((p) => p.insurer))).sort(),
+    [policies],
+  );
 
   const filtered = useMemo(
     () =>
@@ -58,12 +64,15 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
         (p) =>
           (status === "all" || p.status === status) &&
           (branch === "all" || p.branch === branch) &&
+          (insurer === "all" || p.insurer === insurer) &&
           (q === "" ||
             p.clientName.toLowerCase().includes(q.toLowerCase()) ||
             p.number.toLowerCase().includes(q.toLowerCase())),
       ),
-    [policies, q, status, branch],
+    [policies, q, status, branch, insurer],
   );
+
+
 
   return (
     <div className="space-y-5">
@@ -117,7 +126,19 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               <SelectItem value="Saúde">Saúde</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={insurer} onValueChange={setInsurer}>
+            <SelectTrigger className="md:w-48 rounded-xl bg-muted border-0">
+              <SelectValue placeholder="Seguradora" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as seguradoras</SelectItem>
+              {insurers.map((i) => (
+                <SelectItem key={i} value={i}>{i}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
       </Card>
 
       {/* Lista */}

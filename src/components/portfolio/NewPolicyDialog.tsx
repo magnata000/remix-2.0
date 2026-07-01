@@ -8,8 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { team, formatBRL, formatBRLInt, formatDateShort, type Beneficiary, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
+import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
+import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
@@ -96,7 +96,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setClientId(id); setClientName(c.name); setClientOpen(false);
   };
 
-  const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
+
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
   const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
 
@@ -137,7 +138,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       toast.error("Revise os campos obrigatórios");
       return;
     }
-    const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
+    const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     const created = addPolicy({
       clientName,
@@ -244,12 +245,12 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
             <div>
               <Label className="text-xs text-muted-foreground">{branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}</Label>
               <Input
-                inputMode="numeric"
+                inputMode="decimal"
                 value={premium}
-                onChange={(e) => setPremium(e.target.value.replace(/\D/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLInt(premiumNum)); }}
-                onFocus={() => setPremium(String(premiumNum || ""))}
-                placeholder="R$ 0"
+                onChange={(e) => setPremium(e.target.value.replace(/[^\d.,]/g, ""))}
+                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum)); }}
+                onFocus={() => setPremium(premiumNum ? String(premiumNum).replace(".", ",") : "")}
+                placeholder="R$ 0,00"
                 className="mt-1.5 rounded-xl bg-muted border-0"
               />
               {showErr("premium") && <p className="text-xs text-destructive mt-1">{errors.premium}</p>}

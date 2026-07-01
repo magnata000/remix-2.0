@@ -1,52 +1,84 @@
-## Objetivo
-Corrigir a aba **Repasses de Vendedores** (Financeiro) — hoje aparece vazia/quebrada — e reposicionar o seletor de colaborador como **filtro global** no topo da página.
+# Plano — Melhorias na página Carteira
 
-## Bugs identificados
+## Análise
 
-1. **KPIs e histórico sempre vazios.** O filtro exige `c.status === "pago" && c.paidAt`, mas as comissões do seed marcadas como "pago" (em `src/lib/mock/data.ts`) não têm `paidAt`. Resultado: nenhum repasse aparece, mesmo com dados.
-2. **Apólices sem `assigneeId`.** As `curatedPolicies` e `extraPolicies` do seed não definem `assigneeId`, então `computePayout` retorna 0 para tudo — nenhum total se acumula por vendedor.
-3. **`Select` com value `""`.** O estado inicial `useState(sellers[0]?.id ?? "")` pode ficar vazio antes da hidratação do `TeamProvider`; Radix `Select` quebra com value vazio. Precisa de fallback via `useEffect` quando a lista de vendedores muda.
-4. **Seletor fora de lugar.** O `Select` de vendedor está dentro do card "Histórico", mas controla também o cálculo conceitual de repasse — confunde o usuário.
+### Funcionalidades / arquivos impactados
+- **Filtro seguradora**: `src/components/portfolio/PoliciesTab.tsx` (adicionar `Select`), reaproveitando a lista de seguradoras já existentes em `policies` (dedupe).
+- **Campos monetários (Prêmio / Valor inicial Saúde)**: hoje usam `replace(/\D/g, "")`, o que remove `,` e `.` e trata o valor como inteiro (via `formatBRLInt`). Impacto em:
+  - `src/components/portfolio/NewPolicyDialog.tsx` (Prêmio)
+  - `src/components/portfolio/EditPolicyDialog.tsx` (Prêmio)
+  - `src/components/portfolio/RenewPolicyDialog.tsx` (Prêmio)
+  - `src/components/portfolio/BranchSpecificFields.tsx` (Valor inicial Saúde)
+- **Editar/excluir documento com confirmação**: `src/components/documents/FolderTree.tsx` (componente `FolderRow`/`FileRow`). Já existe botão de editar/excluir por arquivo, mas: (1) o hover **não aparece** — o `<li>` não tem `group`; (2) a exclusão é imediata (sem confirmação).
+- **Drag-and-drop de arquivos entre pastas**: hoje só há DnD de pastas. Falta em `documentStore.tsx` (`moveFile`) e em `FolderTree.tsx` (`draggable` no `FileRow`, drop handler no `TreeNode` aceitando também `application/x-file-id`).
+- **Excluir apólice**: falta ação em `src/lib/portfolio/policyStore.tsx` (`deletePolicy`) e botão em `src/components/portfolio/PolicyDetailDrawer.tsx`. Efeitos colaterais a limpar: comissões da apólice (`commissionStore`) e pastas/arquivos da apólice (`documentStore`).
 
-## Mudanças
+### Hooks / stores impactados
+- `usePolicyStore` — novo `deletePolicy`.
+- `useDocumentStore` — novo `moveFile`, `deleteFilesByPolicy`, `deleteFoldersByPolicy` (para limpeza em cascata).
+- `useCommissionStore` — novo `deleteByPolicy` (limpeza em cascata).
 
-### 1. `src/lib/mock/data.ts`
-- Backfill: distribuir `assigneeId` (rotacionando entre os membros do time) em `curatedPolicies` e `extraPolicies` para que os repasses tenham a quem ser atribuídos no demo.
-- Para as comissões `status: "pago"` do seed, adicionar `paidAt` (usar o próprio `dueDate` como data de pagamento) para que apareçam no histórico do mês correspondente.
+### Riscos
+- Cascata da exclusão de apólice: se não limparmos comissões e docs, viram órfãos e aparecem no Financeiro/Documentos sem apólice-mãe.
+- Parser monetário: precisa lidar com `1.234,56` (BR) e `1234.56` (decimal ponto). Estratégia: remover todos os pontos, trocar `,` por `.`, `Number()`, arredondar a 2 casas.
 
-### 2. `src/components/financial/SellerCommissionsTab.tsx` — reestruturação
-Nova hierarquia visual:
+---
 
-```text
-┌──────────────────────────────────────────────────────┐
-│ Filtro global: [Vendedor ▾]  [Mês ▾]   (sticky top) │
-└──────────────────────────────────────────────────────┘
-┌────────────── KPI do vendedor selecionado ──────────┐
-│ Total a repassar · {Mês}    R$ XX.XXX,XX            │
-│ Comissões pagas: N · Ramos atendidos: N              │
-└──────────────────────────────────────────────────────┘
-┌── Configuração de % (apenas a linha do vendedor) ───┐
-│ Vendedor | Auto | Vida | Resid. | Empr. | Saúde |Cons│
-└──────────────────────────────────────────────────────┘
-┌────────────── Histórico de comissões pagas ─────────┐
-│ Tabela atual (sem o seletor interno)                 │
-└──────────────────────────────────────────────────────┘
-```
+## Plano de implementação
 
-Correções de comportamento:
-- Mover `Select` de vendedor + `Select` de mês para um card de cabeçalho (`sticky top-0` opcional).
-- Inicializar `sellerId` com `useEffect` quando `sellers` ficar disponível; se vazio, manter a mensagem de "Nenhum vendedor cadastrado".
-- Substituir a grade de KPIs (uma por vendedor) por **um único card** focado no vendedor selecionado, com contagem de comissões e ramos atendidos no subtítulo.
-- Tabela de % passa a mostrar **apenas a linha do vendedor selecionado** (mantém edição dos 6 ramos). Texto auxiliar deixa claro: "Editando percentuais de {Nome}".
-- Histórico continua igual (já filtrado), só perde os selects do header.
-- Manter o estado vazio do histórico, mas com mensagem mais explícita ("Nenhuma comissão paga para {Nome} em {Mês}").
+### 1. Filtro por Seguradora (`PoliciesTab.tsx`)
+- Adicionar estado `insurer` (default `"all"`).
+- Derivar a lista de seguradoras via `Array.from(new Set(policies.map(p => p.insurer))).sort()`.
+- Novo `<Select>` no card de filtros, entre "Status" e "Ramo", com mesmo estilo (`rounded-xl bg-muted border-0`).
+- Estender o filtro `useMemo` para respeitar `insurer`.
 
-### 3. Robustez
-- Filtro de "pago no mês": aceitar `paidAt ?? dueDate` para definir a quais mês/ano a comissão pertence (evita o bug de comissões antigas marcadas como pagas sem `paidAt` ficarem invisíveis).
-- `computePayout` permanece exigindo `status === "pago"`; sem `assigneeId` continua retornando 0 (não inventa repasse).
+### 2. Campos monetários com decimais
+- Criar helper em `src/lib/utils.ts` (ou novo `src/lib/format/currency.ts`):
+  - `parseMoneyInput(raw: string): number` — aceita `100`, `100,5`, `100.5`, `1.234,56`, arredonda a 2 casas.
+  - `formatBRLDecimal(n: number): string` — usa `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`, sempre 2 casas.
+- Trocar em **NewPolicyDialog / EditPolicyDialog / RenewPolicyDialog**:
+  - `onChange`: aceitar dígitos, `,` e `.` (regex `/[^\d.,]/g`), guardar string bruta.
+  - `onBlur`: `parseMoneyInput` → `formatBRLDecimal` para exibir.
+  - `onFocus`: mostrar valor cru (sem `R$`).
+  - `premiumNum` = `parseMoneyInput(premium)`.
+- Mesma troca no `BranchSpecificFields` para "Valor inicial (contratação)".
+- `Policy.premium` já é `number`; passa a receber float (2 casas). `formatBRL` de `mock/data.ts` deve exibir com 2 casas — validar; ajustar se estiver truncando.
 
-## Arquivos afetados
-- `src/lib/mock/data.ts` (seed: `assigneeId` + `paidAt`)
-- `src/components/financial/SellerCommissionsTab.tsx` (reestrutura e correções)
+### 3. Editar/excluir documentos (arquivos) com confirmação — `FolderTree.tsx`
+- No `<li>` do `FileRow`, adicionar `className="group ..."` para o `opacity-0 group-hover:opacity-100` funcionar (padrão dos cards de Tarefas).
+- Botão editar: já funciona (rename inline) — apenas ajustar visual (aparece só no hover).
+- Botão excluir: abrir `AlertDialog` (novo estado `confirmFile: DocFile | null`) antes de chamar `store.deleteFile`.
 
-Sem alterações de schema, store ou regras de negócio fora dessa aba.
+### 4. Drag-and-drop de arquivos
+- `documentStore.tsx`: adicionar `moveFile(id, newFolderId)` que atualiza `folderId` e recalcula `policyId`/`clientName` a partir da nova pasta (garante consistência).
+- `FolderTree.tsx`:
+  - `FileRow`: `draggable`, `onDragStart` setando `application/x-file-id`.
+  - `TreeNode.handleDragOver/Drop`: aceitar também tipo `application/x-file-id` e delegar a `store.moveFile` (mesmo highlight `ring-2 ring-brand/60`).
+  - Continua funcionando entre pastas do mesmo cliente/apólice (raiz cliente ↔ raiz apólice, incluindo sub-pastas).
+
+### 5. Excluir apólice
+- `policyStore.tsx`: novo `deletePolicy(id)` que:
+  - Se a apólice tem `renewedFromId`, limpa `renewedToId` da antecessora.
+  - Se a apólice tem `renewedToId`, limpa `renewedFromId` da sucessora.
+  - Remove a apólice.
+- `commissionStore.tsx`: `deleteByPolicy(policyId)`.
+- `documentStore.tsx`: `deleteByPolicy(policyId)` (folders + files onde `policyId === id`).
+- `PolicyDetailDrawer.tsx`: novo botão "Excluir" (variant destructive, ao lado do "Editar dados" no header, com ícone `Trash2`), abre `AlertDialog` de confirmação. Ao confirmar: chamar cascata acima na ordem (comissões → docs → policy) e `onOpenChange(false)`.
+
+---
+
+## Arquivos modificados
+- `src/components/portfolio/PoliciesTab.tsx` — filtro seguradora.
+- `src/lib/utils.ts` (ou novo `src/lib/format/currency.ts`) — helpers monetários.
+- `src/components/portfolio/NewPolicyDialog.tsx` — Prêmio com decimais.
+- `src/components/portfolio/EditPolicyDialog.tsx` — Prêmio com decimais.
+- `src/components/portfolio/RenewPolicyDialog.tsx` — Prêmio com decimais.
+- `src/components/portfolio/BranchSpecificFields.tsx` — Valor inicial (Saúde) com decimais.
+- `src/lib/mock/data.ts` — garantir `formatBRL` sempre com 2 casas (checar/ajustar).
+- `src/components/documents/FolderTree.tsx` — hover buttons, confirm delete de arquivo, DnD de arquivo.
+- `src/lib/documents/documentStore.tsx` — `moveFile`, `deleteByPolicy`.
+- `src/lib/financial/commissionStore.tsx` — `deleteByPolicy`.
+- `src/lib/portfolio/policyStore.tsx` — `deletePolicy`.
+- `src/components/portfolio/PolicyDetailDrawer.tsx` — botão excluir + AlertDialog + cascata.
+
+Sem alterações fora do escopo listado.

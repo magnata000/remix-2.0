@@ -59,6 +59,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<DocFolder | null>(null);
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState<DocFile | null>(null);
   const [newFolderParent, setNewFolderParent] = useState<DocFolder | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [uploadTo, setUploadTo] = useState<DocFolder | null>(null);
@@ -223,7 +224,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
           ) : (
             <ul className="divide-y divide-border">
               {selectedFiles.map((file) => (
-                <FileRow key={file.id} file={file} />
+                <FileRow key={file.id} file={file} onRequestDelete={() => setConfirmDeleteFile(file)} />
               ))}
             </ul>
           )}
@@ -354,6 +355,33 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirm delete file */}
+      <AlertDialog
+        open={!!confirmDeleteFile}
+        onOpenChange={(o) => !o && setConfirmDeleteFile(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir documento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O arquivo <span className="font-medium">{confirmDeleteFile?.name}</span> será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDeleteFile) store.deleteFile(confirmDeleteFile.id);
+                setConfirmDeleteFile(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -406,8 +434,10 @@ function TreeNode({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    const draggedId = e.dataTransfer.types.includes("application/x-folder-id");
-    if (!draggedId) return;
+    const types = e.dataTransfer.types;
+    const isFolder = types.includes("application/x-folder-id");
+    const isFile = types.includes("application/x-file-id");
+    if (!isFolder && !isFile) return;
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
@@ -423,6 +453,12 @@ function TreeNode({
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
+    const draggedFileId = e.dataTransfer.getData("application/x-file-id");
+    if (draggedFileId) {
+      const moved = store.moveFile(draggedFileId, node.id);
+      if (moved && !expanded.has(node.id)) onToggle(node.id);
+      return;
+    }
     const draggedId = e.dataTransfer.getData("application/x-folder-id");
     if (!draggedId || draggedId === node.id) return;
     const moved = store.moveFolder(draggedId, node.id);
@@ -523,13 +559,25 @@ function TreeNode({
   );
 }
 
-function FileRow({ file }: { file: DocFile }) {
+function FileRow({ file, onRequestDelete }: { file: DocFile; onRequestDelete: () => void }) {
   const store = useDocumentStore();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(file.name);
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData("application/x-file-id", file.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
   return (
-    <li className="px-4 py-2.5 flex items-center gap-3 hover:bg-muted/40">
+    <li
+      draggable={!renaming}
+      onDragStart={handleDragStart}
+      className={cn(
+        "group px-4 py-2.5 flex items-center gap-3 hover:bg-muted/40",
+        !renaming && "active:cursor-grabbing",
+      )}
+    >
       <div className="h-8 w-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
         <FileText className="h-4 w-4 text-brand" />
       </div>
@@ -561,7 +609,7 @@ function FileRow({ file }: { file: DocFile }) {
           {formatFileSize(file.sizeKB)} • {formatDateShort(file.uploadedAt)}
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           size="icon"
           variant="ghost"
@@ -576,7 +624,7 @@ function FileRow({ file }: { file: DocFile }) {
           variant="ghost"
           className="h-7 w-7 text-destructive hover:text-destructive"
           title="Excluir"
-          onClick={() => store.deleteFile(file.id)}
+          onClick={onRequestDelete}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
@@ -584,3 +632,4 @@ function FileRow({ file }: { file: DocFile }) {
     </li>
   );
 }
+

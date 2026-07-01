@@ -11,12 +11,23 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   FileText,
   Calendar,
   Building2,
   User,
   RotateCw,
   Pencil,
+  Trash2,
   Users,
 } from "lucide-react";
 import {
@@ -28,10 +39,12 @@ import {
   type PolicyStatus,
 } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
 import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
+import { toast } from "sonner";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
@@ -72,17 +85,30 @@ export function PolicyDetailDrawer({
   onSelectPolicy?: (p: Policy) => void;
 }) {
   const docStore = useDocumentStore();
-  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy } = usePolicyStore();
+  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy, deletePolicy } = usePolicyStore();
+  const { deleteByPolicy: deleteCommissionsByPolicy } = useCommissionStore();
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
   const [renewOpen, setRenewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const chainIndex = policy ? renewalIndexOf(policy.id) : -1;
   const chain = policy ? renewalChainOf(policy.id) : [];
   const previous = policy?.renewedFromId ? findPolicy(policy.renewedFromId) : undefined;
   const next = policy?.renewedToId ? findPolicy(policy.renewedToId) : undefined;
   const alreadyRenewed = policy ? isAlreadyRenewed(policy.id) : false;
+
+  const handleDelete = () => {
+    if (!policy) return;
+    const number = policy.number;
+    deleteCommissionsByPolicy(policy.id);
+    docStore.deleteByPolicy(policy.id);
+    deletePolicy(policy.id);
+    setConfirmDelete(false);
+    onOpenChange(false);
+    toast.success(`Apólice ${number} excluída`);
+  };
 
   const ordinalLabel = (i: number) => {
     if (i <= 0) return null;
@@ -119,6 +145,20 @@ export function PolicyDetailDrawer({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Editar dados</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => setConfirmDelete(true)}
+                        aria-label="Excluir apólice"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Excluir apólice</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </SheetTitle>
@@ -248,6 +288,29 @@ export function PolicyDetailDrawer({
               sourcePolicy={policy}
             />
             <EditPolicyDialog open={editOpen} onOpenChange={setEditOpen} policy={policy} />
+
+            <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir apólice?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A apólice <span className="font-medium font-mono">{policy.number}</span> de{" "}
+                    <span className="font-medium">{policy.clientName}</span> será removida
+                    permanentemente, junto com suas comissões e documentos vinculados. Esta ação
+                    não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={handleDelete}
+                  >
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         )}
       </SheetContent>

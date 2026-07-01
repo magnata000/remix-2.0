@@ -8,6 +8,7 @@ type Ctx = {
   policies: Policy[];
   addPolicy: (input: AddPolicyInput) => Policy;
   updatePolicy: (id: string, patch: Partial<AddPolicyInput>) => void;
+  deletePolicy: (id: string) => void;
   renewPolicy: (sourceId: string, input: RenewPolicyInput) => Policy;
   isAlreadyRenewed: (policyId: string) => boolean;
   renewalChainOf: (policyId: string) => Policy[];
@@ -80,6 +81,27 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     return created;
   }, []);
 
+  const deletePolicy = useCallback((id: string) => {
+    setPolicies((arr) => {
+      const target = arr.find((p) => p.id === id);
+      if (!target) return arr;
+      return arr
+        .filter((p) => p.id !== id)
+        .map((p) => {
+          if (target.renewedFromId && p.id === target.renewedFromId) {
+            const { renewedToId: _t, ...rest } = p;
+            return rest as Policy;
+          }
+          if (target.renewedToId && p.id === target.renewedToId) {
+            const { renewedFromId: _f, ...rest } = p;
+            return rest as Policy;
+          }
+          return p;
+        });
+    });
+  }, []);
+
+
   const findPolicy = useCallback(
     (id: string) => policies.find((p) => p.id === id),
     [policies],
@@ -122,13 +144,14 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
       policies,
       addPolicy,
       updatePolicy,
+      deletePolicy,
       renewPolicy,
       isAlreadyRenewed,
       renewalChainOf,
       renewalIndexOf,
       findPolicy,
     }),
-    [policies, addPolicy, updatePolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
+    [policies, addPolicy, updatePolicy, deletePolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
   );
 
   return <PolicyCtx.Provider value={value}>{children}</PolicyCtx.Provider>;

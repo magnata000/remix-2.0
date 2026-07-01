@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatBRL, formatBRLInt, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
+import { formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
@@ -58,7 +58,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     if (open && policy) {
       setBranch(policy.branch);
       setInsurer(policy.insurer);
-      setPremium(formatBRLInt(policy.premium));
+      setPremium(formatBRLDecimal(policy.premium));
       setStartDate(policy.startDate ? new Date(policy.startDate) : undefined);
       setEndDate(policy.endDate ? new Date(policy.endDate) : undefined);
       setStatus(policy.status);
@@ -75,7 +75,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       setAutoInstallments(String(policy.commissionInstallments ?? 10));
       setHealthAnniversary(policy.healthAnniversary ?? "");
       setAnniversaryTouched(!!policy.healthAnniversary);
-      setHealthInitialValue(policy.healthInitialValue ? formatBRLInt(policy.healthInitialValue) : "");
+      setHealthInitialValue(policy.healthInitialValue ? formatBRLDecimal(policy.healthInitialValue) : "");
       setHealthCategory(policy.healthCategory ?? "");
       setHealthCoparticipation(!!policy.healthCoparticipation);
       setBeneficiaries(policy.beneficiaries ?? []);
@@ -103,7 +103,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     }
   }, [autoScheme, parceladoAllowed, adiantamentoAllowed]);
 
-  const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
   const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
 
@@ -133,7 +133,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
-    const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
+    const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     updatePolicy(policy.id, {
       clientName: policy.clientName,
@@ -205,12 +205,12 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
             <div>
               <Label className="text-xs text-muted-foreground">{branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}</Label>
               <Input
-                inputMode="numeric"
+                inputMode="decimal"
                 value={premium}
-                onChange={(e) => setPremium(e.target.value.replace(/\D/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLInt(premiumNum)); }}
-                onFocus={() => setPremium(String(premiumNum || ""))}
-                placeholder="R$ 0"
+                onChange={(e) => setPremium(e.target.value.replace(/[^\d.,]/g, ""))}
+                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum)); }}
+                onFocus={() => setPremium(premiumNum ? String(premiumNum).replace(".", ",") : "")}
+                placeholder="R$ 0,00"
                 className="mt-1.5 rounded-xl bg-muted border-0"
               />
               {showErr("premium") && <p className="text-xs text-destructive mt-1">{errors.premium}</p>}
