@@ -515,6 +515,30 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     setFiles((arr) => arr.filter((f) => f.id !== id));
   }, []);
 
+  const moveFile = useCallback((id: string, newFolderId: string): boolean => {
+    let ok = false;
+    setFiles((arr) => {
+      const file = arr.find((f) => f.id === id);
+      if (!file || file.folderId === newFolderId) return arr;
+      const parent = folders.find((f) => f.id === newFolderId);
+      if (!parent) return arr;
+      if (parent.clientName !== file.clientName) return arr;
+      ok = true;
+      return arr.map((f) =>
+        f.id === id
+          ? { ...f, folderId: newFolderId, policyId: parent.policyId, clientName: parent.clientName }
+          : f,
+      );
+    });
+    return ok;
+  }, [folders]);
+
+  const deleteByPolicy = useCallback((policyId: string) => {
+    setFolders((arr) => arr.filter((f) => f.policyId !== policyId));
+    setFiles((arr) => arr.filter((f) => f.policyId !== policyId));
+  }, []);
+
+
   const value: Ctx = {
     folders,
     files,
