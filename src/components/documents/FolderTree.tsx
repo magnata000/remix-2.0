@@ -524,13 +524,25 @@ function TreeNode({
   );
 }
 
-function FileRow({ file }: { file: DocFile }) {
+function FileRow({ file, onRequestDelete }: { file: DocFile; onRequestDelete: () => void }) {
   const store = useDocumentStore();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(file.name);
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData("application/x-file-id", file.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
   return (
-    <li className="px-4 py-2.5 flex items-center gap-3 hover:bg-muted/40">
+    <li
+      draggable={!renaming}
+      onDragStart={handleDragStart}
+      className={cn(
+        "group px-4 py-2.5 flex items-center gap-3 hover:bg-muted/40",
+        !renaming && "active:cursor-grabbing",
+      )}
+    >
       <div className="h-8 w-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
         <FileText className="h-4 w-4 text-brand" />
       </div>
@@ -562,7 +574,7 @@ function FileRow({ file }: { file: DocFile }) {
           {formatFileSize(file.sizeKB)} • {formatDateShort(file.uploadedAt)}
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           size="icon"
           variant="ghost"
@@ -577,7 +589,7 @@ function FileRow({ file }: { file: DocFile }) {
           variant="ghost"
           className="h-7 w-7 text-destructive hover:text-destructive"
           title="Excluir"
-          onClick={() => store.deleteFile(file.id)}
+          onClick={onRequestDelete}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
@@ -585,3 +597,4 @@ function FileRow({ file }: { file: DocFile }) {
     </li>
   );
 }
+
