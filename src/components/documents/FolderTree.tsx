@@ -407,8 +407,10 @@ function TreeNode({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    const draggedId = e.dataTransfer.types.includes("application/x-folder-id");
-    if (!draggedId) return;
+    const types = e.dataTransfer.types;
+    const isFolder = types.includes("application/x-folder-id");
+    const isFile = types.includes("application/x-file-id");
+    if (!isFolder && !isFile) return;
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
@@ -424,6 +426,12 @@ function TreeNode({
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
+    const draggedFileId = e.dataTransfer.getData("application/x-file-id");
+    if (draggedFileId) {
+      const moved = store.moveFile(draggedFileId, node.id);
+      if (moved && !expanded.has(node.id)) onToggle(node.id);
+      return;
+    }
     const draggedId = e.dataTransfer.getData("application/x-folder-id");
     if (!draggedId || draggedId === node.id) return;
     const moved = store.moveFolder(draggedId, node.id);
