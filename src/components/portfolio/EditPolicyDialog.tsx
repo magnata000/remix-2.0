@@ -103,7 +103,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     }
   }, [autoScheme, parceladoAllowed, adiantamentoAllowed]);
 
-  const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
   const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
 
