@@ -69,8 +69,10 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
             p.clientName.toLowerCase().includes(q.toLowerCase()) ||
             p.number.toLowerCase().includes(q.toLowerCase())),
       ),
-    [policies, q, status, branch],
+    [policies, q, status, branch, insurer],
   );
+
+
 
   return (
     <div className="space-y-5">
