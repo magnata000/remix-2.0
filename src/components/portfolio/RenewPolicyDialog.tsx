@@ -51,7 +51,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     if (!open || !sourcePolicy) return;
     setBranch(sourcePolicy.branch);
     setInsurer(sourcePolicy.insurer);
-    setPremium(formatBRLInt(sourcePolicy.premium));
+    setPremium(formatBRLDecimal(sourcePolicy.premium));
     const newStart = new Date(sourcePolicy.endDate);
     setStartDate(newStart);
     setEndDate(addYears(newStart, 1));
