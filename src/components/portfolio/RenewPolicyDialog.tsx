@@ -61,7 +61,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     setTaxaImposto(sourcePolicy.taxaImposto);
   }, [open, sourcePolicy]);
 
-  const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
