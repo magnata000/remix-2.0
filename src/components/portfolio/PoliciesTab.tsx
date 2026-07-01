@@ -126,7 +126,19 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               <SelectItem value="Saúde">Saúde</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={insurer} onValueChange={setInsurer}>
+            <SelectTrigger className="md:w-48 rounded-xl bg-muted border-0">
+              <SelectValue placeholder="Seguradora" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as seguradoras</SelectItem>
+              {insurers.map((i) => (
+                <SelectItem key={i} value={i}>{i}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
       </Card>
 
       {/* Lista */}
