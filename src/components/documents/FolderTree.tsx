@@ -355,6 +355,33 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirm delete file */}
+      <AlertDialog
+        open={!!confirmDeleteFile}
+        onOpenChange={(o) => !o && setConfirmDeleteFile(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir documento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O arquivo <span className="font-medium">{confirmDeleteFile?.name}</span> será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDeleteFile) store.deleteFile(confirmDeleteFile.id);
+                setConfirmDeleteFile(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
