@@ -96,7 +96,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setClientId(id); setClientName(c.name); setClientOpen(false);
   };
 
-  const premiumNum = useMemo(() => Number(premium.replace(/\D/g, "")) || 0, [premium]);
+  const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
+
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
   const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
 
