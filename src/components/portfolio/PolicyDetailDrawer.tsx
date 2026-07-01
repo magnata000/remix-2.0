@@ -85,17 +85,30 @@ export function PolicyDetailDrawer({
   onSelectPolicy?: (p: Policy) => void;
 }) {
   const docStore = useDocumentStore();
-  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy } = usePolicyStore();
+  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy, deletePolicy } = usePolicyStore();
+  const { deleteByPolicy: deleteCommissionsByPolicy } = useCommissionStore();
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
   const [renewOpen, setRenewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const chainIndex = policy ? renewalIndexOf(policy.id) : -1;
   const chain = policy ? renewalChainOf(policy.id) : [];
   const previous = policy?.renewedFromId ? findPolicy(policy.renewedFromId) : undefined;
   const next = policy?.renewedToId ? findPolicy(policy.renewedToId) : undefined;
   const alreadyRenewed = policy ? isAlreadyRenewed(policy.id) : false;
+
+  const handleDelete = () => {
+    if (!policy) return;
+    const number = policy.number;
+    deleteCommissionsByPolicy(policy.id);
+    docStore.deleteByPolicy(policy.id);
+    deletePolicy(policy.id);
+    setConfirmDelete(false);
+    onOpenChange(false);
+    toast.success(`Apólice ${number} excluída`);
+  };
 
   const ordinalLabel = (i: number) => {
     if (i <= 0) return null;
