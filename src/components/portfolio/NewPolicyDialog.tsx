@@ -138,7 +138,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       toast.error("Revise os campos obrigatórios");
       return;
     }
-    const healthInitialNum = Number(healthInitialValue.replace(/\D/g, "")) || 0;
+    const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     const created = addPolicy({
       clientName,
