@@ -8,6 +8,7 @@ type Ctx = {
   policies: Policy[];
   addPolicy: (input: AddPolicyInput) => Policy;
   updatePolicy: (id: string, patch: Partial<AddPolicyInput>) => void;
+  deletePolicy: (id: string) => void;
   renewPolicy: (sourceId: string, input: RenewPolicyInput) => Policy;
   isAlreadyRenewed: (policyId: string) => boolean;
   renewalChainOf: (policyId: string) => Policy[];
