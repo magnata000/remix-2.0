@@ -59,6 +59,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<DocFolder | null>(null);
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState<DocFile | null>(null);
   const [newFolderParent, setNewFolderParent] = useState<DocFolder | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [uploadTo, setUploadTo] = useState<DocFolder | null>(null);
