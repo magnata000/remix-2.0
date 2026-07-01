@@ -17,6 +17,7 @@ type Ctx = {
   patchCommission: (id: string, patch: Partial<Commission>) => void;
   generateForPolicy: (policy: Policy) => Commission[];
   scheduleOfPolicy: (policyId: string) => Commission[];
+  deleteByPolicy: (policyId: string) => void;
 };
 
 const CommissionContext = createContext<Ctx | null>(null);
