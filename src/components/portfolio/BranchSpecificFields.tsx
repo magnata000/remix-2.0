@@ -8,7 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatBRLInt, formatDateShort, type Beneficiary, type BeneficiaryTitle, type Branch } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Beneficiary, type BeneficiaryTitle, type Branch } from "@/lib/mock/data";
+import { parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 
 const TITLE_OPTIONS: { key: BeneficiaryTitle; label: string }[] = [
   { key: "titular", label: "Titular" },
