@@ -58,7 +58,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     if (open && policy) {
       setBranch(policy.branch);
       setInsurer(policy.insurer);
-      setPremium(formatBRLInt(policy.premium));
+      setPremium(formatBRLDecimal(policy.premium));
       setStartDate(policy.startDate ? new Date(policy.startDate) : undefined);
       setEndDate(policy.endDate ? new Date(policy.endDate) : undefined);
       setStatus(policy.status);
