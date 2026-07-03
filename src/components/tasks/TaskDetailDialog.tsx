@@ -29,7 +29,7 @@ export function TaskDetailDialog({
   onOpenChange: (v: boolean) => void;
   initialSearch?: string;
 }) {
-  const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, currentUserId } = useTaskStore();
+  const { columns, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
