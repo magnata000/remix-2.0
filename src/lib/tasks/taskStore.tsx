@@ -442,10 +442,10 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
+    addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, updateScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
 
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
