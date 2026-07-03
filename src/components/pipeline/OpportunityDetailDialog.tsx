@@ -274,6 +274,7 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <input ref={fileInput} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+                <AudioRecorder compact onSend={(blob, sec) => addAudioMessage(o.id, blob, sec)} />
                 <Button
                   onClick={submit}
                   disabled={!canSend}
