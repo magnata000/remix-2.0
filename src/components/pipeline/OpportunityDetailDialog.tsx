@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trophy, User, Wallet } from "lucide-react";
+import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trash2, Trophy, User, Wallet } from "lucide-react";
+import { AudioRecorder } from "@/components/shared/AudioRecorder";
 import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage } from "@/lib/mock/data";
 import { usePipelineStore, stageLabels, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
