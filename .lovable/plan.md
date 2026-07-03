@@ -1,84 +1,136 @@
-# Plano — Melhorias na página Carteira
 
-## Análise
+# Plano — Melhorias na página Kanban
 
-### Funcionalidades / arquivos impactados
-- **Filtro seguradora**: `src/components/portfolio/PoliciesTab.tsx` (adicionar `Select`), reaproveitando a lista de seguradoras já existentes em `policies` (dedupe).
-- **Campos monetários (Prêmio / Valor inicial Saúde)**: hoje usam `replace(/\D/g, "")`, o que remove `,` e `.` e trata o valor como inteiro (via `formatBRLInt`). Impacto em:
-  - `src/components/portfolio/NewPolicyDialog.tsx` (Prêmio)
-  - `src/components/portfolio/EditPolicyDialog.tsx` (Prêmio)
-  - `src/components/portfolio/RenewPolicyDialog.tsx` (Prêmio)
-  - `src/components/portfolio/BranchSpecificFields.tsx` (Valor inicial Saúde)
-- **Editar/excluir documento com confirmação**: `src/components/documents/FolderTree.tsx` (componente `FolderRow`/`FileRow`). Já existe botão de editar/excluir por arquivo, mas: (1) o hover **não aparece** — o `<li>` não tem `group`; (2) a exclusão é imediata (sem confirmação).
-- **Drag-and-drop de arquivos entre pastas**: hoje só há DnD de pastas. Falta em `documentStore.tsx` (`moveFile`) e em `FolderTree.tsx` (`draggable` no `FileRow`, drop handler no `TreeNode` aceitando também `application/x-file-id`).
-- **Excluir apólice**: falta ação em `src/lib/portfolio/policyStore.tsx` (`deletePolicy`) e botão em `src/components/portfolio/PolicyDetailDrawer.tsx`. Efeitos colaterais a limpar: comissões da apólice (`commissionStore`) e pastas/arquivos da apólice (`documentStore`).
-
-### Hooks / stores impactados
-- `usePolicyStore` — novo `deletePolicy`.
-- `useDocumentStore` — novo `moveFile`, `deleteFilesByPolicy`, `deleteFoldersByPolicy` (para limpeza em cascata).
-- `useCommissionStore` — novo `deleteByPolicy` (limpeza em cascata).
-
-### Riscos
-- Cascata da exclusão de apólice: se não limparmos comissões e docs, viram órfãos e aparecem no Financeiro/Documentos sem apólice-mãe.
-- Parser monetário: precisa lidar com `1.234,56` (BR) e `1234.56` (decimal ponto). Estratégia: remover todos os pontos, trocar `,` por `.`, `Number()`, arredondar a 2 casas.
+## Visão geral
+Cinco frentes: (1) CRUD do Pipeline alinhado ao padrão de Tarefas, (2) painel de analytics do Pipeline em rota dedicada, (3) recorrência avançada de tarefas, (4) áudio nos cards de Tarefas/Pipeline, (5) SLA em ambos os módulos. Todas reaproveitam componentes existentes e mantêm o padrão visual atual.
 
 ---
 
-## Plano de implementação
+## 1. CRUD do Pipeline no padrão do TaskDetailDialog
 
-### 1. Filtro por Seguradora (`PoliciesTab.tsx`)
-- Adicionar estado `insurer` (default `"all"`).
-- Derivar a lista de seguradoras via `Array.from(new Set(policies.map(p => p.insurer))).sort()`.
-- Novo `<Select>` no card de filtros, entre "Status" e "Ramo", com mesmo estilo (`rounded-xl bg-muted border-0`).
-- Estender o filtro `useMemo` para respeitar `insurer`.
+**Objetivo:** unificar a experiência de detalhe do card entre Tarefas e Pipeline.
 
-### 2. Campos monetários com decimais
-- Criar helper em `src/lib/utils.ts` (ou novo `src/lib/format/currency.ts`):
-  - `parseMoneyInput(raw: string): number` — aceita `100`, `100,5`, `100.5`, `1.234,56`, arredonda a 2 casas.
-  - `formatBRLDecimal(n: number): string` — usa `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`, sempre 2 casas.
-- Trocar em **NewPolicyDialog / EditPolicyDialog / RenewPolicyDialog**:
-  - `onChange`: aceitar dígitos, `,` e `.` (regex `/[^\d.,]/g`), guardar string bruta.
-  - `onBlur`: `parseMoneyInput` → `formatBRLDecimal` para exibir.
-  - `onFocus`: mostrar valor cru (sem `R$`).
-  - `premiumNum` = `parseMoneyInput(premium)`.
-- Mesma troca no `BranchSpecificFields` para "Valor inicial (contratação)".
-- `Policy.premium` já é `number`; passa a receber float (2 casas). `formatBRL` de `mock/data.ts` deve exibir com 2 casas — validar; ajustar se estiver truncando.
+- Reescrever `src/components/pipeline/OpportunityDetailDialog.tsx` para replicar o layout do `TaskDetailDialog`:
+  - Cabeçalho com título editável inline + badge de etapa.
+  - Abas **Detalhes / Comentários / Atividade** (mesmos componentes visuais).
+  - Aba Detalhes preserva campos específicos: valor, seguradora, ramo, produto, cliente, responsável, data de fechamento previsto, motivo de perda (quando aplicável).
+  - Comentários e Atividade reutilizando `MentionInput` e o padrão de timeline já usado em Tarefas.
+  - Anexos (clipe) + áudio (microfone) — ver item 4.
+- Remover botão `⋮` do card no `KanbanModule` (coluna Pipeline). Card inteiro passa a abrir o drawer ao clicar (mesmo padrão do `TaskCard`). Ações de excluir e mover ficam dentro do drawer (botão "Excluir" destrutivo com `AlertDialog`) e via drag-and-drop (já existente).
+- `NewOpportunityDialog` continua o mesmo; após criar, abre direto o novo drawer.
+- Manter `CloseOpportunityDialog` (fluxo de ganho/perdido com motivo).
+- Store `opportunityStore` recebe `addComment`, `addAttachment`, `addAudio`, `logActivity` (espelhando o `taskStore`).
 
-### 3. Editar/excluir documentos (arquivos) com confirmação — `FolderTree.tsx`
-- No `<li>` do `FileRow`, adicionar `className="group ..."` para o `opacity-0 group-hover:opacity-100` funcionar (padrão dos cards de Tarefas).
-- Botão editar: já funciona (rename inline) — apenas ajustar visual (aparece só no hover).
-- Botão excluir: abrir `AlertDialog` (novo estado `confirmFile: DocFile | null`) antes de chamar `store.deleteFile`.
+## 2. Estatísticas do Pipeline com histórico de etapas
 
-### 4. Drag-and-drop de arquivos
-- `documentStore.tsx`: adicionar `moveFile(id, newFolderId)` que atualiza `folderId` e recalcula `policyId`/`clientName` a partir da nova pasta (garante consistência).
-- `FolderTree.tsx`:
-  - `FileRow`: `draggable`, `onDragStart` setando `application/x-file-id`.
-  - `TreeNode.handleDragOver/Drop`: aceitar também tipo `application/x-file-id` e delegar a `store.moveFile` (mesmo highlight `ring-2 ring-brand/60`).
-  - Continua funcionando entre pastas do mesmo cliente/apólice (raiz cliente ↔ raiz apólice, incluindo sub-pastas).
+**Objetivo:** rota `/pipeline/analytics` acessível por botão "Estatísticas" no header do Pipeline.
 
-### 5. Excluir apólice
-- `policyStore.tsx`: novo `deletePolicy(id)` que:
-  - Se a apólice tem `renewedFromId`, limpa `renewedToId` da antecessora.
-  - Se a apólice tem `renewedToId`, limpa `renewedFromId` da sucessora.
-  - Remove a apólice.
-- `commissionStore.tsx`: `deleteByPolicy(policyId)`.
-- `documentStore.tsx`: `deleteByPolicy(policyId)` (folders + files onde `policyId === id`).
-- `PolicyDetailDrawer.tsx`: novo botão "Excluir" (variant destructive, ao lado do "Editar dados" no header, com ícone `Trash2`), abre `AlertDialog` de confirmação. Ao confirmar: chamar cascata acima na ordem (comissões → docs → policy) e `onOpenChange(false)`.
+- **Modelo de dados:** adicionar `stageHistory: { stage: string; enteredAt: string; exitedAt?: string }[]` em `Opportunity`. Toda mudança de etapa (drag-and-drop, close) fecha a entrada corrente e cria uma nova. Migrar mocks existentes com timestamps sintéticos derivados de `createdAt`/`updatedAt` para popular o gráfico já na primeira renderização.
+- **Store:** `opportunityStore.moveToStage(id, stage)` passa a atualizar `stageHistory`. Idem para o fluxo de fechamento.
+- **Cálculo (`src/lib/pipeline/salesStats.ts` reescrito):**
+  - Contagem por etapa (aberto no momento).
+  - Conversão etapa→etapa (leads que passaram por A e chegaram em B / leads que passaram por A).
+  - Conversão total (Ganho / total criado).
+  - Tempo médio em cada etapa (média das durações fechadas + em aberto).
+  - Gargalo: etapa com maior tempo médio.
+  - Maior perda: etapa cuja saída mais frequente é "Perdido".
+  - Top motivos de perda (agrupamento de `lostReason`).
+  - Leads → clientes convertidos (Ganhos únicos por cliente).
+  - Ganhos vs perdidos (valor e contagem), ticket médio.
+- **UI (`src/routes/pipeline.analytics.tsx` + `src/components/pipeline/PipelineAnalytics.tsx`):**
+  - Row de KPIs no topo (conversão total, ticket médio, ganhos, perdidos, gargalo).
+  - Gráfico de funil (barras horizontais decrescentes por etapa).
+  - Barra empilhada de conversão etapa→etapa.
+  - Tabela: etapa · leads atuais · tempo médio · % saída para próxima · % perda.
+  - Lista Top 5 motivos de perda.
+  - Filtros: período (últimos 30/90/365 dias / customizado) e responsável.
+  - Botão "Voltar ao Pipeline" no header. Botão "Estatísticas" adicionado ao header do `KanbanModule` aba Pipeline.
+
+## 3. Recorrência avançada de tarefas
+
+**Objetivo:** trocar o campo "Repetir" simples por um editor tipo Google Calendar.
+
+- **Novo tipo em `taskStore`:**
+  ```ts
+  type Recurrence = {
+    freq: 'daily' | 'weekly' | 'monthly';
+    interval: number;              // a cada X
+    byWeekday?: number[];          // 0..6, semanal
+    byMonthDay?: number;           // 1..31, mensal
+    parity?: 'even' | 'odd';       // diário: pares/ímpares
+    until?: string;                // opcional: data-fim
+    count?: number;                // opcional: N ocorrências
+  };
+  ```
+- **UI:** novo `RecurrenceEditor` dentro do `ScheduledTasksPanel`, com abas Diário/Semanal/Mensal e input "a cada X", chips de dias da semana e seletor de dia do mês. Preview em texto ("A cada 2 semanas, seg/qua/sex, até 31/12").
+- **Engine:** `src/lib/tasks/recurrence.ts` com `expandOccurrences(rule, from, to)` para expandir próximas ocorrências. `workflowEngine.ts` passa a consultar essa função ao materializar tarefas agendadas.
+- Migração dos agendamentos atuais: converter `repeat: 'daily'|'weekly'|'monthly'` em `{ freq, interval: 1 }`. Sem quebra de UX.
+
+## 4. Áudio nos cards (Pipeline + Tarefas)
+
+**Objetivo:** gravar e reproduzir áudio no drawer de detalhes de ambos os módulos.
+
+- **Componente `src/components/shared/AudioRecorder.tsx`:**
+  - Ícone de microfone ao lado do clipe (anexo).
+  - Ao clicar: usa `navigator.mediaDevices.getUserMedia({ audio: true })` + `MediaRecorder`.
+  - Estados: idle → gravando (timer + waveform simples) → prévia (play/re-gravar/cancelar/enviar).
+  - Envia como `{ id, name: "audio-<timestamp>.webm", type: 'audio', dataUrl, durationSec }` para o mesmo array de anexos do card.
+  - Limite: 2 min por gravação (evita estourar localStorage).
+- **Player:** para itens `type: 'audio'`, renderizar `<audio controls>` inline dentro do timeline de comentários/anexos.
+- **Persistência:** dataURL no `taskStore`/`opportunityStore` (mesmo mecanismo dos anexos atuais).
+- **Tratamento de erro:** permissão negada → toast "Habilite o microfone nas permissões do navegador".
+
+## 5. SLA em Pipeline e Tarefas
+
+**Objetivo:** prazo por card com semáforo automático e configuração por coluna/etapa.
+
+- **Modelo:**
+  - `Task.slaDueAt?: string`, `Task.slaPausedAt?: string`.
+  - `Opportunity.slaDueAt?: string`, `Opportunity.slaPausedAt?: string`.
+  - `taskColumn.slaHours?: number` e `pipelineStage.slaHours?: number` (defaults por coluna/etapa).
+- **Configuração:** nova subseção em Configurações → **SLA**:
+  - Tabela editável com colunas Tarefas + etapas Pipeline e input "Prazo (h)".
+  - Botões "Aplicar SLA a cards existentes sem prazo" (opcional).
+  - Ao mover card entre colunas/etapas, se destino tem `slaHours`, recalcula `slaDueAt = now + slaHours` (a menos que o card tenha SLA explícito, ver pergunta futura — por ora sobrescreve com confirmação).
+- **Pausa automática:** ao entrar em `Ganho`/`Perdido` (Pipeline) ou `Concluída` (Tarefas), grava `slaPausedAt` e para o cronômetro. Ao voltar para uma coluna ativa, retoma somando a pausa.
+- **Semáforo (no `TaskCard` e no `OpportunityCard`):**
+  - Verde: `remaining > 50% do prazo total`.
+  - Amarelo: `remaining ≤ 50%` e `> 0`.
+  - Vermelho: vencido (`remaining < 0`).
+  - Badge inline com ícone de relógio + contagem regressiva (`2d 3h`, `4h 12min`, `Vencido há 1d`).
+  - Faixa lateral colorida no card (borda esquerda 3px).
+- **Atualização:** hook `useSlaTicker` re-render a cada 60s nos boards.
+- **Editar no drawer:** campo "Prazo (SLA)" com date-time picker + botão "Usar padrão da coluna/etapa".
 
 ---
 
-## Arquivos modificados
-- `src/components/portfolio/PoliciesTab.tsx` — filtro seguradora.
-- `src/lib/utils.ts` (ou novo `src/lib/format/currency.ts`) — helpers monetários.
-- `src/components/portfolio/NewPolicyDialog.tsx` — Prêmio com decimais.
-- `src/components/portfolio/EditPolicyDialog.tsx` — Prêmio com decimais.
-- `src/components/portfolio/RenewPolicyDialog.tsx` — Prêmio com decimais.
-- `src/components/portfolio/BranchSpecificFields.tsx` — Valor inicial (Saúde) com decimais.
-- `src/lib/mock/data.ts` — garantir `formatBRL` sempre com 2 casas (checar/ajustar).
-- `src/components/documents/FolderTree.tsx` — hover buttons, confirm delete de arquivo, DnD de arquivo.
-- `src/lib/documents/documentStore.tsx` — `moveFile`, `deleteByPolicy`.
-- `src/lib/financial/commissionStore.tsx` — `deleteByPolicy`.
-- `src/lib/portfolio/policyStore.tsx` — `deletePolicy`.
-- `src/components/portfolio/PolicyDetailDrawer.tsx` — botão excluir + AlertDialog + cascata.
+## Arquivos impactados (resumo)
 
-Sem alterações fora do escopo listado.
+**Novos:**
+- `src/routes/pipeline.analytics.tsx`
+- `src/components/pipeline/PipelineAnalytics.tsx`
+- `src/components/shared/AudioRecorder.tsx`
+- `src/components/tasks/RecurrenceEditor.tsx`
+- `src/lib/tasks/recurrence.ts`
+- `src/hooks/useSlaTicker.ts`
+- `src/lib/sla/slaConfig.tsx` (store de defaults por coluna/etapa)
+- `src/components/settings/SlaConfigSection.tsx`
+
+**Modificados:**
+- `src/components/modules/KanbanModule.tsx` — remove `⋮` do card do Pipeline, adiciona botão "Estatísticas".
+- `src/components/pipeline/OpportunityDetailDialog.tsx` — reescrita no padrão TaskDetailDialog.
+- `src/components/pipeline/*Card` (dentro do KanbanModule) — SLA badge + click abre drawer.
+- `src/components/tasks/TaskCard.tsx` — SLA badge.
+- `src/components/tasks/TaskDetailDialog.tsx` — campo SLA + integração AudioRecorder.
+- `src/components/tasks/ScheduledTasksPanel.tsx` — usa RecurrenceEditor.
+- `src/lib/pipeline/opportunityStore.ts` — stageHistory, addComment/addAttachment/addAudio, SLA, moveToStage.
+- `src/lib/pipeline/salesStats.ts` — reescrito com métricas completas.
+- `src/lib/tasks/taskStore.tsx` — SLA fields, addAudio.
+- `src/lib/tasks/workflowEngine.ts` — usa recurrence.expandOccurrences.
+- `src/lib/mock/data.ts` — migração dos mocks (stageHistory sintético).
+- `src/components/modules/SettingsModule.tsx` — inclui SlaConfigSection.
+
+## Fora do escopo
+- Backend real / persistência remota (mantém store local como hoje).
+- Notificações push de SLA (só semáforo visual).
+- Métricas por vendedor cruzadas com repasses (fica em Financeiro).
