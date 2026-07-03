@@ -82,6 +82,18 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
           <DialogTitle className="flex items-center gap-2 pr-6">
             <span className="flex-1">{o.title}</span>
             <Badge variant="outline" className="rounded-full text-xs">{o.branch}</Badge>
+            {onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(o)}
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                aria-label="Excluir oportunidade"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
         <div className="grid md:grid-cols-[220px_1fr] gap-4 flex-1 overflow-hidden">
