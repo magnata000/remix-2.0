@@ -50,10 +50,16 @@ export type TaskItem = {
   timeline: TaskTimelineEvent[];
   /** Identificador opaco usado por workflows automáticos para dedupe. */
   sourceKey?: string;
+  slaDueAt?: string;
+  slaHours?: number;
+  slaPausedAt?: string;
 };
 
-export type ScheduledKind = "data" | "semana";
+export type ScheduledKind = "data" | "semana" | "recorrente";
 export type PeriodKind = "mensal" | "bimestral" | "trimestral" | "semestral" | "anual";
+
+import type { Recurrence } from "./recurrence";
+export type { Recurrence };
 
 export type ScheduledTask = {
   id: string;
@@ -67,8 +73,10 @@ export type ScheduledTask = {
   endDate?: string;
   // semana — 0=Dom..6=Sab
   weekdays?: number[];
-  // recorrência opcional para kind === "data"
+  // recorrência simples opcional para kind === "data"
   period?: PeriodKind;
+  // recorrência avançada estilo Google Calendar (kind === "recorrente")
+  recurrence?: Recurrence;
 };
 
 const SEED_COLUMNS: TaskColumn[] = [
