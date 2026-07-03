@@ -28,10 +28,11 @@ type Props = {
   opportunity: Opportunity | null;
   onOpenChange: (v: boolean) => void;
   onOpenQuote?: (quoteGroupId?: string) => void;
+  onDelete?: (opportunity: Opportunity) => void;
 };
 
-export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote }: Props) {
-  const { addMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, currentUserId } = usePipelineStore();
+export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote, onDelete }: Props) {
+  const { addMessage, addAudioMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, currentUserId } = usePipelineStore();
   const { groups } = useQuoteStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
