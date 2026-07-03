@@ -273,6 +273,7 @@ export function TaskDetailDialog({
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <input ref={fileInput} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+                <AudioRecorder compact onSend={(blob, sec) => addAudioMessage(task.id, blob, sec)} />
                 <Button
                   onClick={submit}
                   disabled={!canSend}
