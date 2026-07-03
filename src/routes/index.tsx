@@ -54,6 +54,7 @@ function AppShell() {
                   <CommissionConfigStoreProvider>
                     <CommissionStoreProvider>
                       <SellerCommissionStoreProvider>
+                        <SlaConfigProvider>
                         <NavigationProvider active={active} setActive={setActive}>
                           <div className="min-h-screen bg-background">
                             <TopBar active={active} onChange={setActive} />
@@ -67,6 +68,7 @@ function AppShell() {
                             </main>
                           </div>
                         </NavigationProvider>
+                        </SlaConfigProvider>
                       </SellerCommissionStoreProvider>
                     </CommissionStoreProvider>
                   </CommissionConfigStoreProvider>
