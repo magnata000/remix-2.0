@@ -240,13 +240,40 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     setTasks((arr) => arr.map((t) => {
       if (t.id !== id || t.columnId === columnId) return t;
       const from = columns.find((c) => c.id === t.columnId)?.title ?? "?";
-      const to = columns.find((c) => c.id === columnId)?.title ?? "?";
+      const toCol = columns.find((c) => c.id === columnId);
+      const to = toCol?.title ?? "?";
+      const terminal = !!toCol && /conclu|finaliz|done/i.test(toCol.title);
       return {
         ...t, columnId,
         timeline: [...t.timeline, { kind: "moved", at: new Date().toISOString(), by: currentUserId, from, to }],
+        slaPausedAt: terminal ? new Date().toISOString() : undefined,
       };
     }));
   }, [columns, currentUserId]);
+
+  const addAudioMessage = useCallback((taskId: string, blob: Blob, durationSec: number) => {
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      const at = new Date().toISOString();
+      const attId = `at${Date.now()}-a-${Math.random().toString(36).slice(2, 7)}`;
+      const att: TaskAttachment = {
+        id: attId,
+        name: `Áudio ${Math.floor(durationSec / 60)}:${String(durationSec % 60).padStart(2, "0")}`,
+        size: blob.size,
+        type: "audio/webm",
+        url: URL.createObjectURL(blob),
+        uploadedAt: at,
+      };
+      const commentId = `cm${Date.now()}`;
+      const comment: TaskComment = { id: commentId, authorId: currentUserId, text: "", createdAt: at, attachmentIds: [attId] };
+      return {
+        ...t,
+        attachments: [...t.attachments, att],
+        comments: [...t.comments, comment],
+        timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId }],
+      };
+    }));
+  }, [currentUserId]);
 
   const addComment = useCallback((taskId: string, text: string) => {
     setTasks((arr) => arr.map((t) => {
