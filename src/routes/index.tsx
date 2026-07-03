@@ -17,6 +17,7 @@ import { CashProvider } from "@/lib/cash/cashStore";
 import { CommissionStoreProvider } from "@/lib/financial/commissionStore";
 import { CommissionConfigStoreProvider } from "@/lib/financial/commissionConfigStore";
 import { SellerCommissionStoreProvider } from "@/lib/financial/sellerCommissionStore";
+import { SlaConfigProvider } from "@/lib/sla/slaConfig";
 
 import { NavigationProvider } from "@/lib/navigation";
 
