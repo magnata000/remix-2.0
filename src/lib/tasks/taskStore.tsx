@@ -50,10 +50,16 @@ export type TaskItem = {
   timeline: TaskTimelineEvent[];
   /** Identificador opaco usado por workflows automáticos para dedupe. */
   sourceKey?: string;
+  slaDueAt?: string;
+  slaHours?: number;
+  slaPausedAt?: string;
 };
 
-export type ScheduledKind = "data" | "semana";
+export type ScheduledKind = "data" | "semana" | "recorrente";
 export type PeriodKind = "mensal" | "bimestral" | "trimestral" | "semestral" | "anual";
+
+import type { Recurrence } from "./recurrence";
+export type { Recurrence };
 
 export type ScheduledTask = {
   id: string;
@@ -67,8 +73,10 @@ export type ScheduledTask = {
   endDate?: string;
   // semana — 0=Dom..6=Sab
   weekdays?: number[];
-  // recorrência opcional para kind === "data"
+  // recorrência simples opcional para kind === "data"
   period?: PeriodKind;
+  // recorrência avançada estilo Google Calendar (kind === "recorrente")
+  recurrence?: Recurrence;
 };
 
 const SEED_COLUMNS: TaskColumn[] = [
@@ -167,9 +175,10 @@ type Ctx = {
   bulkAddTasks: (records: Array<Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">>) => void;
   moveTask: (id: string, columnId: string) => void;
   deleteTask: (id: string) => void;
-  updateTaskFields: (id: string, patch: Partial<Pick<TaskItem, "title" | "description" | "dueDate" | "priority" | "assigneeId" | "clientName" | "columnId">>) => void;
+  updateTaskFields: (id: string, patch: Partial<Pick<TaskItem, "title" | "description" | "dueDate" | "priority" | "assigneeId" | "clientName" | "columnId" | "slaDueAt" | "slaHours">>) => void;
   addComment: (taskId: string, text: string) => void;
   addMessage: (taskId: string, text: string, files: File[]) => void;
+  addAudioMessage: (taskId: string, blob: Blob, durationSec: number) => void;
   editComment: (taskId: string, commentId: string, text: string) => void;
   removeCommentAttachment: (taskId: string, commentId: string, attachmentId: string) => void;
   deleteComment: (taskId: string, commentId: string) => void;
@@ -231,13 +240,40 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     setTasks((arr) => arr.map((t) => {
       if (t.id !== id || t.columnId === columnId) return t;
       const from = columns.find((c) => c.id === t.columnId)?.title ?? "?";
-      const to = columns.find((c) => c.id === columnId)?.title ?? "?";
+      const toCol = columns.find((c) => c.id === columnId);
+      const to = toCol?.title ?? "?";
+      const terminal = !!toCol && /conclu|finaliz|done/i.test(toCol.title);
       return {
         ...t, columnId,
         timeline: [...t.timeline, { kind: "moved", at: new Date().toISOString(), by: currentUserId, from, to }],
+        slaPausedAt: terminal ? new Date().toISOString() : undefined,
       };
     }));
   }, [columns, currentUserId]);
+
+  const addAudioMessage = useCallback((taskId: string, blob: Blob, durationSec: number) => {
+    setTasks((arr) => arr.map((t) => {
+      if (t.id !== taskId) return t;
+      const at = new Date().toISOString();
+      const attId = `at${Date.now()}-a-${Math.random().toString(36).slice(2, 7)}`;
+      const att: TaskAttachment = {
+        id: attId,
+        name: `Áudio ${Math.floor(durationSec / 60)}:${String(durationSec % 60).padStart(2, "0")}`,
+        size: blob.size,
+        type: "audio/webm",
+        url: URL.createObjectURL(blob),
+        uploadedAt: at,
+      };
+      const commentId = `cm${Date.now()}`;
+      const comment: TaskComment = { id: commentId, authorId: currentUserId, text: "", createdAt: at, attachmentIds: [attId] };
+      return {
+        ...t,
+        attachments: [...t.attachments, att],
+        comments: [...t.comments, comment],
+        timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId }],
+      };
+    }));
+  }, [currentUserId]);
 
   const addComment = useCallback((taskId: string, text: string) => {
     setTasks((arr) => arr.map((t) => {
@@ -406,10 +442,10 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     columns, tasks, scheduled, currentUserId,
-    addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
+    addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
     addColumn, renameColumn, recolorColumn, deleteColumn,
     addScheduled, updateScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
+  }), [columns, tasks, scheduled, currentUserId, addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
 
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;

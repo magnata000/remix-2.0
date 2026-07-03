@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trophy, User, Wallet } from "lucide-react";
+import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trash2, Trophy, User, Wallet } from "lucide-react";
+import { AudioRecorder } from "@/components/shared/AudioRecorder";
 import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage } from "@/lib/mock/data";
 import { usePipelineStore, stageLabels, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
@@ -28,10 +29,11 @@ type Props = {
   opportunity: Opportunity | null;
   onOpenChange: (v: boolean) => void;
   onOpenQuote?: (quoteGroupId?: string) => void;
+  onDelete?: (opportunity: Opportunity) => void;
 };
 
-export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote }: Props) {
-  const { addMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, currentUserId } = usePipelineStore();
+export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote, onDelete }: Props) {
+  const { addMessage, addAudioMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, currentUserId } = usePipelineStore();
   const { groups } = useQuoteStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
@@ -80,6 +82,18 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
           <DialogTitle className="flex items-center gap-2 pr-6">
             <span className="flex-1">{o.title}</span>
             <Badge variant="outline" className="rounded-full text-xs">{o.branch}</Badge>
+            {onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(o)}
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                aria-label="Excluir oportunidade"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
         <div className="grid md:grid-cols-[220px_1fr] gap-4 flex-1 overflow-hidden">
@@ -260,6 +274,7 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <input ref={fileInput} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+                <AudioRecorder compact onSend={(blob, sec) => addAudioMessage(o.id, blob, sec)} />
                 <Button
                   onClick={submit}
                   disabled={!canSend}

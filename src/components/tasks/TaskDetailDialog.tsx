@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText, Search, X, Pin } from "lucide-react";
 import { formatDateShort } from "@/lib/mock/data";
 import { MAX_PINNED_COMMENTS, PRIORITY_META, TaskAttachment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
+import { AudioRecorder } from "@/components/shared/AudioRecorder";
 import { MentionInput } from "./MentionInput";
 import {
   AttachmentChip,
@@ -28,7 +29,7 @@ export function TaskDetailDialog({
   onOpenChange: (v: boolean) => void;
   initialSearch?: string;
 }) {
-  const { columns, addMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, currentUserId } = useTaskStore();
+  const { columns, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, currentUserId } = useTaskStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -272,6 +273,7 @@ export function TaskDetailDialog({
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <input ref={fileInput} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+                <AudioRecorder compact onSend={(blob, sec) => addAudioMessage(task.id, blob, sec)} />
                 <Button
                   onClick={submit}
                   disabled={!canSend}
