@@ -4,10 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, Calendar, User, Users, Tag, Layers, FileText, Search, X, Pin } from "lucide-react";
+import { Paperclip, Send, Calendar, Clock, User, Users, Tag, Layers, FileText, Search, X, Pin } from "lucide-react";
 import { formatDateShort } from "@/lib/mock/data";
 import { MAX_PINNED_COMMENTS, PRIORITY_META, TaskAttachment, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { AudioRecorder } from "@/components/shared/AudioRecorder";
+import { SlaControl } from "@/components/shared/SlaControl";
+import { useSlaConfig, isTerminalTaskColumnTitle } from "@/lib/sla/slaConfig";
 import { MentionInput } from "./MentionInput";
 import {
   AttachmentChip,
