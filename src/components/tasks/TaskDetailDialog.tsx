@@ -122,6 +122,17 @@ export function TaskDetailDialog({
             </Meta>
             {task.dueDate && <Meta icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo">{formatDateShort(task.dueDate)}</Meta>}
             {task.clientName && <Meta icon={<Tag className="h-3.5 w-3.5" />} label="Cliente">{task.clientName}</Meta>}
+            {!isTerminalTaskColumnTitle(column?.title) && (
+              <Meta icon={<Clock className="h-3.5 w-3.5" />} label="SLA">
+                <SlaControl
+                  slaDueAt={task.slaDueAt}
+                  slaHours={task.slaHours}
+                  paused={!!task.slaPausedAt}
+                  defaultHours={task.columnId ? taskColumnHours[task.columnId] : undefined}
+                  onApply={(patch) => updateTaskFields(task.id, patch)}
+                />
+              </Meta>
+            )}
             {task.description && (
               <div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> Descrição</p>
