@@ -152,6 +152,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
             <RadioGroup value={kind} onValueChange={(v) => setKind(v as ScheduledKind)} className="mt-2 space-y-2">
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="data" /> Data específica (avulsa)</label>
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="semana" /> Dias da semana</label>
+              <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="recorrente" /> Recorrência avançada</label>
             </RadioGroup>
           </div>
 
