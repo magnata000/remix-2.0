@@ -42,6 +42,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const [range, setRange] = useState<DateRange | undefined>();
   const [repeat, setRepeat] = useState<RepeatValue>("nenhuma");
   const [weekdays, setWeekdays] = useState<string[]>([]);
+  const [recurrence, setRecurrence] = useState<Recurrence>({ freq: "weekly", interval: 1, byWeekday: [1] });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const resetForm = () => {
