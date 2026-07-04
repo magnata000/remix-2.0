@@ -122,6 +122,17 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
             <Meta icon={<Wallet className="h-3.5 w-3.5" />} label="Valor estimado">
               {o.estimatedValue > 0 ? formatBRL(o.estimatedValue) : "—"}
             </Meta>
+            {!TERMINAL_STAGES.includes(o.stage) && (
+              <Meta icon={<Clock className="h-3.5 w-3.5" />} label="SLA">
+                <SlaControl
+                  slaDueAt={o.slaDueAt}
+                  slaHours={o.slaHours}
+                  paused={!!o.slaPausedAt}
+                  defaultHours={pipelineStageHours[o.stage]}
+                  onApply={(patch) => updateOpportunity(o.id, patch)}
+                />
+              </Meta>
+            )}
             <Meta icon={<Calculator className="h-3.5 w-3.5" />} label="Cotação">
               {quote ? (
                 <button
