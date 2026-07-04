@@ -185,6 +185,10 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
               </ToggleGroup>
             </div>
           )}
+          {kind === "recorrente" && (
+            <RecurrenceEditor value={recurrence} onChange={setRecurrence} />
+          )}
+
 
           <div className="flex gap-2">
             <Button className="flex-1 rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>
