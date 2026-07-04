@@ -22,7 +22,6 @@ import { toast } from "sonner";
 
 
 export function TasksBoard() {
-export function TasksBoard() {
   useSlaTicker();
   const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
   const { policies } = usePolicyStore();
