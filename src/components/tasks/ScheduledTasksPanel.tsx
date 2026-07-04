@@ -14,7 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { team, formatDateShort } from "@/lib/mock/data";
-import { PeriodKind, Priority, ScheduledKind, useTaskStore } from "@/lib/tasks/taskStore";
+import { PeriodKind, Priority, ScheduledKind, useTaskStore, type Recurrence } from "@/lib/tasks/taskStore";
+import { describeRecurrence } from "@/lib/tasks/recurrence";
+import { RecurrenceEditor } from "./RecurrenceEditor";
 import { toast } from "sonner";
 
 const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
