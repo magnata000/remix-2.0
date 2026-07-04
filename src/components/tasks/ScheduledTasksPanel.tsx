@@ -54,6 +54,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     setRange(undefined);
     setRepeat("nenhuma");
     setWeekdays([]);
+    setRecurrence({ freq: "weekly", interval: 1, byWeekday: [1] });
     setEditingId(null);
   };
 
