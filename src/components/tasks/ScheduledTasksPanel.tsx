@@ -214,7 +214,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold truncate flex-1 min-w-0">{s.title}</p>
                           <Badge variant="outline" className="bg-muted border-0 text-[10px] shrink-0">
-                            {s.kind === "data" ? "Data" : "Semanal"}
+                            {s.kind === "data" ? "Data" : s.kind === "semana" ? "Semanal" : "Recorrente"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">{describeSchedule(s)}</p>
