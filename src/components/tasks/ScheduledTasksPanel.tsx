@@ -67,6 +67,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     setKind(s.kind);
     setRepeat(s.period ?? "nenhuma");
     setWeekdays(s.weekdays?.map(String) ?? []);
+    if (s.recurrence) setRecurrence(s.recurrence);
     if (s.kind === "data" && s.startDate) {
       setRange({ from: new Date(s.startDate), to: s.endDate ? new Date(s.endDate) : undefined });
     } else {
