@@ -199,6 +199,10 @@ export function SettingsModule() {
       {/* Comissionamento */}
       <CommissionConfigSection />
 
+      {/* SLA */}
+      <SlaConfigSection />
+
+
       {/* Preferências */}
       <Section icon={Bell} title="Preferências" desc="Notificações e alertas">
         <div className="space-y-3">
