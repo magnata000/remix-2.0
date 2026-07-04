@@ -4,6 +4,7 @@ import { Calendar, MessageSquare, Paperclip, Pencil, Trash2, Users } from "lucid
 import { formatDateShort } from "@/lib/mock/data";
 import { team } from "@/lib/mock/data";
 import { MESSAGE_PREVIEW_LIMIT, PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
+import { SlaBadge } from "@/components/shared/SlaBadge";
 import { nameOf } from "@/components/shared/Timeline";
 
 
