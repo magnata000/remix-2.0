@@ -3,11 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calculator, Calendar, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trash2, Trophy, User, Wallet } from "lucide-react";
+import { Calculator, Calendar, Clock, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trash2, Trophy, User, Wallet } from "lucide-react";
 import { AudioRecorder } from "@/components/shared/AudioRecorder";
+import { SlaControl } from "@/components/shared/SlaControl";
 import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage } from "@/lib/mock/data";
 import { usePipelineStore, stageLabels, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
+import { useSlaConfig, TERMINAL_STAGES } from "@/lib/sla/slaConfig";
 import { MAX_PINNED_COMMENTS } from "@/lib/tasks/taskStore";
 import { MentionInput } from "@/components/tasks/MentionInput";
 import {
@@ -33,7 +35,8 @@ type Props = {
 };
 
 export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote, onDelete }: Props) {
-  const { addMessage, addAudioMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, currentUserId } = usePipelineStore();
+  const { addMessage, addAudioMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, updateOpportunity, currentUserId } = usePipelineStore();
+  const { pipelineStageHours } = useSlaConfig();
   const { groups } = useQuoteStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
@@ -119,6 +122,17 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
             <Meta icon={<Wallet className="h-3.5 w-3.5" />} label="Valor estimado">
               {o.estimatedValue > 0 ? formatBRL(o.estimatedValue) : "—"}
             </Meta>
+            {!TERMINAL_STAGES.includes(o.stage) && (
+              <Meta icon={<Clock className="h-3.5 w-3.5" />} label="SLA">
+                <SlaControl
+                  slaDueAt={o.slaDueAt}
+                  slaHours={o.slaHours}
+                  paused={!!o.slaPausedAt}
+                  defaultHours={pipelineStageHours[o.stage]}
+                  onApply={(patch) => updateOpportunity(o.id, patch)}
+                />
+              </Meta>
+            )}
             <Meta icon={<Calculator className="h-3.5 w-3.5" />} label="Cotação">
               {quote ? (
                 <button

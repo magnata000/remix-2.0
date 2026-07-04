@@ -17,10 +17,12 @@ import { TaskDetailDialog } from "./TaskDetailDialog";
 import { ManageColumnsDialog } from "./ManageColumnsDialog";
 import { ScheduledTasksPanel } from "./ScheduledTasksPanel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useSlaTicker } from "@/hooks/useSlaTicker";
 import { toast } from "sonner";
 
 
 export function TasksBoard() {
+  useSlaTicker();
   const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
   const { policies } = usePolicyStore();
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);

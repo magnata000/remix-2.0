@@ -4,6 +4,7 @@ import { Calendar, MessageSquare, Paperclip, Pencil, Trash2, Users } from "lucid
 import { formatDateShort } from "@/lib/mock/data";
 import { team } from "@/lib/mock/data";
 import { MESSAGE_PREVIEW_LIMIT, PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
+import { SlaBadge } from "@/components/shared/SlaBadge";
 import { nameOf } from "@/components/shared/Timeline";
 
 
@@ -76,8 +77,14 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
           <p className="text-xs mt-0.5 break-words">{lastCommentPreview}</p>
         </div>
       )}
+      {task.slaDueAt && (
+        <div className="mt-2">
+          <SlaBadge slaDueAt={task.slaDueAt} slaHours={task.slaHours} paused={!!task.slaPausedAt} compact />
+        </div>
+      )}
 
       <div className="mt-3 flex items-center justify-between">
+
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {task.dueDate && (
             <span className="flex items-center gap-1">

@@ -14,7 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { team, formatDateShort } from "@/lib/mock/data";
-import { PeriodKind, Priority, ScheduledKind, useTaskStore } from "@/lib/tasks/taskStore";
+import { PeriodKind, Priority, ScheduledKind, useTaskStore, type Recurrence } from "@/lib/tasks/taskStore";
+import { describeRecurrence } from "@/lib/tasks/recurrence";
+import { RecurrenceEditor } from "./RecurrenceEditor";
 import { toast } from "sonner";
 
 const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -40,6 +42,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
   const [range, setRange] = useState<DateRange | undefined>();
   const [repeat, setRepeat] = useState<RepeatValue>("nenhuma");
   const [weekdays, setWeekdays] = useState<string[]>([]);
+  const [recurrence, setRecurrence] = useState<Recurrence>({ freq: "weekly", interval: 1, byWeekday: [1] });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const resetForm = () => {
@@ -51,6 +54,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     setRange(undefined);
     setRepeat("nenhuma");
     setWeekdays([]);
+    setRecurrence({ freq: "weekly", interval: 1, byWeekday: [1] });
     setEditingId(null);
   };
 
@@ -63,6 +67,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
     setKind(s.kind);
     setRepeat(s.period ?? "nenhuma");
     setWeekdays(s.weekdays?.map(String) ?? []);
+    if (s.recurrence) setRecurrence(s.recurrence);
     if (s.kind === "data" && s.startDate) {
       setRange({ from: new Date(s.startDate), to: s.endDate ? new Date(s.endDate) : undefined });
     } else {
@@ -77,6 +82,12 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
       toast.error("A data final não pode ser anterior à inicial"); return;
     }
     if (kind === "semana" && weekdays.length === 0) { toast.error("Selecione ao menos um dia"); return; }
+    if (kind === "recorrente" && recurrence.freq === "weekly" && !(recurrence.byWeekday?.length)) {
+      toast.error("Selecione ao menos um dia da semana"); return;
+    }
+    if (kind === "recorrente" && recurrence.freq === "monthly" && !recurrence.byMonthDay) {
+      toast.error("Informe o dia do mês"); return;
+    }
     const from = range?.from;
     const to = range?.to ?? range?.from;
     const payload = {
@@ -87,6 +98,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
       endDate: kind === "data" ? to?.toISOString() : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
       period: kind === "data" && repeat !== "nenhuma" ? repeat : undefined,
+      recurrence: kind === "recorrente" ? recurrence : undefined,
     };
     if (editingId) {
       updateScheduled(editingId, payload);
@@ -140,6 +152,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
             <RadioGroup value={kind} onValueChange={(v) => setKind(v as ScheduledKind)} className="mt-2 space-y-2">
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="data" /> Data específica (avulsa)</label>
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="semana" /> Dias da semana</label>
+              <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="recorrente" /> Recorrência avançada</label>
             </RadioGroup>
           </div>
 
@@ -172,6 +185,10 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
               </ToggleGroup>
             </div>
           )}
+          {kind === "recorrente" && (
+            <RecurrenceEditor value={recurrence} onChange={setRecurrence} />
+          )}
+
 
           <div className="flex gap-2">
             <Button className="flex-1 rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>
@@ -197,7 +214,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold truncate flex-1 min-w-0">{s.title}</p>
                           <Badge variant="outline" className="bg-muted border-0 text-[10px] shrink-0">
-                            {s.kind === "data" ? "Data" : "Semanal"}
+                            {s.kind === "data" ? "Data" : s.kind === "semana" ? "Semanal" : "Recorrente"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">{describeSchedule(s)}</p>
@@ -269,5 +286,6 @@ function describeSchedule(s: ReturnType<typeof useTaskStore>["scheduled"][number
     return `${range}${s.period ? ` · ${s.period}` : ""}`;
   }
   if (s.kind === "semana" && s.weekdays) return `Dias: ${s.weekdays.map((d) => WEEKDAY_LABELS[d]).join(", ")}`;
+  if (s.kind === "recorrente" && s.recurrence) return describeRecurrence(s.recurrence);
   return "—";
 }
