@@ -286,5 +286,6 @@ function describeSchedule(s: ReturnType<typeof useTaskStore>["scheduled"][number
     return `${range}${s.period ? ` · ${s.period}` : ""}`;
   }
   if (s.kind === "semana" && s.weekdays) return `Dias: ${s.weekdays.map((d) => WEEKDAY_LABELS[d]).join(", ")}`;
+  if (s.kind === "recorrente" && s.recurrence) return describeRecurrence(s.recurrence);
   return "—";
 }
