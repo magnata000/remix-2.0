@@ -82,6 +82,12 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
       toast.error("A data final não pode ser anterior à inicial"); return;
     }
     if (kind === "semana" && weekdays.length === 0) { toast.error("Selecione ao menos um dia"); return; }
+    if (kind === "recorrente" && recurrence.freq === "weekly" && !(recurrence.byWeekday?.length)) {
+      toast.error("Selecione ao menos um dia da semana"); return;
+    }
+    if (kind === "recorrente" && recurrence.freq === "monthly" && !recurrence.byMonthDay) {
+      toast.error("Informe o dia do mês"); return;
+    }
     const from = range?.from;
     const to = range?.to ?? range?.from;
     const payload = {
@@ -92,6 +98,7 @@ export function ScheduledTasksPanel({ open, onOpenChange }: { open: boolean; onO
       endDate: kind === "data" ? to?.toISOString() : undefined,
       weekdays: kind === "semana" ? weekdays.map(Number) : undefined,
       period: kind === "data" && repeat !== "nenhuma" ? repeat : undefined,
+      recurrence: kind === "recorrente" ? recurrence : undefined,
     };
     if (editingId) {
       updateScheduled(editingId, payload);
