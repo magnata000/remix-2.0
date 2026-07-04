@@ -35,7 +35,8 @@ type Props = {
 };
 
 export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote, onDelete }: Props) {
-  const { addMessage, addAudioMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, currentUserId } = usePipelineStore();
+  const { addMessage, addAudioMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, updateOpportunity, currentUserId } = usePipelineStore();
+  const { pipelineStageHours } = useSlaConfig();
   const { groups } = useQuoteStore();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
