@@ -13,6 +13,7 @@ import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 import { CloseOpportunityDialog } from "@/components/pipeline/CloseOpportunityDialog";
 import { OpportunityDetailDialog } from "@/components/pipeline/OpportunityDetailDialog";
+import { EditOpportunityDialog } from "@/components/pipeline/EditOpportunityDialog";
 import { PipelineAnalytics } from "@/components/pipeline/PipelineAnalytics";
 import { LostReasonDialog } from "@/components/shared/LostReasonDialog";
 import { SlaBadge } from "@/components/shared/SlaBadge";
@@ -42,6 +43,7 @@ export function KanbanModule() {
   const [pendingClose, setPendingClose] = useState<{ id: string } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Opportunity | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [view, setView] = useState<"board" | "analytics">("board");
   const initialFocus = useMemo(() => consumeFocus(), [consumeFocus]);
   const [highlightId] = useState<string | null>(initialFocus.opportunityId ?? null);
@@ -135,7 +137,7 @@ export function KanbanModule() {
                             <button
                               type="button"
                               aria-label="Editar"
-                              onClick={(e) => { e.stopPropagation(); setDetailId(t.id); }}
+                              onClick={(e) => { e.stopPropagation(); setEditingId(t.id); }}
                               className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                             >
                               <Pencil className="h-3.5 w-3.5" />
