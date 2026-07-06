@@ -226,6 +226,11 @@ export function KanbanModule() {
         onDelete={(o) => { setDetailId(null); setPendingDelete(o); }}
       />
 
+      <EditOpportunityDialog
+        opportunity={editingId ? opportunities.find((o) => o.id === editingId) ?? null : null}
+        onOpenChange={(o) => !o && setEditingId(null)}
+      />
+
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
