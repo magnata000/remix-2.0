@@ -172,8 +172,8 @@ export function PendingChip({ file, onRemove }: { file: File; onRemove: () => vo
 }
 
 export function AttachmentChip({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void }) {
+  if (isAudio(a.type)) return <AudioBubble a={a} onRemove={onRemove} />;
   return (
-    <div className="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border pl-1 pr-1.5 py-1 text-xs max-w-[220px]">
       <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-muted-foreground">
         {isImage(a.type) ? <ImageIcon className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
       </span>
