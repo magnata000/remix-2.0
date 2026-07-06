@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, FileText, Image as ImageIcon, Pencil, Pin, PinOff, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Image as ImageIcon, Pause, Pencil, Pin, PinOff, Play, Trash2, X } from "lucide-react";
 import { team } from "@/lib/mock/data";
 import type { TaskAttachment, TaskComment } from "@/lib/tasks/taskStore";
 import { MESSAGE_PREVIEW_LIMIT } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "@/components/tasks/MentionInput";
+
 
 
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -27,6 +28,104 @@ export const formatBytes = (n: number) => {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 };
 export const isImage = (type: string) => type.startsWith("image/");
+export const isAudio = (type: string) => type.startsWith("audio/");
+
+/**
+ * Player de áudio embutido estilo WhatsApp. Toca dentro da bolha sem abrir aba.
+ * Pausa qualquer outro AudioBubble ao dar play (um por vez).
+ */
+export function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onOtherPlay = (ev: Event) => {
+      if (ev.target !== el && !el.paused) {
+        el.pause();
+      }
+    };
+    document.addEventListener("play", onOtherPlay, true);
+    return () => document.removeEventListener("play", onOtherPlay, true);
+  }, []);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) {
+      void el.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    } else {
+      el.pause();
+      setPlaying(false);
+    }
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current;
+    if (!el || !duration || !isFinite(duration)) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    el.currentTime = ratio * duration;
+    setCurrent(el.currentTime);
+  };
+
+  const fmt = (s: number) => {
+    if (!isFinite(s) || s < 0) s = 0;
+    const m = Math.floor(s / 60);
+    const r = Math.floor(s % 60);
+    return `${m}:${String(r).padStart(2, "0")}`;
+  };
+
+  const shown = duration > 0 ? duration : current;
+  const pct = duration > 0 ? (current / duration) * 100 : 0;
+
+  return (
+    <div className="inline-flex items-center gap-2 rounded-2xl bg-background border border-border pl-1.5 pr-2 py-1.5 max-w-[280px]">
+      <audio
+        ref={audioRef}
+        src={a.url}
+        preload="metadata"
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setCurrent(0); }}
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={playing ? "Pausar áudio" : "Reproduzir áudio"}
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-brand-foreground hover:bg-brand/90 shrink-0"
+      >
+        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-[1px]" />}
+      </button>
+      <div className="flex-1 min-w-[110px]">
+        <div
+          onClick={seek}
+          className="h-1.5 rounded-full bg-muted cursor-pointer overflow-hidden"
+          role="slider"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(pct)}
+        >
+          <div className="h-full bg-brand transition-[width] duration-100" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-0.5 flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+          <span>{fmt(playing || current > 0 ? current : shown)}</span>
+          <span>{formatBytes(a.size)}</span>
+        </div>
+      </div>
+      {onRemove && (
+        <button type="button" onClick={onRemove} aria-label="Remover áudio" className="text-muted-foreground hover:text-destructive shrink-0">
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function TimelineRow({
   authorId, at, children,
