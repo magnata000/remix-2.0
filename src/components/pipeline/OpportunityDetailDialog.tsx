@@ -13,6 +13,7 @@ import { useSlaConfig, TERMINAL_STAGES } from "@/lib/sla/slaConfig";
 import { MAX_PINNED_COMMENTS } from "@/lib/tasks/taskStore";
 import { MentionInput } from "@/components/tasks/MentionInput";
 import {
+  AttachmentChip,
   CommentBubble,
   EDIT_WINDOW_MS,
   PendingChip,
@@ -247,9 +248,7 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                   const a = o.attachments.find((x) => x.id === ev.attachmentId);
                   return a ? (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
-                      <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-brand hover:underline">
-                        <Paperclip className="h-3 w-3" />{a.name}
-                      </a>
+                      <AttachmentChip a={a} />
                     </TimelineRow>
                   ) : null;
                 }
