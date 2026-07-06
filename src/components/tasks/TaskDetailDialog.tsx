@@ -245,9 +245,7 @@ export function TaskDetailDialog({
                   if (!a || !attachmentMatches(a.name)) return null;
                   return (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
-                      <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-brand hover:underline">
-                        <Paperclip className="h-3 w-3" />{a.name}
-                      </a>
+                      <AttachmentChip a={a} />
                     </TimelineRow>
                   );
                 }
