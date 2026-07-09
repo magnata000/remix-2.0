@@ -102,16 +102,14 @@ export function ReportTab() {
     });
   }, [cashFlow, commissions, range]);
 
-  // Saídas por categoria
+  // Saídas por categoria (respeita filtro global)
   const pieData = useMemo(() => {
-    const inSelected = entries.filter((e) => {
-      const d = new Date(e.paidAt);
-      return d.getMonth() === pieMonth && d.getFullYear() === new Date().getFullYear();
-    });
+    const inSelected = entries.filter((e) => inRange(e.paidAt, range));
     const map = new Map<string, number>();
     inSelected.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [entries, pieMonth]);
+  }, [entries, range]);
+
 
   // Evolução das despesas
   const despesasEvol = useMemo(() => {
@@ -124,7 +122,7 @@ export function ReportTab() {
     });
   }, [cashFlow, entries, range]);
 
-  // Evolução financeira comparativa
+  // Evolução financeira (receita e lucro no período)
   const evolucao = useMemo(() => {
     return cashFlow.map((m, idx) => {
       const start = new Date(range.start.getFullYear(), range.start.getMonth() + idx, 1);
@@ -133,38 +131,10 @@ export function ReportTab() {
       const receita = revenueBruta(commissions, incomes, r);
       const custos = entries.filter((e) => inRange(e.paidAt, r)).reduce((s, e) => s + e.amount, 0);
       const lucro = receita - custos;
+      return { month: m.month, receita, lucro };
+    });
+  }, [cashFlow, commissions, incomes, entries, range]);
 
-      // comparativo
-      let compReceita = 0;
-      let compLucro = 0;
-      if (evolTab === "mes-anterior") {
-        const cs = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-        const ce = new Date(cs.getFullYear(), cs.getMonth() + 1, 0, 23, 59, 59);
-        const cr = { start: cs, end: ce };
-        compReceita = revenueBruta(commissions, incomes, cr);
-        compLucro = compReceita - entries.filter((e) => inRange(e.paidAt, cr)).reduce((s, e) => s + e.amount, 0);
-      } else if (evolTab === "ano-anterior") {
-        const cs = new Date(start.getFullYear() - 1, start.getMonth(), 1);
-        const ce = new Date(cs.getFullYear(), cs.getMonth() + 1, 0, 23, 59, 59);
-        const cr = { start: cs, end: ce };
-        compReceita = revenueBruta(commissions, incomes, cr);
-        compLucro = compReceita - entries.filter((e) => inRange(e.paidAt, cr)).reduce((s, e) => s + e.amount, 0);
-      }
-      return { month: m.month, receita, lucro, compReceita, compLucro };
-    }).reduce<Array<{ month: string; receita: number; lucro: number; compReceita: number; compLucro: number }>>((acc, curr, i) => {
-      if (evolTab === "acumulado") {
-        const prev = acc[i - 1];
-        acc.push({
-          ...curr,
-          receita: (prev?.receita ?? 0) + curr.receita,
-          lucro: (prev?.lucro ?? 0) + curr.lucro,
-        });
-      } else {
-        acc.push(curr);
-      }
-      return acc;
-    }, []);
-  }, [cashFlow, commissions, incomes, entries, range, evolTab]);
 
   // Inadimplência
   const del = useMemo(() => delinquency(commissions), [commissions]);
