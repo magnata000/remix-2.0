@@ -252,20 +252,12 @@ export function ReportTab() {
       {/* Despesas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card className="p-5 rounded-2xl border-border shadow-none">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">Despesas por Categoria</h2>
-              <p className="text-xs text-muted-foreground">{MONTHS_PT[pieMonth]} · {new Date().getFullYear()}</p>
-            </div>
-            <Select value={String(pieMonth)} onValueChange={(v) => setPieMonth(Number(v))}>
-              <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MONTHS_PT.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Despesas por Categoria</h2>
+            <p className="text-xs text-muted-foreground">No período selecionado</p>
           </div>
           <div className="h-64">
-            {pieData.length === 0 ? <EmptyState label="Nenhuma saída neste mês." /> : (
+            {pieData.length === 0 ? <EmptyState label="Nenhuma saída no período." /> : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2}>
@@ -308,18 +300,9 @@ export function ReportTab() {
 
       {/* Evolução financeira */}
       <Card className="p-5 rounded-2xl border-border shadow-none">
-        <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <h2 className="text-lg font-semibold">Evolução Financeira</h2>
-            <p className="text-xs text-muted-foreground">Receita e lucro no período com comparativo</p>
-          </div>
-          <Tabs value={evolTab} onValueChange={(v) => setEvolTab(v as typeof evolTab)}>
-            <TabsList>
-              <TabsTrigger value="mes-anterior">Mês anterior</TabsTrigger>
-              <TabsTrigger value="ano-anterior">Ano anterior</TabsTrigger>
-              <TabsTrigger value="acumulado">Acumulado</TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Evolução Financeira</h2>
+          <p className="text-xs text-muted-foreground">Receita e lucro por mês no período</p>
         </div>
         <div className="h-72">
           {evolucao.length === 0 ? <EmptyState /> : (
@@ -332,12 +315,6 @@ export function ReportTab() {
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line type="monotone" dataKey="receita" name="Receita" stroke="var(--brand)" strokeWidth={3} dot={{ r: 3 }} />
                 <Line type="monotone" dataKey="lucro" name="Lucro" stroke="var(--success)" strokeWidth={3} dot={{ r: 3 }} />
-                {evolTab !== "acumulado" && (
-                  <>
-                    <Line type="monotone" dataKey="compReceita" name="Receita (comp.)" stroke="var(--brand)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
-                    <Line type="monotone" dataKey="compLucro" name="Lucro (comp.)" stroke="var(--success)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
-                  </>
-                )}
               </LineChart>
             </ResponsiveContainer>
           )}
