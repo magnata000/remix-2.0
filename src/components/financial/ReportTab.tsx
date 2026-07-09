@@ -2,169 +2,293 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, AlertCircle, BarChart3 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
-  PieChart, Pie, Cell, BarChart, Bar,
+  PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import { formatBRL } from "@/lib/mock/data";
 import { useCashStore, MONTHS_PT } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
-import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
-import { salesByMonthFromPipeline } from "@/lib/pipeline/salesStats";
+import { useDreConfig } from "@/lib/financial/dreConfigStore";
+import {
+  rangePreset,
+  previousRange,
+  revenueBruta,
+  computeDre,
+  projectedCashFlow,
+  delinquency,
+  compareDelta,
+  monthlySeries,
+  inRange,
+  formatPct,
+  type DateRange,
+} from "@/lib/financial/reportMetrics";
+import { KpiCard } from "@/components/financial/KpiCard";
+import { DreTable } from "@/components/financial/DreTable";
+import { ReportFilters, type PeriodPreset } from "@/components/financial/ReportFilters";
 
 const PIE_COLORS = ["var(--brand)", "var(--warning)", "var(--success)", "var(--destructive)", "var(--primary)", "#8b5cf6", "#06b6d4"];
 
-const MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const tooltipStyle = {
+  borderRadius: 12,
+  border: "1px solid var(--border)",
+  background: "var(--card)",
+  fontSize: 12,
+} as const;
+
+function EmptyState({ label = "Sem dados no período." }: { label?: string }) {
+  return (
+    <div className="h-full flex items-center justify-center text-sm text-muted-foreground bg-muted/30 rounded-xl">
+      {label}
+    </div>
+  );
+}
 
 export function ReportTab() {
-  const { entries, incomes } = useCashStore();
+  const { entries, incomes, expenses } = useCashStore();
   const { commissions } = useCommissionStore();
-  const { opportunities } = usePipelineStore();
-  const currentYear = new Date().getFullYear();
+  const { taxOnRevenuePct, taxOnProfitPct, classify } = useDreConfig();
+
+  const [preset, setPreset] = useState<PeriodPreset>("ano");
+  const [range, setRange] = useState<DateRange>(() => rangePreset("ano"));
   const [pieMonth, setPieMonth] = useState<number>(new Date().getMonth());
-  const [topBy, setTopBy] = useState<"clientes" | "seguradoras">("clientes");
+  const [evolTab, setEvolTab] = useState<"mes-anterior" | "ano-anterior" | "acumulado">("mes-anterior");
 
-  // 1) Fluxo de caixa mensal
-  const cashFlow = useMemo(() => {
-    return MONTHS_SHORT.map((label, m) => {
-      const inMonth = (iso: string) => {
-        const d = new Date(iso);
-        return d.getMonth() === m && d.getFullYear() === currentYear;
-      };
-      const comIn = commissions
-        .filter((c) => c.status === "pago" && inMonth(c.dueDate))
-        .reduce((s, c) => s + c.amount, 0);
-      const manualIn = incomes.filter((i) => inMonth(i.receivedAt)).reduce((s, i) => s + i.amount, 0);
-      const out = entries.filter((e) => inMonth(e.paidAt)).reduce((s, e) => s + e.amount, 0);
-      const entradas = comIn + manualIn;
-      return { month: label, entradas, saidas: out, saldo: entradas - out };
-    });
-  }, [entries, incomes, commissions, currentYear]);
+  const prevR = useMemo(() => previousRange(range), [range]);
 
-  // 2) Receita vs Comissões — derivado das oportunidades em "Fechado"
-  const lineData = useMemo(
-    () =>
-      salesByMonthFromPipeline(opportunities, currentYear).map((s) => ({
-        month: s.month,
-        receita: s.receita,
-        comissoes: Math.round(s.receita * 0.18),
-      })),
-    [opportunities, currentYear],
+  // KPIs
+  const dreCur = useMemo(
+    () => computeDre(commissions, incomes, entries, range, taxOnRevenuePct, taxOnProfitPct, classify),
+    [commissions, incomes, entries, range, taxOnRevenuePct, taxOnProfitPct, classify],
+  );
+  const drePrev = useMemo(
+    () => computeDre(commissions, incomes, entries, prevR, taxOnRevenuePct, taxOnProfitPct, classify),
+    [commissions, incomes, entries, prevR, taxOnRevenuePct, taxOnProfitPct, classify],
+  );
+  const rbCmp = compareDelta(dreCur.receitaBruta, drePrev.receitaBruta);
+  const rlCmp = compareDelta(dreCur.receitaLiquida, drePrev.receitaLiquida);
+  const llCmp = compareDelta(dreCur.lucroLiquido, drePrev.lucroLiquido);
+  const mgCmp = compareDelta(dreCur.margem, drePrev.margem);
+
+  const projected = useMemo(
+    () => projectedCashFlow(commissions, expenses, entries, incomes),
+    [commissions, expenses, entries, incomes],
   );
 
-  // 3) Saídas por categoria do mês
+  // Fluxo de caixa mensal (respeitando range)
+  const cashFlow = useMemo(() => {
+    return monthlySeries(range, (s, e) => 0).map((m, idx, arr) => {
+      const start = new Date(range.start.getFullYear(), range.start.getMonth() + idx, 1);
+      const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+      const r = { start, end };
+      const entradas =
+        commissions.filter((c) => c.status === "pago" && inRange(c.paidAt, r)).reduce((s, c) => s + c.amount, 0) +
+        incomes.filter((i) => inRange(i.receivedAt, r)).reduce((s, i) => s + i.amount, 0);
+      const saidas = entries.filter((e) => inRange(e.paidAt, r)).reduce((s, e) => s + e.amount, 0);
+      return { month: m.month, entradas, saidas, saldo: entradas - saidas };
+    });
+  }, [range, commissions, incomes, entries]);
+
+  // Receita prevista × realizada
+  const previstaVsReal = useMemo(() => {
+    return cashFlow.map((_, idx) => {
+      const start = new Date(range.start.getFullYear(), range.start.getMonth() + idx, 1);
+      const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+      const r = { start, end };
+      const realizada = commissions
+        .filter((c) => c.status === "pago" && inRange(c.paidAt, r))
+        .reduce((s, c) => s + c.amount, 0);
+      const prevista = commissions
+        .filter((c) => c.status !== "cancelada" && c.status !== "devolvido" && inRange(c.dueDate, r))
+        .reduce((s, c) => s + c.amount, 0);
+      return { month: cashFlow[idx].month, prevista, realizada };
+    });
+  }, [cashFlow, commissions, range]);
+
+  // Saídas por categoria
   const pieData = useMemo(() => {
     const inSelected = entries.filter((e) => {
       const d = new Date(e.paidAt);
-      return d.getMonth() === pieMonth && d.getFullYear() === currentYear;
+      return d.getMonth() === pieMonth && d.getFullYear() === new Date().getFullYear();
     });
     const map = new Map<string, number>();
     inSelected.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [entries, pieMonth, currentYear]);
+  }, [entries, pieMonth]);
 
-  // 4) Top clientes / seguradoras
-  const topData = useMemo(() => {
-    const key = topBy === "clientes" ? "clientName" : "insurer";
-    const map = new Map<string, number>();
-    commissions.forEach((c) => {
-      const k = c[key as "clientName" | "insurer"];
-      map.set(k, (map.get(k) ?? 0) + c.amount);
+  // Evolução das despesas
+  const despesasEvol = useMemo(() => {
+    return cashFlow.map((m, idx) => {
+      const start = new Date(range.start.getFullYear(), range.start.getMonth() + idx, 1);
+      const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+      const r = { start, end };
+      const total = entries.filter((e) => inRange(e.paidAt, r)).reduce((s, e) => s + e.amount, 0);
+      return { month: m.month, total };
     });
-    return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10);
-  }, [topBy, commissions]);
+  }, [cashFlow, entries, range]);
 
-  // KPIs (movidos da aba Caixa)
-  const totalCom = commissions.reduce((s, c) => s + c.amount, 0);
-  const pendenteCom = commissions.filter((c) => c.status === "pendente").reduce((s, c) => s + c.amount, 0);
-  const atrasadoCom = commissions.filter((c) => c.status === "atrasado").reduce((s, c) => s + c.amount, 0);
-  const kpis = [
-    { label: "Comissões a Receber", value: formatBRL(pendenteCom), icon: Clock, iconBg: "bg-warning/15", iconColor: "text-warning", highlight: true },
-    { label: "Inadimplência", value: formatBRL(atrasadoCom), icon: AlertCircle, iconBg: "bg-destructive/15", iconColor: "text-destructive", highlight: false },
-    { label: "Ticket Médio", value: formatBRL(totalCom / commissions.length), icon: BarChart3, iconBg: "bg-brand/30", iconColor: "text-brand-foreground", highlight: false },
-  ];
+  // Evolução financeira comparativa
+  const evolucao = useMemo(() => {
+    return cashFlow.map((m, idx) => {
+      const start = new Date(range.start.getFullYear(), range.start.getMonth() + idx, 1);
+      const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+      const r = { start, end };
+      const receita = revenueBruta(commissions, incomes, r);
+      const custos = entries.filter((e) => inRange(e.paidAt, r)).reduce((s, e) => s + e.amount, 0);
+      const lucro = receita - custos;
 
-  const tooltipStyle = {
-    borderRadius: 12,
-    border: "1px solid var(--border)",
-    background: "var(--card)",
-    fontSize: 12,
-  } as const;
+      // comparativo
+      let compReceita = 0;
+      let compLucro = 0;
+      if (evolTab === "mes-anterior") {
+        const cs = new Date(start.getFullYear(), start.getMonth() - 1, 1);
+        const ce = new Date(cs.getFullYear(), cs.getMonth() + 1, 0, 23, 59, 59);
+        const cr = { start: cs, end: ce };
+        compReceita = revenueBruta(commissions, incomes, cr);
+        compLucro = compReceita - entries.filter((e) => inRange(e.paidAt, cr)).reduce((s, e) => s + e.amount, 0);
+      } else if (evolTab === "ano-anterior") {
+        const cs = new Date(start.getFullYear() - 1, start.getMonth(), 1);
+        const ce = new Date(cs.getFullYear(), cs.getMonth() + 1, 0, 23, 59, 59);
+        const cr = { start: cs, end: ce };
+        compReceita = revenueBruta(commissions, incomes, cr);
+        compLucro = compReceita - entries.filter((e) => inRange(e.paidAt, cr)).reduce((s, e) => s + e.amount, 0);
+      }
+      return { month: m.month, receita, lucro, compReceita, compLucro };
+    }).reduce<Array<{ month: string; receita: number; lucro: number; compReceita: number; compLucro: number }>>((acc, curr, i) => {
+      if (evolTab === "acumulado") {
+        const prev = acc[i - 1];
+        acc.push({
+          ...curr,
+          receita: (prev?.receita ?? 0) + curr.receita,
+          lucro: (prev?.lucro ?? 0) + curr.lucro,
+        });
+      } else {
+        acc.push(curr);
+      }
+      return acc;
+    }, []);
+  }, [cashFlow, commissions, incomes, entries, range, evolTab]);
+
+  // Inadimplência
+  const del = useMemo(() => delinquency(commissions), [commissions]);
 
   return (
     <div className="space-y-5">
+      {/* Filtros */}
+      <Card className="p-4 rounded-2xl border-border shadow-none">
+        <ReportFilters
+          preset={preset}
+          range={range}
+          onChange={(p, r) => {
+            setPreset(p);
+            setRange(r);
+          }}
+        />
+      </Card>
+
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {kpis.map((k) => (
-          <Card key={k.label} className={`p-5 rounded-2xl border-border shadow-none ${k.highlight ? "bg-brand/15 border-brand/30" : "bg-card"}`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">{k.label}</p>
-                <p className="mt-2 text-2xl font-bold tracking-tight">{k.value}</p>
-              </div>
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${k.iconBg}`}>
-                <k.icon className={`h-5 w-5 ${k.iconColor}`} />
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        <KpiCard
+          title="Receita Bruta"
+          value={formatBRL(dreCur.receitaBruta)}
+          hint="Soma das comissões pagas e receitas manuais no período selecionado."
+          deltaPct={rbCmp.deltaPct}
+          trend={rbCmp.trend}
+        />
+        <KpiCard
+          title="Receita Líquida"
+          value={formatBRL(dreCur.receitaLiquida)}
+          hint={`Receita Bruta menos impostos sobre receita (${formatPct(taxOnRevenuePct)}).`}
+          deltaPct={rlCmp.deltaPct}
+          trend={rlCmp.trend}
+        />
+        <KpiCard
+          title="Lucro Líquido"
+          value={formatBRL(dreCur.lucroLiquido)}
+          hint="Lucro Operacional menos impostos sobre lucro."
+          deltaPct={llCmp.deltaPct}
+          trend={llCmp.trend}
+        />
+        <KpiCard
+          title="Margem de Lucro"
+          value={formatPct(dreCur.margem)}
+          hint="Lucro Líquido ÷ Receita Bruta."
+          deltaPct={mgCmp.deltaPct}
+          trend={mgCmp.trend}
+        />
+        <KpiCard
+          title="Fluxo de Caixa Projetado"
+          value={formatBRL(projected.saldoProjetado)}
+          hint="Saldo Atual + Recebimentos Futuros − Pagamentos Futuros (próximos 60 dias)."
+          footer={
+            <div className="space-y-0.5">
+              <div>Saldo atual: <span className="tabular-nums font-medium text-foreground">{formatBRL(projected.saldoAtual)}</span></div>
+              <div>+ Recebimentos: <span className="tabular-nums font-medium text-success">{formatBRL(projected.recebimentos)}</span></div>
+              <div>− Pagamentos: <span className="tabular-nums font-medium text-destructive">{formatBRL(projected.pagamentos)}</span></div>
             </div>
-          </Card>
-        ))}
+          }
+        />
       </div>
 
-
-      {/* 1) Fluxo de caixa full-width */}
+      {/* Fluxo de caixa mensal */}
       <Card className="p-5 rounded-2xl border-border shadow-none">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Fluxo de Caixa Mensal</h2>
-          <p className="text-xs text-muted-foreground">Entradas, saídas e saldo · {currentYear}</p>
+          <p className="text-xs text-muted-foreground">Entradas, saídas e saldo no período</p>
         </div>
         <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={cashFlow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
-              <YAxis tickLine={false} axisLine={false} fontSize={12} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={3} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="saidas" name="Saídas" stroke="var(--destructive)" strokeWidth={3} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--brand)" strokeWidth={3} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* 2) Receita vs Comissões */}
-        <Card className="p-5 rounded-2xl border-border shadow-none">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Receita vs Comissões</h2>
-            <p className="text-xs text-muted-foreground">Últimos 12 meses</p>
-          </div>
-          <div className="h-64">
+          {cashFlow.length === 0 ? <EmptyState /> : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={lineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={cashFlow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis tickLine={false} axisLine={false} fontSize={12} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Line type="monotone" dataKey="receita" name="Receita" stroke="var(--brand)" strokeWidth={3} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="comissoes" name="Comissões" stroke="var(--warning)" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="saidas" name="Saídas" stroke="var(--destructive)" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--brand)" strokeWidth={3} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
-          </div>
-        </Card>
+          )}
+        </div>
+      </Card>
 
-        {/* 3) Saídas por categoria */}
+      {/* DRE */}
+      <DreTable dre={dreCur} />
+
+      {/* Receita Prevista × Realizada */}
+      <Card className="p-5 rounded-2xl border-border shadow-none">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Receita Prevista × Realizada</h2>
+          <p className="text-xs text-muted-foreground">
+            Prevista considera comissões contratadas por vencimento; realizada, valores efetivamente recebidos.
+          </p>
+        </div>
+        <div className="h-72">
+          {previstaVsReal.length === 0 ? <EmptyState /> : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={previstaVsReal} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="prevista" name="Prevista" stroke="var(--warning)" strokeWidth={3} strokeDasharray="6 4" dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="realizada" name="Realizada" stroke="var(--brand)" strokeWidth={3} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </Card>
+
+      {/* Despesas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card className="p-5 rounded-2xl border-border shadow-none">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold">Saídas por Categoria</h2>
-              <p className="text-xs text-muted-foreground">{MONTHS_PT[pieMonth]} · {currentYear}</p>
+              <h2 className="text-lg font-semibold">Despesas por Categoria</h2>
+              <p className="text-xs text-muted-foreground">{MONTHS_PT[pieMonth]} · {new Date().getFullYear()}</p>
             </div>
             <Select value={String(pieMonth)} onValueChange={(v) => setPieMonth(Number(v))}>
               <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
@@ -174,11 +298,7 @@ export function ReportTab() {
             </Select>
           </div>
           <div className="h-64">
-            {pieData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground bg-muted/30 rounded-xl">
-                Nenhuma saída neste mês.
-              </div>
-            ) : (
+            {pieData.length === 0 ? <EmptyState label="Nenhuma saída neste mês." /> : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2}>
@@ -192,33 +312,97 @@ export function ReportTab() {
           </div>
         </Card>
 
-        {/* 4) Top clientes / seguradoras */}
-        <Card className="p-5 rounded-2xl border-border shadow-none lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <h2 className="text-lg font-semibold">Top por Receita</h2>
-              <p className="text-xs text-muted-foreground">Soma de comissões (todos os status)</p>
-            </div>
-            <Tabs value={topBy} onValueChange={(v) => setTopBy(v as "clientes" | "seguradoras")}>
-              <TabsList>
-                <TabsTrigger value="clientes">Clientes</TabsTrigger>
-                <TabsTrigger value="seguradoras">Seguradoras</TabsTrigger>
-              </TabsList>
-            </Tabs>
+        <Card className="p-5 rounded-2xl border-border shadow-none">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Evolução das Despesas</h2>
+            <p className="text-xs text-muted-foreground">Total de saídas por mês no período</p>
           </div>
-          <div className="h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topData} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
-                <XAxis type="number" tickLine={false} axisLine={false} fontSize={12} />
-                <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} fontSize={12} width={80} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
-                <Bar dataKey="value" fill="var(--brand)" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-64">
+            {despesasEvol.length === 0 ? <EmptyState /> : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={despesasEvol} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="despArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--destructive)" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="var(--destructive)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                  <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                  <Area type="monotone" dataKey="total" name="Despesas" stroke="var(--destructive)" strokeWidth={2} fill="url(#despArea)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </Card>
       </div>
+
+      {/* Evolução financeira */}
+      <Card className="p-5 rounded-2xl border-border shadow-none">
+        <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold">Evolução Financeira</h2>
+            <p className="text-xs text-muted-foreground">Receita e lucro no período com comparativo</p>
+          </div>
+          <Tabs value={evolTab} onValueChange={(v) => setEvolTab(v as typeof evolTab)}>
+            <TabsList>
+              <TabsTrigger value="mes-anterior">Mês anterior</TabsTrigger>
+              <TabsTrigger value="ano-anterior">Ano anterior</TabsTrigger>
+              <TabsTrigger value="acumulado">Acumulado</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        <div className="h-72">
+          {evolucao.length === 0 ? <EmptyState /> : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={evolucao} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="receita" name="Receita" stroke="var(--brand)" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="lucro" name="Lucro" stroke="var(--success)" strokeWidth={3} dot={{ r: 3 }} />
+                {evolTab !== "acumulado" && (
+                  <>
+                    <Line type="monotone" dataKey="compReceita" name="Receita (comp.)" stroke="var(--brand)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
+                    <Line type="monotone" dataKey="compLucro" name="Lucro (comp.)" stroke="var(--success)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
+                  </>
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </Card>
+
+      {/* Inadimplência */}
+      <Card className="p-5 rounded-2xl border-border shadow-none">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Inadimplência</h2>
+          <p className="text-xs text-muted-foreground">Comissões com status atrasado</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <KpiCard title="Valor em Aberto" value={formatBRL(del.valorEmAberto)} hint="Soma das comissões com status Atrasado." />
+          <KpiCard title="Inadimplência (%)" value={formatPct(del.pct)} hint="Valor em aberto ÷ (Atrasado + Pendente)." invertTrendColor />
+          <KpiCard title="Parcelas em Atraso" value={String(del.parcelas)} hint="Número de comissões atrasadas." />
+          <KpiCard title="Clientes Inadimplentes" value={String(del.clientes)} hint="Clientes distintos com pelo menos uma parcela atrasada." />
+        </div>
+        <div className="h-64">
+          {del.serieMensal.every((s) => s.value === 0) ? <EmptyState label="Sem histórico de inadimplência." /> : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={del.serieMensal} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                <Bar dataKey="value" name="Em atraso" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

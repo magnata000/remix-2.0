@@ -32,6 +32,7 @@ import { EditMemberDialog } from "@/components/settings/EditMemberDialog";
 import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
 import { CommissionConfigSection } from "@/components/settings/CommissionConfigSection";
 import { SlaConfigSection } from "@/components/settings/SlaConfigSection";
+import { DreConfigSection } from "@/components/settings/DreConfigSection";
 import { toast } from "sonner";
 
 
@@ -201,6 +202,9 @@ export function SettingsModule() {
 
       {/* SLA */}
       <SlaConfigSection />
+
+      {/* DRE & Impostos */}
+      <DreConfigSection />
 
 
       {/* Preferências */}
