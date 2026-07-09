@@ -18,6 +18,7 @@ import { CommissionStoreProvider } from "@/lib/financial/commissionStore";
 import { CommissionConfigStoreProvider } from "@/lib/financial/commissionConfigStore";
 import { SellerCommissionStoreProvider } from "@/lib/financial/sellerCommissionStore";
 import { SlaConfigProvider } from "@/lib/sla/slaConfig";
+import { DreConfigProvider } from "@/lib/financial/dreConfigStore";
 
 import { NavigationProvider } from "@/lib/navigation";
 
@@ -55,6 +56,7 @@ function AppShell() {
                     <CommissionStoreProvider>
                       <SellerCommissionStoreProvider>
                         <SlaConfigProvider>
+                        <DreConfigProvider>
                         <NavigationProvider active={active} setActive={setActive}>
                           <div className="min-h-screen bg-background">
                             <TopBar active={active} onChange={setActive} />
@@ -68,6 +70,7 @@ function AppShell() {
                             </main>
                           </div>
                         </NavigationProvider>
+                        </DreConfigProvider>
                         </SlaConfigProvider>
                       </SellerCommissionStoreProvider>
                     </CommissionStoreProvider>
