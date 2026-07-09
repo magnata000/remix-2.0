@@ -6,7 +6,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import { formatBRL } from "@/lib/mock/data";
-import { useCashStore, MONTHS_PT } from "@/lib/cash/cashStore";
+import { useCashStore } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { useDreConfig } from "@/lib/financial/dreConfigStore";
 import {
