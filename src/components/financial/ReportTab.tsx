@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area,
 } from "recharts";
 import { formatBRL } from "@/lib/mock/data";
-import { useCashStore, MONTHS_PT } from "@/lib/cash/cashStore";
+import { useCashStore } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { useDreConfig } from "@/lib/financial/dreConfigStore";
 import {
@@ -51,8 +50,6 @@ export function ReportTab() {
 
   const [preset, setPreset] = useState<PeriodPreset>("ano");
   const [range, setRange] = useState<DateRange>(() => rangePreset("ano"));
-  const [pieMonth, setPieMonth] = useState<number>(new Date().getMonth());
-  const [evolTab, setEvolTab] = useState<"mes-anterior" | "ano-anterior" | "acumulado">("mes-anterior");
 
   const prevR = useMemo(() => previousRange(range), [range]);
 
@@ -105,16 +102,14 @@ export function ReportTab() {
     });
   }, [cashFlow, commissions, range]);
 
-  // Saídas por categoria
+  // Saídas por categoria (respeita filtro global)
   const pieData = useMemo(() => {
-    const inSelected = entries.filter((e) => {
-      const d = new Date(e.paidAt);
-      return d.getMonth() === pieMonth && d.getFullYear() === new Date().getFullYear();
-    });
+    const inSelected = entries.filter((e) => inRange(e.paidAt, range));
     const map = new Map<string, number>();
     inSelected.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [entries, pieMonth]);
+  }, [entries, range]);
+
 
   // Evolução das despesas
   const despesasEvol = useMemo(() => {
@@ -127,7 +122,7 @@ export function ReportTab() {
     });
   }, [cashFlow, entries, range]);
 
-  // Evolução financeira comparativa
+  // Evolução financeira (receita e lucro no período)
   const evolucao = useMemo(() => {
     return cashFlow.map((m, idx) => {
       const start = new Date(range.start.getFullYear(), range.start.getMonth() + idx, 1);
@@ -136,38 +131,10 @@ export function ReportTab() {
       const receita = revenueBruta(commissions, incomes, r);
       const custos = entries.filter((e) => inRange(e.paidAt, r)).reduce((s, e) => s + e.amount, 0);
       const lucro = receita - custos;
+      return { month: m.month, receita, lucro };
+    });
+  }, [cashFlow, commissions, incomes, entries, range]);
 
-      // comparativo
-      let compReceita = 0;
-      let compLucro = 0;
-      if (evolTab === "mes-anterior") {
-        const cs = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-        const ce = new Date(cs.getFullYear(), cs.getMonth() + 1, 0, 23, 59, 59);
-        const cr = { start: cs, end: ce };
-        compReceita = revenueBruta(commissions, incomes, cr);
-        compLucro = compReceita - entries.filter((e) => inRange(e.paidAt, cr)).reduce((s, e) => s + e.amount, 0);
-      } else if (evolTab === "ano-anterior") {
-        const cs = new Date(start.getFullYear() - 1, start.getMonth(), 1);
-        const ce = new Date(cs.getFullYear(), cs.getMonth() + 1, 0, 23, 59, 59);
-        const cr = { start: cs, end: ce };
-        compReceita = revenueBruta(commissions, incomes, cr);
-        compLucro = compReceita - entries.filter((e) => inRange(e.paidAt, cr)).reduce((s, e) => s + e.amount, 0);
-      }
-      return { month: m.month, receita, lucro, compReceita, compLucro };
-    }).reduce<Array<{ month: string; receita: number; lucro: number; compReceita: number; compLucro: number }>>((acc, curr, i) => {
-      if (evolTab === "acumulado") {
-        const prev = acc[i - 1];
-        acc.push({
-          ...curr,
-          receita: (prev?.receita ?? 0) + curr.receita,
-          lucro: (prev?.lucro ?? 0) + curr.lucro,
-        });
-      } else {
-        acc.push(curr);
-      }
-      return acc;
-    }, []);
-  }, [cashFlow, commissions, incomes, entries, range, evolTab]);
 
   // Inadimplência
   const del = useMemo(() => delinquency(commissions), [commissions]);
@@ -285,20 +252,12 @@ export function ReportTab() {
       {/* Despesas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card className="p-5 rounded-2xl border-border shadow-none">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">Despesas por Categoria</h2>
-              <p className="text-xs text-muted-foreground">{MONTHS_PT[pieMonth]} · {new Date().getFullYear()}</p>
-            </div>
-            <Select value={String(pieMonth)} onValueChange={(v) => setPieMonth(Number(v))}>
-              <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MONTHS_PT.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Despesas por Categoria</h2>
+            <p className="text-xs text-muted-foreground">No período selecionado</p>
           </div>
           <div className="h-64">
-            {pieData.length === 0 ? <EmptyState label="Nenhuma saída neste mês." /> : (
+            {pieData.length === 0 ? <EmptyState label="Nenhuma saída no período." /> : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2}>
@@ -341,18 +300,9 @@ export function ReportTab() {
 
       {/* Evolução financeira */}
       <Card className="p-5 rounded-2xl border-border shadow-none">
-        <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <h2 className="text-lg font-semibold">Evolução Financeira</h2>
-            <p className="text-xs text-muted-foreground">Receita e lucro no período com comparativo</p>
-          </div>
-          <Tabs value={evolTab} onValueChange={(v) => setEvolTab(v as typeof evolTab)}>
-            <TabsList>
-              <TabsTrigger value="mes-anterior">Mês anterior</TabsTrigger>
-              <TabsTrigger value="ano-anterior">Ano anterior</TabsTrigger>
-              <TabsTrigger value="acumulado">Acumulado</TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Evolução Financeira</h2>
+          <p className="text-xs text-muted-foreground">Receita e lucro por mês no período</p>
         </div>
         <div className="h-72">
           {evolucao.length === 0 ? <EmptyState /> : (
@@ -365,12 +315,6 @@ export function ReportTab() {
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line type="monotone" dataKey="receita" name="Receita" stroke="var(--brand)" strokeWidth={3} dot={{ r: 3 }} />
                 <Line type="monotone" dataKey="lucro" name="Lucro" stroke="var(--success)" strokeWidth={3} dot={{ r: 3 }} />
-                {evolTab !== "acumulado" && (
-                  <>
-                    <Line type="monotone" dataKey="compReceita" name="Receita (comp.)" stroke="var(--brand)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
-                    <Line type="monotone" dataKey="compLucro" name="Lucro (comp.)" stroke="var(--success)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
-                  </>
-                )}
               </LineChart>
             </ResponsiveContainer>
           )}
