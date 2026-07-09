@@ -45,30 +45,42 @@ export function DreConfigSection() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-        <div>
-          <Label className="text-xs text-muted-foreground">Imposto sobre Receita (%)</Label>
-          <Input
-            type="number"
-            step="0.1"
-            min={0}
-            max={100}
-            value={taxOnRevenuePct}
-            onChange={(e) => setTaxOnRevenuePct(Number(e.target.value) || 0)}
-            className="mt-1.5 rounded-xl bg-muted border-0"
-          />
-        </div>
-        <div>
-          <Label className="text-xs text-muted-foreground">Imposto sobre Lucro (%)</Label>
-          <Input
-            type="number"
-            step="0.1"
-            min={0}
-            max={100}
-            value={taxOnProfitPct}
-            onChange={(e) => setTaxOnProfitPct(Number(e.target.value) || 0)}
-            className="mt-1.5 rounded-xl bg-muted border-0"
-          />
+      <div className="rounded-xl border border-border bg-muted/30 p-4 mb-5">
+        <p className="text-sm font-semibold mb-1">Alíquotas de impostos</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Usadas para calcular Impostos sobre Receita e sobre Lucro na DRE Simplificada. As alterações são salvas automaticamente.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label className="text-xs text-muted-foreground">Imposto sobre Receita (%)</Label>
+            <div className="relative mt-1.5">
+              <Input
+                type="number"
+                step="0.1"
+                min={0}
+                max={100}
+                value={taxOnRevenuePct}
+                onChange={(e) => setTaxOnRevenuePct(Number(e.target.value) || 0)}
+                className="rounded-xl bg-card border border-border pr-9"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">%</span>
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Imposto sobre Lucro (%)</Label>
+            <div className="relative mt-1.5">
+              <Input
+                type="number"
+                step="0.1"
+                min={0}
+                max={100}
+                value={taxOnProfitPct}
+                onChange={(e) => setTaxOnProfitPct(Number(e.target.value) || 0)}
+                className="rounded-xl bg-card border border-border pr-9"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">%</span>
+            </div>
+          </div>
         </div>
       </div>
 
