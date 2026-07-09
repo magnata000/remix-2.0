@@ -50,8 +50,6 @@ export function ReportTab() {
 
   const [preset, setPreset] = useState<PeriodPreset>("ano");
   const [range, setRange] = useState<DateRange>(() => rangePreset("ano"));
-  const [pieMonth, setPieMonth] = useState<number>(new Date().getMonth());
-  const [evolTab, setEvolTab] = useState<"mes-anterior" | "ano-anterior" | "acumulado">("mes-anterior");
 
   const prevR = useMemo(() => previousRange(range), [range]);
 
