@@ -1,35 +1,25 @@
-## Correção: alíquotas configuráveis em "DRE & Impostos"
+## Ajustes na aba Relatório e Configurações
 
-### Diagnóstico atual
-O código já existe e está wired:
-- `src/components/settings/DreConfigSection.tsx` renderiza dois `<Input type="number">` para `taxOnRevenuePct` e `taxOnProfitPct`.
-- `SettingsModule.tsx` importa e renderiza `<DreConfigSection />`.
-- `routes/index.tsx` envolve tudo em `DreConfigProvider`.
+### 1. Configurações → DRE & Impostos
 
-Ou seja, no código estático os campos estão presentes. O relato do usuário ("não há alíquotas configuráveis") indica um problema de runtime/visual, não ausência de código.
+- Remover a subseção "Alíquotas de impostos" (bloco destacado com os dois inputs de % e o texto explicativo) do arquivo `src/components/settings/DreConfigSection.tsx`.
+- Remover a seção (classificação de categorias como custo/despesa operacional).
+- Será criado outra feature posteriormente para inserir os impostos, para serem contabilizados no DRE.
 
-### Passo 1 — Reproduzir no navegador (Playwright em modo build)
-Abrir `http://localhost:8080`, ir em Configurações, rolar até "DRE & Impostos", tirar screenshot da seção e capturar erros do console. Isso identifica qual das três hipóteses é a real:
+### 2. Gráfico "Evolução Financeira" (ReportTab)
 
-1. **Erro de render** (ex.: `useDreConfig` falhando em algum ponto, boundary silenciosa) → a seção some inteira.
-2. **Ordem/visibilidade** — a seção existe mas está abaixo de outras e o usuário não rolou até ela, ou o card está com altura zero por algum motivo de layout.
-3. **Inputs presentes mas visualmente indistinguíveis** — `bg-muted border-0` sobre fundo branco pode estar apagando a borda dos campos numéricos.
+- Remover as abas de filtro (`Mês anterior` / `Ano anterior` / `Acumulado`) e o estado `evolTab`.
+- Manter apenas as linhas de Receita e Lucro no período. Remover linhas comparativas (`compReceita`, `compLucro`) e a lógica de acúmulo.
 
-### Passo 2 — Correção conforme diagnóstico
+### 3. Gráfico "Despesas por Categoria" (ReportTab)
 
-- **Se erro de render**: corrigir a causa (provavelmente algum consumidor de `useDreConfig` fora do provider, ou tipo incorreto).
-- **Se ordem/visibilidade**: mover `<DreConfigSection />` para logo abaixo de "Comissionamento"/"SLA" (já está lá, mas reforçar posicionamento) e garantir que o Card tenha destaque visual — adicionar um Badge "Novo" temporário e âncora scroll.
-- **Se estilo confuso**: adicionar `border border-border` explícito aos inputs numéricos, sufixo `%` visual, e um botão "Salvar alíquotas" com toast (hoje o `onChange` altera direto, sem confirmação — usuário pode não perceber que já está salvo).
-
-### Passo 3 — Melhorias que serão feitas de qualquer forma
-Independente da causa raiz, aplicar:
-- Título da seção mais evidente ("Alíquotas de impostos") como subtítulo antes dos dois inputs.
-- Sufixo `%` dentro do Input (usando wrapper com `<span>` absoluto), para deixar claro que é percentual.
-- Feedback visual (toast "Alíquota atualizada") ao alterar cada campo (debounced 500ms) para que o usuário veja que a mudança persiste.
-- Verificação pós-fix via novo screenshot Playwright confirmando que os dois campos estão visíveis, editáveis e com valores default 6 e 15.
+- Remover o `Select` de mês no cabeçalho e o estado `pieMonth`.
+- Passar a considerar todas as despesas dentro do `range` global (respeitando o filtro global de período), somando por categoria.
+- Atualizar subtítulo para refletir o período selecionado (ex.: "No período selecionado").
 
 ### Arquivos afetados
-- `src/components/settings/DreConfigSection.tsx` (ajustes visuais + feedback)
-- Possivelmente `src/lib/financial/dreConfigStore.tsx` (se o diagnóstico apontar erro no provider)
 
-Nenhum outro módulo, store ou cálculo será alterado.
+- `src/components/settings/DreConfigSection.tsx`
+- `src/components/financial/ReportTab.tsx`
+
+Nenhum outro módulo/store precisa ser alterado.
