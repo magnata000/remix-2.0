@@ -1,7 +1,16 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL, formatDateShort } from "@/lib/mock/data";
-import { formatDateTimeBR, formatDateBR, type Expense, type ExpenseEntry, type ManualIncome } from "@/lib/cash/cashStore";
+import {
+  formatDateTimeBR,
+  formatDateBR,
+  taxKindLabel,
+  MONTHS_PT,
+  type Expense,
+  type ExpenseEntry,
+  type ManualIncome,
+  type TaxEntry,
+} from "@/lib/cash/cashStore";
 import type { Commission } from "@/lib/mock/data";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
@@ -13,7 +22,8 @@ import { usePolicyStore } from "@/lib/portfolio/policyStore";
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
   | { kind: "manual"; income: ManualIncome }
-  | { kind: "saida"; entry: ExpenseEntry; expense?: Expense };
+  | { kind: "saida"; entry: ExpenseEntry; expense?: Expense }
+  | { kind: "imposto"; tax: TaxEntry };
 
 export type Movement = {
   id: string;
