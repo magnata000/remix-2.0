@@ -5,17 +5,20 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCashStore, type ExpenseRecurrence } from "@/lib/cash/cashStore";
+import type { CategoryKind } from "@/lib/financial/dreConfigStore";
 import { toast } from "sonner";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void };
 
-const CATEGORIES = ["Aluguel", "Software", "Marketing", "Impostos", "Salários", "Serviços", "Outros"];
+const CATEGORIES = ["Aluguel", "Software", "Marketing", "Impostos", "Salários", "Serviços", "Infra", "Viagens", "Outros"];
 
 export function NewExpenseSheet({ open, onOpenChange }: Props) {
   const { addExpense } = useCashStore();
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [dreKind, setDreKind] = useState<CategoryKind | "">("");
   const [amount, setAmount] = useState("");
   const [recurrence, setRecurrence] = useState<ExpenseRecurrence>("avulsa");
   const [dueDay, setDueDay] = useState("");
@@ -24,7 +27,7 @@ export function NewExpenseSheet({ open, onOpenChange }: Props) {
 
   useEffect(() => {
     if (open) {
-      setDescription(""); setCategory(""); setAmount(""); setRecurrence("avulsa");
+      setDescription(""); setCategory(""); setDreKind(""); setAmount(""); setRecurrence("avulsa");
       setDueDay(""); setNotes(""); setErrors({});
     }
   }, [open]);
@@ -33,6 +36,7 @@ export function NewExpenseSheet({ open, onOpenChange }: Props) {
     const errs: Record<string, string> = {};
     if (!description.trim()) errs.description = "Obrigatório";
     if (!category.trim()) errs.category = "Obrigatório";
+    if (!dreKind) errs.dreKind = "Obrigatório";
     const amt = Number(amount.replace(",", "."));
     if (!amt || amt <= 0) errs.amount = "Valor inválido";
     let dd: number | undefined;
@@ -44,6 +48,7 @@ export function NewExpenseSheet({ open, onOpenChange }: Props) {
     addExpense({
       description: description.trim(),
       category: category.trim(),
+      dreKind: dreKind as CategoryKind,
       amount: amt,
       recurrence,
       dueDay: dd,
@@ -65,18 +70,29 @@ export function NewExpenseSheet({ open, onOpenChange }: Props) {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Categoria *</Label>
-            <Input
-              list="cat-suggestions"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              maxLength={40}
-              placeholder="Aluguel, Software…"
-              className="mt-1.5 rounded-xl bg-muted border-0"
-            />
-            <datalist id="cat-suggestions">
-              {CATEGORIES.map((c) => <option key={c} value={c} />)}
-            </datalist>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                <SelectValue placeholder="Selecione a categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
             {errors.category && <p className="text-xs text-destructive mt-1">{errors.category}</p>}
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Classificação DRE *</Label>
+            <Select value={dreKind} onValueChange={(v) => setDreKind(v as CategoryKind)}>
+              <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                <SelectValue placeholder="Selecione a classificação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="custo_operacional">Custo Operacional</SelectItem>
+                <SelectItem value="despesa_operacional">Despesa Operacional</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground mt-1">Usado para contabilizar no DRE.</p>
+            {errors.dreKind && <p className="text-xs text-destructive mt-1">{errors.dreKind}</p>}
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Valor base (R$) *</Label>
