@@ -134,16 +134,41 @@ export function CaixaTab() {
     return { income, expense, balance: income - expense };
   }, [monthMovements]);
 
-  // Despesas visíveis no mês (regra spec)
+  // Despesas visíveis no mês com status calculado
+  type ExpenseStatus = "pago" | "vencido" | "pendente";
   const visibleExpenses = useMemo(() => {
     const selectedIdx = currentYear * 12 + selectedMonth;
-    return expenses.filter((exp) => {
+    const today = new Date();
+    const isCurrentMonth = today.getMonth() === selectedMonth && today.getFullYear() === currentYear;
+    const filtered = expenses.filter((exp) => {
       const created = new Date(exp.createdAt);
       const createdIdx = created.getFullYear() * 12 + created.getMonth();
       if (exp.recurrence === "mensal") return createdIdx <= selectedIdx;
       return created.getMonth() === selectedMonth && created.getFullYear() === currentYear;
     });
-  }, [expenses, selectedMonth, currentYear]);
+    const withStatus = filtered.map((exp) => {
+      const hasPaidInMonth = entries.some((e) => {
+        if (e.expenseId !== exp.id) return false;
+        const d = new Date(e.paidAt);
+        return d.getMonth() === selectedMonth && d.getFullYear() === currentYear;
+      });
+      let status: ExpenseStatus = "pendente";
+      if (hasPaidInMonth) status = "pago";
+      else if (
+        exp.recurrence === "mensal" &&
+        exp.dueDay &&
+        isCurrentMonth &&
+        today.getDate() > exp.dueDay
+      ) status = "vencido";
+      return { exp, status };
+    });
+    const order: Record<ExpenseStatus, number> = { vencido: 0, pendente: 1, pago: 2 };
+    return withStatus.sort((a, b) => {
+      const d = order[a.status] - order[b.status];
+      if (d !== 0) return d;
+      return new Date(b.exp.createdAt).getTime() - new Date(a.exp.createdAt).getTime();
+    });
+  }, [expenses, entries, selectedMonth, currentYear]);
 
   const handleRemoveExpense = (e: Expense) => {
     removeExpense(e.id);
