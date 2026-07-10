@@ -140,6 +140,12 @@ export function ReportTab() {
   // Inadimplência
   const del = useMemo(() => delinquency(commissions), [commissions]);
 
+  // Perdas de Receita (canceladas + devolvidas)
+  const losses = useMemo(() => revenueLosses(commissions, range), [commissions, range]);
+  const lossesPrev = useMemo(() => revenueLosses(commissions, prevR), [commissions, prevR]);
+  const cancCmp = compareDelta(losses.canceladas.valor, lossesPrev.canceladas.valor);
+  const devCmp = compareDelta(losses.devolvidas.valor, lossesPrev.devolvidas.valor);
+
   return (
     <div className="space-y-5">
       {/* Filtros */}
