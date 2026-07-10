@@ -166,7 +166,7 @@ export function ReportTab() {
         <KpiCard
           title="Receita Líquida"
           value={formatBRL(dreCur.receitaLiquida)}
-          hint="Receita Bruta menos impostos sobre receita lançados no período (por competência)."
+          hint="Receita Bruta menos devoluções e impostos sobre receita lançados no período (por competência)."
           deltaPct={rlCmp.deltaPct}
           trend={rlCmp.trend}
         />
