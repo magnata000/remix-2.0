@@ -1,25 +1,44 @@
-## Ajustes na aba Relatório e Configurações
+## Ajustes na aba Caixa
 
-### 1. Configurações → DRE & Impostos
+### 1. Formulário "Nova despesa" (`NewExpenseSheet.tsx`)
 
-- Remover a subseção "Alíquotas de impostos" (bloco destacado com os dois inputs de % e o texto explicativo) do arquivo `src/components/settings/DreConfigSection.tsx`.
-- Remover a seção (classificação de categorias como custo/despesa operacional).
-- Será criado outra feature posteriormente para inserir os impostos, para serem contabilizados no DRE.
+- **Categoria**: virar `Select` (shadcn) com valores predefinidos: Aluguel, Software, Marketing, Impostos, Salários, Serviços, Infra, Viagens, Outros. Substitui o input livre + datalist atual.
+- **Novo campo obrigatório "Classificação DRE"**: `Select` com duas opções — `Custo Operacional` e `Despesa Operacional`. Nota curta abaixo: "Usado para contabilizar no DRE".
+- Ambos campos com validação obrigatória.
+- `addExpense` passa a receber `dreKind: "custo_operacional" | "despesa_operacional"` — persistido no registro da despesa.
 
-### 2. Gráfico "Evolução Financeira" (ReportTab)
+### 2. Modelo de dados (`cashStore.tsx`)
 
-- Remover as abas de filtro (`Mês anterior` / `Ano anterior` / `Acumulado`) e o estado `evolTab`.
-- Manter apenas as linhas de Receita e Lucro no período. Remover linhas comparativas (`compReceita`, `compLucro`) e a lógica de acúmulo.
+- `Expense` ganha campo `dreKind: CategoryKind` (`"custo_operacional" | "despesa_operacional"`).
+- Seeds atualizados com valores plausíveis (Aluguel/Software = custo; Marketing = despesa).
+- `classifyCategory` do `dreConfigStore` passa a preferir `expense.dreKind` quando presente (mantém heurística para dados antigos).
 
-### 3. Gráfico "Despesas por Categoria" (ReportTab)
+### 3. Lista "Despesas cadastradas" (`CaixaTab.tsx`)
 
-- Remover o `Select` de mês no cabeçalho e o estado `pieMonth`.
-- Passar a considerar todas as despesas dentro do `range` global (respeitando o filtro global de período), somando por categoria.
-- Atualizar subtítulo para refletir o período selecionado (ex.: "No período selecionado").
+Estado computado por card, no mês selecionado:
+
+- **Pago (por mês)**: existe um `ExpenseEntry` daquela despesa cujo `paidAt` cai no mês/ano selecionado.
+- **Vencido**: apenas para `recurrence === "mensal"`, quando o mês selecionado é o mês atual, `hoje.getDate() > dueDay` e não há entry pago no mês.
+- **Pendente**: qualquer outra.
+
+Visual:
+
+- **Pago**: card com `opacity-60`, título com `line-through` suave, badge verde `Pago` (`bg-success/15 text-success`), ícone de check. Botão "Registrar pagamento" oculto.
+- **Vencido**: card com borda `border-destructive/40` + `bg-destructive/5`, badge vermelha `Vencido`, ícone de alerta discreto.
+- **Pendente**: visual atual.
+
+Ordenação: Vencidas → Pendentes → Pagas. Dentro de cada grupo, mantém ordem de criação decrescente.
+
+Botão excluir e valor base permanecem em todos os estados. Ao registrar pagamento de mensal, o card se move automaticamente para o final (via re-render sobre o estado calculado).
 
 ### Arquivos afetados
 
-- `src/components/settings/DreConfigSection.tsx`
-- `src/components/financial/ReportTab.tsx`
+- `src/lib/cash/cashStore.tsx` — adicionar `dreKind` em `Expense` e seeds.
+- `src/lib/financial/dreConfigStore.tsx` — `classify` respeita `expense.dreKind` (adicionar overload/helper).
+- `src/components/financial/NewExpenseSheet.tsx` — Categoria vira Select + novo Select "Classificação DRE".
+- `src/components/financial/CaixaTab.tsx` — cálculo de status por card, badges, estilos e ordenação.
+- `src/lib/financial/reportMetrics.ts` — usar `expense.dreKind` como fonte primária ao classificar entries no DRE.
 
-Nenhum outro módulo/store precisa ser alterado.
+### Fora do escopo (para próximo ciclo)
+
+- Configuração global de categorias no Settings (Custo vs Despesa) — já não é necessária, pois a classificação vira responsabilidade do próprio registro.
