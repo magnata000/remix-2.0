@@ -34,6 +34,27 @@ export type ManualIncome = {
   notes?: string;
 };
 
+export type TaxKind = "sobre_receita" | "sobre_lucro";
+
+export type TaxEntry = {
+  id: string;
+  kind: TaxKind;
+  description: string;
+  amount: number;
+  /** Mês de competência (0–11) — usado para classificar no DRE. */
+  competenceMonth: number;
+  /** Ano de competência. */
+  competenceYear: number;
+  /** Data efetiva de saída do caixa (ISO). */
+  paidAt: string;
+  notes?: string;
+};
+
+export const taxKindLabel: Record<TaxKind, string> = {
+  sobre_receita: "Sobre Receita",
+  sobre_lucro: "Sobre Lucro",
+};
+
 const newId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -61,10 +82,33 @@ const seedIncomes: ManualIncome[] = [
   { id: "i1", description: "Bônus de performance", source: "Porto Seguro", amount: 1500, receivedAt: iso(new Date().getMonth(), 12) },
 ];
 
+const curMonth = new Date().getMonth();
+const seedTaxes: TaxEntry[] = [
+  {
+    id: "t1",
+    kind: "sobre_receita",
+    description: "PIS/COFINS",
+    amount: 820,
+    competenceMonth: curMonth,
+    competenceYear: Y,
+    paidAt: iso(curMonth, 20),
+  },
+  {
+    id: "t2",
+    kind: "sobre_lucro",
+    description: "IRPJ estimativa",
+    amount: 1250,
+    competenceMonth: curMonth,
+    competenceYear: Y,
+    paidAt: iso(curMonth, 25),
+  },
+];
+
 type Ctx = {
   expenses: Expense[];
   entries: ExpenseEntry[];
   incomes: ManualIncome[];
+  taxes: TaxEntry[];
   addExpense: (data: Omit<Expense, "id" | "createdAt">) => Expense;
   removeExpense: (id: string) => void;
   registerExpenseEntry: (
@@ -73,6 +117,8 @@ type Ctx = {
   ) => ExpenseEntry | null;
   addIncome: (data: Omit<ManualIncome, "id">) => ManualIncome;
   removeIncome: (id: string) => void;
+  addTax: (data: Omit<TaxEntry, "id">) => TaxEntry;
+  removeTax: (id: string) => void;
 };
 
 const CashContext = createContext<Ctx | null>(null);
@@ -81,6 +127,7 @@ export function CashProvider({ children }: { children: ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>(seedExpenses);
   const [entries, setEntries] = useState<ExpenseEntry[]>(seedEntries);
   const [incomes, setIncomes] = useState<ManualIncome[]>(seedIncomes);
+  const [taxes, setTaxes] = useState<TaxEntry[]>(seedTaxes);
 
   const addExpense = useCallback((data: Omit<Expense, "id" | "createdAt">) => {
     const exp: Expense = { ...data, id: newId(), createdAt: now() };
@@ -125,9 +172,23 @@ export function CashProvider({ children }: { children: ReactNode }) {
     setIncomes((p) => p.filter((i) => i.id !== id));
   }, []);
 
+  const addTax = useCallback((data: Omit<TaxEntry, "id">) => {
+    const tax: TaxEntry = { ...data, id: newId() };
+    setTaxes((p) => [tax, ...p]);
+    return tax;
+  }, []);
+
+  const removeTax = useCallback((id: string) => {
+    setTaxes((p) => p.filter((t) => t.id !== id));
+  }, []);
+
   const value = useMemo<Ctx>(
-    () => ({ expenses, entries, incomes, addExpense, removeExpense, registerExpenseEntry, addIncome, removeIncome }),
-    [expenses, entries, incomes, addExpense, removeExpense, registerExpenseEntry, addIncome, removeIncome]
+    () => ({
+      expenses, entries, incomes, taxes,
+      addExpense, removeExpense, registerExpenseEntry,
+      addIncome, removeIncome, addTax, removeTax,
+    }),
+    [expenses, entries, incomes, taxes, addExpense, removeExpense, registerExpenseEntry, addIncome, removeIncome, addTax, removeTax]
   );
 
   return <CashContext.Provider value={value}>{children}</CashContext.Provider>;

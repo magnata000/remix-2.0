@@ -1,6 +1,14 @@
 import type { Commission } from "@/lib/mock/data";
-import type { ExpenseEntry, ManualIncome, Expense } from "@/lib/cash/cashStore";
+import type { ExpenseEntry, ManualIncome, Expense, TaxEntry } from "@/lib/cash/cashStore";
 import type { CategoryKind } from "@/lib/financial/dreConfigStore";
+
+/** Verifica se um lançamento de imposto pertence ao período por competência (mês/ano). */
+export function taxInRangeByCompetence(t: TaxEntry, r: DateRange): boolean {
+  const compStart = new Date(t.competenceYear, t.competenceMonth, 1, 0, 0, 0).getTime();
+  const compEnd = new Date(t.competenceYear, t.competenceMonth + 1, 0, 23, 59, 59).getTime();
+  // considera o imposto no período se sua competência intersecta o range
+  return compEnd >= r.start.getTime() && compStart <= r.end.getTime();
+}
 
 export type DateRange = { start: Date; end: Date };
 
@@ -111,9 +119,8 @@ export function computeDre(
   incomes: ManualIncome[],
   entries: ExpenseEntry[],
   expenses: Expense[],
+  taxes: TaxEntry[],
   r: DateRange,
-  taxRevenuePct: number,
-  taxProfitPct: number,
   classify: (c: string) => CategoryKind,
 ): DreResult {
   const expenseMap = new Map(expenses.map((x) => [x.id, x]));
@@ -127,12 +134,17 @@ export function computeDre(
     .reduce((s, x) => s + x.amount, 0);
   const manuais = incomes.filter((x) => inRange(x.receivedAt, r)).reduce((s, x) => s + x.amount, 0);
   const receitaBruta = comissoes + manuais;
-  const impostosReceita = receitaBruta * (taxRevenuePct / 100);
+  const taxesInPeriod = taxes.filter((t) => taxInRangeByCompetence(t, r));
+  const impostosReceita = taxesInPeriod
+    .filter((t) => t.kind === "sobre_receita")
+    .reduce((s, t) => s + t.amount, 0);
+  const impostosLucro = taxesInPeriod
+    .filter((t) => t.kind === "sobre_lucro")
+    .reduce((s, t) => s + t.amount, 0);
   const receitaLiquida = receitaBruta - impostosReceita;
   const split = expensesSplit(entries, r, resolveKind);
   const lucroBruto = receitaLiquida - split.custos;
   const lucroOperacional = lucroBruto - split.despesas;
-  const impostosLucro = Math.max(0, lucroOperacional) * (taxProfitPct / 100);
   const lucroLiquido = lucroOperacional - impostosLucro;
   const margem = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0;
   return {

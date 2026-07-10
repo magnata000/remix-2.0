@@ -2,9 +2,6 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 
 export type CategoryKind = "custo_operacional" | "despesa_operacional";
 
-const DEFAULT_TAX_REVENUE = 6;
-const DEFAULT_TAX_PROFIT = 15;
-
 // Heurística inicial baseada nas categorias já usadas no cashStore.
 const DEFAULT_CATEGORY_KIND: Record<string, CategoryKind> = {
   Aluguel: "custo_operacional",
@@ -27,11 +24,7 @@ export function classifyCategory(
 }
 
 type Ctx = {
-  taxOnRevenuePct: number;
-  taxOnProfitPct: number;
   categoryKind: Record<string, CategoryKind>;
-  setTaxOnRevenuePct: (n: number) => void;
-  setTaxOnProfitPct: (n: number) => void;
   setCategoryKind: (cat: string, kind: CategoryKind) => void;
   resetDefaults: () => void;
   classify: (category: string) => CategoryKind;
@@ -40,8 +33,6 @@ type Ctx = {
 const DreConfigContext = createContext<Ctx | null>(null);
 
 export function DreConfigProvider({ children }: { children: ReactNode }) {
-  const [taxOnRevenuePct, setTaxOnRevenuePct] = useState(DEFAULT_TAX_REVENUE);
-  const [taxOnProfitPct, setTaxOnProfitPct] = useState(DEFAULT_TAX_PROFIT);
   const [categoryKind, setCategoryKindState] = useState<Record<string, CategoryKind>>({});
 
   const setCategoryKind = useCallback((cat: string, kind: CategoryKind) => {
@@ -49,8 +40,6 @@ export function DreConfigProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetDefaults = useCallback(() => {
-    setTaxOnRevenuePct(DEFAULT_TAX_REVENUE);
-    setTaxOnProfitPct(DEFAULT_TAX_PROFIT);
     setCategoryKindState({});
   }, []);
 
@@ -60,17 +49,8 @@ export function DreConfigProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<Ctx>(
-    () => ({
-      taxOnRevenuePct,
-      taxOnProfitPct,
-      categoryKind,
-      setTaxOnRevenuePct,
-      setTaxOnProfitPct,
-      setCategoryKind,
-      resetDefaults,
-      classify,
-    }),
-    [taxOnRevenuePct, taxOnProfitPct, categoryKind, setCategoryKind, resetDefaults, classify],
+    () => ({ categoryKind, setCategoryKind, resetDefaults, classify }),
+    [categoryKind, setCategoryKind, resetDefaults, classify],
   );
 
   return <DreConfigContext.Provider value={value}>{children}</DreConfigContext.Provider>;
