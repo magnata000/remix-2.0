@@ -9,16 +9,19 @@ import {
 import {
   ArrowDownCircle, ArrowUpCircle, AlertTriangle, CheckCircle2,
   Plus, Receipt, Trash2, TrendingUp, TrendingDown, Scale, FileSpreadsheet,
+  Landmark,
 } from "lucide-react";
 import { formatBRL } from "@/lib/mock/data";
 import {
   useCashStore, formatDateTimeBR, formatDateBR, MONTHS_PT,
-  type Expense,
+  taxKindLabel,
+  type Expense, type TaxEntry,
 } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 import { NewExpenseSheet } from "@/components/financial/NewExpenseSheet";
 import { NewIncomeDialog } from "@/components/financial/NewIncomeDialog";
+import { NewTaxSheet } from "@/components/financial/NewTaxSheet";
 import { RegisterEntryDialog } from "@/components/financial/RegisterEntryDialog";
 import { MovementDetailsSheet, type Movement } from "@/components/financial/MovementDetailsSheet";
 import { CommissionStatusMenu } from "@/components/financial/CommissionStatusMenu";
@@ -28,12 +31,13 @@ import { toast } from "sonner";
 type StatusFilter = "all" | "pago" | "pendente" | "atrasado" | "devolvido" | "cancelada" | "none";
 
 export function CaixaTab() {
-  const { expenses, entries, incomes, removeExpense } = useCashStore();
+  const { expenses, entries, incomes, taxes, removeExpense, removeTax } = useCashStore();
   const { commissions } = useCommissionStore();
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
+  const [openTax, setOpenTax] = useState(false);
   const [openReconcile, setOpenReconcile] = useState(false);
   const [registerFor, setRegisterFor] = useState<Expense | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
