@@ -183,6 +183,9 @@ export function computeDre(
     .reduce((s, x) => s + x.amount, 0);
   const manuais = incomes.filter((x) => inRange(x.receivedAt, r)).reduce((s, x) => s + x.amount, 0);
   const receitaBruta = comissoes + manuais;
+  const devolucoes = commissions
+    .filter((x) => x.status === "devolvido" && inRange(x.refundedAt, r))
+    .reduce((s, x) => s + x.amount, 0);
   const taxesInPeriod = taxes.filter((t) => taxInRangeByCompetence(t, r));
   const impostosReceita = taxesInPeriod
     .filter((t) => t.kind === "sobre_receita")
@@ -190,7 +193,7 @@ export function computeDre(
   const impostosLucro = taxesInPeriod
     .filter((t) => t.kind === "sobre_lucro")
     .reduce((s, t) => s + t.amount, 0);
-  const receitaLiquida = receitaBruta - impostosReceita;
+  const receitaLiquida = receitaBruta - devolucoes - impostosReceita;
   const split = expensesSplit(entries, r, resolveKind);
   const lucroBruto = receitaLiquida - split.custos;
   const lucroOperacional = lucroBruto - split.despesas;
@@ -198,6 +201,7 @@ export function computeDre(
   const margem = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0;
   return {
     receitaBruta,
+    devolucoes,
     impostosReceita,
     receitaLiquida,
     custos: split.custos,
