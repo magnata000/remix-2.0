@@ -67,7 +67,7 @@ export function expensesByCategory(entries: ExpenseEntry[], r: DateRange) {
 export function expensesSplit(
   entries: ExpenseEntry[],
   r: DateRange,
-  classify: (c: string) => CategoryKind,
+  resolveKind: (entry: ExpenseEntry) => CategoryKind,
 ) {
   let custos = 0;
   let despesas = 0;
@@ -76,7 +76,7 @@ export function expensesSplit(
   entries
     .filter((e) => inRange(e.paidAt, r))
     .forEach((e) => {
-      const k = classify(e.category);
+      const k = resolveKind(e);
       if (k === "custo_operacional") {
         custos += e.amount;
         custosByCat.set(e.category, (custosByCat.get(e.category) ?? 0) + e.amount);
