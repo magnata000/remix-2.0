@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
+import type { CategoryKind } from "@/lib/financial/dreConfigStore";
 
 export type ExpenseRecurrence = "avulsa" | "mensal";
 
