@@ -7,7 +7,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowDownCircle, ArrowUpCircle,
+  ArrowDownCircle, ArrowUpCircle, AlertTriangle, CheckCircle2,
   Plus, Receipt, Trash2, TrendingUp, TrendingDown, Scale, FileSpreadsheet,
 } from "lucide-react";
 import { formatBRL } from "@/lib/mock/data";
