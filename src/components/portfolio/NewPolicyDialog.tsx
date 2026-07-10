@@ -15,7 +15,6 @@ import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
-import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { toast } from "sonner";
 
@@ -69,9 +68,6 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   const [consortiumGroup, setConsortiumGroup] = useState("");
   const [consortiumQuota, setConsortiumQuota] = useState("");
   const [consortiumType, setConsortiumType] = useState<"Imóvel" | "Auto" | undefined>(undefined);
-  // Imposto (override por apólice; undefined = herda da seguradora)
-  const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
-  const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -83,7 +79,6 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
     setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
     setConsortiumGroup(""); setConsortiumQuota(""); setConsortiumType(undefined);
-    setComissaoLiquida(undefined); setTaxaImposto(undefined);
     if (defaultClientName) {
       const c = clients.find((x) => x.name === defaultClientName);
       if (c) { setClientId(c.id); setClientName(c.name); }
@@ -150,8 +145,6 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       status,
       assigneeId: assigneeId || undefined,
       commissionPct: commissionPct || undefined,
-      comissaoLiquida,
-      taxaImposto,
       ...(isAutoLike && {
         commissionScheme: autoScheme,
         commissionInstallments: autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
@@ -423,14 +416,6 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
             </div>
           )}
 
-          <PolicyTaxOverrideFields
-            branch={branch}
-            insurer={insurer}
-            comissaoLiquida={comissaoLiquida}
-            setComissaoLiquida={setComissaoLiquida}
-            taxaImposto={taxaImposto}
-            setTaxaImposto={setTaxaImposto}
-          />
         </div>
 
 
