@@ -1,7 +1,16 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL, formatDateShort } from "@/lib/mock/data";
-import { formatDateTimeBR, formatDateBR, type Expense, type ExpenseEntry, type ManualIncome } from "@/lib/cash/cashStore";
+import {
+  formatDateTimeBR,
+  formatDateBR,
+  taxKindLabel,
+  MONTHS_PT,
+  type Expense,
+  type ExpenseEntry,
+  type ManualIncome,
+  type TaxEntry,
+} from "@/lib/cash/cashStore";
 import type { Commission } from "@/lib/mock/data";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
@@ -13,7 +22,8 @@ import { usePolicyStore } from "@/lib/portfolio/policyStore";
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
   | { kind: "manual"; income: ManualIncome }
-  | { kind: "saida"; entry: ExpenseEntry; expense?: Expense };
+  | { kind: "saida"; entry: ExpenseEntry; expense?: Expense }
+  | { kind: "imposto"; tax: TaxEntry };
 
 export type Movement = {
   id: string;
@@ -128,6 +138,20 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
               {movement.details.entry.notes && <Row label="Observações" value={movement.details.entry.notes} />}
             </>
           )}
+          {movement.details.kind === "imposto" && (() => {
+            const t = movement.details.tax;
+            return (
+              <>
+                <Row label="Tipo" value={`Imposto · ${taxKindLabel[t.kind]}`} />
+                <Row
+                  label="Competência"
+                  value={`${MONTHS_PT[t.competenceMonth]}/${t.competenceYear}`}
+                />
+                <Row label="Pago em" value={formatDateTimeBR(t.paidAt)} />
+                {t.notes && <Row label="Observações" value={t.notes} />}
+              </>
+            );
+          })()}
         </div>
 
         {schedule.length > 1 && (

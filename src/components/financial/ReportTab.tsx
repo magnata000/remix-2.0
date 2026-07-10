@@ -44,9 +44,9 @@ function EmptyState({ label = "Sem dados no período." }: { label?: string }) {
 }
 
 export function ReportTab() {
-  const { entries, incomes, expenses } = useCashStore();
+  const { entries, incomes, expenses, taxes } = useCashStore();
   const { commissions } = useCommissionStore();
-  const { taxOnRevenuePct, taxOnProfitPct, classify } = useDreConfig();
+  const { classify } = useDreConfig();
 
   const [preset, setPreset] = useState<PeriodPreset>("ano");
   const [range, setRange] = useState<DateRange>(() => rangePreset("ano"));
@@ -55,12 +55,12 @@ export function ReportTab() {
 
   // KPIs
   const dreCur = useMemo(
-    () => computeDre(commissions, incomes, entries, expenses, range, taxOnRevenuePct, taxOnProfitPct, classify),
-    [commissions, incomes, entries, expenses, range, taxOnRevenuePct, taxOnProfitPct, classify],
+    () => computeDre(commissions, incomes, entries, expenses, taxes, range, classify),
+    [commissions, incomes, entries, expenses, taxes, range, classify],
   );
   const drePrev = useMemo(
-    () => computeDre(commissions, incomes, entries, expenses, prevR, taxOnRevenuePct, taxOnProfitPct, classify),
-    [commissions, incomes, entries, expenses, prevR, taxOnRevenuePct, taxOnProfitPct, classify],
+    () => computeDre(commissions, incomes, entries, expenses, taxes, prevR, classify),
+    [commissions, incomes, entries, expenses, taxes, prevR, classify],
   );
   const rbCmp = compareDelta(dreCur.receitaBruta, drePrev.receitaBruta);
   const rlCmp = compareDelta(dreCur.receitaLiquida, drePrev.receitaLiquida);
@@ -165,7 +165,7 @@ export function ReportTab() {
         <KpiCard
           title="Receita Líquida"
           value={formatBRL(dreCur.receitaLiquida)}
-          hint={`Receita Bruta menos impostos sobre receita (${formatPct(taxOnRevenuePct)}).`}
+          hint="Receita Bruta menos impostos sobre receita lançados no período (por competência)."
           deltaPct={rlCmp.deltaPct}
           trend={rlCmp.trend}
         />

@@ -1,44 +1,70 @@
-## Ajustes na aba Caixa
+## Objetivo
 
-### 1. Formulário "Nova despesa" (`NewExpenseSheet.tsx`)
+Adicionar uma **seção dedicada de Impostos** na aba Caixa, distinta das despesas. Impostos alimentam suas próprias linhas do DRE (Impostos sobre Receita e Impostos sobre Lucro), aparecem como saída nas Movimentações e substituem o cálculo por alíquota %.
 
-- **Categoria**: virar `Select` (shadcn) com valores predefinidos: Aluguel, Software, Marketing, Impostos, Salários, Serviços, Infra, Viagens, Outros. Substitui o input livre + datalist atual.
-- **Novo campo obrigatório "Classificação DRE"**: `Select` com duas opções — `Custo Operacional` e `Despesa Operacional`. Nota curta abaixo: "Usado para contabilizar no DRE".
-- Ambos campos com validação obrigatória.
-- `addExpense` passa a receber `dreKind: "custo_operacional" | "despesa_operacional"` — persistido no registro da despesa.
+## Modelo de dados (`src/lib/cash/cashStore.tsx`)
 
-### 2. Modelo de dados (`cashStore.tsx`)
+Novo tipo `TaxEntry`:
 
-- `Expense` ganha campo `dreKind: CategoryKind` (`"custo_operacional" | "despesa_operacional"`).
-- Seeds atualizados com valores plausíveis (Aluguel/Software = custo; Marketing = despesa).
-- `classifyCategory` do `dreConfigStore` passa a preferir `expense.dreKind` quando presente (mantém heurística para dados antigos).
+```ts
+type TaxKind = "sobre_receita" | "sobre_lucro";
+type TaxEntry = {
+  id: string;
+  kind: TaxKind;
+  description: string;
+  amount: number;
+  competenceMonth: number;   // 0-11
+  competenceYear: number;
+  paidAt: string;            // ISO, data de saída do caixa
+  notes?: string;
+};
+```
 
-### 3. Lista "Despesas cadastradas" (`CaixaTab.tsx`)
+Adicionar ao store: `taxes: TaxEntry[]`, `addTax`, `removeTax`. Seeds mínimos (2–3 lançamentos de exemplo do mês atual).
 
-Estado computado por card, no mês selecionado:
+## UI — aba Caixa (`CaixaTab.tsx`)
 
-- **Pago (por mês)**: existe um `ExpenseEntry` daquela despesa cujo `paidAt` cai no mês/ano selecionado.
-- **Vencido**: apenas para `recurrence === "mensal"`, quando o mês selecionado é o mês atual, `hoje.getDate() > dueDay` e não há entry pago no mês.
-- **Pendente**: qualquer outra.
+- Novo card **"Impostos"**, abaixo de "Despesas cadastradas", com botão "Novo imposto".
+- Lista os `TaxEntry` do mês/ano selecionados (por **competência**), agrupados visualmente por tipo, com badge azul "Sobre Receita" / roxo "Sobre Lucro".
+- Cada item: descrição, valor, "Competência: Jul/2026", "Pago em: 15/07/2026", botão remover.
+- Novo componente `NewTaxSheet.tsx` (padrão do `NewExpenseSheet`): Tipo (Select), Descrição, Valor, Competência (mês/ano, default = mês selecionado), Pago em (date, default = hoje), Observações.
 
-Visual:
+## Movimentações
 
-- **Pago**: card com `opacity-60`, título com `line-through` suave, badge verde `Pago` (`bg-success/15 text-success`), ícone de check. Botão "Registrar pagamento" oculto.
-- **Vencido**: card com borda `border-destructive/40` + `bg-destructive/5`, badge vermelha `Vencido`, ícone de alerta discreto.
-- **Pendente**: visual atual.
+- Incluir `TaxEntry` no `movements` como `kind: "saida"`, `date = paidAt`, descrição `"Imposto · <tipo> · <descrição>"`, badge "Imposto".
+- `_sortIso` usa `paidAt`. Afeta o saldo de caixa normalmente.
+- `MovementDetailsSheet` ganha um `details.kind = "imposto"` com os campos do TaxEntry.
 
-Ordenação: Vencidas → Pendentes → Pagas. Dentro de cada grupo, mantém ordem de criação decrescente.
+## DRE (`reportMetrics.ts` + `ReportTab.tsx`)
 
-Botão excluir e valor base permanecem em todos os estados. Ao registrar pagamento de mensal, o card se move automaticamente para o final (via re-render sobre o estado calculado).
+- `computeDre` passa a receber `taxes: TaxEntry[]` e classifica **por competência** (competenceYear/Month dentro do `range`):
+  - `impostosReceita` = soma de `TaxEntry` com `kind = "sobre_receita"` no período
+  - `impostosLucro` = soma de `TaxEntry` com `kind = "sobre_lucro"` no período
+- **Remover** parâmetros `taxOnRevenuePct` / `taxOnProfitPct` da assinatura de `computeDre` e do uso em `ReportTab`.
+- `ReportTab`: hint da linha "Receita Líquida" passa a ser "Receita Bruta menos impostos sobre receita lançados no período" (sem %).
 
-### Arquivos afetados
+## Config (`dreConfigStore.tsx`)
 
-- `src/lib/cash/cashStore.tsx` — adicionar `dreKind` em `Expense` e seeds.
-- `src/lib/financial/dreConfigStore.tsx` — `classify` respeita `expense.dreKind` (adicionar overload/helper).
-- `src/components/financial/NewExpenseSheet.tsx` — Categoria vira Select + novo Select "Classificação DRE".
-- `src/components/financial/CaixaTab.tsx` — cálculo de status por card, badges, estilos e ordenação.
-- `src/lib/financial/reportMetrics.ts` — usar `expense.dreKind` como fonte primária ao classificar entries no DRE.
+- Remover `taxOnRevenuePct`, `taxOnProfitPct`, `DEFAULT_TAX_REVENUE`, `DEFAULT_TAX_PROFIT`, seus setters e o reset associado. Manter apenas `classify` / `categoryKind`.
+- Remover qualquer UI de configuração de alíquotas ainda referenciada (a subseção "Alíquotas de impostos" em Settings já foi removida em turno anterior — apenas confirmar que não sobrou nada).
 
-### Fora do escopo (para próximo ciclo)
+## Nova Despesa (`NewExpenseSheet.tsx`)
 
-- Configuração global de categorias no Settings (Custo vs Despesa) — já não é necessária, pois a classificação vira responsabilidade do próprio registro.
+- **Não** adicionar "Imposto sobre Receita" / "Imposto sobre Lucro" ao Select de Categoria. Impostos só entram pela nova seção.
+
+## Arquivos afetados
+
+- `src/lib/cash/cashStore.tsx` — tipo TaxEntry, estado, actions, seeds
+- `src/components/financial/NewTaxSheet.tsx` — **novo**
+- `src/components/financial/CaixaTab.tsx` — card Impostos + integração em `movements`
+- `src/components/financial/MovementDetailsSheet.tsx` — variante "imposto"
+- `src/lib/financial/reportMetrics.ts` — soma por competência, remove params de alíquota
+- `src/components/financial/ReportTab.tsx` — atualiza chamada e hint
+- `src/lib/financial/dreConfigStore.tsx` — remove alíquotas
+- `src/routes/index.tsx` — remove referências a `taxOnRevenuePct/taxOnProfitPct` se houver
+
+## Fora de escopo
+
+- Cálculo automático a partir de faturamento (usuário lança manualmente).
+- Recorrência mensal de imposto (cada mês é um lançamento novo).
+- Edição de imposto existente (apenas criar/remover, alinhado ao padrão de despesas).

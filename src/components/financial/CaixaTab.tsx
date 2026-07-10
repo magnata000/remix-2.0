@@ -9,16 +9,19 @@ import {
 import {
   ArrowDownCircle, ArrowUpCircle, AlertTriangle, CheckCircle2,
   Plus, Receipt, Trash2, TrendingUp, TrendingDown, Scale, FileSpreadsheet,
+  Landmark,
 } from "lucide-react";
 import { formatBRL } from "@/lib/mock/data";
 import {
   useCashStore, formatDateTimeBR, formatDateBR, MONTHS_PT,
-  type Expense,
+  taxKindLabel,
+  type Expense, type TaxEntry,
 } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 import { NewExpenseSheet } from "@/components/financial/NewExpenseSheet";
 import { NewIncomeDialog } from "@/components/financial/NewIncomeDialog";
+import { NewTaxSheet } from "@/components/financial/NewTaxSheet";
 import { RegisterEntryDialog } from "@/components/financial/RegisterEntryDialog";
 import { MovementDetailsSheet, type Movement } from "@/components/financial/MovementDetailsSheet";
 import { CommissionStatusMenu } from "@/components/financial/CommissionStatusMenu";
@@ -28,12 +31,13 @@ import { toast } from "sonner";
 type StatusFilter = "all" | "pago" | "pendente" | "atrasado" | "devolvido" | "cancelada" | "none";
 
 export function CaixaTab() {
-  const { expenses, entries, incomes, removeExpense } = useCashStore();
+  const { expenses, entries, incomes, taxes, removeExpense, removeTax } = useCashStore();
   const { commissions } = useCommissionStore();
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
+  const [openTax, setOpenTax] = useState(false);
   const [openReconcile, setOpenReconcile] = useState(false);
   const [registerFor, setRegisterFor] = useState<Expense | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
@@ -93,10 +97,19 @@ export function CaixaTab() {
       details: { kind: "saida" as const, entry: e, expense: expenses.find((x) => x.id === e.expenseId) },
       _sortIso: e.paidAt,
     }));
-    return [...fromCommissions, ...fromManual, ...out].sort(
+    const fromTaxes = taxes.map((t) => ({
+      id: `tax-${t.id}`,
+      kind: "saida" as const,
+      date: formatDateTimeBR(t.paidAt),
+      description: `Imposto · ${taxKindLabel[t.kind]} · ${t.description}`,
+      amount: t.amount,
+      details: { kind: "imposto" as const, tax: t },
+      _sortIso: t.paidAt,
+    }));
+    return [...fromCommissions, ...fromManual, ...out, ...fromTaxes].sort(
       (a, b) => new Date(b._sortIso).getTime() - new Date(a._sortIso).getTime()
     );
-  }, [commissions, incomes, entries, expenses]);
+  }, [commissions, incomes, entries, expenses, taxes]);
 
   const monthMovements = movements.filter((m) => inMonth(m._sortIso));
 
@@ -273,6 +286,106 @@ export function CaixaTab() {
         </div>
       </Card>
 
+      {/* Impostos */}
+      <Card className="rounded-2xl border-border shadow-none">
+        <div className="flex items-center justify-between p-5 pb-3">
+          <div>
+            <h2 className="text-lg font-semibold">Impostos</h2>
+            <p className="text-xs text-muted-foreground">
+              Competência em {MONTHS_PT[selectedMonth]}/{currentYear}
+            </p>
+          </div>
+          <Button size="sm" className="rounded-full" onClick={() => setOpenTax(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Novo imposto
+          </Button>
+        </div>
+        <div className="px-5 pb-5">
+          {(() => {
+            const monthTaxes = taxes
+              .filter((t) => t.competenceMonth === selectedMonth && t.competenceYear === currentYear)
+              .sort((a, b) => {
+                if (a.kind !== b.kind) return a.kind === "sobre_receita" ? -1 : 1;
+                return new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime();
+              });
+            if (monthTaxes.length === 0) {
+              return (
+                <div className="text-sm text-muted-foreground py-8 text-center bg-muted/30 rounded-xl">
+                  Nenhum imposto lançado neste mês.
+                </div>
+              );
+            }
+            const totals = monthTaxes.reduce(
+              (acc, t) => {
+                if (t.kind === "sobre_receita") acc.receita += t.amount;
+                else acc.lucro += t.amount;
+                return acc;
+              },
+              { receita: 0, lucro: 0 }
+            );
+            const renderBadge = (t: TaxEntry) =>
+              t.kind === "sobre_receita" ? (
+                <Badge className="bg-primary/10 text-primary border-0">{taxKindLabel[t.kind]}</Badge>
+              ) : (
+                <Badge className="bg-[color-mix(in_srgb,var(--brand)_15%,transparent)] text-brand border-0">
+                  {taxKindLabel[t.kind]}
+                </Badge>
+              );
+            return (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-xl border border-border bg-muted/30 px-3 py-2">
+                    <div className="text-muted-foreground">Sobre Receita</div>
+                    <div className="font-semibold tabular-nums">{formatBRL(totals.receita)}</div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-muted/30 px-3 py-2">
+                    <div className="text-muted-foreground">Sobre Lucro</div>
+                    <div className="font-semibold tabular-nums">{formatBRL(totals.lucro)}</div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {monthTaxes.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Landmark className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="font-medium truncate">{t.description}</span>
+                          {renderBadge(t)}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Compet.: {MONTHS_PT[t.competenceMonth]}/{t.competenceYear} · Pago em {formatDateBR(t.paidAt)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold tabular-nums text-destructive">
+                          − {formatBRL(t.amount)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                          title="Excluir"
+                          onClick={() => {
+                            removeTax(t.id);
+                            toast.success(`"${t.description}" removido`);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </Card>
+
+
+
       {/* Movimentações */}
       <Card className="rounded-2xl border-border shadow-none overflow-hidden">
         <div className="flex items-center justify-between p-5 pb-3 gap-3 flex-wrap">
@@ -400,6 +513,12 @@ export function CaixaTab() {
 
       <NewExpenseSheet open={openExpense} onOpenChange={setOpenExpense} />
       <NewIncomeDialog open={openIncome} onOpenChange={setOpenIncome} />
+      <NewTaxSheet
+        open={openTax}
+        onOpenChange={setOpenTax}
+        defaultCompetenceMonth={selectedMonth}
+        defaultCompetenceYear={currentYear}
+      />
       <RegisterEntryDialog expense={registerFor} open={registerFor !== null} onOpenChange={(o) => !o && setRegisterFor(null)} />
       <MovementDetailsSheet movement={selectedMovement} open={selectedMovement !== null} onOpenChange={(o) => !o && setSelectedMovement(null)} />
       <ReconcileSheet open={openReconcile} onOpenChange={setOpenReconcile} month={selectedMonth} year={currentYear} />
