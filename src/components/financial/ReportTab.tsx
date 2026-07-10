@@ -16,6 +16,7 @@ import {
   computeDre,
   projectedCashFlow,
   delinquency,
+  revenueLosses,
   compareDelta,
   monthlySeries,
   inRange,
