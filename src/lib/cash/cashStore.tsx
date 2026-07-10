@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
+import type { CategoryKind } from "@/lib/financial/dreConfigStore";
 
 export type ExpenseRecurrence = "avulsa" | "mensal";
 
@@ -6,6 +7,7 @@ export type Expense = {
   id: string;
   description: string;
   category: string;
+  dreKind: CategoryKind;
   amount: number;
   recurrence: ExpenseRecurrence;
   dueDay?: number;
@@ -45,9 +47,9 @@ const iso = (m: number, d: number, h = 10) =>
   new Date(Y, m, d, h, 0, 0).toISOString();
 
 const seedExpenses: Expense[] = [
-  { id: "e1", description: "Aluguel do escritório", category: "Aluguel", amount: 4200, recurrence: "mensal", dueDay: 5, createdAt: iso(0, 1), notes: "Sala 802" },
-  { id: "e2", description: "Software CRM", category: "Software", amount: 480, recurrence: "mensal", dueDay: 10, createdAt: iso(0, 1) },
-  { id: "e3", description: "Campanha de marketing", category: "Marketing", amount: 2500, recurrence: "avulsa", createdAt: iso(new Date().getMonth(), 8) },
+  { id: "e1", description: "Aluguel do escritório", category: "Aluguel", dreKind: "custo_operacional", amount: 4200, recurrence: "mensal", dueDay: 5, createdAt: iso(0, 1), notes: "Sala 802" },
+  { id: "e2", description: "Software CRM", category: "Software", dreKind: "custo_operacional", amount: 480, recurrence: "mensal", dueDay: 10, createdAt: iso(0, 1) },
+  { id: "e3", description: "Campanha de marketing", category: "Marketing", dreKind: "despesa_operacional", amount: 2500, recurrence: "avulsa", createdAt: iso(new Date().getMonth(), 8) },
 ];
 
 const seedEntries: ExpenseEntry[] = [

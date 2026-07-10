@@ -7,7 +7,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowDownCircle, ArrowUpCircle,
+  ArrowDownCircle, ArrowUpCircle, AlertTriangle, CheckCircle2,
   Plus, Receipt, Trash2, TrendingUp, TrendingDown, Scale, FileSpreadsheet,
 } from "lucide-react";
 import { formatBRL } from "@/lib/mock/data";
@@ -134,16 +134,41 @@ export function CaixaTab() {
     return { income, expense, balance: income - expense };
   }, [monthMovements]);
 
-  // Despesas visíveis no mês (regra spec)
+  // Despesas visíveis no mês com status calculado
+  type ExpenseStatus = "pago" | "vencido" | "pendente";
   const visibleExpenses = useMemo(() => {
     const selectedIdx = currentYear * 12 + selectedMonth;
-    return expenses.filter((exp) => {
+    const today = new Date();
+    const isCurrentMonth = today.getMonth() === selectedMonth && today.getFullYear() === currentYear;
+    const filtered = expenses.filter((exp) => {
       const created = new Date(exp.createdAt);
       const createdIdx = created.getFullYear() * 12 + created.getMonth();
       if (exp.recurrence === "mensal") return createdIdx <= selectedIdx;
       return created.getMonth() === selectedMonth && created.getFullYear() === currentYear;
     });
-  }, [expenses, selectedMonth, currentYear]);
+    const withStatus = filtered.map((exp) => {
+      const hasPaidInMonth = entries.some((e) => {
+        if (e.expenseId !== exp.id) return false;
+        const d = new Date(e.paidAt);
+        return d.getMonth() === selectedMonth && d.getFullYear() === currentYear;
+      });
+      let status: ExpenseStatus = "pendente";
+      if (hasPaidInMonth) status = "pago";
+      else if (
+        exp.recurrence === "mensal" &&
+        exp.dueDay &&
+        isCurrentMonth &&
+        today.getDate() > exp.dueDay
+      ) status = "vencido";
+      return { exp, status };
+    });
+    const order: Record<ExpenseStatus, number> = { vencido: 0, pendente: 1, pago: 2 };
+    return withStatus.sort((a, b) => {
+      const d = order[a.status] - order[b.status];
+      if (d !== 0) return d;
+      return new Date(b.exp.createdAt).getTime() - new Date(a.exp.createdAt).getTime();
+    });
+  }, [expenses, entries, selectedMonth, currentYear]);
 
   const handleRemoveExpense = (e: Expense) => {
     removeExpense(e.id);
@@ -197,31 +222,53 @@ export function CaixaTab() {
             </div>
           ) : (
             <div className="space-y-2">
-              {visibleExpenses.map((exp) => (
-                <div key={exp.id} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border hover:bg-muted/40">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium truncate">{exp.description}</span>
-                      <Badge className="bg-muted text-muted-foreground border-0">{exp.category}</Badge>
-                      {exp.recurrence === "mensal" ? (
-                        <Badge className="bg-primary/10 text-primary border-0">Mensal · dia {exp.dueDay}</Badge>
-                      ) : (
-                        <Badge className="bg-muted text-muted-foreground border-0">Avulsa</Badge>
-                      )}
+              {visibleExpenses.map(({ exp, status }) => {
+                const isPago = status === "pago";
+                const isVencido = status === "vencido";
+                const rowCls = isPago
+                  ? "border-border bg-muted/20 opacity-60"
+                  : isVencido
+                  ? "border-destructive/40 bg-destructive/5"
+                  : "border-border hover:bg-muted/40";
+                return (
+                  <div key={exp.id} className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-colors ${rowCls}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`font-medium truncate ${isPago ? "line-through decoration-muted-foreground/60" : ""}`}>{exp.description}</span>
+                        <Badge className="bg-muted text-muted-foreground border-0">{exp.category}</Badge>
+                        {exp.recurrence === "mensal" ? (
+                          <Badge className="bg-primary/10 text-primary border-0">Mensal · dia {exp.dueDay}</Badge>
+                        ) : (
+                          <Badge className="bg-muted text-muted-foreground border-0">Avulsa</Badge>
+                        )}
+                        {isPago && (
+                          <Badge className="bg-success/15 text-success border-0 gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Pago
+                          </Badge>
+                        )}
+                        {isVencido && (
+                          <Badge className="bg-destructive/15 text-destructive border-0 gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Vencido
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Valor base: {formatBRL(exp.amount)}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Valor base: {formatBRL(exp.amount)}</p>
+                    <div className="flex items-center gap-1">
+                      {!isPago && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Registrar pagamento" onClick={() => setRegisterFor(exp)}>
+                          <Receipt className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" title="Excluir" onClick={() => handleRemoveExpense(exp)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Registrar pagamento" onClick={() => setRegisterFor(exp)}>
-                      <Receipt className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" title="Excluir" onClick={() => handleRemoveExpense(exp)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
           )}
         </div>
       </Card>

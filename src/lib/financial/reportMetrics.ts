@@ -67,7 +67,7 @@ export function expensesByCategory(entries: ExpenseEntry[], r: DateRange) {
 export function expensesSplit(
   entries: ExpenseEntry[],
   r: DateRange,
-  classify: (c: string) => CategoryKind,
+  resolveKind: (entry: ExpenseEntry) => CategoryKind,
 ) {
   let custos = 0;
   let despesas = 0;
@@ -76,7 +76,7 @@ export function expensesSplit(
   entries
     .filter((e) => inRange(e.paidAt, r))
     .forEach((e) => {
-      const k = classify(e.category);
+      const k = resolveKind(e);
       if (k === "custo_operacional") {
         custos += e.amount;
         custosByCat.set(e.category, (custosByCat.get(e.category) ?? 0) + e.amount);
@@ -110,11 +110,18 @@ export function computeDre(
   commissions: Commission[],
   incomes: ManualIncome[],
   entries: ExpenseEntry[],
+  expenses: Expense[],
   r: DateRange,
   taxRevenuePct: number,
   taxProfitPct: number,
   classify: (c: string) => CategoryKind,
 ): DreResult {
+  const expenseMap = new Map(expenses.map((x) => [x.id, x]));
+  const resolveKind = (entry: ExpenseEntry): CategoryKind => {
+    const exp = expenseMap.get(entry.expenseId);
+    if (exp?.dreKind) return exp.dreKind;
+    return classify(entry.category);
+  };
   const comissoes = commissions
     .filter((x) => x.status === "pago" && inRange(x.paidAt, r))
     .reduce((s, x) => s + x.amount, 0);
@@ -122,7 +129,7 @@ export function computeDre(
   const receitaBruta = comissoes + manuais;
   const impostosReceita = receitaBruta * (taxRevenuePct / 100);
   const receitaLiquida = receitaBruta - impostosReceita;
-  const split = expensesSplit(entries, r, classify);
+  const split = expensesSplit(entries, r, resolveKind);
   const lucroBruto = receitaLiquida - split.custos;
   const lucroOperacional = lucroBruto - split.despesas;
   const impostosLucro = Math.max(0, lucroOperacional) * (taxProfitPct / 100);

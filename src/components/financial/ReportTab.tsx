@@ -55,12 +55,12 @@ export function ReportTab() {
 
   // KPIs
   const dreCur = useMemo(
-    () => computeDre(commissions, incomes, entries, range, taxOnRevenuePct, taxOnProfitPct, classify),
-    [commissions, incomes, entries, range, taxOnRevenuePct, taxOnProfitPct, classify],
+    () => computeDre(commissions, incomes, entries, expenses, range, taxOnRevenuePct, taxOnProfitPct, classify),
+    [commissions, incomes, entries, expenses, range, taxOnRevenuePct, taxOnProfitPct, classify],
   );
   const drePrev = useMemo(
-    () => computeDre(commissions, incomes, entries, prevR, taxOnRevenuePct, taxOnProfitPct, classify),
-    [commissions, incomes, entries, prevR, taxOnRevenuePct, taxOnProfitPct, classify],
+    () => computeDre(commissions, incomes, entries, expenses, prevR, taxOnRevenuePct, taxOnProfitPct, classify),
+    [commissions, incomes, entries, expenses, prevR, taxOnRevenuePct, taxOnProfitPct, classify],
   );
   const rbCmp = compareDelta(dreCur.receitaBruta, drePrev.receitaBruta);
   const rlCmp = compareDelta(dreCur.receitaLiquida, drePrev.receitaLiquida);
