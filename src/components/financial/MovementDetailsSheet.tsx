@@ -138,6 +138,20 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
               {movement.details.entry.notes && <Row label="Observações" value={movement.details.entry.notes} />}
             </>
           )}
+          {movement.details.kind === "imposto" && (() => {
+            const t = movement.details.tax;
+            return (
+              <>
+                <Row label="Tipo" value={`Imposto · ${taxKindLabel[t.kind]}`} />
+                <Row
+                  label="Competência"
+                  value={`${MONTHS_PT[t.competenceMonth]}/${t.competenceYear}`}
+                />
+                <Row label="Pago em" value={formatDateTimeBR(t.paidAt)} />
+                {t.notes && <Row label="Observações" value={t.notes} />}
+              </>
+            );
+          })()}
         </div>
 
         {schedule.length > 1 && (
