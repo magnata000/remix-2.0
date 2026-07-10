@@ -97,10 +97,19 @@ export function CaixaTab() {
       details: { kind: "saida" as const, entry: e, expense: expenses.find((x) => x.id === e.expenseId) },
       _sortIso: e.paidAt,
     }));
-    return [...fromCommissions, ...fromManual, ...out].sort(
+    const fromTaxes = taxes.map((t) => ({
+      id: `tax-${t.id}`,
+      kind: "saida" as const,
+      date: formatDateTimeBR(t.paidAt),
+      description: `Imposto · ${taxKindLabel[t.kind]} · ${t.description}`,
+      amount: t.amount,
+      details: { kind: "imposto" as const, tax: t },
+      _sortIso: t.paidAt,
+    }));
+    return [...fromCommissions, ...fromManual, ...out, ...fromTaxes].sort(
       (a, b) => new Date(b._sortIso).getTime() - new Date(a._sortIso).getTime()
     );
-  }, [commissions, incomes, entries, expenses]);
+  }, [commissions, incomes, entries, expenses, taxes]);
 
   const monthMovements = movements.filter((m) => inMonth(m._sortIso));
 
