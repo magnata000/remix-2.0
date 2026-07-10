@@ -7,6 +7,7 @@ export type Expense = {
   id: string;
   description: string;
   category: string;
+  dreKind: CategoryKind;
   amount: number;
   recurrence: ExpenseRecurrence;
   dueDay?: number;
