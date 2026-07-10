@@ -16,6 +16,7 @@ import {
   computeDre,
   projectedCashFlow,
   delinquency,
+  revenueLosses,
   compareDelta,
   monthlySeries,
   inRange,
@@ -139,6 +140,12 @@ export function ReportTab() {
   // Inadimplência
   const del = useMemo(() => delinquency(commissions), [commissions]);
 
+  // Perdas de Receita (canceladas + devolvidas)
+  const losses = useMemo(() => revenueLosses(commissions, range), [commissions, range]);
+  const lossesPrev = useMemo(() => revenueLosses(commissions, prevR), [commissions, prevR]);
+  const cancCmp = compareDelta(losses.canceladas.valor, lossesPrev.canceladas.valor);
+  const devCmp = compareDelta(losses.devolvidas.valor, lossesPrev.devolvidas.valor);
+
   return (
     <div className="space-y-5">
       {/* Filtros */}
@@ -165,7 +172,7 @@ export function ReportTab() {
         <KpiCard
           title="Receita Líquida"
           value={formatBRL(dreCur.receitaLiquida)}
-          hint="Receita Bruta menos impostos sobre receita lançados no período (por competência)."
+          hint="Receita Bruta menos devoluções e impostos sobre receita lançados no período (por competência)."
           deltaPct={rlCmp.deltaPct}
           trend={rlCmp.trend}
         />
@@ -342,6 +349,61 @@ export function ReportTab() {
                 <YAxis tickLine={false} axisLine={false} fontSize={12} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
                 <Bar dataKey="value" name="Em atraso" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </Card>
+
+      {/* Perdas de Receita */}
+      <Card className="p-5 rounded-2xl border-border shadow-none">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Perdas de Receita</h2>
+          <p className="text-xs text-muted-foreground">
+            Comissões canceladas (por vencimento) e devolvidas (por data de estorno) no período
+          </p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <KpiCard
+            title="Total Cancelado"
+            value={formatBRL(losses.canceladas.valor)}
+            hint="Soma das comissões com status Cancelada, agrupadas pelo vencimento."
+            deltaPct={cancCmp.deltaPct}
+            trend={cancCmp.trend}
+            invertTrendColor
+          />
+          <KpiCard
+            title="Total Devolvido"
+            value={formatBRL(losses.devolvidas.valor)}
+            hint="Soma das comissões com status Devolvido, agrupadas pela data de estorno."
+            deltaPct={devCmp.deltaPct}
+            trend={devCmp.trend}
+            invertTrendColor
+          />
+          <KpiCard
+            title="Parcelas Canceladas"
+            value={String(losses.canceladas.parcelas)}
+            hint="Número de comissões canceladas no período."
+          />
+          <KpiCard
+            title="Parcelas Devolvidas"
+            value={String(losses.devolvidas.parcelas)}
+            hint="Número de comissões devolvidas no período."
+          />
+        </div>
+        <div className="h-64">
+          {losses.serieMensal.every((s) => s.canceladas === 0 && s.devolvidas === 0) ? (
+            <EmptyState label="Sem canceladas ou devoluções no período." />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={losses.serieMensal} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="canceladas" name="Canceladas" stackId="perdas" fill="var(--warning)" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="devolvidas" name="Devolvidas" stackId="perdas" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

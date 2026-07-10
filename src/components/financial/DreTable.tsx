@@ -73,6 +73,7 @@ export function DreTable({ dre }: { dre: DreResult }) {
       </div>
       <div className="space-y-0.5">
         <DreRow label="Receita Bruta" value={dre.receitaBruta} children={receitaChildren} />
+        <DreRow label="(−) Devoluções" value={dre.devolucoes} variant="deduction" />
         <DreRow label="(−) Impostos sobre Receita" value={dre.impostosReceita} variant="deduction" />
         <DreRow label="Receita Líquida" value={dre.receitaLiquida} variant="subtotal" />
         <DreRow

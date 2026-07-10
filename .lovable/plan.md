@@ -1,70 +1,60 @@
 ## Objetivo
 
-Adicionar uma **seção dedicada de Impostos** na aba Caixa, distinta das despesas. Impostos alimentam suas próprias linhas do DRE (Impostos sobre Receita e Impostos sobre Lucro), aparecem como saída nas Movimentações e substituem o cálculo por alíquota %.
+Tornar visíveis no Relatório as comissões **Canceladas** e **Devolvidas**, hoje ignoradas, e refletir devoluções no DRE.
 
-## Modelo de dados (`src/lib/cash/cashStore.tsx`)
-
-Novo tipo `TaxEntry`:
+## 1. `reportMetrics.ts` — nova função `revenueLosses`
 
 ```ts
-type TaxKind = "sobre_receita" | "sobre_lucro";
-type TaxEntry = {
-  id: string;
-  kind: TaxKind;
-  description: string;
-  amount: number;
-  competenceMonth: number;   // 0-11
-  competenceYear: number;
-  paidAt: string;            // ISO, data de saída do caixa
-  notes?: string;
+export type RevenueLosses = {
+  canceladas: { valor: number; parcelas: number; clientes: number };
+  devolvidas: { valor: number; parcelas: number; clientes: number };
+  serieMensal: Array<{ month: string; canceladas: number; devolvidas: number }>;
 };
+export function revenueLosses(commissions: Commission[], r: DateRange): RevenueLosses
 ```
 
-Adicionar ao store: `taxes: TaxEntry[]`, `addTax`, `removeTax`. Seeds mínimos (2–3 lançamentos de exemplo do mês atual).
+- **Canceladas**: filtra `status === "cancelada"` por `dueDate` dentro de `r`.
+- **Devolvidas**: filtra `status === "devolvido"` por `refundedAt` dentro de `r`.
+- Série mensal cobre os meses do `range` selecionado (usa `monthlySeries` como referência), somando cada status pelo seu eixo temporal próprio.
 
-## UI — aba Caixa (`CaixaTab.tsx`)
+### Ajuste no DRE (`computeDre`)
 
-- Novo card **"Impostos"**, abaixo de "Despesas cadastradas", com botão "Novo imposto".
-- Lista os `TaxEntry` do mês/ano selecionados (por **competência**), agrupados visualmente por tipo, com badge azul "Sobre Receita" / roxo "Sobre Lucro".
-- Cada item: descrição, valor, "Competência: Jul/2026", "Pago em: 15/07/2026", botão remover.
-- Novo componente `NewTaxSheet.tsx` (padrão do `NewExpenseSheet`): Tipo (Select), Descrição, Valor, Competência (mês/ano, default = mês selecionado), Pago em (date, default = hoje), Observações.
+- Nova linha **Devoluções** entre Receita Bruta e Receita Líquida:
+  - `devolucoes = commissions.filter(status === "devolvido" && inRange(refundedAt, r)).sum(amount)`
+  - `receitaLiquida = receitaBruta - devolucoes - impostosReceita`
+- Adicionar `devolucoes: number` em `DreResult`.
 
-## Movimentações
+## 2. `DreTable.tsx`
 
-- Incluir `TaxEntry` no `movements` como `kind: "saida"`, `date = paidAt`, descrição `"Imposto · <tipo> · <descrição>"`, badge "Imposto".
-- `_sortIso` usa `paidAt`. Afeta o saldo de caixa normalmente.
-- `MovementDetailsSheet` ganha um `details.kind = "imposto"` com os campos do TaxEntry.
+- Renderizar a linha "(−) Devoluções" logo abaixo de Receita Bruta, antes de Impostos sobre Receita.
 
-## DRE (`reportMetrics.ts` + `ReportTab.tsx`)
+## 3. `ReportTab.tsx` — novo card "Perdas de Receita"
 
-- `computeDre` passa a receber `taxes: TaxEntry[]` e classifica **por competência** (competenceYear/Month dentro do `range`):
-  - `impostosReceita` = soma de `TaxEntry` com `kind = "sobre_receita"` no período
-  - `impostosLucro` = soma de `TaxEntry` com `kind = "sobre_lucro"` no período
-- **Remover** parâmetros `taxOnRevenuePct` / `taxOnProfitPct` da assinatura de `computeDre` e do uso em `ReportTab`.
-- `ReportTab`: hint da linha "Receita Líquida" passa a ser "Receita Bruta menos impostos sobre receita lançados no período" (sem %).
+Inserido logo **após** o card Inadimplência (blocos separados; Inadimplência permanece intacta).
 
-## Config (`dreConfigStore.tsx`)
+Layout espelhando o padrão de Inadimplência:
 
-- Remover `taxOnRevenuePct`, `taxOnProfitPct`, `DEFAULT_TAX_REVENUE`, `DEFAULT_TAX_PROFIT`, seus setters e o reset associado. Manter apenas `classify` / `categoryKind`.
-- Remover qualquer UI de configuração de alíquotas ainda referenciada (a subseção "Alíquotas de impostos" em Settings já foi removida em turno anterior — apenas confirmar que não sobrou nada).
+- **4 KPIs** (usando `KpiCard`):
+  - Total Cancelado (valor R$)
+  - Total Devolvido (valor R$)
+  - Parcelas Canceladas (contagem)
+  - Parcelas Devolvidas (contagem)
+- Ambos KPIs de valor usam `invertTrendColor` (aumento é ruim), comparando com `prevR`.
+- **Gráfico mensal**: `BarChart` empilhado com duas séries — `canceladas` (cor `--warning`) e `devolvidas` (cor `--destructive`), radius topo 6px.
+- Título: "Perdas de Receita" · subtítulo: "Comissões canceladas (por vencimento) e devolvidas (por data de estorno) no período".
+- `EmptyState` quando ambas as séries somam zero.
 
-## Nova Despesa (`NewExpenseSheet.tsx`)
+## 4. Hint do KPI "Receita Líquida"
 
-- **Não** adicionar "Imposto sobre Receita" / "Imposto sobre Lucro" ao Select de Categoria. Impostos só entram pela nova seção.
+Atualizar para: "Receita Bruta menos devoluções e impostos sobre receita lançados no período."
 
 ## Arquivos afetados
 
-- `src/lib/cash/cashStore.tsx` — tipo TaxEntry, estado, actions, seeds
-- `src/components/financial/NewTaxSheet.tsx` — **novo**
-- `src/components/financial/CaixaTab.tsx` — card Impostos + integração em `movements`
-- `src/components/financial/MovementDetailsSheet.tsx` — variante "imposto"
-- `src/lib/financial/reportMetrics.ts` — soma por competência, remove params de alíquota
-- `src/components/financial/ReportTab.tsx` — atualiza chamada e hint
-- `src/lib/financial/dreConfigStore.tsx` — remove alíquotas
-- `src/routes/index.tsx` — remove referências a `taxOnRevenuePct/taxOnProfitPct` se houver
+- `src/lib/financial/reportMetrics.ts` — nova `revenueLosses`, ajuste em `computeDre` (linha devoluções).
+- `src/components/financial/DreTable.tsx` — nova linha.
+- `src/components/financial/ReportTab.tsx` — novo card + memo `losses` e `lossesPrev` para deltas.
 
 ## Fora de escopo
 
-- Cálculo automático a partir de faturamento (usuário lança manualmente).
-- Recorrência mensal de imposto (cada mês é um lançamento novo).
-- Edição de imposto existente (apenas criar/remover, alinhado ao padrão de despesas).
+- Nenhuma mudança em `CaixaTab`, formulários, `cashStore` ou `commissionStore`.
+- Card de Inadimplência permanece como está.

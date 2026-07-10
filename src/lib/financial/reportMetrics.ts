@@ -98,6 +98,7 @@ export function expensesSplit(
 
 export type DreResult = {
   receitaBruta: number;
+  devolucoes: number;
   impostosReceita: number;
   receitaLiquida: number;
   custos: number;
@@ -113,6 +114,54 @@ export type DreResult = {
     despesasByCat: Array<{ name: string; value: number }>;
   };
 };
+
+export type RevenueLosses = {
+  canceladas: { valor: number; parcelas: number; clientes: number };
+  devolvidas: { valor: number; parcelas: number; clientes: number };
+  serieMensal: Array<{ month: string; canceladas: number; devolvidas: number }>;
+};
+
+export function revenueLosses(commissions: Commission[], r: DateRange): RevenueLosses {
+  const canc = commissions.filter((c) => c.status === "cancelada" && inRange(c.dueDate, r));
+  const dev = commissions.filter((c) => c.status === "devolvido" && inRange(c.refundedAt, r));
+
+  const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const serieMensal: Array<{ month: string; canceladas: number; devolvidas: number }> = [];
+  const cur = new Date(r.start.getFullYear(), r.start.getMonth(), 1);
+  const end = new Date(r.end.getFullYear(), r.end.getMonth(), 1);
+  while (cur.getTime() <= end.getTime()) {
+    const y = cur.getFullYear();
+    const m = cur.getMonth();
+    const canceladas = canc
+      .filter((c) => {
+        const d = new Date(c.dueDate);
+        return d.getFullYear() === y && d.getMonth() === m;
+      })
+      .reduce((s, c) => s + c.amount, 0);
+    const devolvidas = dev
+      .filter((c) => {
+        const d = new Date(c.refundedAt!);
+        return d.getFullYear() === y && d.getMonth() === m;
+      })
+      .reduce((s, c) => s + c.amount, 0);
+    serieMensal.push({ month: MONTHS[m], canceladas, devolvidas });
+    cur.setMonth(cur.getMonth() + 1);
+  }
+
+  return {
+    canceladas: {
+      valor: canc.reduce((s, c) => s + c.amount, 0),
+      parcelas: canc.length,
+      clientes: new Set(canc.map((c) => c.clientName)).size,
+    },
+    devolvidas: {
+      valor: dev.reduce((s, c) => s + c.amount, 0),
+      parcelas: dev.length,
+      clientes: new Set(dev.map((c) => c.clientName)).size,
+    },
+    serieMensal,
+  };
+}
 
 export function computeDre(
   commissions: Commission[],
@@ -134,6 +183,9 @@ export function computeDre(
     .reduce((s, x) => s + x.amount, 0);
   const manuais = incomes.filter((x) => inRange(x.receivedAt, r)).reduce((s, x) => s + x.amount, 0);
   const receitaBruta = comissoes + manuais;
+  const devolucoes = commissions
+    .filter((x) => x.status === "devolvido" && inRange(x.refundedAt, r))
+    .reduce((s, x) => s + x.amount, 0);
   const taxesInPeriod = taxes.filter((t) => taxInRangeByCompetence(t, r));
   const impostosReceita = taxesInPeriod
     .filter((t) => t.kind === "sobre_receita")
@@ -141,7 +193,7 @@ export function computeDre(
   const impostosLucro = taxesInPeriod
     .filter((t) => t.kind === "sobre_lucro")
     .reduce((s, t) => s + t.amount, 0);
-  const receitaLiquida = receitaBruta - impostosReceita;
+  const receitaLiquida = receitaBruta - devolucoes - impostosReceita;
   const split = expensesSplit(entries, r, resolveKind);
   const lucroBruto = receitaLiquida - split.custos;
   const lucroOperacional = lucroBruto - split.despesas;
@@ -149,6 +201,7 @@ export function computeDre(
   const margem = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0;
   return {
     receitaBruta,
+    devolucoes,
     impostosReceita,
     receitaLiquida,
     custos: split.custos,
