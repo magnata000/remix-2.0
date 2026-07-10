@@ -110,11 +110,18 @@ export function computeDre(
   commissions: Commission[],
   incomes: ManualIncome[],
   entries: ExpenseEntry[],
+  expenses: Expense[],
   r: DateRange,
   taxRevenuePct: number,
   taxProfitPct: number,
   classify: (c: string) => CategoryKind,
 ): DreResult {
+  const expenseMap = new Map(expenses.map((x) => [x.id, x]));
+  const resolveKind = (entry: ExpenseEntry): CategoryKind => {
+    const exp = expenseMap.get(entry.expenseId);
+    if (exp?.dreKind) return exp.dreKind;
+    return classify(entry.category);
+  };
   const comissoes = commissions
     .filter((x) => x.status === "pago" && inRange(x.paidAt, r))
     .reduce((s, x) => s + x.amount, 0);
@@ -122,7 +129,7 @@ export function computeDre(
   const receitaBruta = comissoes + manuais;
   const impostosReceita = receitaBruta * (taxRevenuePct / 100);
   const receitaLiquida = receitaBruta - impostosReceita;
-  const split = expensesSplit(entries, r, classify);
+  const split = expensesSplit(entries, r, resolveKind);
   const lucroBruto = receitaLiquida - split.custos;
   const lucroOperacional = lucroBruto - split.despesas;
   const impostosLucro = Math.max(0, lucroOperacional) * (taxProfitPct / 100);
