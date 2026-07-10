@@ -15,7 +15,6 @@ import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
-import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { toast } from "sonner";
 
