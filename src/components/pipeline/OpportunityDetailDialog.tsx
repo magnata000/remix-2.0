@@ -11,6 +11,7 @@ import { usePipelineStore, stageLabels, type Opportunity } from "@/lib/pipeline/
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useSlaConfig, TERMINAL_STAGES } from "@/lib/sla/slaConfig";
 import { MAX_PINNED_COMMENTS } from "@/lib/tasks/taskStore";
+import { FEATURES } from "@/lib/featureFlags";
 import { MentionInput } from "@/components/tasks/MentionInput";
 import {
   AttachmentChip,
@@ -134,26 +135,28 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                 />
               </Meta>
             )}
-            <Meta icon={<Calculator className="h-3.5 w-3.5" />} label="Cotação">
-              {quote ? (
-                <button
-                  onClick={() => onOpenQuote?.(o.quoteGroupId)}
-                  className="inline-flex items-center gap-1.5 text-brand hover:underline"
-                >
-                  <Link2 className="h-3 w-3" />
-                  {quote.versions.length} {quote.versions.length === 1 ? "versão" : "versões"}
-                  <Trophy className="h-3 w-3 ml-1" />
-                  <span className="font-medium">v{quote.latest.version}</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => onOpenQuote?.(undefined)}
-                  className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-                >
-                  <Calculator className="h-3 w-3" /> Cotar no Multicálculo
-                </button>
-              )}
-            </Meta>
+            {FEATURES.multicalc && (
+              <Meta icon={<Calculator className="h-3.5 w-3.5" />} label="Cotação">
+                {quote ? (
+                  <button
+                    onClick={() => onOpenQuote?.(o.quoteGroupId)}
+                    className="inline-flex items-center gap-1.5 text-brand hover:underline"
+                  >
+                    <Link2 className="h-3 w-3" />
+                    {quote.versions.length} {quote.versions.length === 1 ? "versão" : "versões"}
+                    <Trophy className="h-3 w-3 ml-1" />
+                    <span className="font-medium">v{quote.latest.version}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onOpenQuote?.(undefined)}
+                    className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <Calculator className="h-3 w-3" /> Cotar no Multicálculo
+                  </button>
+                )}
+              </Meta>
+            )}
             {o.stage === "perdido" && o.lostReason && (
               <div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">

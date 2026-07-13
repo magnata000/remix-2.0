@@ -21,6 +21,7 @@ import { SlaConfigProvider } from "@/lib/sla/slaConfig";
 import { DreConfigProvider } from "@/lib/financial/dreConfigStore";
 
 import { NavigationProvider } from "@/lib/navigation";
+import { FEATURES } from "@/lib/featureFlags";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,7 +43,9 @@ export const Route = createFileRoute("/")({
 });
 
 function AppShell() {
-  const [active, setActive] = useState<ModuleKey>("dashboard");
+  const [rawActive, setActive] = useState<ModuleKey>("dashboard");
+  // Guard: se Multicálculo está desabilitado, força fallback para dashboard.
+  const active: ModuleKey = rawActive === "multicalc" && !FEATURES.multicalc ? "dashboard" : rawActive;
 
   return (
     <PipelineStoreProvider>
@@ -64,7 +67,7 @@ function AppShell() {
                               {active === "dashboard" && <DashboardModule />}
                               {active === "policies" && <PortfolioModule />}
                               {active === "kanban" && <KanbanModule />}
-                              {active === "multicalc" && <MulticalcModule />}
+                              {active === "multicalc" && FEATURES.multicalc && <MulticalcModule />}
                               {active === "financial" && <FinancialModule />}
                               {active === "settings" && <SettingsModule />}
                             </main>

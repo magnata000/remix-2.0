@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { FEATURES } from "@/lib/featureFlags";
 
 export type ModuleKey =
   | "dashboard"
@@ -25,7 +26,7 @@ export type ModuleKey =
   | "financial"
   | "settings";
 
-export const modules: { key: ModuleKey; label: string; icon: typeof LayoutDashboard }[] = [
+const allModules: { key: ModuleKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "policies", label: "Carteira", icon: FileText },
   { key: "kanban", label: "Kanban", icon: KanbanSquare },
@@ -33,6 +34,8 @@ export const modules: { key: ModuleKey; label: string; icon: typeof LayoutDashbo
   { key: "financial", label: "Financeiro", icon: Wallet },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
+
+export const modules = allModules.filter((m) => m.key !== "multicalc" || FEATURES.multicalc);
 
 export function TopBar({
   active,

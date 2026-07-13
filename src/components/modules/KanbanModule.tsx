@@ -9,6 +9,7 @@ import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type Los
 import { usePipelineStore, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
+import { FEATURES } from "@/lib/featureFlags";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 import { CloseOpportunityDialog } from "@/components/pipeline/CloseOpportunityDialog";
@@ -94,7 +95,7 @@ export function KanbanModule() {
             <>
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
-                  Arraste para mover • {opportunities.length} oportunidades · vinculadas ao Multicálculo
+                  Arraste para mover • {opportunities.length} oportunidades{FEATURES.multicalc ? " · vinculadas ao Multicálculo" : ""}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" className="rounded-xl" onClick={() => setView("analytics")}>
@@ -291,27 +292,29 @@ function KanbanCardBody({
         </div>
       )}
 
-      <button
-        onClick={(e) => { e.stopPropagation(); onOpenQuote(); }}
-        className="mt-2 w-full text-left text-[11px] flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 transition text-muted-foreground hover:text-foreground"
-        title={task.quoteGroupId ? "Abrir no Multicálculo" : "Cotar no Multicálculo"}
-      >
-        {task.quoteGroupId && quoteSummary ? (
-          <>
-            <Link2 className="h-3 w-3 shrink-0 text-brand" />
-            <span className="truncate">
-              {quoteSummary.versions.length} {quoteSummary.versions.length === 1 ? "cotação" : "cotações"}
-            </span>
-            <Trophy className="h-3 w-3 shrink-0 ml-auto" />
-            <span className="font-medium text-foreground">v{quoteSummary.latest.version}</span>
-          </>
-        ) : (
-          <>
-            <Calculator className="h-3 w-3 shrink-0" />
-            <span>Cotar no Multicálculo</span>
-          </>
-        )}
-      </button>
+      {FEATURES.multicalc && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onOpenQuote(); }}
+          className="mt-2 w-full text-left text-[11px] flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 transition text-muted-foreground hover:text-foreground"
+          title={task.quoteGroupId ? "Abrir no Multicálculo" : "Cotar no Multicálculo"}
+        >
+          {task.quoteGroupId && quoteSummary ? (
+            <>
+              <Link2 className="h-3 w-3 shrink-0 text-brand" />
+              <span className="truncate">
+                {quoteSummary.versions.length} {quoteSummary.versions.length === 1 ? "cotação" : "cotações"}
+              </span>
+              <Trophy className="h-3 w-3 shrink-0 ml-auto" />
+              <span className="font-medium text-foreground">v{quoteSummary.latest.version}</span>
+            </>
+          ) : (
+            <>
+              <Calculator className="h-3 w-3 shrink-0" />
+              <span>Cotar no Multicálculo</span>
+            </>
+          )}
+        </button>
+      )}
 
       {task.stage === "perdido" && task.lostReason && (
         <div className="mt-1.5 space-y-0.5">
