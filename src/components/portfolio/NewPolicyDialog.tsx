@@ -168,7 +168,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
     }
     const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
-    const created = addPolicy({
+    const payload = {
       clientName,
       branch,
       insurer,
@@ -196,7 +196,10 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
         consortiumType,
         commissionScheme: "unica" as const,
       }),
-    });
+    };
+    const created = isRenewal && sourcePolicy
+      ? renewPolicy(sourcePolicy.id, payload)
+      : addPolicy(payload);
     ensurePolicyRoots({
       policyId: created.id,
       policyNumber: created.number,
@@ -205,10 +208,11 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       startDate: created.startDate,
     });
     const gerados = generateForPolicy(created);
+    const baseMsg = isRenewal ? `Renovação ${created.number} criada` : `Apólice ${created.number} criada`;
     toast.success(
       gerados.length > 0
-        ? `Apólice ${created.number} criada · ${gerados.length} parcela(s) de comissão geradas`
-        : `Apólice ${created.number} criada`,
+        ? `${baseMsg} · ${gerados.length} parcela(s) de comissão geradas`
+        : baseMsg,
     );
     onOpenChange(false);
   };
@@ -219,7 +223,14 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Nova apólice</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{isRenewal ? "Renovar apólice" : "Nova apólice"}</DialogTitle>
+          {isRenewal && sourcePolicy && (
+            <DialogDescription>
+              Renovando <span className="font-mono">{sourcePolicy.number}</span> — {sourcePolicy.clientName}
+            </DialogDescription>
+          )}
+        </DialogHeader>
 
         <div className="space-y-5">
           <div>
