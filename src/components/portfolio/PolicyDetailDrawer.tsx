@@ -288,11 +288,13 @@ export function PolicyDetailDrawer({
               </TabsContent>
             </Tabs>
 
-            <RenewPolicyDialog
-              open={renewOpen}
-              onOpenChange={setRenewOpen}
-              sourcePolicy={policy}
-            />
+            {policy.branch !== "Saúde" && (
+              <RenewPolicyDialog
+                open={renewOpen}
+                onOpenChange={setRenewOpen}
+                sourcePolicy={policy}
+              />
+            )}
             <EditPolicyDialog open={editOpen} onOpenChange={setEditOpen} policy={policy} />
 
             <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
