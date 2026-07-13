@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
-import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
+import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
@@ -18,7 +18,12 @@ import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSp
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { toast } from "sonner";
 
-type Props = { open: boolean; onOpenChange: (v: boolean) => void; defaultClientName?: string };
+type Props = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  defaultClientName?: string;
+  sourcePolicy?: Policy | null;
+};
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
@@ -33,7 +38,8 @@ const addYears = (d: Date, n: number) => {
   const r = new Date(d); r.setFullYear(r.getFullYear() + n); return r;
 };
 
-export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props) {
+export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy }: Props) {
+  const isRenewal = !!sourcePolicy;
   const { clients } = useClientStore();
   const { addPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
