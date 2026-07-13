@@ -212,7 +212,11 @@ export function PolicyDetailDrawer({
                   <Row
                     icon={Calendar}
                     label="Vigência"
-                    value={`${formatDateShort(policy.startDate)}${policy.endDate ? ` → ${formatDateShort(policy.endDate)}` : ""}`}
+                    value={
+                      policy.branch === "Saúde"
+                        ? "Vitalício"
+                        : `${formatDateShort(policy.startDate)}${policy.endDate ? ` → ${formatDateShort(policy.endDate)}` : ""}`
+                    }
                   />
                 </div>
 
@@ -246,25 +250,27 @@ export function PolicyDetailDrawer({
                 </div>
 
                 <div className="flex gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="flex-1">
-                          <Button
-                            onClick={() => setRenewOpen(true)}
-                            disabled={alreadyRenewed}
-                            className="w-full rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
-                          >
-                            <RotateCw className="h-4 w-4" />
-                            Renovar
-                          </Button>
-                        </span>
-                      </TooltipTrigger>
-                      {alreadyRenewed && next && (
-                        <TooltipContent>Já renovada em {next.number}</TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
+                  {policy.branch !== "Saúde" && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex-1">
+                            <Button
+                              onClick={() => setRenewOpen(true)}
+                              disabled={alreadyRenewed}
+                              className="w-full rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+                            >
+                              <RotateCw className="h-4 w-4" />
+                              Renovar
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {alreadyRenewed && next && (
+                          <TooltipContent>Já renovada em {next.number}</TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   <Button variant="outline" className="flex-1 rounded-xl">
                     Imprimir
                   </Button>
@@ -282,11 +288,13 @@ export function PolicyDetailDrawer({
               </TabsContent>
             </Tabs>
 
-            <RenewPolicyDialog
-              open={renewOpen}
-              onOpenChange={setRenewOpen}
-              sourcePolicy={policy}
-            />
+            {policy.branch !== "Saúde" && (
+              <RenewPolicyDialog
+                open={renewOpen}
+                onOpenChange={setRenewOpen}
+                sourcePolicy={policy}
+              />
+            )}
             <EditPolicyDialog open={editOpen} onOpenChange={setEditOpen} policy={policy} />
 
             <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
