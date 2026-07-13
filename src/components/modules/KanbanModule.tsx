@@ -9,6 +9,7 @@ import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage, type Los
 import { usePipelineStore, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { useQuoteStore } from "@/lib/multicalc/quoteStore";
 import { useNavigation } from "@/lib/navigation";
+import { FEATURES } from "@/lib/featureFlags";
 import { TasksBoard } from "@/components/tasks/TasksBoard";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 import { CloseOpportunityDialog } from "@/components/pipeline/CloseOpportunityDialog";
@@ -94,7 +95,7 @@ export function KanbanModule() {
             <>
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
-                  Arraste para mover • {opportunities.length} oportunidades · vinculadas ao Multicálculo
+                  Arraste para mover • {opportunities.length} oportunidades{FEATURES.multicalc ? " · vinculadas ao Multicálculo" : ""}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" className="rounded-xl" onClick={() => setView("analytics")}>
