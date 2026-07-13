@@ -1,45 +1,52 @@
 ## Objetivo
 
-Ocultar completamente o acesso à Multicálculo e às features relacionadas em Pipeline de Vendas, sem remover código — reativação futura será um único toggle.
+Substituir o diálogo enxuto de renovação por um `NewPolicyDialog` em **modo renovação**: todos os campos pré-preenchidos a partir da apólice de origem, preservando o vínculo (anterior marcada como "renovada" + nova apontando para ela).
 
-## Abordagem: Feature Flag Central
+## Mudanças
 
-Criar `src/lib/featureFlags.ts` exportando:
+### 1. `NewPolicyDialog.tsx` — aceitar modo renovação
+
+Adicionar prop opcional:
 
 ```ts
-export const FEATURES = {
-  multicalc: false, // aguardando desenvolvimento dos RPAs na nuvem
-} as const;
+type Props = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  defaultClientName?: string;
+  sourcePolicy?: Policy | null; // ← NOVO: quando presente, é renovação
+};
 ```
 
-Todos os pontos de acesso passam a checar `FEATURES.multicalc`. Reativar = trocar para `true`.
+Comportamento quando `sourcePolicy` está presente:
 
-## Pontos de ocultação
+- **Título**: "Renovar apólice — {number}" (em vez de "Nova apólice"); adiciona `DialogDescription` mencionando o cliente/apólice de origem.
+- **Pré-preenchimento no `useEffect` de abertura** (a partir de `sourcePolicy`):
+  - cliente (`clientId`/`clientName`)
+  - `branch`, `insurer`, `premium` (formatado), `status = "ativa"`, `assigneeId`
+  - `startDate = sourcePolicy.endDate`; `endDate = startDate + 1 ano` (para ramos não-Saúde)
+  - `commissionStr` a partir de `sourcePolicy.commissionPct`
+  - Campos específicos por ramo (Auto/Vida/Residencial/Empresarial: `commissionScheme`, `commissionInstallments`; Saúde: `healthScheme`, `healthAnniversary`, `healthInitialValue`, `healthCategory`, `healthCoparticipation`, `beneficiaries`; Consórcio: `consortiumGroup`, `consortiumQuota`, `consortiumType`).
+- **Submit em modo renovação**: em vez de `addPolicy(...)`, chamar `renewPolicy(sourcePolicy.id, payload)` do `usePolicyStore`. O payload passa a incluir os campos hoje ausentes no `RenewPolicyDialog` (assignee, comissões, dados por ramo). Se `renewPolicy` ainda não aceita todos esses campos, estendo a sua assinatura em `policyStore.tsx` para receber o mesmo payload que `addPolicy` (menos vínculo, que ele mesmo aplica). Mantém-se `ensurePolicyRoots` + `generateForPolicy` + toast "Renovação {number} criada".
 
-**1. `src/components/shell/TopBar.tsx`**
-- Filtrar o item `{ key: "multicalc", label: "Multicálculo" }` do array de navegação quando a flag estiver off. Tipo `ModuleKey` e componente `MulticalcModule` permanecem intactos.
+### 2. `PolicyDetailDrawer.tsx` — trocar disparador
 
-**2. `src/routes/index.tsx`**
-- Manter `<MulticalcModule />` e `QuoteStoreProvider` no código.
-- Adicionar guarda: se `active === "multicalc"` e a flag estiver off, redirecionar para `"dashboard"` (proteção contra deep-link/estado residual).
+Remover uso do `RenewPolicyDialog`. Ao clicar em "Renovar", abrir o `NewPolicyDialog` passando `sourcePolicy={policy}`.
 
-**3. `src/components/modules/KanbanModule.tsx`**
-- Esconder o botão "Cotar no Multicálculo" / "Abrir no Multicálculo" nos cards.
-- Remover o sufixo "· vinculadas ao Multicálculo" do subtítulo do header.
-- Esconder qualquer badge/indicador de vínculo com quoteGroupId enquanto a flag estiver off.
-- Imports e lógica de `useQuoteStore` permanecem (dead code controlado pela flag).
+### 3. `RenewPolicyDialog.tsx`
 
-**4. `src/components/pipeline/OpportunityDetailDialog.tsx`**
-- Esconder o botão/CTA "Cotar no Multicálculo" e qualquer indicador visível de vínculo.
-- Import de `useQuoteStore` permanece.
+Deixar o arquivo no repositório (não deletar), sem uso — preserva histórico caso queira reverter. Alternativamente pode ser removido; deixarei como está para não perder código.
 
-## Fora de escopo (preservado, sem alterações)
+### 4. `policyStore.tsx` — estender `renewPolicy` se necessário
 
-- `src/components/modules/MulticalcModule.tsx` — página inteira intacta.
-- `src/lib/multicalc/quoteStore` — store intacta.
-- `src/lib/tasks/taskStore.tsx` — referências a quoteGroupId nas tarefas permanecem (dados/lógica preservados; apenas UI de acesso é oculta).
-- `SettingsModule.tsx` — se houver configuração relacionada, permanece; apenas checar se há CTA visível que precise da flag (verificarei na implementação).
+Ajustar a assinatura de `renewPolicy` para aceitar os mesmos campos opcionais do `addPolicy` (assignee, commissionPct, commissionScheme/installments, campos de Saúde e Consórcio), preservando a lógica de vínculo (nova aponta para a anterior; anterior recebe status "renovada"). Sem quebra de chamadas existentes.
 
-## Reativação futura
+## Fora de escopo
 
-Trocar `multicalc: false` → `true` em `src/lib/featureFlags.ts`. Nenhuma outra mudança necessária.
+- Não removo `RenewPolicyDialog.tsx` (fica como dead code opcional).
+- Não altero visual do drawer além do handler do botão Renovar.
+- Regra atual de esconder "Renovar" para ramo Saúde permanece.
+
+## Riscos / cuidados
+
+- Reset de estado do `NewPolicyDialog` no `useEffect` já depende de `open`; incluirei `sourcePolicy` nas dependências para evitar preencher com valores de "nova apólice" quando reabrir em modo renovação.
+- Validações existentes permanecem (prêmio, datas). Campos específicos por ramo continuam obrigatórios conforme `BranchSpecificFields`.
