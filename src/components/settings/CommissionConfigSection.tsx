@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus, Calculator, ChevronDown, Trash2 } from "lucide-react";
@@ -103,10 +103,6 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
       toast.error("% mínimo deve ser menor ou igual ao máximo");
       return;
     }
-    if (local.taxaImposto < 0 || local.taxaImposto > 1) {
-      toast.error("Taxa de imposto inválida");
-      return;
-    }
     if (local.product === "auto") {
       if ((local.parceladoMinInstallments ?? 0) < 1 || (local.adiantamentoMaxInstallments ?? 0) < 1) {
         toast.error("Limites de parcelas devem ser ≥ 1");
@@ -169,24 +165,6 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
       </div>
 
       <div className="space-y-4">
-        {/* Imposto */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-card border">
-          <div className="flex-1">
-            <Label className="text-sm font-medium">Paga comissão líquida</Label>
-            <p className="text-xs text-muted-foreground">Seguradora debita o imposto antes do repasse</p>
-          </div>
-          <Switch
-            checked={local.comissaoLiquida}
-            onCheckedChange={(v) => setLocal({ ...local, comissaoLiquida: v })}
-          />
-        </div>
-        {local.comissaoLiquida && (
-          <Field
-            label="Taxa de imposto (%)"
-            value={pctToStr(local.taxaImposto)}
-            onChange={(v) => setLocal({ ...local, taxaImposto: strToPct(v) })}
-          />
-        )}
 
         {/* Tipo */}
         <div>

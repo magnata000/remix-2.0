@@ -1,12 +1,13 @@
-Remover a flag de imposto (Comissão líquida + taxa) do formulário de Nova Apólice.
+Remover a flag de imposto ("Paga comissão líquida" + campo "Taxa de imposto") da sub-aba Comissionamento em Configurações, para todos os produtos (Seguros, Saúde, Consórcio).
 
-Mudanças em `src/components/portfolio/NewPolicyDialog.tsx`:
-1. Remover o import de `PolicyTaxOverrideFields`.
-2. Remover os estados `comissaoLiquida` e `taxaImposto`.
-3. No `useEffect` de abertura do dialog, remover o reset desses dois estados.
-4. No `submit`, remover `comissaoLiquida` e `taxaImposto` do payload enviado a `addPolicy`.
-5. No JSX, remover o bloco `<PolicyTaxOverrideFields ... />`.
+## Mudanças
 
-Nenhuma alteração em `EditPolicyDialog`, `RenewPolicyDialog`, `PolicyTaxOverrideFields`, stores ou engine. Apenas o formulário de Nova Apólice deixa de oferecer o override por apólice; novas apólices sempre herdarão o padrão da seguradora.
+**`src/components/settings/CommissionConfigSection.tsx`**
+1. Remover o bloco JSX do toggle "Paga comissão líquida" e o campo condicional "Taxa de imposto (%)" (linhas 172–189).
+2. Remover a validação `local.taxaImposto < 0 || local.taxaImposto > 1` do `save()` (linhas 106–109).
+3. Remover o import de `Switch` se deixar de ser usado no arquivo (verificar após remoção).
 
-Outros arquivos não serão modificados.
+## Fora do escopo
+
+- Stores (`commissionConfigStore`), engine (`commissionEngine`) e tipos permanecem intactos — os campos `comissaoLiquida`/`taxaImposto` continuam no modelo, apenas não são mais editáveis por essa UI. As seguradoras manterão o valor atual do seed.
+- Nenhuma alteração em `PolicyTaxOverrideFields`, dialogs de apólice, ou cálculos financeiros.
