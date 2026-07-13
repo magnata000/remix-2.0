@@ -1,13 +1,17 @@
-Remover a flag de imposto ("Paga comissão líquida" + campo "Taxa de imposto") da sub-aba Comissionamento em Configurações, para todos os produtos (Seguros, Saúde, Consórcio).
+## Objetivo
+Tratar apólices de Saúde como vitalícias na Carteira.
 
 ## Mudanças
 
-**`src/components/settings/CommissionConfigSection.tsx`**
-1. Remover o bloco JSX do toggle "Paga comissão líquida" e o campo condicional "Taxa de imposto (%)" (linhas 172–189).
-2. Remover a validação `local.taxaImposto < 0 || local.taxaImposto > 1` do `save()` (linhas 106–109).
-3. Remover o import de `Switch` se deixar de ser usado no arquivo (verificar após remoção).
+**1. `src/components/portfolio/PoliciesTab.tsx` — coluna Vigência (tabela desktop)**
+- Na célula de vigência (linha 222-224), quando `p.branch === "Saúde"`, exibir "Vitalício" (badge/texto sutil) em vez de `formatDateShort(p.endDate)`.
 
-## Fora do escopo
+**2. `src/components/portfolio/PolicyDetailDrawer.tsx` — Drawer**
+- Na seção "Vigência" (Row), quando `policy.branch === "Saúde"`, exibir "Vitalício" em vez de `startDate → endDate`.
+- Ocultar completamente o botão "Renovar" (e o `TooltipProvider` que o envolve) quando `policy.branch === "Saúde"`. O botão "Imprimir" continua visível e ocupa a largura restante.
+- Também não renderizar `<RenewPolicyDialog>` para Saúde (não é acionável).
 
-- Stores (`commissionConfigStore`), engine (`commissionEngine`) e tipos permanecem intactos — os campos `comissaoLiquida`/`taxaImposto` continuam no modelo, apenas não são mais editáveis por essa UI. As seguradoras manterão o valor atual do seed.
-- Nenhuma alteração em `PolicyTaxOverrideFields`, dialogs de apólice, ou cálculos financeiros.
+## Fora de escopo
+- Formulário "Nova Apólice" / "Editar Apólice": não alterar campos de data para Saúde neste passo (o modelo `Policy` mantém `endDate` opcional; a UI da Carteira apenas apresenta como vitalício quando ramo = Saúde).
+- Cards mobile da aba Apólices não exibem vigência hoje, então não há mudança lá.
+- Lógica de renovação/comissões: intacta.

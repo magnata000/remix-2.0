@@ -220,7 +220,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                       <td className="px-5 py-3 text-muted-foreground">{p.insurer}</td>
                       <td className="px-5 py-3 font-semibold">{formatBRL(p.premium)}</td>
                       <td className="px-5 py-3 text-xs text-muted-foreground">
-                        {formatDateShort(p.endDate)}
+                        {p.branch === "Saúde" ? "Vitalício" : formatDateShort(p.endDate)}
                       </td>
                       <td className="px-5 py-3">
                         <button
