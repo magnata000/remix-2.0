@@ -41,7 +41,7 @@ const addYears = (d: Date, n: number) => {
 export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy }: Props) {
   const isRenewal = !!sourcePolicy;
   const { clients } = useClientStore();
-  const { addPolicy } = usePolicyStore();
+  const { addPolicy, renewPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
   const { getConfig } = useCommissionConfigStore();
@@ -77,6 +77,33 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
 
   useEffect(() => {
     if (!open) return;
+    if (sourcePolicy) {
+      const src = sourcePolicy;
+      const c = clients.find((x) => x.name === src.clientName);
+      setClientId(c?.id ?? ""); setClientName(src.clientName);
+      setBranch(src.branch); setInsurer(src.insurer);
+      setPremium(formatBRLDecimal(src.premium));
+      const newStart = new Date(src.endDate || src.startDate);
+      setStartDate(newStart);
+      setEndDate(addYears(newStart, 1));
+      setStatus("ativa");
+      setAssigneeId(src.assigneeId ?? team[0]?.id ?? "");
+      setTouched(false);
+      setCommissionStr(src.commissionPct != null ? String(src.commissionPct).replace(".", ",") : "");
+      setAutoScheme(src.commissionScheme === "parcela" ? "parcela" : "esgotamento");
+      setAutoInstallments(src.commissionInstallments ? String(src.commissionInstallments) : "10");
+      setHealthScheme(src.commissionScheme === "vitalicio" ? "vitalicio" : "agenciamento");
+      setHealthAnniversary(src.healthAnniversary ?? "");
+      setAnniversaryTouched(false);
+      setHealthInitialValue(src.healthInitialValue ? formatBRLDecimal(src.healthInitialValue) : "");
+      setHealthCategory(src.healthCategory ?? "");
+      setHealthCoparticipation(!!src.healthCoparticipation);
+      setBeneficiaries(src.beneficiaries ?? []);
+      setConsortiumGroup(src.consortiumGroup ?? "");
+      setConsortiumQuota(src.consortiumQuota ?? "");
+      setConsortiumType(src.consortiumType);
+      return;
+    }
     setClientId(""); setClientName(""); setBranch("Auto"); setInsurer("Porto Seguro");
     setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
     setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
@@ -89,7 +116,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       const c = clients.find((x) => x.name === defaultClientName);
       if (c) { setClientId(c.id); setClientName(c.name); }
     }
-  }, [open, defaultClientName, clients]);
+  }, [open, defaultClientName, clients, sourcePolicy]);
 
   const selectClient = (id: string) => {
     const c = clients.find((x) => x.id === id);
