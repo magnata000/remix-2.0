@@ -465,7 +465,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
 
         <DialogFooter>
           <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>Criar apólice</Button>
+          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>{isRenewal ? "Confirmar renovação" : "Criar apólice"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
