@@ -271,9 +271,6 @@ export function PolicyDetailDrawer({
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                  <Button variant="outline" className="flex-1 rounded-xl">
-                    Imprimir
-                  </Button>
                 </div>
               </TabsContent>
 
