@@ -212,7 +212,11 @@ export function PolicyDetailDrawer({
                   <Row
                     icon={Calendar}
                     label="Vigência"
-                    value={`${formatDateShort(policy.startDate)}${policy.endDate ? ` → ${formatDateShort(policy.endDate)}` : ""}`}
+                    value={
+                      policy.branch === "Saúde"
+                        ? "Vitalício"
+                        : `${formatDateShort(policy.startDate)}${policy.endDate ? ` → ${formatDateShort(policy.endDate)}` : ""}`
+                    }
                   />
                 </div>
 
