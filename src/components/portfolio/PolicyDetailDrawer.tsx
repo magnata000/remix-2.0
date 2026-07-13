@@ -40,7 +40,7 @@ import {
 } from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
-import { RenewPolicyDialog } from "@/components/portfolio/RenewPolicyDialog";
+import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
 import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
@@ -286,7 +286,7 @@ export function PolicyDetailDrawer({
             </Tabs>
 
             {policy.branch !== "Saúde" && (
-              <RenewPolicyDialog
+              <NewPolicyDialog
                 open={renewOpen}
                 onOpenChange={setRenewOpen}
                 sourcePolicy={policy}

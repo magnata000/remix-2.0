@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
-import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type PolicyStatus } from "@/lib/mock/data";
+import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
@@ -18,7 +18,12 @@ import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSp
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { toast } from "sonner";
 
-type Props = { open: boolean; onOpenChange: (v: boolean) => void; defaultClientName?: string };
+type Props = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  defaultClientName?: string;
+  sourcePolicy?: Policy | null;
+};
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
@@ -33,9 +38,10 @@ const addYears = (d: Date, n: number) => {
   const r = new Date(d); r.setFullYear(r.getFullYear() + n); return r;
 };
 
-export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props) {
+export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy }: Props) {
+  const isRenewal = !!sourcePolicy;
   const { clients } = useClientStore();
-  const { addPolicy } = usePolicyStore();
+  const { addPolicy, renewPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
   const { getConfig } = useCommissionConfigStore();
@@ -71,6 +77,33 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
 
   useEffect(() => {
     if (!open) return;
+    if (sourcePolicy) {
+      const src = sourcePolicy;
+      const c = clients.find((x) => x.name === src.clientName);
+      setClientId(c?.id ?? ""); setClientName(src.clientName);
+      setBranch(src.branch); setInsurer(src.insurer);
+      setPremium(formatBRLDecimal(src.premium));
+      const newStart = new Date(src.endDate || src.startDate);
+      setStartDate(newStart);
+      setEndDate(addYears(newStart, 1));
+      setStatus("ativa");
+      setAssigneeId(src.assigneeId ?? team[0]?.id ?? "");
+      setTouched(false);
+      setCommissionStr(src.commissionPct != null ? String(src.commissionPct).replace(".", ",") : "");
+      setAutoScheme(src.commissionScheme === "parcela" ? "parcela" : "esgotamento");
+      setAutoInstallments(src.commissionInstallments ? String(src.commissionInstallments) : "10");
+      setHealthScheme(src.commissionScheme === "vitalicio" ? "vitalicio" : "agenciamento");
+      setHealthAnniversary(src.healthAnniversary ?? "");
+      setAnniversaryTouched(false);
+      setHealthInitialValue(src.healthInitialValue ? formatBRLDecimal(src.healthInitialValue) : "");
+      setHealthCategory(src.healthCategory ?? "");
+      setHealthCoparticipation(!!src.healthCoparticipation);
+      setBeneficiaries(src.beneficiaries ?? []);
+      setConsortiumGroup(src.consortiumGroup ?? "");
+      setConsortiumQuota(src.consortiumQuota ?? "");
+      setConsortiumType(src.consortiumType);
+      return;
+    }
     setClientId(""); setClientName(""); setBranch("Auto"); setInsurer("Porto Seguro");
     setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
     setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
@@ -83,7 +116,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       const c = clients.find((x) => x.name === defaultClientName);
       if (c) { setClientId(c.id); setClientName(c.name); }
     }
-  }, [open, defaultClientName, clients]);
+  }, [open, defaultClientName, clients, sourcePolicy]);
 
   const selectClient = (id: string) => {
     const c = clients.find((x) => x.id === id);
@@ -135,7 +168,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
     }
     const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
-    const created = addPolicy({
+    const payload = {
       clientName,
       branch,
       insurer,
@@ -163,7 +196,10 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
         consortiumType,
         commissionScheme: "unica" as const,
       }),
-    });
+    };
+    const created = isRenewal && sourcePolicy
+      ? renewPolicy(sourcePolicy.id, payload)
+      : addPolicy(payload);
     ensurePolicyRoots({
       policyId: created.id,
       policyNumber: created.number,
@@ -172,10 +208,11 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
       startDate: created.startDate,
     });
     const gerados = generateForPolicy(created);
+    const baseMsg = isRenewal ? `Renovação ${created.number} criada` : `Apólice ${created.number} criada`;
     toast.success(
       gerados.length > 0
-        ? `Apólice ${created.number} criada · ${gerados.length} parcela(s) de comissão geradas`
-        : `Apólice ${created.number} criada`,
+        ? `${baseMsg} · ${gerados.length} parcela(s) de comissão geradas`
+        : baseMsg,
     );
     onOpenChange(false);
   };
@@ -186,7 +223,14 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Nova apólice</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{isRenewal ? "Renovar apólice" : "Nova apólice"}</DialogTitle>
+          {isRenewal && sourcePolicy && (
+            <DialogDescription>
+              Renovando <span className="font-mono">{sourcePolicy.number}</span> — {sourcePolicy.clientName}
+            </DialogDescription>
+          )}
+        </DialogHeader>
 
         <div className="space-y-5">
           <div>
@@ -421,7 +465,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName }: Props
 
         <DialogFooter>
           <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>Criar apólice</Button>
+          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>{isRenewal ? "Confirmar renovação" : "Criar apólice"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
