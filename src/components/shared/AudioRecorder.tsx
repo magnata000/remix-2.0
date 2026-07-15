@@ -23,14 +23,17 @@ export function AudioRecorder({ onSend, maxSeconds = 120, compact }: Props) {
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Espelho do previewUrl para o cleanup do unmount ler o valor mais recente
+  // sem que o effect precise re-executar a cada mudança de URL.
+  const previewUrlRef = useRef<string | null>(null);
+  previewUrlRef.current = previewUrl;
 
   useEffect(() => {
     return () => {
       if (timerRef.current) window.clearInterval(timerRef.current);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
       recorderRef.current?.stream.getTracks().forEach((t) => t.stop());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const start = async () => {

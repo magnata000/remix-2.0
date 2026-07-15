@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,10 @@ type Props = {
 };
 
 export function BranchSpecificFields(p: Props) {
+  // Setter capturado em ref para não depender da referência instável do pai.
+  const setAnniversaryRef = useRef(p.setHealthAnniversary);
+  setAnniversaryRef.current = p.setHealthAnniversary;
+
   // auto-derive anniversary from startDate while user hasn't touched it
   useEffect(() => {
     if (p.branch !== "Saúde") return;
@@ -69,8 +73,8 @@ export function BranchSpecificFields(p: Props) {
     if (!p.startDate) return;
     const dd = String(p.startDate.getDate()).padStart(2, "0");
     const mm = String(p.startDate.getMonth() + 1).padStart(2, "0");
-    p.setHealthAnniversary(`${dd}/${mm}`);
-  }, [p.branch, p.startDate, p.anniversaryTouched]); // eslint-disable-line react-hooks/exhaustive-deps
+    setAnniversaryRef.current(`${dd}/${mm}`);
+  }, [p.branch, p.startDate, p.anniversaryTouched]);
 
   if (p.branch === "Saúde") {
     const initialNum = parseMoneyInput(p.healthInitialValue);

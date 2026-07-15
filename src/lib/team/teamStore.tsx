@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from "react";
 import { team as seedTeam } from "@/lib/mock/data";
+import { buildTeamNameIndex, type TeamNameIndex } from "@/lib/daily/mentions";
 
 export type TeamRole = "Administrador" | "Pós-venda" | "Vendedor";
 export const TEAM_ROLES: TeamRole[] = ["Administrador", "Pós-venda", "Vendedor"];
@@ -94,6 +95,26 @@ export function useTeam() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useTeam must be used inside TeamProvider");
   return ctx;
+}
+
+/**
+ * Hook reativo: retorna um índice `lowercase name → id` derivado do estado
+ * atual do provider. Ideal para código React.
+ */
+export function useTeamNameIndex(): TeamNameIndex {
+  const { members } = useTeam();
+  return useMemo(() => buildTeamNameIndex(members), [members]);
+}
+
+/**
+ * Helper síncrono, consumível fora de componentes React (funções puras,
+ * utilitários). Cacheado por módulo — hoje reflete apenas o seed mock;
+ * quando a fonte for real, este helper vira o ponto único de swap.
+ */
+let cachedIndex: TeamNameIndex | null = null;
+export function getTeamNameIndex(): TeamNameIndex {
+  if (!cachedIndex) cachedIndex = buildTeamNameIndex(initialMembers);
+  return cachedIndex;
 }
 
 export function buildInviteLink(token: string) {

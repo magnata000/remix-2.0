@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,67 +15,23 @@ import { useTaskStore, type TaskItem, PRIORITY_META } from "@/lib/tasks/taskStor
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
-import { team, formatDateShort, type Policy, type Beneficiary } from "@/lib/mock/data";
+import { useTeam, useTeamNameIndex } from "@/lib/team/teamStore";
+import { type Policy, type Beneficiary } from "@/lib/mock/data";
+import { formatDateShort } from "@/lib/format";
 import { ageAt, findBandChange, isBirthdayToday } from "@/lib/daily/ageBands";
+import {
+  daysBetween,
+  relativeDueLabel,
+  toneClass,
+  type RelativeDue,
+} from "@/lib/daily/dateUtils";
+import { textMentionsUser, type TeamNameIndex } from "@/lib/daily/mentions";
 import { TaskDetailDialog } from "@/components/tasks/TaskDetailDialog";
 import { useNavigation } from "@/lib/navigation";
 
-// ---------- helpers ----------
-
-const DAY_MS = 1000 * 60 * 60 * 24;
-
-function daysBetween(a: Date, b: Date) {
-  const da = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
-  const db = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
-  return Math.round((db - da) / DAY_MS);
-}
-
-function relativeDueLabel(dueISO: string | undefined, now: Date) {
-  if (!dueISO) return { text: "Sem prazo", tone: "muted" as const };
-  const d = daysBetween(now, new Date(dueISO));
-  if (d < 0) return { text: `Atrasada ${Math.abs(d)}d`, tone: "danger" as const };
-  if (d === 0) return { text: "Hoje", tone: "warning" as const };
-  if (d === 1) return { text: "Amanhã", tone: "warning" as const };
-  return { text: `Em ${d}d`, tone: "info" as const };
-}
-
-const toneClass: Record<"muted" | "danger" | "warning" | "info", string> = {
-  muted: "bg-muted text-muted-foreground",
-  danger: "bg-destructive/15 text-destructive",
-  warning: "bg-warning/15 text-warning",
-  info: "bg-info/15 text-info",
-};
-
-function nameToId(name: string): string | null {
-  const m = team.find((t) => t.name.toLowerCase() === name.toLowerCase());
-  return m?.id ?? null;
-}
-
-function extractMentions(text: string): string[] {
-  if (!text) return [];
-  // Matches @Nome Sobrenome (para de capturar em pontuação/quebra)
-  const re = /@([A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)*)/g;
-  const found: string[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(text))) {
-    // Tenta casar com um membro do time (nome mais longo primeiro)
-    const raw = match[1].trim();
-    // greedy: procura o maior prefixo que casa com um nome do time
-    const words = raw.split(/\s+/);
-    for (let n = words.length; n >= 1; n--) {
-      const candidate = words.slice(0, n).join(" ");
-      if (nameToId(candidate) || candidate.toLowerCase() === "todos") {
-        found.push(candidate);
-        break;
-      }
-    }
-  }
-  return found;
-}
-
 // ---------- section: Tasks ----------
 
-type TaskEntry = { task: TaskItem; relative: ReturnType<typeof relativeDueLabel> };
+type TaskEntry = { task: TaskItem; relative: RelativeDue };
 
 function useMyTasks(now: Date): TaskEntry[] {
   const { tasks, columns } = useTaskStore();
@@ -92,6 +47,7 @@ function useMyTasks(now: Date): TaskEntry[] {
       .filter((t) => {
         if (!t.dueDate) return false;
         const d = new Date(t.dueDate);
+        if (Number.isNaN(d.getTime())) return false; // datas ruins não entram na Daily
         return d <= horizon; // inclui atrasadas
       })
       .map((task) => ({ task, relative: relativeDueLabel(task.dueDate, now) }))
@@ -160,30 +116,20 @@ type MentionEntry = {
   clientName?: string;
 };
 
-function useMyMentions(): MentionEntry[] {
+function useMyMentions(teamIndex: TeamNameIndex): MentionEntry[] {
   const { tasks } = useTaskStore();
   const currentUserId = useCurrentUserId();
 
   return useMemo(() => {
-    // Cache local: evita reprocessar o mesmo texto (descrição/comentário)
-    // dentro deste memo. `extractMentions` faz backtracking O(n²) por match.
+    // Cache local — `extractMentions` faz backtracking O(n) por match;
+    // muitos comentários repetem @menções, então cachear por texto ajuda.
     const mentionCache = new Map<string, string[]>();
-    const mentionsOf = (text: string) => {
-      const cached = mentionCache.get(text);
-      if (cached) return cached;
-      const result = extractMentions(text);
-      mentionCache.set(text, result);
-      return result;
-    };
     const hit = (text: string) =>
-      mentionsOf(text).some((m) => {
-        if (m.toLowerCase() === "todos") return true;
-        return nameToId(m) === currentUserId;
-      });
+      textMentionsUser(text, currentUserId, teamIndex, mentionCache);
 
     const out: MentionEntry[] = [];
     tasks.forEach((task) => {
-      // Descrição da task (autor = assigneeId como proxy, já que não temos createdBy)
+      // Descrição da task (autor = assigneeId como proxy — ainda não temos createdBy)
       if (task.description && hit(task.description)) {
         out.push({
           taskId: task.id,
@@ -219,11 +165,18 @@ function useMyMentions(): MentionEntry[] {
         return true;
       })
       .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-  }, [tasks, currentUserId]);
+  }, [tasks, currentUserId, teamIndex]);
 }
 
-function MentionsSection({ onOpenTaskId }: { onOpenTaskId: (id: string) => void }) {
-  const entries = useMyMentions();
+function MentionsSection({
+  teamIndex,
+  onOpenTaskId,
+}: {
+  teamIndex: TeamNameIndex;
+  onOpenTaskId: (id: string) => void;
+}) {
+  const { members } = useTeam();
+  const entries = useMyMentions(teamIndex);
   return (
     <SectionCard
       icon={<AtSign className="h-4 w-4" />}
@@ -236,7 +189,7 @@ function MentionsSection({ onOpenTaskId }: { onOpenTaskId: (id: string) => void 
       ) : (
         <ul className="divide-y divide-border">
           {entries.slice(0, 8).map((e, i) => {
-            const author = team.find((t) => t.id === e.authorId);
+            const author = members.find((t) => t.id === e.authorId);
             return (
               <li key={`${e.taskId}-${i}`}>
                 <button
@@ -590,7 +543,9 @@ export function DailyModule() {
   }, []);
 
   const currentUserId = useCurrentUserId();
-  const meName = team.find((t) => t.id === currentUserId)?.name ?? "";
+  const { members } = useTeam();
+  const teamIndex = useTeamNameIndex();
+  const meName = members.find((m) => m.id === currentUserId)?.name ?? "";
   const firstName = meName.split(" ")[0] || "por aí";
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const { tasks } = useTaskStore();
@@ -642,7 +597,7 @@ export function DailyModule() {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <TasksSection now={now} onOpenTask={setSelectedTask} />
-            <MentionsSection onOpenTaskId={openTaskById} />
+            <MentionsSection teamIndex={teamIndex} onOpenTaskId={openTaskById} />
             <BirthdaysSection now={now} />
             <RenewalsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
           </div>

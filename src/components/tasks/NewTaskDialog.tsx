@@ -50,10 +50,15 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
       setClientName(task.clientName ?? "");
       setColumnId(task.columnId);
     } else {
-      reset();
+      setTitle("");
+      setDescription("");
+      setDueDate(undefined);
+      setPriority("media");
+      setAssigneeId(team[0]?.id ?? "");
+      setClientName("");
+      setColumnId(defaultColumnId ?? columns[0]?.id ?? "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, task]);
+  }, [open, task, defaultColumnId, columns]);
 
   const submit = () => {
     if (!title.trim()) { toast.error("Título é obrigatório"); return; }

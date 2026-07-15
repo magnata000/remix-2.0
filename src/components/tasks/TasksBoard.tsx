@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,14 +44,16 @@ export function TasksBoard() {
   const [fClient, setFClient] = useState<string>("");
   const [fSort, setFSort] = useState<"recent" | "old">("recent");
 
-  // Workflow engine — roda no mount da aba, dedupe via sourceKey
+  // Workflow engine — roda no mount da aba, dedupe via ref
   const defaultColumnId = columns[0]?.id;
+  const workflowsRanRef = useRef(false);
   useEffect(() => {
+    if (workflowsRanRef.current) return;
     if (!defaultColumnId) return;
+    workflowsRanRef.current = true;
     const created = runWorkflows({ policies, existingTasks: tasks, defaultColumnId });
     if (created.length) bulkAddTasks(created);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [defaultColumnId, policies, tasks, bulkAddTasks]);
 
   const term = searchTerm.trim();
   const clientMatches = useMemo(() => {

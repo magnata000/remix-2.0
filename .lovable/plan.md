@@ -1,81 +1,71 @@
 
-# Plano de Execução Aprovado — Refatoração pré-integração
+# Plano de execução aprovado — QW1 + QW2 + QW3
 
-Ajustes seguindo os dois refinamentos que você pediu:
-- **Item 3.1 (extrair SectionCard)**: NÃO fazer. Cards permanecem locais em `DailyModule.tsx`.
-- **Item 1.6 (deduplicar `useTaskStore`)**: só aplicar se limpo. No caso, exige prop drilling de `tasks` para `MentionsSection` → **mantido como está**, duas chamadas independentes à store.
+Escopo dos 3 quick wins do relatório de saúde, com os ajustes que você pediu (compat via `mock/data`, teamStore expandido, DailyModule endurecido, zero supressões).
 
-Todo o resto listado no relatório de auditoria é executado.
+Nada da lista de preservação é tocado: `DashboardModule.tsx`, `RenewPolicyDialog.tsx`, `ComingSoonOverlay.tsx`, `use-mobile.tsx`, `router.tsx`, `components/ui/*`, mocks `salesByMonth`/`insurerLogos`.
 
 ---
 
-## Passo 1 — Bug 1.1: Hydration mismatch na Daily
+## QW1 — Extrair utilitários, tirar `team`/`formatDateShort` do mock
 
-Arquivo: `src/components/modules/DailyModule.tsx`
+**Criar** `src/lib/format.ts` — casa nova do `formatDateShort` (função pura, sem dependência de mock).
 
-- Trocar `import { useMemo, useState } from "react"` por `import { useEffect, useMemo, useState } from "react"`.
-- Substituir `const now = useMemo(() => new Date(), [])` por:
-  ```ts
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => { setNow(new Date()); }, []);
-  ```
-- `greeting` retorna `"Olá"` quando `now` é `null`; `dateLabel` fica `""` e o `Badge` de data só renderiza quando `dateLabel` existe.
-- As seções que dependem de `now` (Tasks, Birthdays, Renewals, AgeBand) são renderizadas dentro de um `{now && (...)}`, evitando qualquer render server-side dependente de hora local.
-- Efeito colateral positivo: SSR e primeiro paint do cliente renderizam HTML idêntico → some o warning `Hydration failed`.
+**Criar** `src/lib/daily/dateUtils.ts` — `DAY_MS`, `daysBetween`, `relativeDueLabel`, `toneClass`, tipo `DueTone`. `relativeDueLabel` ganha guarda de `NaN` (retorna `"Data inválida"` tone `muted`) — endurece contra datas ruins vindas do futuro Cloud.
 
-## Passo 2 — Bugs 1.2, 1.3, 1.4: limpezas do DailyModule
+**Criar** `src/lib/daily/mentions.ts` — API pura:
+- `TeamNameIndex` (Map imutável `lowercase name → id`)
+- `buildTeamNameIndex(members)`
+- `resolveMentionId(name, index)`
+- `extractMentions(text, index)` — recebe o índice como parâmetro, evita O(n) por match
+- `textMentionsUser(text, userId, index, cache?)` — encapsula o teste de menção + cache opcional
 
-Mesmo arquivo:
-- **1.2** Remover `const myName = ...` e tirar `myName` das deps do `useMemo` em `useMyMentions`.
-- **1.3** Em `MentionsSection`, remover o `useTaskStore()` local e trocar o `onClick` por `() => onOpenTaskId(e.taskId)` — o consumidor já faz o lookup.
-- **1.4** Dentro de `useMyMentions`, envolver `extractMentions` num cache local `Map<string, string[]>` para não reprocessar o mesmo texto (descrição + comentários repetidos). Sem mudança visual.
+**Editar** `src/lib/mock/data.ts` — remover a implementação local de `formatDateShort` e substituir por `export { formatDateShort } from "@/lib/format";` com JSDoc `@deprecated` recomendando `@/lib/format`. Nenhum outro import legado quebra.
 
-## Passo 3 — Item 3.5: Header responsivo da Daily
+**Editar** `src/lib/team/teamStore.tsx` — expor:
+- `getTeamNameIndex()` — helper síncrono, calcula uma vez a partir do `seedTeam` do mock, cacheado em módulo. Consumível por funções puras (fora de React).
+- `useTeamNameIndex()` — hook derivado do `members` do provider (index reativo aos members do estado, útil para o dia em que houver CRUD real).
 
-Ainda em `DailyModule.tsx`, trocar o wrapper do cabeçalho:
-```diff
-- <div className="flex flex-wrap items-end justify-between gap-3">
-+ <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
+Nenhum consumidor atual é forçado a migrar de `import { team } from "@/lib/mock/data"` agora — a extração completa fica como próximo passo (fora deste QW). Este QW deixa a porta aberta.
+
+## QW2 — Endurecer e otimizar o DailyModule
+
+**Editar** `src/components/modules/DailyModule.tsx`:
+- Remover as versões locais de `DAY_MS`, `daysBetween`, `relativeDueLabel`, `toneClass`, `nameToId`, `extractMentions` — passam a vir de `@/lib/daily/dateUtils` e `@/lib/daily/mentions`.
+- Remover `import { team, formatDateShort } from "@/lib/mock/data"`. Passar a importar `formatDateShort` de `@/lib/format` e usar `useTeamNameIndex()` + `useTeam` para obter `members` (para o `authorId → name` da MentionsSection e para o nome do usuário logado no cabeçalho).
+- `useMyTasks`: guardar `Number.isNaN(new Date(t.dueDate!).getTime())` antes de comparar/ordenar, ignorando datas inválidas em vez de deixá-las virar `NaN` no `sort`.
+- `useMyMentions`: passar a receber o `teamIndex` do módulo (via prop / closure) — o `mentionCache` fica local ao memo, como já está, mas `resolveMention` deixa de ser O(n).
+- `useAgeBandChanges`: manter casamento por `clientName` (o schema atual não tem `clientId` em `Policy`), mas comentar como dívida a resolver com o schema real do Cloud.
+- Passar `currentUserId` como prop das seções que dependem dele em vez de cada uma chamar `useCurrentUserId()`.
+- Manter `SectionCard`/`EmptyState` locais (conforme sua diretriz anterior).
+
+## QW3 — Zerar as 8 supressões
+
+**`src/lib/multicalc/quoteStore.ts`** (2 supressões) — substituir os dois `@ts-expect-error dynamic` por um acessor tipado:
+```ts
+function getField(data: QuoteFormData, path: string): string {
+  const [g, k] = path.split(".") as [keyof QuoteFormData, string];
+  const group = data[g] as Record<string, string | undefined>;
+  return String(group[k] ?? "");
+}
 ```
-Adicionar `min-w-0` no bloco de texto e `shrink-0` no ícone `Sparkles` e no `Badge` de data. Padrão exigido pelo template para não quebrar em ~780px.
+Usar em `computeDiff`.
 
-## Passo 4 — Item 2.4: rebaixar exports não usados
+**`src/components/tasks/TasksBoard.tsx:53`** — trocar `useEffect(..., [])` + disable por guarda com `useRef` (`workflowsRanRef`), listar todas as deps reais (`defaultColumnId`, `policies`, `tasks`, `bulkAddTasks`); o ref garante rodar-só-uma-vez.
 
-Nenhuma remoção, apenas troca de `export ...` por declaração local em símbolos que não são consumidos por outros arquivos (confirmado com `knip` + `rg`):
+**`src/components/tasks/NewTaskDialog.tsx:55`** — inline o corpo do `reset` dentro do próprio `useEffect`, evitando a dependência instável em `reset` (mantém deps `[open, task]` sem disable, pois todas as demais referências são setters do `useState` estáveis).
 
-- `src/components/shared/SlaBadge.tsx` → `slaBorderClass`
-- `src/components/shared/Timeline.tsx` → `formatTime`, `formatBytes`, `isImage`, `isAudio`, `AudioBubble`
-- `src/components/shell/TopBar.tsx` → `modules` (mantido interno)
-- `src/lib/daily/ageBands.ts` → `ANS_AGE_BANDS`, `bandOf`
-- `src/lib/financial/dreConfigStore.tsx` → `classifyCategory`
-- `src/lib/financial/reportMetrics.ts` → `taxInRangeByCompetence`, `expensesByCategory`, `expensesSplit`, tipo `RevenueLosses`
-- `src/lib/pipeline/salesStats.ts` → `OPEN_STAGES`, `salesByMonthFromPipeline`, `revenueInMonth`, remoção da linha `export { MS_DAY }`
-- `src/lib/tasks/recurrence.ts` → `expandOccurrences`
-- `src/lib/multicalc/quoteStore.ts` → tipo `FieldDiff`
-- `src/lib/mock/data.ts` → tipo `TeamMember`
-- `src/components/multicalc/MulticalcWizard.tsx` → tipo `WizardCompletePayload`
+**`src/components/pipeline/NewOpportunityDialog.tsx:65`** — mesmo padrão: inline o reset dentro do effect (ou envolver `reset` em `useCallback` com deps explícitas e adicioná-la).
 
-Ficam intactos por serem consumidos em algum lugar (ex.: `ButtonProps` importado em `pagination.tsx`, `salesByMonth`/`insurerLogos` usados no `DashboardModule` preservado, mocks e etc).
+**`src/components/portfolio/BranchSpecificFields.tsx:73`** — capturar `p.setHealthAnniversary` em um `useRef` atualizado a cada render; o effect depende só de `p.branch`, `p.startDate`, `p.anniversaryTouched` — sem disable, sem risco de loop caso o pai não memoize o setter.
 
-## Passo 5 — Verificação
+**`src/components/shared/AudioRecorder.tsx:33`** — mover `previewUrl` para um `useRef<string | null>` atualizado em cada set; effect de cleanup passa a não ter deps externas e roda unicamente no unmount, sem disable.
 
-- `bunx tsgo --noEmit` para garantir zero erro de tipo.
-- `bunx knip` para conferir redução da lista de exports.
-- Smoke visual: Daily (aguardar montar, ver saudação/data), Carteira, Kanban, Financeiro, Configurações — nenhum arquivo de UI foi tocado além do header da Daily.
-- Console limpo de `Hydration failed`.
+## Verificação final
 
----
+1. `bunx tsgo --noEmit` — deve continuar limpo.
+2. `rg -n "eslint-disable|@ts-ignore|@ts-expect-error" src -g '!ui/*' -g '!routeTree*'` — deve retornar **zero** ocorrências fora de `routeTree.gen.ts`.
+3. Console do preview sem `Hydration failed` ao abrir `/`.
+4. Playwright headless para screenshot da Daily e conferir que o layout não regrediu.
 
-## Preservação (não tocar)
-
-- `src/components/modules/DashboardModule.tsx`
-- `src/components/portfolio/RenewPolicyDialog.tsx`
-- `src/components/shared/ComingSoonOverlay.tsx`
-- `src/hooks/use-mobile.tsx`
-- `src/router.tsx`
-- Todos os componentes shadcn (`accordion`, `alert`, `carousel`, `chart`, ...)
-- Todos os pacotes em `package.json`
-- Mocks `salesByMonth` e `insurerLogos` em `src/lib/mock/data.ts`
-- Cores, espaçamentos, tipografia, animações
-
-Nada além dos passos 1–5 acima é executado.
+Se quiser, digo "pode ir" e eu executo a bateria toda em uma rodada, sem parar no meio.

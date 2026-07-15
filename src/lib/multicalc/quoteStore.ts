@@ -181,14 +181,17 @@ const FIELD_LABELS: Record<string, string> = {
   "coberturas.vidros": "Vidros", "coberturas.assistencia24h": "Assistência 24h",
 };
 
+function getField(data: QuoteFormData, path: string): string {
+  const [g, k] = path.split(".") as [keyof QuoteFormData, string];
+  const group = data[g] as Record<string, string | undefined>;
+  return String(group[k] ?? "");
+}
+
 export const computeDiff = (a: QuoteFormData, b: QuoteFormData): FieldDiff[] => {
   const diffs: FieldDiff[] = [];
   (Object.keys(FIELD_LABELS) as string[]).forEach((path) => {
-    const [g, k] = path.split(".") as [keyof QuoteFormData, string];
-    // @ts-expect-error dynamic
-    const va = String(a[g][k] ?? "");
-    // @ts-expect-error dynamic
-    const vb = String(b[g][k] ?? "");
+    const va = getField(a, path);
+    const vb = getField(b, path);
     if (va !== vb) diffs.push({ field: path, label: FIELD_LABELS[path], from: va, to: vb });
   });
   return diffs;
