@@ -13,10 +13,7 @@ export function daysBetween(a: Date, b: Date): number {
 export type DueTone = "muted" | "danger" | "warning" | "info";
 export type RelativeDue = { text: string; tone: DueTone };
 
-export function relativeDueLabel(
-  dueISO: string | undefined,
-  now: Date,
-): RelativeDue {
+export function relativeDueLabel(dueISO: string | undefined, now: Date): RelativeDue {
   if (!dueISO) return { text: "Sem prazo", tone: "muted" };
   const parsed = new Date(dueISO);
   if (Number.isNaN(parsed.getTime())) {

@@ -19,12 +19,7 @@ import { useTeam, useTeamNameIndex } from "@/lib/team/teamStore";
 import { type Policy, type Beneficiary } from "@/lib/mock/data";
 import { formatDateShort } from "@/lib/format";
 import { ageAt, findBandChange, isBirthdayToday } from "@/lib/daily/ageBands";
-import {
-  daysBetween,
-  relativeDueLabel,
-  toneClass,
-  type RelativeDue,
-} from "@/lib/daily/dateUtils";
+import { daysBetween, relativeDueLabel, toneClass, type RelativeDue } from "@/lib/daily/dateUtils";
 import { textMentionsUser, type TeamNameIndex } from "@/lib/daily/mentions";
 import { TaskDetailDialog } from "@/components/tasks/TaskDetailDialog";
 import { useNavigation } from "@/lib/navigation";
@@ -124,8 +119,7 @@ function useMyMentions(teamIndex: TeamNameIndex): MentionEntry[] {
     // Cache local — `extractMentions` faz backtracking O(n) por match;
     // muitos comentários repetem @menções, então cachear por texto ajuda.
     const mentionCache = new Map<string, string[]>();
-    const hit = (text: string) =>
-      textMentionsUser(text, currentUserId, teamIndex, mentionCache);
+    const hit = (text: string) => textMentionsUser(text, currentUserId, teamIndex, mentionCache);
 
     const out: MentionEntry[] = [];
     tasks.forEach((task) => {
@@ -204,9 +198,7 @@ function MentionsSection({
                     </span>
                   </div>
                   <p className="text-sm truncate mt-0.5">{e.taskTitle}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                    {e.preview}
-                  </p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{e.preview}</p>
                 </button>
               </li>
             );
@@ -281,9 +273,7 @@ function BirthdaysSection({ now }: { now: Date }) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">
                   {e.name}{" "}
-                  <span className="text-xs text-muted-foreground font-normal">
-                    · {e.age} anos
-                  </span>
+                  <span className="text-xs text-muted-foreground font-normal">· {e.age} anos</span>
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   {e.kind}
@@ -328,12 +318,7 @@ function RenewalsSection({ now, onGoToPortfolio }: { now: Date; onGoToPortfolio:
       count={entries.length}
       action={
         entries.length > 0 ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onGoToPortfolio}
-            className="text-xs h-7"
-          >
+          <Button variant="ghost" size="sm" onClick={onGoToPortfolio} className="text-xs h-7">
             Ver carteira <ArrowRight className="h-3 w-3 ml-1" />
           </Button>
         ) : null
@@ -344,8 +329,7 @@ function RenewalsSection({ now, onGoToPortfolio }: { now: Date; onGoToPortfolio:
       ) : (
         <ul className="divide-y divide-border">
           {entries.slice(0, 8).map(({ policy, daysLeft }) => {
-            const tone =
-              daysLeft <= 7 ? "danger" : daysLeft <= 15 ? "warning" : "info";
+            const tone = daysLeft <= 7 ? "danger" : daysLeft <= 15 ? "warning" : "info";
             const mine = policy.assigneeId === currentUserId;
             return (
               <li key={policy.id} className="py-2.5 px-1 flex items-start gap-3">
@@ -357,9 +341,7 @@ function RenewalsSection({ now, onGoToPortfolio }: { now: Date; onGoToPortfolio:
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">
                     {policy.clientName}
-                    {mine && (
-                      <span className="ml-2 text-[10px] font-medium text-brand">SUA</span>
-                    )}
+                    {mine && <span className="ml-2 text-[10px] font-medium text-brand">SUA</span>}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {policy.number} · {policy.branch} · {policy.insurer}
@@ -526,9 +508,7 @@ function SectionCard({
 }
 
 function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="py-8 text-center text-xs text-muted-foreground">{text}</div>
-  );
+  return <div className="py-8 text-center text-xs text-muted-foreground">{text}</div>;
 }
 
 // ---------- module ----------
@@ -605,10 +585,7 @@ export function DailyModule() {
         </>
       )}
 
-      <TaskDetailDialog
-        task={selectedTask}
-        onOpenChange={(o) => !o && setSelectedTask(null)}
-      />
+      <TaskDetailDialog task={selectedTask} onOpenChange={(o) => !o && setSelectedTask(null)} />
     </div>
   );
 }

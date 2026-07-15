@@ -25,26 +25,14 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditClientDialog } from "@/components/portfolio/EditClientDialog";
-import {
-  formatBRL,
-  formatDateShort,
-  type Policy,
-  type PolicyStatus,
-} from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { useNavigation } from "@/lib/navigation";
-import {
-  getClientStats,
-  initialsOf,
-  type ClientStatus,
-} from "@/lib/portfolio/clientStats";
+import { getClientStats, initialsOf, type ClientStatus } from "@/lib/portfolio/clientStats";
 
-import {
-  useDocumentStore,
-  formatFileSize,
-} from "@/lib/documents/documentStore";
+import { useDocumentStore, formatFileSize } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
 import { NewOpportunityDialog } from "@/components/pipeline/NewOpportunityDialog";
 
@@ -73,11 +61,7 @@ type Props = {
   onOpenPolicy?: (policy: Policy) => void;
 };
 
-export function ClientDetailDrawer({
-  clientName,
-  onOpenChange,
-  onOpenPolicy,
-}: Props) {
+export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: Props) {
   const { clients } = useClients();
   const { policies } = usePolicies();
   const { commissions } = useCommissionStore();
@@ -96,9 +80,6 @@ export function ClientDetailDrawer({
     () => (clientName ? policies.filter((p) => p.clientName === clientName) : []),
     [policies, clientName],
   );
-
-
-
 
   const open = !!clientName && !!stats;
 
@@ -175,7 +156,11 @@ export function ClientDetailDrawer({
 
               {/* KPIs */}
               <section className="grid grid-cols-3 gap-3">
-                <Kpi label="Apólices ativas" value={String(stats.activePolicies)} sub={`de ${stats.totalPolicies}`} />
+                <Kpi
+                  label="Apólices ativas"
+                  value={String(stats.activePolicies)}
+                  sub={`de ${stats.totalPolicies}`}
+                />
                 <Kpi label="Prêmio anual" value={formatBRL(stats.annualPremium)} sub="vigente" />
                 <Kpi label="LTV estimado" value={formatBRL(stats.ltv)} sub="histórico" />
               </section>
@@ -194,7 +179,9 @@ export function ClientDetailDrawer({
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs text-muted-foreground">{p.number}</span>
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {p.number}
+                            </span>
                             <Badge className={policyStatusColor[p.status]}>{p.status}</Badge>
                           </div>
                           <div className="text-sm font-medium mt-1">
@@ -213,9 +200,6 @@ export function ClientDetailDrawer({
                   </div>
                 )}
               </Section>
-
-
-
 
               {/* Footer actions */}
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -254,10 +238,7 @@ export function ClientDetailDrawer({
 function ClientDocumentsPanel({ clientName }: { clientName: string }) {
   const docStore = useDocumentStore();
   const [query, setQuery] = useState("");
-  const roots = useMemo(
-    () => docStore.rootFoldersByClient(clientName),
-    [docStore, clientName],
-  );
+  const roots = useMemo(() => docStore.rootFoldersByClient(clientName), [docStore, clientName]);
   const hits = useMemo(
     () => docStore.searchFilesByClient(clientName, query),
     [docStore, clientName, query],
@@ -316,7 +297,15 @@ function ClientDocumentsPanel({ clientName }: { clientName: string }) {
   );
 }
 
-function ContactRow({ icon: Icon, value, aside }: { icon: typeof Phone; value: string; aside?: string }) {
+function ContactRow({
+  icon: Icon,
+  value,
+  aside,
+}: {
+  icon: typeof Phone;
+  value: string;
+  aside?: string;
+}) {
   return (
     <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2">
       <Icon className="h-4 w-4 text-muted-foreground shrink-0" />

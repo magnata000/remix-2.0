@@ -111,7 +111,11 @@ export function AudioRecorder({ onSend, maxSeconds = 120, compact }: Props) {
         variant="ghost"
         size="icon"
         onClick={start}
-        className={compact ? "h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground" : "rounded-lg text-muted-foreground hover:text-foreground"}
+        className={
+          compact
+            ? "h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+            : "rounded-lg text-muted-foreground hover:text-foreground"
+        }
         aria-label="Gravar áudio"
       >
         <Mic className="h-4 w-4" />
@@ -124,7 +128,14 @@ export function AudioRecorder({ onSend, maxSeconds = 120, compact }: Props) {
       <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-2 py-1">
         <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
         <span className="text-xs font-mono text-destructive">{fmt(elapsed)}</span>
-        <Button type="button" size="icon" variant="ghost" onClick={stop} className="h-7 w-7" aria-label="Parar">
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          onClick={stop}
+          className="h-7 w-7"
+          aria-label="Parar"
+        >
           <Square className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -135,14 +146,34 @@ export function AudioRecorder({ onSend, maxSeconds = 120, compact }: Props) {
   return (
     <div className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1">
       <audio ref={audioRef} src={previewUrl ?? undefined} onEnded={() => setPlaying(false)} />
-      <Button type="button" size="icon" variant="ghost" onClick={togglePlay} className="h-7 w-7" aria-label="Reproduzir">
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        onClick={togglePlay}
+        className="h-7 w-7"
+        aria-label="Reproduzir"
+      >
         {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
       </Button>
       <span className="text-xs font-mono">{fmt(elapsed)}</span>
-      <Button type="button" size="icon" variant="ghost" onClick={cancel} className="h-7 w-7 text-muted-foreground hover:text-destructive" aria-label="Cancelar">
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        onClick={cancel}
+        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+        aria-label="Cancelar"
+      >
         <Trash2 className="h-3.5 w-3.5" />
       </Button>
-      <Button type="button" size="icon" onClick={send} className="h-7 w-7 bg-brand text-brand-foreground hover:bg-brand/90" aria-label="Enviar áudio">
+      <Button
+        type="button"
+        size="icon"
+        onClick={send}
+        className="h-7 w-7 bg-brand text-brand-foreground hover:bg-brand/90"
+        aria-label="Enviar áudio"
+      >
         <Send className="h-3.5 w-3.5" />
       </Button>
     </div>

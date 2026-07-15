@@ -3,12 +3,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatDateShort, type Beneficiary, type BeneficiaryTitle, type Branch } from "@/lib/mock/data";
+import {
+  formatBRL,
+  formatDateShort,
+  type Beneficiary,
+  type BeneficiaryTitle,
+  type Branch,
+} from "@/lib/mock/data";
 import { parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 
 const TITLE_OPTIONS: { key: BeneficiaryTitle; label: string }[] = [
@@ -22,7 +34,9 @@ const TITLE_OPTIONS: { key: BeneficiaryTitle; label: string }[] = [
 ];
 
 const maskCPF = (v: string) =>
-  v.replace(/\D/g, "").slice(0, 11)
+  v
+    .replace(/\D/g, "")
+    .slice(0, 11)
     .replace(/(\d{3})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
@@ -89,8 +103,12 @@ export function BranchSpecificFields(p: Props) {
               inputMode="decimal"
               value={p.healthInitialValue}
               onChange={(e) => p.setHealthInitialValue(e.target.value.replace(/[^\d.,]/g, ""))}
-              onBlur={() => { if (initialNum > 0) p.setHealthInitialValue(formatBRLDecimal(initialNum)); }}
-              onFocus={() => p.setHealthInitialValue(initialNum ? String(initialNum).replace(".", ",") : "")}
+              onBlur={() => {
+                if (initialNum > 0) p.setHealthInitialValue(formatBRLDecimal(initialNum));
+              }}
+              onFocus={() =>
+                p.setHealthInitialValue(initialNum ? String(initialNum).replace(".", ",") : "")
+              }
               placeholder="R$ 0,00"
               className="mt-1.5 rounded-xl bg-muted border-0"
             />
@@ -99,7 +117,10 @@ export function BranchSpecificFields(p: Props) {
             <Label className="text-xs text-muted-foreground">Aniversário do plano (dd/mm)</Label>
             <Input
               value={p.healthAnniversary}
-              onChange={(e) => { p.setAnniversaryTouched(true); p.setHealthAnniversary(e.target.value); }}
+              onChange={(e) => {
+                p.setAnniversaryTouched(true);
+                p.setHealthAnniversary(e.target.value);
+              }}
               placeholder="dd/mm"
               maxLength={5}
               className="mt-1.5 rounded-xl bg-muted border-0"
@@ -116,7 +137,10 @@ export function BranchSpecificFields(p: Props) {
           </div>
           <div className="col-span-2 flex items-center justify-between rounded-xl bg-muted px-3 py-2">
             <Label className="text-sm">Coparticipação</Label>
-            <Switch checked={p.healthCoparticipation} onCheckedChange={p.setHealthCoparticipation} />
+            <Switch
+              checked={p.healthCoparticipation}
+              onCheckedChange={p.setHealthCoparticipation}
+            />
           </div>
         </div>
 
@@ -147,16 +171,27 @@ export function BranchSpecificFields(p: Props) {
             const age = calcAge(b.birthDate);
             const bd = b.birthDate ? new Date(b.birthDate) : undefined;
             const update = (patch: Partial<Beneficiary>) =>
-              p.setBeneficiaries(p.beneficiaries.map((x, i) => (i === idx ? { ...x, ...patch } : x)));
+              p.setBeneficiaries(
+                p.beneficiaries.map((x, i) => (i === idx ? { ...x, ...patch } : x)),
+              );
             return (
               <div key={b.id} className="rounded-xl border border-border/60 p-3 space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-[10px] uppercase text-muted-foreground">Título</Label>
-                    <Select value={b.title} onValueChange={(v) => update({ title: v as BeneficiaryTitle })}>
-                      <SelectTrigger className="mt-1 h-9 rounded-lg bg-muted border-0"><SelectValue /></SelectTrigger>
+                    <Select
+                      value={b.title}
+                      onValueChange={(v) => update({ title: v as BeneficiaryTitle })}
+                    >
+                      <SelectTrigger className="mt-1 h-9 rounded-lg bg-muted border-0">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        {TITLE_OPTIONS.map((t) => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
+                        {TITLE_OPTIONS.map((t) => (
+                          <SelectItem key={t.key} value={t.key}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -182,14 +217,20 @@ export function BranchSpecificFields(p: Props) {
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase text-muted-foreground">
-                      Nascimento {age !== null && <span className="text-foreground/70 normal-case">· {age} anos</span>}
+                      Nascimento{" "}
+                      {age !== null && (
+                        <span className="text-foreground/70 normal-case">· {age} anos</span>
+                      )}
                     </Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           type="button"
                           variant="outline"
-                          className={cn("mt-1 h-9 w-full justify-start rounded-lg bg-muted border-0 font-normal text-sm", !bd && "text-muted-foreground")}
+                          className={cn(
+                            "mt-1 h-9 w-full justify-start rounded-lg bg-muted border-0 font-normal text-sm",
+                            !bd && "text-muted-foreground",
+                          )}
                         >
                           <CalendarIcon className="h-3.5 w-3.5 mr-2" />
                           {bd ? formatDateShort(b.birthDate) : "Selecionar"}
@@ -199,7 +240,9 @@ export function BranchSpecificFields(p: Props) {
                         <Calendar
                           mode="single"
                           selected={bd}
-                          onSelect={(d) => update({ birthDate: d ? d.toISOString().slice(0, 10) : "" })}
+                          onSelect={(d) =>
+                            update({ birthDate: d ? d.toISOString().slice(0, 10) : "" })
+                          }
                           initialFocus
                           captionLayout="dropdown"
                           fromYear={1920}

@@ -5,7 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check, RefreshCw, Sparkles, Star, Trophy, Pencil } from "lucide-react";
@@ -34,7 +38,11 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
   const [form, setForm] = useState<QuoteFormData>(() => initialData ?? emptyForm());
   const [results, setResults] = useState<Quote[]>([]);
 
-  const update = <G extends keyof QuoteFormData>(group: G, key: keyof QuoteFormData[G], value: string) => {
+  const update = <G extends keyof QuoteFormData>(
+    group: G,
+    key: keyof QuoteFormData[G],
+    value: string,
+  ) => {
     setForm((f) => ({ ...f, [group]: { ...f[group], [key]: value } }));
   };
 
@@ -51,7 +59,10 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
 
   const next = () => {
     if (step < 2) setStep(step + 1);
-    else { setStep(3); calc(); }
+    else {
+      setStep(3);
+      calc();
+    }
   };
 
   const recalc = () => {
@@ -93,14 +104,18 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
             <div key={s} className="flex items-center gap-2 shrink-0">
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition ${
-                  i < step ? "bg-success text-success-foreground"
-                    : i === step ? "bg-brand text-brand-foreground"
-                    : "bg-muted text-muted-foreground"
+                  i < step
+                    ? "bg-success text-success-foreground"
+                    : i === step
+                      ? "bg-brand text-brand-foreground"
+                      : "bg-muted text-muted-foreground"
                 }`}
               >
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
               </div>
-              <span className={`text-sm whitespace-nowrap ${i === step ? "font-semibold" : "text-muted-foreground"}`}>
+              <span
+                className={`text-sm whitespace-nowrap ${i === step ? "font-semibold" : "text-muted-foreground"}`}
+              >
                 {s}
               </span>
               {i < steps.length - 1 && <div className="w-6 h-px bg-border mx-1" />}
@@ -114,36 +129,111 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {step === 0 && (
               <>
-                <Field label="Nome do cliente" placeholder="Ex: João Silva" value={form.cliente.nome} onChange={(v) => update("cliente", "nome", v)} />
-                <Field label="CPF" placeholder="000.000.000-00" value={form.cliente.cpf} onChange={(v) => update("cliente", "cpf", v)} />
-                <Field label="E-mail" placeholder="cliente@email.com" value={form.cliente.email} onChange={(v) => update("cliente", "email", v)} />
-                <Field label="Telefone" placeholder="(11) 90000-0000" value={form.cliente.telefone} onChange={(v) => update("cliente", "telefone", v)} />
+                <Field
+                  label="Nome do cliente"
+                  placeholder="Ex: João Silva"
+                  value={form.cliente.nome}
+                  onChange={(v) => update("cliente", "nome", v)}
+                />
+                <Field
+                  label="CPF"
+                  placeholder="000.000.000-00"
+                  value={form.cliente.cpf}
+                  onChange={(v) => update("cliente", "cpf", v)}
+                />
+                <Field
+                  label="E-mail"
+                  placeholder="cliente@email.com"
+                  value={form.cliente.email}
+                  onChange={(v) => update("cliente", "email", v)}
+                />
+                <Field
+                  label="Telefone"
+                  placeholder="(11) 90000-0000"
+                  value={form.cliente.telefone}
+                  onChange={(v) => update("cliente", "telefone", v)}
+                />
               </>
             )}
             {step === 1 && (
               <>
-                <SelectField label="Tipo de seguro" options={["Auto", "Vida", "Residencial", "Empresarial", "Saúde"]} value={form.objeto.tipo} onChange={(v) => update("objeto", "tipo", v as Branch)} />
-                <Field label="Marca / Modelo" placeholder="Ex: Honda Civic" value={form.objeto.marcaModelo} onChange={(v) => update("objeto", "marcaModelo", v)} />
-                <Field label="Ano" placeholder="2024" value={form.objeto.ano} onChange={(v) => update("objeto", "ano", v)} />
-                <Field label="CEP de pernoite" placeholder="00000-000" value={form.objeto.cep} onChange={(v) => update("objeto", "cep", v)} />
+                <SelectField
+                  label="Tipo de seguro"
+                  options={["Auto", "Vida", "Residencial", "Empresarial", "Saúde"]}
+                  value={form.objeto.tipo}
+                  onChange={(v) => update("objeto", "tipo", v as Branch)}
+                />
+                <Field
+                  label="Marca / Modelo"
+                  placeholder="Ex: Honda Civic"
+                  value={form.objeto.marcaModelo}
+                  onChange={(v) => update("objeto", "marcaModelo", v)}
+                />
+                <Field
+                  label="Ano"
+                  placeholder="2024"
+                  value={form.objeto.ano}
+                  onChange={(v) => update("objeto", "ano", v)}
+                />
+                <Field
+                  label="CEP de pernoite"
+                  placeholder="00000-000"
+                  value={form.objeto.cep}
+                  onChange={(v) => update("objeto", "cep", v)}
+                />
               </>
             )}
             {step === 2 && (
               <>
-                <SelectField label="Cobertura terceiros" options={["50.000", "100.000", "200.000"]} value={form.coberturas.terceiros} onChange={(v) => update("coberturas", "terceiros", v)} />
-                <SelectField label="Carro reserva" options={["Sim", "Não"]} value={form.coberturas.carroReserva} onChange={(v) => update("coberturas", "carroReserva", v)} />
-                <SelectField label="Vidros" options={["Completo", "Para-brisa", "Não"]} value={form.coberturas.vidros} onChange={(v) => update("coberturas", "vidros", v)} />
-                <SelectField label="Assistência 24h" options={["Sim", "Não"]} value={form.coberturas.assistencia24h} onChange={(v) => update("coberturas", "assistencia24h", v)} />
+                <SelectField
+                  label="Cobertura terceiros"
+                  options={["50.000", "100.000", "200.000"]}
+                  value={form.coberturas.terceiros}
+                  onChange={(v) => update("coberturas", "terceiros", v)}
+                />
+                <SelectField
+                  label="Carro reserva"
+                  options={["Sim", "Não"]}
+                  value={form.coberturas.carroReserva}
+                  onChange={(v) => update("coberturas", "carroReserva", v)}
+                />
+                <SelectField
+                  label="Vidros"
+                  options={["Completo", "Para-brisa", "Não"]}
+                  value={form.coberturas.vidros}
+                  onChange={(v) => update("coberturas", "vidros", v)}
+                />
+                <SelectField
+                  label="Assistência 24h"
+                  options={["Sim", "Não"]}
+                  value={form.coberturas.assistencia24h}
+                  onChange={(v) => update("coberturas", "assistencia24h", v)}
+                />
               </>
             )}
           </div>
 
           <div className="mt-6 flex justify-between">
-            <Button variant="outline" className="rounded-xl" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setStep(Math.max(0, step - 1))}
+              disabled={step === 0}
+            >
               Voltar
             </Button>
-            <Button onClick={next} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
-              {step === 2 ? (<><Sparkles className="h-4 w-4 mr-2" />Calcular</>) : "Próximo"}
+            <Button
+              onClick={next}
+              className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            >
+              {step === 2 ? (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Calcular
+                </>
+              ) : (
+                "Próximo"
+              )}
             </Button>
           </div>
         </Card>
@@ -157,7 +247,12 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
               <Button variant="outline" className="rounded-xl" onClick={() => setStep(2)}>
                 Editar parâmetros
               </Button>
-              <Button variant="outline" className="rounded-xl" onClick={recalc} disabled={calculating}>
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={recalc}
+                disabled={calculating}
+              >
                 <RefreshCw className={`h-4 w-4 mr-2 ${calculating ? "animate-spin" : ""}`} />
                 Recalcular
               </Button>
@@ -166,7 +261,9 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
 
           {calculating ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {Array.from({ length: 5 }).map((_, i) => (<Skeleton key={i} className="h-64 rounded-2xl" />))}
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-64 rounded-2xl" />
+              ))}
             </div>
           ) : (
             showResult && (
@@ -174,7 +271,10 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
                 {results.map((q) => {
                   const winner = q.price === cheapest;
                   return (
-                    <Card key={q.insurer} className={`p-5 rounded-2xl border shadow-none flex flex-col ${winner ? "border-brand bg-brand/15" : "border-border"}`}>
+                    <Card
+                      key={q.insurer}
+                      className={`p-5 rounded-2xl border shadow-none flex flex-col ${winner ? "border-brand bg-brand/15" : "border-border"}`}
+                    >
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-semibold">{q.insurer}</p>
@@ -183,14 +283,19 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
                             <span className="text-xs">{q.rating.toFixed(1)}</span>
                           </div>
                         </div>
-                        {winner && (<Badge className="bg-brand text-brand-foreground border-0"><Trophy className="h-3 w-3 mr-1" /> Melhor</Badge>)}
+                        {winner && (
+                          <Badge className="bg-brand text-brand-foreground border-0">
+                            <Trophy className="h-3 w-3 mr-1" /> Melhor
+                          </Badge>
+                        )}
                       </div>
                       <p className="mt-4 text-3xl font-bold tracking-tight">{formatBRL(q.price)}</p>
                       <p className="text-xs text-muted-foreground">/ ano</p>
                       <div className="mt-4 space-y-1.5">
                         {q.coverages.map((c) => (
                           <div key={c} className="flex items-center gap-2 text-xs">
-                            <Check className="h-3 w-3 text-success" />{c}
+                            <Check className="h-3 w-3 text-success" />
+                            {c}
                           </div>
                         ))}
                       </div>
@@ -216,23 +321,54 @@ export function MulticalcWizard({ initialData, editingLabel, onComplete }: Props
   );
 }
 
-function Field({ label, placeholder, value, onChange }: { label: string; placeholder?: string; value: string; onChange: (v: string) => void }) {
+function Field({
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div>
       <Label className="text-xs text-muted-foreground">{label}</Label>
-      <Input placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} className="mt-1.5 rounded-xl bg-muted border-0" />
+      <Input
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 rounded-xl bg-muted border-0"
+      />
     </div>
   );
 }
 
-function SelectField({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
+function SelectField({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div>
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
-          {options.map((o) => (<SelectItem key={o} value={o}>{o}</SelectItem>))}
+          {options.map((o) => (
+            <SelectItem key={o} value={o}>
+              {o}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

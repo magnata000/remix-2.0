@@ -31,7 +31,11 @@ function DreRow({ label, value, variant = "normal", children }: RowProps) {
       >
         <div className="flex items-center gap-2 min-w-0">
           {hasChildren ? (
-            open ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            open ? (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            )
           ) : (
             <span className="w-3.5" />
           )}
@@ -45,7 +49,10 @@ function DreRow({ label, value, variant = "normal", children }: RowProps) {
       {hasChildren && open && (
         <div className="pl-9 pr-4 py-1 space-y-0.5">
           {children!.map((c) => (
-            <div key={c.name} className="grid grid-cols-[1fr_auto] items-center gap-2 py-1 text-xs text-muted-foreground">
+            <div
+              key={c.name}
+              className="grid grid-cols-[1fr_auto] items-center gap-2 py-1 text-xs text-muted-foreground"
+            >
               <span className="truncate">{c.name}</span>
               <span className="tabular-nums">{formatBRL(c.value)}</span>
             </div>
@@ -74,7 +81,11 @@ export function DreTable({ dre }: { dre: DreResult }) {
       <div className="space-y-0.5">
         <DreRow label="Receita Bruta" value={dre.receitaBruta} children={receitaChildren} />
         <DreRow label="(−) Devoluções" value={dre.devolucoes} variant="deduction" />
-        <DreRow label="(−) Impostos sobre Receita" value={dre.impostosReceita} variant="deduction" />
+        <DreRow
+          label="(−) Impostos sobre Receita"
+          value={dre.impostosReceita}
+          variant="deduction"
+        />
         <DreRow label="Receita Líquida" value={dre.receitaLiquida} variant="subtotal" />
         <DreRow
           label="(−) Custos Operacionais"

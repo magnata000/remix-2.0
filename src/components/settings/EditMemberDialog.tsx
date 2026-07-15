@@ -61,7 +61,11 @@ export function EditMemberDialog({
         <div className="space-y-3">
           <div>
             <Label className="text-xs text-muted-foreground">Nome</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5 rounded-xl" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1.5 rounded-xl"
+            />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">E-mail</Label>

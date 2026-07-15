@@ -12,11 +12,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Search, Users, Plus } from "lucide-react";
-import {
-  formatBRL,
-  formatDateShort,
-  type Branch,
-} from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Branch } from "@/lib/mock/data";
 import {
   listClientsWithStats,
   initialsOf,
@@ -27,7 +23,6 @@ import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { NewClientDialog } from "@/components/portfolio/NewClientDialog";
-
 
 const statusColor: Record<ClientStatus, string> = {
   ativo: "bg-success/15 text-success border-0",
@@ -61,7 +56,10 @@ export function ClientsTab({ onSelectClient }: Props) {
   const [branch, setBranch] = useState<string>("all");
   const [newOpen, setNewOpen] = useState(false);
 
-  const all = useMemo(() => listClientsWithStats(clients, policies, commissions), [clients, policies, commissions]);
+  const all = useMemo(
+    () => listClientsWithStats(clients, policies, commissions),
+    [clients, policies, commissions],
+  );
 
   const filtered = useMemo(
     () =>
@@ -93,7 +91,6 @@ export function ClientsTab({ onSelectClient }: Props) {
           <span className="hidden md:inline">Novo cliente</span>
         </Button>
       </div>
-
 
       {/* Filtros */}
       <Card className="p-4 rounded-2xl border-border shadow-none">
@@ -163,7 +160,10 @@ export function ClientsTab({ onSelectClient }: Props) {
                   <span
                     role="button"
                     tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); cycleStatus(s.client.id, s.status); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cycleStatus(s.client.id, s.status);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
@@ -174,12 +174,21 @@ export function ClientsTab({ onSelectClient }: Props) {
                     title="Clique para alterar o status"
                     className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
                   >
-                    <Badge className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}>{statusLabel[s.status]}</Badge>
+                    <Badge
+                      className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}
+                    >
+                      {statusLabel[s.status]}
+                    </Badge>
                   </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{s.activePolicies} apólice{s.activePolicies === 1 ? "" : "s"} ativa{s.activePolicies === 1 ? "" : "s"}</span>
-                  <span className="font-semibold text-foreground">{formatBRL(s.annualPremium)}/ano</span>
+                  <span>
+                    {s.activePolicies} apólice{s.activePolicies === 1 ? "" : "s"} ativa
+                    {s.activePolicies === 1 ? "" : "s"}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {formatBRL(s.annualPremium)}/ano
+                  </span>
                 </div>
               </button>
             ))}
@@ -231,11 +240,18 @@ export function ClientsTab({ onSelectClient }: Props) {
                       <td className="px-5 py-3">
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); cycleStatus(s.client.id, s.status); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cycleStatus(s.client.id, s.status);
+                          }}
                           title="Clique para alterar o status"
                           className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
                         >
-                          <Badge className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}>{statusLabel[s.status]}</Badge>
+                          <Badge
+                            className={`${statusColor[s.status]} cursor-pointer hover:opacity-80 transition`}
+                          >
+                            {statusLabel[s.status]}
+                          </Badge>
                         </button>
                       </td>
                     </tr>
@@ -251,4 +267,3 @@ export function ClientsTab({ onSelectClient }: Props) {
     </div>
   );
 }
-

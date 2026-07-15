@@ -51,15 +51,18 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
   const { configForPolicy, findMalha } = useCommissionConfigStore();
   if (!movement) return null;
   const isEntry = movement.kind === "entrada";
-  const policyForComm = movement.details.kind === "comissao" && movement.details.commission.policyId
-    ? findPolicy(movement.details.commission.policyId)
-    : undefined;
-  const malhaName = policyForComm && policyForComm.branch === "Saúde"
-    ? findMalha(configForPolicy(policyForComm).malhaId)?.name
-    : undefined;
-  const schedule = movement.details.kind === "comissao" && movement.details.commission.policyId
-    ? scheduleOfPolicy(movement.details.commission.policyId)
-    : [];
+  const policyForComm =
+    movement.details.kind === "comissao" && movement.details.commission.policyId
+      ? findPolicy(movement.details.commission.policyId)
+      : undefined;
+  const malhaName =
+    policyForComm && policyForComm.branch === "Saúde"
+      ? findMalha(configForPolicy(policyForComm).malhaId)?.name
+      : undefined;
+  const schedule =
+    movement.details.kind === "comissao" && movement.details.commission.policyId
+      ? scheduleOfPolicy(movement.details.commission.policyId)
+      : [];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -87,39 +90,55 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
         </div>
 
         <div className="mt-5">
-          {movement.details.kind === "comissao" && (() => {
-            const c = movement.details.commission;
-            const statusClass = commissionStatusColor[c.status];
-            const instLabel = c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
-              ? `${c.installmentIndex}/${c.installmentTotal}`
-              : "—";
-            return (
-              <>
-                <Row label="Tipo" value={`Comissão · ${commissionKindLabel(c.kind)}`} />
-                <Row label="Cliente" value={c.clientName} />
-                <Row label="Seguradora" value={c.insurer} />
-                <Row label="Apólice" value={<span className="font-mono text-xs">{c.policyNumber}</span>} />
-                {malhaName && <Row label="Malha" value={malhaName} />}
-                <Row label="Parcela" value={instLabel} />
-                <Row label="Vencimento" value={formatDateBR(c.dueDate)} />
-                {c.paidAt && <Row label="Pago em" value={formatDateTimeBR(c.paidAt)} />}
-                {c.refundedAt && <Row label="Devolvida em" value={formatDateTimeBR(c.refundedAt)} />}
-                {c.refundReason && <Row label="Motivo" value={c.refundReason} />}
-                <Row label="Status" value={<Badge className={statusClass}>{c.status}</Badge>} />
-              </>
-            );
-          })()}
+          {movement.details.kind === "comissao" &&
+            (() => {
+              const c = movement.details.commission;
+              const statusClass = commissionStatusColor[c.status];
+              const instLabel =
+                c.installmentTotal && c.installmentTotal > 1 && c.installmentIndex
+                  ? `${c.installmentIndex}/${c.installmentTotal}`
+                  : "—";
+              return (
+                <>
+                  <Row label="Tipo" value={`Comissão · ${commissionKindLabel(c.kind)}`} />
+                  <Row label="Cliente" value={c.clientName} />
+                  <Row label="Seguradora" value={c.insurer} />
+                  <Row
+                    label="Apólice"
+                    value={<span className="font-mono text-xs">{c.policyNumber}</span>}
+                  />
+                  {malhaName && <Row label="Malha" value={malhaName} />}
+                  <Row label="Parcela" value={instLabel} />
+                  <Row label="Vencimento" value={formatDateBR(c.dueDate)} />
+                  {c.paidAt && <Row label="Pago em" value={formatDateTimeBR(c.paidAt)} />}
+                  {c.refundedAt && (
+                    <Row label="Devolvida em" value={formatDateTimeBR(c.refundedAt)} />
+                  )}
+                  {c.refundReason && <Row label="Motivo" value={c.refundReason} />}
+                  <Row label="Status" value={<Badge className={statusClass}>{c.status}</Badge>} />
+                </>
+              );
+            })()}
           {movement.details.kind === "manual" && (
             <>
               <Row label="Tipo" value="Entrada manual" />
               <Row label="Origem" value={movement.details.income.source} />
-              {movement.details.income.notes && <Row label="Observações" value={movement.details.income.notes} />}
+              {movement.details.income.notes && (
+                <Row label="Observações" value={movement.details.income.notes} />
+              )}
             </>
           )}
           {movement.details.kind === "saida" && movement.details.entry && (
             <>
               <Row label="Tipo" value="Pagamento de despesa" />
-              <Row label="Categoria" value={<Badge className="bg-muted text-muted-foreground border-0">{movement.details.entry.category}</Badge>} />
+              <Row
+                label="Categoria"
+                value={
+                  <Badge className="bg-muted text-muted-foreground border-0">
+                    {movement.details.entry.category}
+                  </Badge>
+                }
+              />
               {movement.details.expense && (
                 <Row
                   label="Despesa-mãe"
@@ -127,31 +146,36 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                     <span>
                       {movement.details.expense.description}{" "}
                       <span className="text-xs text-muted-foreground">
-                        ({movement.details.expense.recurrence === "mensal"
+                        (
+                        {movement.details.expense.recurrence === "mensal"
                           ? `Mensal · dia ${movement.details.expense.dueDay}`
-                          : "Avulsa"})
+                          : "Avulsa"}
+                        )
                       </span>
                     </span>
                   }
                 />
               )}
-              {movement.details.entry.notes && <Row label="Observações" value={movement.details.entry.notes} />}
+              {movement.details.entry.notes && (
+                <Row label="Observações" value={movement.details.entry.notes} />
+              )}
             </>
           )}
-          {movement.details.kind === "imposto" && (() => {
-            const t = movement.details.tax;
-            return (
-              <>
-                <Row label="Tipo" value={`Imposto · ${taxKindLabel[t.kind]}`} />
-                <Row
-                  label="Competência"
-                  value={`${MONTHS_PT[t.competenceMonth]}/${t.competenceYear}`}
-                />
-                <Row label="Pago em" value={formatDateTimeBR(t.paidAt)} />
-                {t.notes && <Row label="Observações" value={t.notes} />}
-              </>
-            );
-          })()}
+          {movement.details.kind === "imposto" &&
+            (() => {
+              const t = movement.details.tax;
+              return (
+                <>
+                  <Row label="Tipo" value={`Imposto · ${taxKindLabel[t.kind]}`} />
+                  <Row
+                    label="Competência"
+                    value={`${MONTHS_PT[t.competenceMonth]}/${t.competenceYear}`}
+                  />
+                  <Row label="Pago em" value={formatDateTimeBR(t.paidAt)} />
+                  {t.notes && <Row label="Observações" value={t.notes} />}
+                </>
+              );
+            })()}
         </div>
 
         {schedule.length > 1 && (
@@ -159,25 +183,39 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
             <h3 className="text-sm font-semibold mb-2">Cronograma da apólice</h3>
             <div className="rounded-xl border border-border divide-y divide-border text-xs">
               {schedule.map((s) => {
-                const isCurrent = movement.details.kind === "comissao" && movement.details.commission.id === s.id;
+                const isCurrent =
+                  movement.details.kind === "comissao" && movement.details.commission.id === s.id;
                 const statusClr =
-                  s.status === "pago" ? "text-success"
-                  : s.status === "atrasado" ? "text-destructive"
-                  : s.status === "devolvido" ? "text-destructive"
-                  : s.status === "cancelada" ? "text-muted-foreground line-through"
-                  : "text-warning";
+                  s.status === "pago"
+                    ? "text-success"
+                    : s.status === "atrasado"
+                      ? "text-destructive"
+                      : s.status === "devolvido"
+                        ? "text-destructive"
+                        : s.status === "cancelada"
+                          ? "text-muted-foreground line-through"
+                          : "text-warning";
                 return (
-                  <div key={s.id} className={`flex items-center justify-between gap-3 px-3 py-2 ${isCurrent ? "bg-muted/50" : ""}`}>
+                  <div
+                    key={s.id}
+                    className={`flex items-center justify-between gap-3 px-3 py-2 ${isCurrent ? "bg-muted/50" : ""}`}
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-muted-foreground">{commissionKindLabel(s.kind)}</span>
                       {s.installmentTotal && s.installmentTotal > 1 && (
-                        <span className="text-muted-foreground">{s.installmentIndex}/{s.installmentTotal}</span>
+                        <span className="text-muted-foreground">
+                          {s.installmentIndex}/{s.installmentTotal}
+                        </span>
                       )}
                       <span className="text-muted-foreground">· {formatDateShort(s.dueDate)}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`uppercase text-[10px] ${statusClr}`}>{s.status}</span>
-                      <span className={`font-mono ${s.status === "cancelada" ? "line-through text-muted-foreground" : ""}`}>{formatBRL(s.amount)}</span>
+                      <span
+                        className={`font-mono ${s.status === "cancelada" ? "line-through text-muted-foreground" : ""}`}
+                      >
+                        {formatBRL(s.amount)}
+                      </span>
                     </div>
                   </div>
                 );

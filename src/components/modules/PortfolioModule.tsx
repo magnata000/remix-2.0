@@ -24,9 +24,7 @@ export function PortfolioModule() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Carteira</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Apólices e clientes em um só lugar
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">Apólices e clientes em um só lugar</p>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>

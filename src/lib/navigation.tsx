@@ -22,10 +22,13 @@ export function NavigationProvider({
 }) {
   const focusRef = useRef<Focus>({});
 
-  const goTo = useCallback((module: ModuleKey, f?: Focus) => {
-    focusRef.current = f ?? {};
-    setActive(module);
-  }, [setActive]);
+  const goTo = useCallback(
+    (module: ModuleKey, f?: Focus) => {
+      focusRef.current = f ?? {};
+      setActive(module);
+    },
+    [setActive],
+  );
 
   const consumeFocus = useCallback(() => {
     const current = focusRef.current;

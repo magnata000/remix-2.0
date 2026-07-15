@@ -1,9 +1,28 @@
 import { useMemo, useState, type ChangeEvent } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, MinusCircle, PlusCircle } from "lucide-react";
+import {
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertTriangle,
+  MinusCircle,
+  PlusCircle,
+} from "lucide-react";
 import { formatBRL, type Insurer } from "@/lib/mock/data";
 import { MONTHS_PT } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
@@ -43,7 +62,10 @@ function parseCsv(text: string): ParsedRow[] {
     if (cells.length < 3) continue;
     const [policyNumber, dueDate, amountRaw] = cells;
     const amount = Number(
-      amountRaw.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".")
+      amountRaw
+        .replace(/[^\d,.-]/g, "")
+        .replace(/\.(?=\d{3}(\D|$))/g, "")
+        .replace(",", "."),
     );
     if (!policyNumber || !Number.isFinite(amount)) continue;
     out.push({ policyNumber, dueDate, amount, lineNumber: i + 1 });
@@ -153,7 +175,11 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
         applied += 1;
       } else if (m.status === "diverge" && m.commissionId) {
         if (d === "accept_sheet" && m.sheet) {
-          patchCommission(m.commissionId, { amount: m.sheet.amount, status: "pago", paidAt: new Date().toISOString() });
+          patchCommission(m.commissionId, {
+            amount: m.sheet.amount,
+            status: "pago",
+            paidAt: new Date().toISOString(),
+          });
           applied += 1;
         } else if (d === "mark_paid") {
           updateCommissionStatus(m.commissionId, "pago");
@@ -172,10 +198,29 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
   };
 
   const statusBadge = (s: RowMatch["status"]) => {
-    if (s === "match") return <Badge className="bg-success/15 text-success border-0 gap-1"><CheckCircle2 className="h-3 w-3" /> Match</Badge>;
-    if (s === "diverge") return <Badge className="bg-warning/15 text-warning border-0 gap-1"><AlertTriangle className="h-3 w-3" /> Divergência</Badge>;
-    if (s === "extra") return <Badge className="bg-brand/15 text-brand border-0 gap-1"><PlusCircle className="h-3 w-3" /> Extra</Badge>;
-    return <Badge className="bg-muted text-muted-foreground border-0 gap-1"><MinusCircle className="h-3 w-3" /> Faltando</Badge>;
+    if (s === "match")
+      return (
+        <Badge className="bg-success/15 text-success border-0 gap-1">
+          <CheckCircle2 className="h-3 w-3" /> Match
+        </Badge>
+      );
+    if (s === "diverge")
+      return (
+        <Badge className="bg-warning/15 text-warning border-0 gap-1">
+          <AlertTriangle className="h-3 w-3" /> Divergência
+        </Badge>
+      );
+    if (s === "extra")
+      return (
+        <Badge className="bg-brand/15 text-brand border-0 gap-1">
+          <PlusCircle className="h-3 w-3" /> Extra
+        </Badge>
+      );
+    return (
+      <Badge className="bg-muted text-muted-foreground border-0 gap-1">
+        <MinusCircle className="h-3 w-3" /> Faltando
+      </Badge>
+    );
   };
 
   return (
@@ -186,8 +231,9 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
             <FileSpreadsheet className="h-5 w-5" /> Conciliação · {MONTHS_PT[month]} {year}
           </SheetTitle>
           <SheetDescription className="text-xs">
-            Faça upload da planilha de comissões da seguradora e revise as divergências antes de aplicar.
-            Formato esperado (CSV): <code className="font-mono">apolice, vencimento, valor</code> — uma linha por parcela.
+            Faça upload da planilha de comissões da seguradora e revise as divergências antes de
+            aplicar. Formato esperado (CSV):{" "}
+            <code className="font-mono">apolice, vencimento, valor</code> — uma linha por parcela.
           </SheetDescription>
         </SheetHeader>
 
@@ -195,9 +241,23 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-muted-foreground">Seguradora</label>
-              <Select value={insurer} onValueChange={(v) => { setInsurer(v as Insurer); setParsed(null); }}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
-                <SelectContent>{INSURERS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+              <Select
+                value={insurer}
+                onValueChange={(v) => {
+                  setInsurer(v as Insurer);
+                  setParsed(null);
+                }}
+              >
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSURERS.map((i) => (
+                    <SelectItem key={i} value={i}>
+                      {i}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div>
@@ -213,10 +273,22 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
           {parsed && (
             <>
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-xl bg-success/10 p-2"><div className="text-lg font-bold text-success">{summary.match}</div><div className="text-[10px] uppercase text-muted-foreground">Match</div></div>
-                <div className="rounded-xl bg-warning/10 p-2"><div className="text-lg font-bold text-warning">{summary.diverge}</div><div className="text-[10px] uppercase text-muted-foreground">Divergência</div></div>
-                <div className="rounded-xl bg-brand/10 p-2"><div className="text-lg font-bold text-brand">{summary.extra}</div><div className="text-[10px] uppercase text-muted-foreground">Extra</div></div>
-                <div className="rounded-xl bg-muted p-2"><div className="text-lg font-bold">{summary.missing}</div><div className="text-[10px] uppercase text-muted-foreground">Faltando</div></div>
+                <div className="rounded-xl bg-success/10 p-2">
+                  <div className="text-lg font-bold text-success">{summary.match}</div>
+                  <div className="text-[10px] uppercase text-muted-foreground">Match</div>
+                </div>
+                <div className="rounded-xl bg-warning/10 p-2">
+                  <div className="text-lg font-bold text-warning">{summary.diverge}</div>
+                  <div className="text-[10px] uppercase text-muted-foreground">Divergência</div>
+                </div>
+                <div className="rounded-xl bg-brand/10 p-2">
+                  <div className="text-lg font-bold text-brand">{summary.extra}</div>
+                  <div className="text-[10px] uppercase text-muted-foreground">Extra</div>
+                </div>
+                <div className="rounded-xl bg-muted p-2">
+                  <div className="text-lg font-bold">{summary.missing}</div>
+                  <div className="text-[10px] uppercase text-muted-foreground">Faltando</div>
+                </div>
               </div>
 
               <div className="rounded-xl border border-border divide-y divide-border text-xs">
@@ -227,30 +299,55 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2 min-w-0">
                           {statusBadge(m.status)}
-                          <span className="font-mono text-xs">{m.sheet?.policyNumber ?? m.clientName}</span>
+                          <span className="font-mono text-xs">
+                            {m.sheet?.policyNumber ?? m.clientName}
+                          </span>
                         </div>
                         <div className="text-right">
                           {m.sheet && (
-                            <div><span className="text-muted-foreground">Planilha:</span> <span className="font-semibold">{formatBRL(m.sheet.amount)}</span></div>
+                            <div>
+                              <span className="text-muted-foreground">Planilha:</span>{" "}
+                              <span className="font-semibold">{formatBRL(m.sheet.amount)}</span>
+                            </div>
                           )}
                           {m.commissionAmount !== undefined && (
-                            <div><span className="text-muted-foreground">Sistema:</span> <span className="font-semibold">{formatBRL(m.commissionAmount)}</span> · {m.commissionStatus}</div>
+                            <div>
+                              <span className="text-muted-foreground">Sistema:</span>{" "}
+                              <span className="font-semibold">{formatBRL(m.commissionAmount)}</span>{" "}
+                              · {m.commissionStatus}
+                            </div>
                           )}
                         </div>
                       </div>
                       {m.status === "diverge" && (
-                        <Select value={dec} onValueChange={(v) => setDecisions((p) => ({ ...p, [m.key]: v as Decision }))}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <Select
+                          value={dec}
+                          onValueChange={(v) =>
+                            setDecisions((p) => ({ ...p, [m.key]: v as Decision }))
+                          }
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="accept_sheet">Aceitar valor da planilha</SelectItem>
-                            <SelectItem value="mark_paid">Manter valor do sistema (marcar pago)</SelectItem>
+                            <SelectItem value="mark_paid">
+                              Manter valor do sistema (marcar pago)
+                            </SelectItem>
                             <SelectItem value="keep">Não alterar</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
                       {m.status === "missing" && (
-                        <Select value={dec} onValueChange={(v) => setDecisions((p) => ({ ...p, [m.key]: v as Decision }))}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <Select
+                          value={dec}
+                          onValueChange={(v) =>
+                            setDecisions((p) => ({ ...p, [m.key]: v as Decision }))
+                          }
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="ignore">Ignorar (manter como está)</SelectItem>
                             <SelectItem value="mark_paid">Marcar como pago mesmo assim</SelectItem>
@@ -259,7 +356,8 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
                       )}
                       {m.status === "extra" && (
                         <div className="text-xs text-muted-foreground italic">
-                          Não há comissão correspondente no sistema. (Criação manual ficará disponível em próxima iteração.)
+                          Não há comissão correspondente no sistema. (Criação manual ficará
+                          disponível em próxima iteração.)
                         </div>
                       )}
                     </div>
@@ -268,8 +366,19 @@ export function ReconcileSheet({ open, onOpenChange, month, year }: Props) {
               </div>
 
               <div className="flex items-center justify-end gap-2">
-                <Button variant="outline" className="rounded-full" onClick={() => { setParsed(null); setFileName(""); }}>Descartar</Button>
-                <Button className="rounded-full" onClick={apply}>Aplicar alterações</Button>
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => {
+                    setParsed(null);
+                    setFileName("");
+                  }}
+                >
+                  Descartar
+                </Button>
+                <Button className="rounded-full" onClick={apply}>
+                  Aplicar alterações
+                </Button>
               </div>
             </>
           )}

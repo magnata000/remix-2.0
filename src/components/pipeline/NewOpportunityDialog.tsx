@@ -1,12 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { CalendarIcon, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
@@ -24,7 +43,12 @@ const STAGES: { key: KanbanStage; label: string; dot: string }[] = [
 ];
 
 const initialsOf = (name: string) =>
-  name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
 export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: Props) {
   const { createOpportunity } = usePipelineStore();
@@ -42,21 +66,35 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
   const [stage, setStage] = useState<KanbanStage>("lead");
   const [estimatedValue, setEstimatedValue] = useState<string>("");
   const [dueDate, setDueDate] = useState<Date | undefined>(() => {
-    const d = new Date(); d.setDate(d.getDate() + 7); return d;
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d;
   });
 
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
 
   const reset = useCallback(() => {
-    setClientMode("existing"); setClientId(""); setClientName(""); setPhone(""); setEmail("");
-    setTitle(""); setBranch("Auto"); setStage("lead"); setEstimatedValue("");
-    const d = new Date(); d.setDate(d.getDate() + 7); setDueDate(d);
+    setClientMode("existing");
+    setClientId("");
+    setClientName("");
+    setPhone("");
+    setEmail("");
+    setTitle("");
+    setBranch("Auto");
+    setStage("lead");
+    setEstimatedValue("");
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    setDueDate(d);
     setAssigneeId(team[0]?.id ?? "");
     if (defaultClientName) {
       const c = clients.find((x) => x.name === defaultClientName);
       if (c) {
         setClientMode("existing");
-        setClientId(c.id); setClientName(c.name); setPhone(c.phone); setEmail(c.email);
+        setClientId(c.id);
+        setClientName(c.name);
+        setPhone(c.phone);
+        setEmail(c.email);
       } else {
         setClientMode("new");
         setClientName(defaultClientName);
@@ -64,12 +102,17 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
     }
   }, [defaultClientName, clients]);
 
-  useEffect(() => { if (open) reset(); }, [open, reset]);
+  useEffect(() => {
+    if (open) reset();
+  }, [open, reset]);
 
   const selectClient = (id: string) => {
     const c = clients.find((x) => x.id === id);
     if (!c) return;
-    setClientId(id); setClientName(c.name); setPhone(c.phone); setEmail(c.email);
+    setClientId(id);
+    setClientName(c.name);
+    setPhone(c.phone);
+    setEmail(c.email);
     setClientOpen(false);
   };
 
@@ -82,7 +125,8 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
     else if (title.length > 80) e.title = "Máx. 80 caracteres";
     if (!dueDate) e.date = "Selecione o prazo";
     else {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       if (dueDate < today) e.date = "Prazo não pode ser anterior a hoje";
     }
     return e;
@@ -112,13 +156,17 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Nova oportunidade</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Nova oportunidade</DialogTitle>
+        </DialogHeader>
 
         <div className="space-y-5">
           {/* Bloco 1 — Cliente */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cliente</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Cliente
+              </h3>
               <Button
                 type="button"
                 variant="ghost"
@@ -127,7 +175,10 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                 onClick={() => {
                   const next = clientMode === "existing" ? "new" : "existing";
                   setClientMode(next);
-                  setClientId(""); setClientName(""); setPhone(""); setEmail("");
+                  setClientId("");
+                  setClientName("");
+                  setPhone("");
+                  setEmail("");
                 }}
               >
                 <UserPlus className="h-3.5 w-3.5 mr-1" />
@@ -140,7 +191,13 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
               {clientMode === "existing" ? (
                 <Popover open={clientOpen} onOpenChange={setClientOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !clientName && "text-muted-foreground")}>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                        !clientName && "text-muted-foreground",
+                      )}
+                    >
                       {clientName || "Buscar cliente..."}
                     </Button>
                   </PopoverTrigger>
@@ -151,7 +208,11 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                         <CommandEmpty>Nenhum cliente.</CommandEmpty>
                         <CommandGroup>
                           {clients.map((c) => (
-                            <CommandItem key={c.id} value={c.name} onSelect={() => selectClient(c.id)}>
+                            <CommandItem
+                              key={c.id}
+                              value={c.name}
+                              onSelect={() => selectClient(c.id)}
+                            >
                               {c.name}
                             </CommandItem>
                           ))}
@@ -161,7 +222,12 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                   </PopoverContent>
                 </Popover>
               ) : (
-                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Nome completo" className="mt-1.5 rounded-xl bg-muted border-0" />
+                <Input
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="Nome completo"
+                  className="mt-1.5 rounded-xl bg-muted border-0"
+                />
               )}
               {errors.client && <p className="text-xs text-destructive mt-1">{errors.client}</p>}
             </div>
@@ -192,7 +258,9 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
 
           {/* Bloco 2 — Oportunidade */}
           <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Oportunidade</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Oportunidade
+            </h3>
 
             <div>
               <Label className="text-xs text-muted-foreground">Título *</Label>
@@ -210,16 +278,24 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
               <div>
                 <Label className="text-xs text-muted-foreground">Ramo *</Label>
                 <Select value={branch} onValueChange={(v) => setBranch(v as Branch)}>
-                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    {BRANCHES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                    {BRANCHES.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Etapa inicial</Label>
                 <Select value={stage} onValueChange={(v) => setStage(v as KanbanStage)}>
-                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {STAGES.map((s) => (
                       <SelectItem key={s.key} value={s.key}>
@@ -238,7 +314,9 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                   inputMode="numeric"
                   value={estimatedValue}
                   onChange={(e) => setEstimatedValue(e.target.value.replace(/\D/g, ""))}
-                  onBlur={() => { if (valueNum > 0) setEstimatedValue(formatBRL(valueNum)); }}
+                  onBlur={() => {
+                    if (valueNum > 0) setEstimatedValue(formatBRL(valueNum));
+                  }}
                   onFocus={() => setEstimatedValue(String(valueNum || ""))}
                   placeholder="Opcional"
                   className="mt-1.5 rounded-xl bg-muted border-0"
@@ -249,7 +327,13 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                 <Label className="text-xs text-muted-foreground">Prazo *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !dueDate && "text-muted-foreground")}>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                        !dueDate && "text-muted-foreground",
+                      )}
+                    >
                       <CalendarIcon className="h-4 w-4 mr-2" />
                       {dueDate ? formatDateShort(dueDate.toISOString()) : "Selecionar data"}
                     </Button>
@@ -259,7 +343,11 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                       mode="single"
                       selected={dueDate}
                       onSelect={setDueDate}
-                      disabled={(d) => { const t = new Date(); t.setHours(0,0,0,0); return d < t; }}
+                      disabled={(d) => {
+                        const t = new Date();
+                        t.setHours(0, 0, 0, 0);
+                        return d < t;
+                      }}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
@@ -272,11 +360,15 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
 
           {/* Bloco 3 — Atribuição */}
           <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Atribuição</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Atribuição
+            </h3>
             <div>
               <Label className="text-xs text-muted-foreground">Responsável</Label>
               <Select value={assigneeId} onValueChange={setAssigneeId}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {team.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
@@ -295,7 +387,9 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
           <Button
             className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
             onClick={submit}

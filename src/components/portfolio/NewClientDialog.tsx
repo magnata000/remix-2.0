@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -59,7 +65,6 @@ function maskCpfCnpj(input: string): string {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 }
 
-
 export function NewClientDialog({ open, onOpenChange }: Props) {
   const { addClient, clients } = useClients();
   const [name, setName] = useState("");
@@ -71,7 +76,12 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
 
   useEffect(() => {
     if (open) {
-      setName(""); setEmail(""); setPhone(""); setDocument(""); setBirthDate(""); setErrors({});
+      setName("");
+      setEmail("");
+      setPhone("");
+      setDocument("");
+      setBirthDate("");
+      setErrors({});
     }
   }, [open]);
 
@@ -92,7 +102,9 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
     const parsed = schema.safeParse({ name, email, phone, document, birthDate });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
-      parsed.error.issues.forEach((i) => { errs[i.path[0] as string] = i.message; });
+      parsed.error.issues.forEach((i) => {
+        errs[i.path[0] as string] = i.message;
+      });
       setErrors(errs);
       return;
     }
@@ -108,29 +120,59 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader><DialogTitle>Novo cliente</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Novo cliente</DialogTitle>
+        </DialogHeader>
 
         <div className="space-y-4">
           <div>
             <Label className="text-xs text-muted-foreground">Nome *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} placeholder="Nome completo" className="mt-1.5 rounded-xl bg-muted border-0" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
+              placeholder="Nome completo"
+              className="mt-1.5 rounded-xl bg-muted border-0"
+            />
             {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">E-mail *</Label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} placeholder="cliente@email.com" className="mt-1.5 rounded-xl bg-muted border-0" />
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              maxLength={255}
+              placeholder="cliente@email.com"
+              className="mt-1.5 rounded-xl bg-muted border-0"
+            />
             {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Telefone *</Label>
-              <Input value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="numeric" maxLength={16} placeholder="(11) 90000-0000" className="mt-1.5 rounded-xl bg-muted border-0" />
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(maskPhone(e.target.value))}
+                inputMode="numeric"
+                maxLength={16}
+                placeholder="(11) 90000-0000"
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
               {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">CPF/CNPJ *</Label>
-              <Input value={document} onChange={(e) => setDocument(maskCpfCnpj(e.target.value))} inputMode="numeric" maxLength={18} placeholder="000.000.000-00" className="mt-1.5 rounded-xl bg-muted border-0" />
-              {errors.document && <p className="text-xs text-destructive mt-1">{errors.document}</p>}
+              <Input
+                value={document}
+                onChange={(e) => setDocument(maskCpfCnpj(e.target.value))}
+                inputMode="numeric"
+                maxLength={18}
+                placeholder="000.000.000-00"
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+              {errors.document && (
+                <p className="text-xs text-destructive mt-1">{errors.document}</p>
+              )}
             </div>
           </div>
           <div>
@@ -162,13 +204,22 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
                 />
               </PopoverContent>
             </Popover>
-            {errors.birthDate && <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>}
+            {errors.birthDate && (
+              <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>
+            )}
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>Criar cliente</Button>
+          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            onClick={submit}
+          >
+            Criar cliente
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

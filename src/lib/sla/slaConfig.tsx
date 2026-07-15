@@ -30,7 +30,8 @@ const SlaCtx = createContext<Ctx | null>(null);
 
 export function SlaConfigProvider({ children }: { children: ReactNode }) {
   const [taskColumnHours, setTaskCols] = useState<Record<string, number | undefined>>(DEFAULT_TASK);
-  const [pipelineStageHours, setStages] = useState<Record<KanbanStage, number | undefined>>(DEFAULT_STAGE);
+  const [pipelineStageHours, setStages] =
+    useState<Record<KanbanStage, number | undefined>>(DEFAULT_STAGE);
 
   const setTaskColumnHours = useCallback((id: string, hours: number | undefined) => {
     setTaskCols((r) => ({ ...r, [id]: hours }));

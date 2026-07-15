@@ -3,7 +3,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calculator, Calendar, Clock, FileText, Layers, Link2, Paperclip, Pin, Send, Tag, Trash2, Trophy, User, Wallet } from "lucide-react";
+import {
+  Calculator,
+  Calendar,
+  Clock,
+  FileText,
+  Layers,
+  Link2,
+  Paperclip,
+  Pin,
+  Send,
+  Tag,
+  Trash2,
+  Trophy,
+  User,
+  Wallet,
+} from "lucide-react";
 import { AudioRecorder } from "@/components/shared/AudioRecorder";
 import { SlaControl } from "@/components/shared/SlaControl";
 import { formatBRL, formatDateShort, lostReasonLabel, type KanbanStage } from "@/lib/mock/data";
@@ -36,8 +51,22 @@ type Props = {
   onDelete?: (opportunity: Opportunity) => void;
 };
 
-export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote, onDelete }: Props) {
-  const { addMessage, addAudioMessage, editComment, deleteComment, removeCommentAttachment, togglePinComment, updateOpportunity, currentUserId } = usePipelineStore();
+export function OpportunityDetailDialog({
+  opportunity,
+  onOpenChange,
+  onOpenQuote,
+  onDelete,
+}: Props) {
+  const {
+    addMessage,
+    addAudioMessage,
+    editComment,
+    deleteComment,
+    removeCommentAttachment,
+    togglePinComment,
+    updateOpportunity,
+    currentUserId,
+  } = usePipelineStore();
   const { pipelineStageHours } = useSlaConfig();
   const { groups } = useQuoteStore();
   const [text, setText] = useState("");
@@ -86,7 +115,9 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 pr-6">
             <span className="flex-1">{o.title}</span>
-            <Badge variant="outline" className="rounded-full text-xs">{o.branch}</Badge>
+            <Badge variant="outline" className="rounded-full text-xs">
+              {o.branch}
+            </Badge>
             {onDelete && (
               <Button
                 type="button"
@@ -105,7 +136,10 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
           <aside className="space-y-3 text-sm overflow-y-auto pr-2">
             <Meta icon={<Layers className="h-3.5 w-3.5" />} label="Etapa">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ background: stageColor[o.stage] }} />
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: stageColor[o.stage] }}
+                />
                 {stageLabels[o.stage]}
               </span>
             </Meta>
@@ -119,8 +153,12 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                 {o.assignee}
               </span>
             </Meta>
-            <Meta icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo">{formatDateShort(o.dueDate)}</Meta>
-            <Meta icon={<Tag className="h-3.5 w-3.5" />} label="Cliente">{o.clientName}</Meta>
+            <Meta icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo">
+              {formatDateShort(o.dueDate)}
+            </Meta>
+            <Meta icon={<Tag className="h-3.5 w-3.5" />} label="Cliente">
+              {o.clientName}
+            </Meta>
             <Meta icon={<Wallet className="h-3.5 w-3.5" />} label="Valor estimado">
               {o.estimatedValue > 0 ? formatBRL(o.estimatedValue) : "—"}
             </Meta>
@@ -164,7 +202,9 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                 </p>
                 <p className="mt-1 text-sm text-destructive">{lostReasonLabel[o.lostReason]}</p>
                 {o.lostNote && (
-                  <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{o.lostNote}</p>
+                  <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
+                    {o.lostNote}
+                  </p>
                 )}
               </div>
             )}
@@ -260,21 +300,37 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
             </div>
 
             <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
-              onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                addFiles(e.dataTransfer.files);
+              }}
               className={`mt-3 shrink-0 rounded-xl border bg-muted/60 p-2 transition ${dragOver ? "border-brand ring-2 ring-brand/40 bg-brand/5" : "border-border"}`}
             >
               {pending.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {pending.map((f, i) => <PendingChip key={i} file={f} onRemove={() => removePending(i)} />)}
+                  {pending.map((f, i) => (
+                    <PendingChip key={i} file={f} onRemove={() => removePending(i)} />
+                  ))}
                 </div>
               )}
               <MentionInput
                 value={text}
                 onChange={setText}
                 onSubmit={submit}
-                placeholder={dragOver ? "Solte os arquivos para anexar..." : "Escreva um comentário ou solte arquivos aqui... use @ para mencionar"}
+                placeholder={
+                  dragOver
+                    ? "Solte os arquivos para anexar..."
+                    : "Escreva um comentário ou solte arquivos aqui... use @ para mencionar"
+                }
                 rows={2}
                 className="resize-none border-0 bg-transparent focus-visible:ring-0 shadow-none px-2 py-1.5"
               />
@@ -289,7 +345,16 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>
-                <input ref={fileInput} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+                <input
+                  ref={fileInput}
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={(e) => {
+                    addFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
                 <AudioRecorder compact onSend={(blob, sec) => addAudioMessage(o.id, blob, sec)} />
                 <Button
                   onClick={submit}
@@ -309,10 +374,21 @@ export function OpportunityDetailDialog({ opportunity, onOpenChange, onOpenQuote
   );
 }
 
-function Meta({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+function Meta({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <p className="text-xs text-muted-foreground flex items-center gap-1.5">{icon}{label}</p>
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+        {icon}
+        {label}
+      </p>
       <div className="mt-1 text-sm">{children}</div>
     </div>
   );

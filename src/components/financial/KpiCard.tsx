@@ -16,10 +16,26 @@ type Props = {
   footer?: React.ReactNode;
 };
 
-export function KpiCard({ title, value, hint, deltaPct, trend, invertTrendColor, loading, footer }: Props) {
+export function KpiCard({
+  title,
+  value,
+  hint,
+  deltaPct,
+  trend,
+  invertTrendColor,
+  loading,
+  footer,
+}: Props) {
   const good = invertTrendColor ? trend === "down" : trend === "up";
   const bad = invertTrendColor ? trend === "up" : trend === "down";
-  const color = trend === "flat" ? "text-muted-foreground" : good ? "text-success" : bad ? "text-destructive" : "text-muted-foreground";
+  const color =
+    trend === "flat"
+      ? "text-muted-foreground"
+      : good
+        ? "text-success"
+        : bad
+          ? "text-destructive"
+          : "text-muted-foreground";
   const Icon = trend === "flat" ? Minus : trend === "up" ? ArrowUp : ArrowDown;
 
   return (
@@ -30,7 +46,11 @@ export function KpiCard({ title, value, hint, deltaPct, trend, invertTrendColor,
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Informação">
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Informação"
+                >
                   <Info className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>

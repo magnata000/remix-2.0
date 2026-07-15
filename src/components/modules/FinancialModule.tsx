@@ -8,7 +8,9 @@ export function FinancialModule() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Financeiro</h1>
-        <p className="text-sm text-muted-foreground mt-1">Caixa, comissões, repasses e relatórios analíticos</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Caixa, comissões, repasses e relatórios analíticos
+        </p>
       </div>
 
       <Tabs defaultValue="caixa" className="space-y-5">

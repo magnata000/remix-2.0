@@ -2,9 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Users, Wallet } from "lucide-react";
 import { formatBRL, type Branch } from "@/lib/mock/data";
@@ -41,7 +52,7 @@ export function SellerCommissionsTab() {
   const selectedSeller = sellers.find((s) => s.id === sellerId);
 
   const policyById = useMemo(() => {
-    const m = new Map<string, typeof policies[number]>();
+    const m = new Map<string, (typeof policies)[number]>();
     policies.forEach((p) => m.set(p.id, p));
     return m;
   }, [policies]);
@@ -71,11 +82,11 @@ export function SellerCommissionsTab() {
         };
       })
       .filter(Boolean) as Array<{
-        commission: (typeof commissions)[number];
-        policy: (typeof policies)[number];
-        pct: number;
-        payout: number;
-      }>;
+      commission: (typeof commissions)[number];
+      policy: (typeof policies)[number];
+      pct: number;
+      payout: number;
+    }>;
   }, [paidThisMonth, sellerId, policyById, getRate, computePayout, commissions, policies]);
 
   const sellerTotal = sellerHistory.reduce((s, r) => s + r.payout, 0);
@@ -99,7 +110,9 @@ export function SellerCommissionsTab() {
       <Card className="rounded-2xl border-border shadow-none p-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Filtro global</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+              Filtro global
+            </div>
             <div className="text-sm text-muted-foreground mt-0.5">
               Toda a página reflete o vendedor e mês selecionados.
             </div>
@@ -112,16 +125,26 @@ export function SellerCommissionsTab() {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sellers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  {sellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground">Mês</Label>
               <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-                <SelectTrigger className="h-9 w-[140px] rounded-full text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 w-[140px] rounded-full text-sm">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {MONTHS_PT.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
+                  {MONTHS_PT.map((m, i) => (
+                    <SelectItem key={i} value={String(i)}>
+                      {m}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -137,7 +160,8 @@ export function SellerCommissionsTab() {
         </div>
         <div className="mt-2 text-3xl font-bold">{formatBRL(sellerTotal)}</div>
         <div className="text-xs text-muted-foreground mt-1">
-          {selectedSeller?.name ?? "—"} · {sellerHistory.length} comissão(ões) paga(s) · {branchesServed} ramo(s) atendido(s)
+          {selectedSeller?.name ?? "—"} · {sellerHistory.length} comissão(ões) paga(s) ·{" "}
+          {branchesServed} ramo(s) atendido(s)
         </div>
       </Card>
 
@@ -146,7 +170,9 @@ export function SellerCommissionsTab() {
         <div className="p-5 pb-3">
           <h2 className="text-lg font-semibold">Configuração de comissão (%)</h2>
           <p className="text-xs text-muted-foreground">
-            Editando percentuais de <span className="font-medium text-foreground">{selectedSeller?.name ?? "—"}</span>. Aplicado à comissão recebida pela corretora, por ramo.
+            Editando percentuais de{" "}
+            <span className="font-medium text-foreground">{selectedSeller?.name ?? "—"}</span>.
+            Aplicado à comissão recebida pela corretora, por ramo.
           </p>
         </div>
         <div className="overflow-x-auto px-5 pb-5">
@@ -155,7 +181,9 @@ export function SellerCommissionsTab() {
               <TableRow className="border-y border-border bg-muted/40">
                 <TableHead className="text-xs">Vendedor</TableHead>
                 {BRANCHES.map((b) => (
-                  <TableHead key={b} className="text-xs text-center">{b}</TableHead>
+                  <TableHead key={b} className="text-xs text-center">
+                    {b}
+                  </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
@@ -175,7 +203,9 @@ export function SellerCommissionsTab() {
                           onChange={(e) => updateRate(selectedSeller.id, b, Number(e.target.value))}
                           className="w-20 h-8 text-center pr-6 rounded-lg bg-muted border-0"
                         />
-                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                          %
+                        </span>
                       </div>
                     </TableCell>
                   ))}
@@ -223,14 +253,24 @@ export function SellerCommissionsTab() {
                     <TableCell className="text-sm">{r.commission.clientName}</TableCell>
                     <TableCell className="text-xs font-mono">{r.commission.policyNumber}</TableCell>
                     <TableCell className="text-xs">{r.policy.branch}</TableCell>
-                    <TableCell className="text-right text-sm">{formatBRL(r.commission.amount)}</TableCell>
-                    <TableCell className="text-center text-xs">{r.pct.toLocaleString("pt-BR")}%</TableCell>
-                    <TableCell className="text-right font-semibold text-success">{formatBRL(r.payout)}</TableCell>
+                    <TableCell className="text-right text-sm">
+                      {formatBRL(r.commission.amount)}
+                    </TableCell>
+                    <TableCell className="text-center text-xs">
+                      {r.pct.toLocaleString("pt-BR")}%
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-success">
+                      {formatBRL(r.payout)}
+                    </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="bg-muted/40">
-                  <TableCell colSpan={6} className="text-right font-semibold">Total a repassar</TableCell>
-                  <TableCell className="text-right font-bold text-success">{formatBRL(sellerTotal)}</TableCell>
+                  <TableCell colSpan={6} className="text-right font-semibold">
+                    Total a repassar
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-success">
+                    {formatBRL(sellerTotal)}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>

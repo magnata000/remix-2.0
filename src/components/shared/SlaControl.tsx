@@ -60,7 +60,11 @@ export function SlaControl({ slaDueAt, slaHours, paused, defaultHours, onApply }
           <span className="text-xs text-muted-foreground">horas</span>
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <Button size="sm" className="rounded-lg h-8 flex-1 bg-brand text-brand-foreground hover:bg-brand/90" onClick={start}>
+          <Button
+            size="sm"
+            className="rounded-lg h-8 flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
+            onClick={start}
+          >
             <Play className="h-3 w-3 mr-1" /> {slaDueAt ? "Reiniciar" : "Iniciar"}
           </Button>
           {slaDueAt && (

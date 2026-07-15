@@ -1,14 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
-import { formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import {
+  formatDateShort,
+  type Branch,
+  type Insurer,
+  type Policy,
+  type PolicyStatus,
+} from "@/lib/mock/data";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
@@ -29,7 +48,9 @@ const STATUSES: { key: PolicyStatus; label: string }[] = [
 ];
 
 const addYears = (d: Date, n: number) => {
-  const r = new Date(d); r.setFullYear(r.getFullYear() + n); return r;
+  const r = new Date(d);
+  r.setFullYear(r.getFullYear() + n);
+  return r;
 };
 
 export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
@@ -112,32 +133,46 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
           <DialogTitle>Renovar apólice</DialogTitle>
           {sourcePolicy && (
             <DialogDescription>
-              Renovando <span className="font-mono">{sourcePolicy.number}</span> — {sourcePolicy.clientName}
+              Renovando <span className="font-mono">{sourcePolicy.number}</span> —{" "}
+              {sourcePolicy.clientName}
             </DialogDescription>
           )}
         </DialogHeader>
 
         <div className="space-y-5">
           <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
-            Uma nova apólice será criada e vinculada à anterior. A apólice atual será marcada como <span className="font-medium">renovada</span>.
+            Uma nova apólice será criada e vinculada à anterior. A apólice atual será marcada como{" "}
+            <span className="font-medium">renovada</span>.
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Ramo *</Label>
               <Select value={branch} onValueChange={(v) => setBranch(v as Branch)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {BRANCHES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                  {BRANCHES.map((b) => (
+                    <SelectItem key={b} value={b}>
+                      {b}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Seguradora *</Label>
               <Select value={insurer} onValueChange={(v) => setInsurer(v as Insurer)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                  {INSURERS.map((i) => (
+                    <SelectItem key={i} value={i}>
+                      {i}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -147,19 +182,29 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                 inputMode="decimal"
                 value={premium}
                 onChange={(e) => setPremium(e.target.value.replace(/[^\d.,]/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum)); }}
+                onBlur={() => {
+                  if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum));
+                }}
                 onFocus={() => setPremium(premiumNum ? String(premiumNum).replace(".", ",") : "")}
                 placeholder="R$ 0,00"
                 className="mt-1.5 rounded-xl bg-muted border-0"
               />
-              {showErr("premium") && <p className="text-xs text-destructive mt-1">{errors.premium}</p>}
+              {showErr("premium") && (
+                <p className="text-xs text-destructive mt-1">{errors.premium}</p>
+              )}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Status *</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as PolicyStatus)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s.key} value={s.key}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -167,7 +212,13 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
               <Label className="text-xs text-muted-foreground">Início vigência *</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !startDate && "text-muted-foreground")}>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                      !startDate && "text-muted-foreground",
+                    )}
+                  >
                     <CalendarIcon className="h-4 w-4 mr-2" />
                     {startDate ? formatDateShort(startDate.toISOString()) : "Selecionar"}
                   </Button>
@@ -176,19 +227,30 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                   <Calendar
                     mode="single"
                     selected={startDate}
-                    onSelect={(d) => { setStartDate(d); if (d) setEndDate(addYears(d, 1)); }}
+                    onSelect={(d) => {
+                      setStartDate(d);
+                      if (d) setEndDate(addYears(d, 1));
+                    }}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>
-              {showErr("startDate") && <p className="text-xs text-destructive mt-1">{errors.startDate}</p>}
+              {showErr("startDate") && (
+                <p className="text-xs text-destructive mt-1">{errors.startDate}</p>
+              )}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Fim vigência *</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !endDate && "text-muted-foreground")}>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                      !endDate && "text-muted-foreground",
+                    )}
+                  >
                     <CalendarIcon className="h-4 w-4 mr-2" />
                     {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
                   </Button>
@@ -203,7 +265,9 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                   />
                 </PopoverContent>
               </Popover>
-              {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
+              {showErr("endDate") && (
+                <p className="text-xs text-destructive mt-1">{errors.endDate}</p>
+              )}
             </div>
           </div>
 
@@ -218,8 +282,15 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>Confirmar renovação</Button>
+          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            onClick={submit}
+          >
+            Confirmar renovação
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

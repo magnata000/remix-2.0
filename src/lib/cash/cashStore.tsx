@@ -64,22 +64,68 @@ const now = () => new Date().toISOString();
 
 // Seed mock — current year
 const Y = new Date().getFullYear();
-const iso = (m: number, d: number, h = 10) =>
-  new Date(Y, m, d, h, 0, 0).toISOString();
+const iso = (m: number, d: number, h = 10) => new Date(Y, m, d, h, 0, 0).toISOString();
 
 const seedExpenses: Expense[] = [
-  { id: "e1", description: "Aluguel do escritório", category: "Aluguel", dreKind: "custo_operacional", amount: 4200, recurrence: "mensal", dueDay: 5, createdAt: iso(0, 1), notes: "Sala 802" },
-  { id: "e2", description: "Software CRM", category: "Software", dreKind: "custo_operacional", amount: 480, recurrence: "mensal", dueDay: 10, createdAt: iso(0, 1) },
-  { id: "e3", description: "Campanha de marketing", category: "Marketing", dreKind: "despesa_operacional", amount: 2500, recurrence: "avulsa", createdAt: iso(new Date().getMonth(), 8) },
+  {
+    id: "e1",
+    description: "Aluguel do escritório",
+    category: "Aluguel",
+    dreKind: "custo_operacional",
+    amount: 4200,
+    recurrence: "mensal",
+    dueDay: 5,
+    createdAt: iso(0, 1),
+    notes: "Sala 802",
+  },
+  {
+    id: "e2",
+    description: "Software CRM",
+    category: "Software",
+    dreKind: "custo_operacional",
+    amount: 480,
+    recurrence: "mensal",
+    dueDay: 10,
+    createdAt: iso(0, 1),
+  },
+  {
+    id: "e3",
+    description: "Campanha de marketing",
+    category: "Marketing",
+    dreKind: "despesa_operacional",
+    amount: 2500,
+    recurrence: "avulsa",
+    createdAt: iso(new Date().getMonth(), 8),
+  },
 ];
 
 const seedEntries: ExpenseEntry[] = [
-  { id: "n1", expenseId: "e1", description: "Aluguel do escritório", category: "Aluguel", amount: 4200, paidAt: iso(new Date().getMonth(), 5) },
-  { id: "n2", expenseId: "e2", description: "Software CRM", category: "Software", amount: 480, paidAt: iso(new Date().getMonth(), 10) },
+  {
+    id: "n1",
+    expenseId: "e1",
+    description: "Aluguel do escritório",
+    category: "Aluguel",
+    amount: 4200,
+    paidAt: iso(new Date().getMonth(), 5),
+  },
+  {
+    id: "n2",
+    expenseId: "e2",
+    description: "Software CRM",
+    category: "Software",
+    amount: 480,
+    paidAt: iso(new Date().getMonth(), 10),
+  },
 ];
 
 const seedIncomes: ManualIncome[] = [
-  { id: "i1", description: "Bônus de performance", source: "Porto Seguro", amount: 1500, receivedAt: iso(new Date().getMonth(), 12) },
+  {
+    id: "i1",
+    description: "Bônus de performance",
+    source: "Porto Seguro",
+    amount: 1500,
+    receivedAt: iso(new Date().getMonth(), 12),
+  },
 ];
 
 const curMonth = new Date().getMonth();
@@ -113,7 +159,7 @@ type Ctx = {
   removeExpense: (id: string) => void;
   registerExpenseEntry: (
     expenseId: string,
-    input: { amount: number; paidAt?: string; notes?: string }
+    input: { amount: number; paidAt?: string; notes?: string },
   ) => ExpenseEntry | null;
   addIncome: (data: Omit<ManualIncome, "id">) => ManualIncome;
   removeIncome: (id: string) => void;
@@ -159,7 +205,7 @@ export function CashProvider({ children }: { children: ReactNode }) {
       }
       return entry;
     },
-    [expenses]
+    [expenses],
   );
 
   const addIncome = useCallback((data: Omit<ManualIncome, "id">) => {
@@ -184,11 +230,31 @@ export function CashProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(
     () => ({
-      expenses, entries, incomes, taxes,
-      addExpense, removeExpense, registerExpenseEntry,
-      addIncome, removeIncome, addTax, removeTax,
+      expenses,
+      entries,
+      incomes,
+      taxes,
+      addExpense,
+      removeExpense,
+      registerExpenseEntry,
+      addIncome,
+      removeIncome,
+      addTax,
+      removeTax,
     }),
-    [expenses, entries, incomes, taxes, addExpense, removeExpense, registerExpenseEntry, addIncome, removeIncome, addTax, removeTax]
+    [
+      expenses,
+      entries,
+      incomes,
+      taxes,
+      addExpense,
+      removeExpense,
+      registerExpenseEntry,
+      addIncome,
+      removeIncome,
+      addTax,
+      removeTax,
+    ],
   );
 
   return <CashContext.Provider value={value}>{children}</CashContext.Provider>;
@@ -217,6 +283,16 @@ export const formatDateBR = (iso: string) => {
 };
 
 export const MONTHS_PT = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];

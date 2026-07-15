@@ -1,17 +1,17 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CalendarRange } from "lucide-react";
 import type { DateRange } from "@/lib/financial/reportMetrics";
 import { rangePreset } from "@/lib/financial/reportMetrics";
 
-export type PeriodPreset =
-  | "mes"
-  | "mes-anterior"
-  | "ultimos-3"
-  | "ano"
-  | "ano-anterior"
-  | "custom";
+export type PeriodPreset = "mes" | "mes-anterior" | "ultimos-3" | "ano" | "ano-anterior" | "custom";
 
 const PRESET_LABEL: Record<PeriodPreset, string> = {
   mes: "Este mês",
@@ -47,8 +47,18 @@ export function ReportFilters({ preset, range, onChange }: Props) {
   const handleDate = (which: "start" | "end", value: string) => {
     if (!value) return;
     const parts = value.split("-").map(Number);
-    const d = new Date(parts[0], parts[1] - 1, parts[2], which === "end" ? 23 : 0, which === "end" ? 59 : 0, which === "end" ? 59 : 0);
-    onChange("custom", which === "start" ? { start: d, end: range.end } : { start: range.start, end: d });
+    const d = new Date(
+      parts[0],
+      parts[1] - 1,
+      parts[2],
+      which === "end" ? 23 : 0,
+      which === "end" ? 59 : 0,
+      which === "end" ? 59 : 0,
+    );
+    onChange(
+      "custom",
+      which === "start" ? { start: d, end: range.end } : { start: range.start, end: d },
+    );
   };
 
   return (
@@ -118,7 +128,9 @@ export function ReportFilters({ preset, range, onChange }: Props) {
                 </Select>
               </div>
             </TooltipTrigger>
-            <TooltipContent className="text-xs">Disponível quando contas bancárias forem cadastradas.</TooltipContent>
+            <TooltipContent className="text-xs">
+              Disponível quando contas bancárias forem cadastradas.
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -137,7 +149,9 @@ export function ReportFilters({ preset, range, onChange }: Props) {
                 </Select>
               </div>
             </TooltipTrigger>
-            <TooltipContent className="text-xs">Disponível quando centros de custo forem cadastrados.</TooltipContent>
+            <TooltipContent className="text-xs">
+              Disponível quando centros de custo forem cadastrados.
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>

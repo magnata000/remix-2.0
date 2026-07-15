@@ -69,6 +69,7 @@ export function SellerCommissionStoreProvider({ children }: { children: ReactNod
 
 export function useSellerCommissionStore() {
   const ctx = useContext(SellerCtx);
-  if (!ctx) throw new Error("useSellerCommissionStore must be used inside SellerCommissionStoreProvider");
+  if (!ctx)
+    throw new Error("useSellerCommissionStore must be used inside SellerCommissionStoreProvider");
   return ctx;
 }

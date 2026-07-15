@@ -30,10 +30,7 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
     setClients((arr) => arr.map((c) => (c.id === id ? { ...c, statusOverride: status } : c)));
   }, []);
 
-  const findByName = useCallback(
-    (name: string) => clients.find((c) => c.name === name),
-    [clients],
-  );
+  const findByName = useCallback((name: string) => clients.find((c) => c.name === name), [clients]);
 
   return (
     <ClientCtx.Provider value={{ clients, addClient, updateClient, setClientStatus, findByName }}>

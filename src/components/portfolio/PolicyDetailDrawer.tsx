@@ -20,16 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  FileText,
-  Calendar,
-  Building2,
-  User,
-  RotateCw,
-  Pencil,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { FileText, Calendar, Building2, User, RotateCw, Pencil, Trash2, Users } from "lucide-react";
 import {
   formatBRL,
   formatDateShort,
@@ -85,7 +76,8 @@ export function PolicyDetailDrawer({
   onSelectPolicy?: (p: Policy) => void;
 }) {
   const docStore = useDocumentStore();
-  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy, deletePolicy } = usePolicies();
+  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy, deletePolicy } =
+    usePolicies();
   const { deleteByPolicy: deleteCommissionsByPolicy } = useCommissionStore();
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
@@ -286,11 +278,7 @@ export function PolicyDetailDrawer({
             </Tabs>
 
             {policy.branch !== "Saúde" && (
-              <NewPolicyDialog
-                open={renewOpen}
-                onOpenChange={setRenewOpen}
-                sourcePolicy={policy}
-              />
+              <NewPolicyDialog open={renewOpen} onOpenChange={setRenewOpen} sourcePolicy={policy} />
             )}
             <EditPolicyDialog open={editOpen} onOpenChange={setEditOpen} policy={policy} />
 
@@ -301,8 +289,8 @@ export function PolicyDetailDrawer({
                   <AlertDialogDescription>
                     A apólice <span className="font-medium font-mono">{policy.number}</span> de{" "}
                     <span className="font-medium">{policy.clientName}</span> será removida
-                    permanentemente, junto com suas comissões e documentos vinculados. Esta ação
-                    não pode ser desfeita.
+                    permanentemente, junto com suas comissões e documentos vinculados. Esta ação não
+                    pode ser desfeita.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

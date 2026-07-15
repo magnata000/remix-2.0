@@ -13,10 +13,7 @@ const DEFAULT_CATEGORY_KIND: Record<string, CategoryKind> = {
   Outros: "despesa_operacional",
 };
 
-function classifyCategory(
-  category: string,
-  overrides: Record<string, CategoryKind>,
-): CategoryKind {
+function classifyCategory(category: string, overrides: Record<string, CategoryKind>): CategoryKind {
   if (overrides[category]) return overrides[category];
   if (DEFAULT_CATEGORY_KIND[category]) return DEFAULT_CATEGORY_KIND[category];
   // fallback: despesa operacional

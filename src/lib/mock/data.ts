@@ -4,9 +4,24 @@ export type Branch = "Auto" | "Vida" | "Residencial" | "Empresarial" | "Saúde" 
 export type Insurer = "Porto Seguro" | "Bradesco" | "SulAmérica" | "Allianz" | "Mapfre";
 
 export type ClientStatus = "ativo" | "inativo" | "lead";
-export type Client = { id: string; name: string; email: string; phone: string; document: string; birthDate?: string; statusOverride?: ClientStatus };
+export type Client = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  document: string;
+  birthDate?: string;
+  statusOverride?: ClientStatus;
+};
 
-export type BeneficiaryTitle = "titular" | "conjuge" | "filho" | "pai_mae" | "irmao" | "parente" | "outro";
+export type BeneficiaryTitle =
+  | "titular"
+  | "conjuge"
+  | "filho"
+  | "pai_mae"
+  | "irmao"
+  | "parente"
+  | "outro";
 export type Beneficiary = {
   id: string;
   title: BeneficiaryTitle;
@@ -17,7 +32,13 @@ export type Beneficiary = {
 };
 
 export type CommissionScheme = "agenciamento" | "esgotamento" | "parcela" | "unica" | "vitalicio";
-export type CommissionKind = "agenciamento" | "recorrencia" | "esgotamento" | "parcela" | "unica" | "vitalicio";
+export type CommissionKind =
+  | "agenciamento"
+  | "recorrencia"
+  | "esgotamento"
+  | "parcela"
+  | "unica"
+  | "vitalicio";
 
 export type Policy = {
   id: string;
@@ -34,10 +55,10 @@ export type Policy = {
   commissionPct?: number;
   // Comissionamento (overrides do padrão da seguradora)
   commissionScheme?: CommissionScheme;
-  commissionInstallments?: number;     // p/ scheme "parcela" (Auto)
-  agenciamentoSchedule?: number[];     // p/ Saúde (ex: [1, 0.5, 0.3, 0.2])
-  recorrenciaPct?: number;             // p/ Saúde (ex: 0.03)
-  comissaoLiquida?: boolean;           // override por apólice
+  commissionInstallments?: number; // p/ scheme "parcela" (Auto)
+  agenciamentoSchedule?: number[]; // p/ Saúde (ex: [1, 0.5, 0.3, 0.2])
+  recorrenciaPct?: number; // p/ Saúde (ex: 0.03)
+  comissaoLiquida?: boolean; // override por apólice
   taxaImposto?: number;
   // Saúde
   healthAnniversary?: string;
@@ -103,14 +124,34 @@ type TeamMember = { id: string; name: string; role: string; email: string };
 const insurers: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const branches: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const names = [
-  "Ana Souza", "Carlos Lima", "Mariana Alves", "João Pereira", "Beatriz Costa",
-  "Rafael Mendes", "Juliana Rocha", "Pedro Henrique", "Larissa Dias", "Bruno Carvalho",
-  "Camila Ferreira", "Diego Santos", "Fernanda Nunes", "Gustavo Moreira", "Helena Ribeiro",
-  "Igor Almeida", "Patrícia Cardoso", "Lucas Barros", "Renata Silva", "Marcelo Pinto",
-  "Vanessa Teixeira", "Thiago Castro", "Aline Cavalcanti", "Ricardo Monteiro", "Sofia Andrade",
+  "Ana Souza",
+  "Carlos Lima",
+  "Mariana Alves",
+  "João Pereira",
+  "Beatriz Costa",
+  "Rafael Mendes",
+  "Juliana Rocha",
+  "Pedro Henrique",
+  "Larissa Dias",
+  "Bruno Carvalho",
+  "Camila Ferreira",
+  "Diego Santos",
+  "Fernanda Nunes",
+  "Gustavo Moreira",
+  "Helena Ribeiro",
+  "Igor Almeida",
+  "Patrícia Cardoso",
+  "Lucas Barros",
+  "Renata Silva",
+  "Marcelo Pinto",
+  "Vanessa Teixeira",
+  "Thiago Castro",
+  "Aline Cavalcanti",
+  "Ricardo Monteiro",
+  "Sofia Andrade",
 ];
 
-const rand = <T,>(arr: T[], i: number) => arr[i % arr.length];
+const rand = <T>(arr: T[], i: number) => arr[i % arr.length];
 const pad = (n: number) => String(n).padStart(4, "0");
 
 export const clients: Client[] = names.map((n, i) => {
@@ -133,7 +174,11 @@ const statuses: PolicyStatus[] = ["ativa", "ativa", "ativa", "pendente", "vencid
 // Helpers para o seed
 const today = new Date();
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
-const monthsAgo = (n: number) => { const d = new Date(today); d.setMonth(d.getMonth() - n); return d; };
+const monthsAgo = (n: number) => {
+  const d = new Date(today);
+  d.setMonth(d.getMonth() - n);
+  return d;
+};
 
 // Apólices "curadas" que demonstram os 3 modelos de comissionamento
 const curatedPolicies: Policy[] = [
@@ -222,47 +267,78 @@ const extraPolicies: Policy[] = Array.from({ length: 20 }, (_, i) => {
     clientName: rand(names, i),
     branch,
     insurer: rand(insurers, i + 2),
-    premium: 800 + (i * 137) % 5400,
+    premium: 800 + ((i * 137) % 5400),
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10),
     status: rand(statuses, i),
     assigneeId: teamRotation[i % teamRotation.length],
     commissionPct: 15 + (i % 10),
-    commissionScheme: branch === "Saúde" ? "agenciamento" : branch === "Consórcio" ? "unica" : "esgotamento",
+    commissionScheme:
+      branch === "Saúde" ? "agenciamento" : branch === "Consórcio" ? "unica" : "esgotamento",
   };
 });
 
 export const policies: Policy[] = [...curatedPolicies, ...extraPolicies];
-
 
 const stages: KanbanStage[] = ["lead", "cotacao", "negociacao", "fechado"];
 
 // Curated opportunities — first 5 are linked to seeded quote groups (g1..g5 in quoteStore)
 const curated: Task[] = [
   {
-    id: "t1", title: "Renovação Auto", clientName: "João Silva", branch: "Auto",
-    estimatedValue: 1850, dueDate: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
-    assignee: "AS", stage: "fechado", quoteGroupId: "g1",
+    id: "t1",
+    title: "Renovação Auto",
+    clientName: "João Silva",
+    branch: "Auto",
+    estimatedValue: 1850,
+    dueDate: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
+    assignee: "AS",
+    stage: "fechado",
+    quoteGroupId: "g1",
   },
   {
-    id: "t2", title: "Seguro de Vida", clientName: "Mariana Alves", branch: "Vida",
-    estimatedValue: 1650, dueDate: new Date(Date.now() + 8 * 86400000).toISOString().slice(0, 10),
-    assignee: "CL", stage: "perdido", quoteGroupId: "g2", lostReason: "preco",
+    id: "t2",
+    title: "Seguro de Vida",
+    clientName: "Mariana Alves",
+    branch: "Vida",
+    estimatedValue: 1650,
+    dueDate: new Date(Date.now() + 8 * 86400000).toISOString().slice(0, 10),
+    assignee: "CL",
+    stage: "perdido",
+    quoteGroupId: "g2",
+    lostReason: "preco",
   },
   {
-    id: "t3", title: "Seguro Residencial — apto", clientName: "Carlos Lima", branch: "Residencial",
-    estimatedValue: 1750, dueDate: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
-    assignee: "AS", stage: "negociacao", quoteGroupId: "g3",
+    id: "t3",
+    title: "Seguro Residencial — apto",
+    clientName: "Carlos Lima",
+    branch: "Residencial",
+    estimatedValue: 1750,
+    dueDate: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+    assignee: "AS",
+    stage: "negociacao",
+    quoteGroupId: "g3",
   },
   {
-    id: "t4", title: "Renovação Auto Corolla", clientName: "Beatriz Costa", branch: "Auto",
-    estimatedValue: 1930, dueDate: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10),
-    assignee: "MA", stage: "cotacao", quoteGroupId: "g4",
+    id: "t4",
+    title: "Renovação Auto Corolla",
+    clientName: "Beatriz Costa",
+    branch: "Auto",
+    estimatedValue: 1930,
+    dueDate: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10),
+    assignee: "MA",
+    stage: "cotacao",
+    quoteGroupId: "g4",
   },
   {
-    id: "t5", title: "PME — Empresarial", clientName: "Rafael Mendes", branch: "Empresarial",
-    estimatedValue: 2270, dueDate: new Date(Date.now() + 6 * 86400000).toISOString().slice(0, 10),
-    assignee: "AS", stage: "cotacao", quoteGroupId: "g5",
+    id: "t5",
+    title: "PME — Empresarial",
+    clientName: "Rafael Mendes",
+    branch: "Empresarial",
+    estimatedValue: 2270,
+    dueDate: new Date(Date.now() + 6 * 86400000).toISOString().slice(0, 10),
+    assignee: "AS",
+    stage: "cotacao",
+    quoteGroupId: "g5",
   },
 ];
 
@@ -274,7 +350,7 @@ const extras: Task[] = Array.from({ length: 8 }, (_, i) => {
     title: `${rand(["Novo lead", "Follow-up", "Proposta"], i)} ${rand(branches, i)}`,
     clientName: rand(names, i + 8),
     branch: rand(branches, i + 1),
-    estimatedValue: 1200 + (i * 213) % 6800,
+    estimatedValue: 1200 + ((i * 213) % 6800),
     dueDate: due.toISOString().slice(0, 10),
     assignee: rand(["AS", "CL", "MA", "JP"], i),
     stage: stages[i % 3] as KanbanStage, // lead, cotacao, negociacao
@@ -287,7 +363,13 @@ export const quotes: Quote[] = insurers.map((ins, i) => ({
   insurer: ins,
   price: 1850 + i * 240 - (i === 2 ? 320 : 0),
   deductible: 1500 + i * 200,
-  coverages: ["Casco", "Terceiros 100k", "APP", "Carro reserva", i % 2 === 0 ? "Vidros" : "Assistência 24h"],
+  coverages: [
+    "Casco",
+    "Terceiros 100k",
+    "APP",
+    "Carro reserva",
+    i % 2 === 0 ? "Vidros" : "Assistência 24h",
+  ],
   rating: 4 + ((i * 17) % 10) / 10,
 }));
 
@@ -302,13 +384,76 @@ const monthFromAuto2 = (offset: number) => ymd(monthsAgo(4 - offset));
 
 export const commissions: Commission[] = [
   // ----- Saúde (agenciamento, mensalidade 1.200) -----
-  { id: "cm-saude-ag1", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 1200, dueDate: startMonth(0), paidAt: startMonth(0), status: "pago", kind: "agenciamento", installmentIndex: 1, installmentTotal: 4 },
-  { id: "cm-saude-ag2", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 600,  dueDate: startMonth(1), paidAt: startMonth(1), status: "pago", kind: "agenciamento", installmentIndex: 2, installmentTotal: 4 },
-  { id: "cm-saude-ag3", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 360,  dueDate: startMonth(2), status: "pendente", kind: "agenciamento", installmentIndex: 3, installmentTotal: 4 },
-  { id: "cm-saude-ag4", policyId: "p-saude-1", policyNumber: "APO-2026-0001", clientName: "Mariana Alves", insurer: "SulAmérica", amount: 240,  dueDate: startMonth(3), status: "pendente", kind: "agenciamento", installmentIndex: 4, installmentTotal: 4 },
+  {
+    id: "cm-saude-ag1",
+    policyId: "p-saude-1",
+    policyNumber: "APO-2026-0001",
+    clientName: "Mariana Alves",
+    insurer: "SulAmérica",
+    amount: 1200,
+    dueDate: startMonth(0),
+    paidAt: startMonth(0),
+    status: "pago",
+    kind: "agenciamento",
+    installmentIndex: 1,
+    installmentTotal: 4,
+  },
+  {
+    id: "cm-saude-ag2",
+    policyId: "p-saude-1",
+    policyNumber: "APO-2026-0001",
+    clientName: "Mariana Alves",
+    insurer: "SulAmérica",
+    amount: 600,
+    dueDate: startMonth(1),
+    paidAt: startMonth(1),
+    status: "pago",
+    kind: "agenciamento",
+    installmentIndex: 2,
+    installmentTotal: 4,
+  },
+  {
+    id: "cm-saude-ag3",
+    policyId: "p-saude-1",
+    policyNumber: "APO-2026-0001",
+    clientName: "Mariana Alves",
+    insurer: "SulAmérica",
+    amount: 360,
+    dueDate: startMonth(2),
+    status: "pendente",
+    kind: "agenciamento",
+    installmentIndex: 3,
+    installmentTotal: 4,
+  },
+  {
+    id: "cm-saude-ag4",
+    policyId: "p-saude-1",
+    policyNumber: "APO-2026-0001",
+    clientName: "Mariana Alves",
+    insurer: "SulAmérica",
+    amount: 240,
+    dueDate: startMonth(3),
+    status: "pendente",
+    kind: "agenciamento",
+    installmentIndex: 4,
+    installmentTotal: 4,
+  },
 
   // ----- Auto Esgotamento (prêmio 3.200 × 18% = 576) -----
-  { id: "cm-auto1-es", policyId: "p-auto-1", policyNumber: "APO-2026-0002", clientName: "João Pereira", insurer: "Porto Seguro", amount: 576, dueDate: monthFromAuto1(0), paidAt: monthFromAuto1(0), status: "pago", kind: "esgotamento", installmentIndex: 1, installmentTotal: 1 },
+  {
+    id: "cm-auto1-es",
+    policyId: "p-auto-1",
+    policyNumber: "APO-2026-0002",
+    clientName: "João Pereira",
+    insurer: "Porto Seguro",
+    amount: 576,
+    dueDate: monthFromAuto1(0),
+    paidAt: monthFromAuto1(0),
+    status: "pago",
+    kind: "esgotamento",
+    installmentIndex: 1,
+    installmentTotal: 1,
+  },
 
   // ----- Auto Parcela 10x (prêmio 4.800 × 20% = 960 / 10 = 96) -----
   ...Array.from({ length: 10 }, (_, i) => {
@@ -331,9 +476,20 @@ export const commissions: Commission[] = [
   }),
 
   // ----- Consórcio (60.000 × 1.5% = 900) -----
-  { id: "cm-cons1-un", policyId: "p-cons-1", policyNumber: "APO-2026-0004", clientName: "Rafael Mendes", insurer: "Bradesco", amount: 900, dueDate: ymd(monthsAgo(0)), status: "pendente", kind: "unica", installmentIndex: 1, installmentTotal: 1 },
+  {
+    id: "cm-cons1-un",
+    policyId: "p-cons-1",
+    policyNumber: "APO-2026-0004",
+    clientName: "Rafael Mendes",
+    insurer: "Bradesco",
+    amount: 900,
+    dueDate: ymd(monthsAgo(0)),
+    status: "pendente",
+    kind: "unica",
+    installmentIndex: 1,
+    installmentTotal: 1,
+  },
 ];
-
 
 export const team: TeamMember[] = [
   { id: "u1", name: "Ana Souza", role: "Sócia / Corretora", email: "ana@insuranceos.com" },
@@ -366,7 +522,12 @@ export const insurerLogos: Record<Insurer, string> = {
 };
 
 export const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  v.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 /** BRL sem centavos — usado em inputs que trabalham com reais inteiros. */
 export const formatBRLInt = (v: number) =>

@@ -2,7 +2,20 @@ import type { Opportunity } from "./opportunityStore";
 import type { KanbanStage } from "@/lib/mock/data";
 import { lostReasonLabel } from "@/lib/mock/data";
 
-const MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] as const;
+const MONTHS_SHORT = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+] as const;
 
 export type SalesMonthPoint = { month: string; vendas: number; receita: number };
 
@@ -45,12 +58,12 @@ export function revenueInMonth(
 
 export type StageAnalytic = {
   stage: KanbanStage;
-  currentCount: number;      // leads atualmente na etapa
-  totalPassed: number;       // total de leads que já passaram pela etapa
-  totalExited: number;       // total que já saiu
-  avgHoursInStage: number;   // tempo médio (aberto ou fechado)
-  lostFromHere: number;      // saíram desta etapa para "perdido"
-  advancedFromHere: number;  // saíram desta etapa para próxima etapa (não perdido)
+  currentCount: number; // leads atualmente na etapa
+  totalPassed: number; // total de leads que já passaram pela etapa
+  totalExited: number; // total que já saiu
+  avgHoursInStage: number; // tempo médio (aberto ou fechado)
+  lostFromHere: number; // saíram desta etapa para "perdido"
+  advancedFromHere: number; // saíram desta etapa para próxima etapa (não perdido)
 };
 
 export type PipelineAnalytics = {
@@ -61,7 +74,7 @@ export type PipelineAnalytics = {
   wonRevenue: number;
   lostRevenue: number;
   avgTicket: number;
-  overallConversion: number;   // fechado / criados (0..1)
+  overallConversion: number; // fechado / criados (0..1)
   bottleneckStage?: KanbanStage;
   worstLossStage?: KanbanStage;
   stages: StageAnalytic[];
@@ -88,17 +101,39 @@ export function computePipelineAnalytics(
   const openCount = filtered.filter((o) => OPEN_STAGES.includes(o.stage)).length;
   const wonOpps = filtered.filter((o) => o.stage === "fechado");
   const wonRevenue = wonOpps.reduce((s, o) => s + o.estimatedValue, 0);
-  const lostRevenue = filtered.filter((o) => o.stage === "perdido").reduce((s, o) => s + o.estimatedValue, 0);
+  const lostRevenue = filtered
+    .filter((o) => o.stage === "perdido")
+    .reduce((s, o) => s + o.estimatedValue, 0);
   const avgTicket = won > 0 ? wonRevenue / won : 0;
   const overallConversion = totalCreated > 0 ? won / totalCreated : 0;
 
   // Por etapa: percorre stageHistory
   const stageStats: Record<KanbanStage, StageAnalytic> = {} as Record<KanbanStage, StageAnalytic>;
   STAGE_ORDER.forEach((s) => {
-    stageStats[s] = { stage: s, currentCount: 0, totalPassed: 0, totalExited: 0, avgHoursInStage: 0, lostFromHere: 0, advancedFromHere: 0 };
+    stageStats[s] = {
+      stage: s,
+      currentCount: 0,
+      totalPassed: 0,
+      totalExited: 0,
+      avgHoursInStage: 0,
+      lostFromHere: 0,
+      advancedFromHere: 0,
+    };
   });
-  const durationSum: Record<KanbanStage, number> = { lead: 0, cotacao: 0, negociacao: 0, fechado: 0, perdido: 0 };
-  const durationCount: Record<KanbanStage, number> = { lead: 0, cotacao: 0, negociacao: 0, fechado: 0, perdido: 0 };
+  const durationSum: Record<KanbanStage, number> = {
+    lead: 0,
+    cotacao: 0,
+    negociacao: 0,
+    fechado: 0,
+    perdido: 0,
+  };
+  const durationCount: Record<KanbanStage, number> = {
+    lead: 0,
+    cotacao: 0,
+    negociacao: 0,
+    fechado: 0,
+    perdido: 0,
+  };
 
   filtered.forEach((o) => {
     stageStats[o.stage].currentCount += 1;
@@ -169,7 +204,10 @@ export function computePipelineAnalytics(
   stageToStage.push({
     from: "negociacao",
     to: "fechado",
-    rate: stageStats.negociacao.totalPassed > 0 ? stageStats.fechado.totalPassed / stageStats.negociacao.totalPassed : 0,
+    rate:
+      stageStats.negociacao.totalPassed > 0
+        ? stageStats.fechado.totalPassed / stageStats.negociacao.totalPassed
+        : 0,
   });
 
   const uniqueClientsWon = new Set(wonOpps.map((o) => o.clientName)).size;
@@ -199,5 +237,3 @@ export function formatHours(h: number): string {
   if (d < 30) return `${d.toFixed(1)}d`;
   return `${(d / 30).toFixed(1)} meses`;
 }
-
-

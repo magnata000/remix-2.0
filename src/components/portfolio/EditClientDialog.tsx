@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -98,7 +104,9 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
     const parsed = schema.safeParse({ email, phone, document, birthDate });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
-      parsed.error.issues.forEach((i) => { errs[i.path[0] as string] = i.message; });
+      parsed.error.issues.forEach((i) => {
+        errs[i.path[0] as string] = i.message;
+      });
       setErrors(errs);
       return;
     }
@@ -110,7 +118,9 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Editar cliente</DialogTitle>
+        </DialogHeader>
 
         <div className="space-y-4">
           <div>
@@ -122,19 +132,38 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">E-mail *</Label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} className="mt-1.5 rounded-xl bg-muted border-0" />
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              maxLength={255}
+              className="mt-1.5 rounded-xl bg-muted border-0"
+            />
             {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Telefone *</Label>
-              <Input value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="numeric" maxLength={16} className="mt-1.5 rounded-xl bg-muted border-0" />
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(maskPhone(e.target.value))}
+                inputMode="numeric"
+                maxLength={16}
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
               {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">CPF/CNPJ *</Label>
-              <Input value={document} onChange={(e) => setDocument(maskCpfCnpj(e.target.value))} inputMode="numeric" maxLength={18} className="mt-1.5 rounded-xl bg-muted border-0" />
-              {errors.document && <p className="text-xs text-destructive mt-1">{errors.document}</p>}
+              <Input
+                value={document}
+                onChange={(e) => setDocument(maskCpfCnpj(e.target.value))}
+                inputMode="numeric"
+                maxLength={18}
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+              {errors.document && (
+                <p className="text-xs text-destructive mt-1">{errors.document}</p>
+              )}
             </div>
           </div>
           <div>
@@ -147,13 +176,22 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
               max={todayISO()}
               className="mt-1.5 rounded-xl bg-muted border-0"
             />
-            {errors.birthDate && <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>}
+            {errors.birthDate && (
+              <p className="text-xs text-destructive mt-1">{errors.birthDate}</p>
+            )}
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>Salvar alterações</Button>
+          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            onClick={submit}
+          >
+            Salvar alterações
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
