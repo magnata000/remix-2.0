@@ -1,7 +1,9 @@
 ## Objetivo
+
 Subir de **9.1 → 9.5+/10** com dois ciclos independentes: limpeza cosmética + primeira bateria de testes unitários nos utilitários puros de domínio.
 
 ## Escopo protegido (não tocar)
+
 `DashboardModule.tsx`, `RenewPolicyDialog.tsx`, `ComingSoonOverlay.tsx`, `use-mobile.tsx`, `router.tsx`, `components/ui/*`, `routeTree.gen.ts`.
 
 ---
@@ -29,6 +31,7 @@ Subir de **9.1 → 9.5+/10** com dois ciclos independentes: limpeza cosmética +
 Estrutura: cada arquivo testado ganha um vizinho `*.test.ts`.
 
 ### `src/lib/daily/dateUtils.test.ts` — `relativeDueLabel`
+
 - `undefined` → `"Sem prazo"`, tone `muted`.
 - ISO inválida → `"Data inválida"`, tone `muted`.
 - Passado (-3d, -1d) → `"Atrasada Nd"`, tone `danger`.
@@ -38,6 +41,7 @@ Estrutura: cada arquivo testado ganha um vizinho `*.test.ts`.
 - Fronteira: `daysBetween` ignora horas (data no fim do dia vs início).
 
 ### `src/lib/daily/mentions.test.ts` — `buildTeamNameIndex`, `extractMentions`, `textMentionsUser`, `resolveMentionId`
+
 - Índice lowercase: `"João Silva"` casa `"@joão silva"`.
 - Match guloso: em `"@João Silva Santos"`, com apenas `"João Silva"` no time, retorna `"João Silva"` (maior prefixo casável).
 - `@todos` sempre casa.
@@ -48,7 +52,9 @@ Estrutura: cada arquivo testado ganha um vizinho `*.test.ts`.
 - Cache: chamando duas vezes com o mesmo texto, `extractMentions` só é executado uma vez (spy).
 
 ### `src/lib/financial/commissionEngine.test.ts` — `generateCommissionSchedule`, `branchToProduct`, `expectedRecurrencesUntil`, `commissionKindLabel`
+
 Fixtures inline (Policy + CommissionConfig mínimos).
+
 - `branchToProduct`: Saúde→saude, Consórcio→consorcio, Auto/Vida/Residencial/Empresarial→auto.
 - Policy `cancelada`/`vencida` → retorna `[]`.
 - **Saúde agenciamento**: N parcelas = length do schedule, mensal, `amount = mensalidade * pct` (com/sem imposto).
@@ -73,6 +79,7 @@ bun run lint         # zero erros
 ```
 
 Metas de nota:
+
 - Prettier limpo + warnings do react-refresh reduzidos: **+0.05**
 - Bateria de testes cobrindo os 3 núcleos de lógica pura: **+0.35**
 - **Nova nota estimada: 9.5/10**

@@ -168,12 +168,7 @@ describe("generateCommissionSchedule — Consórcio", () => {
 
 describe("expectedRecurrencesUntil", () => {
   it("retorna [] para produtos não-saúde", () => {
-    const out = expectedRecurrencesUntil(
-      policy(),
-      config(),
-      new Date(2027, 0, 1),
-      new Set(),
-    );
+    const out = expectedRecurrencesUntil(policy(), config(), new Date(2027, 0, 1), new Set());
     expect(out).toEqual([]);
   });
 

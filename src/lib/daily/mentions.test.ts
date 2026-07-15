@@ -47,9 +47,7 @@ describe("extractMentions", () => {
   it("prefers longest matching prefix", () => {
     // Só "João Silva" está no time; "João Silva Santos" não existe.
     // Match guloso deve casar "João Silva" (2 palavras), não só "João".
-    expect(extractMentions("@João Silva Santos revisou", IDX)).toEqual([
-      "João Silva",
-    ]);
+    expect(extractMentions("@João Silva Santos revisou", IDX)).toEqual(["João Silva"]);
   });
 
   it("matches @todos", () => {
