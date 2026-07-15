@@ -116,30 +116,20 @@ type MentionEntry = {
   clientName?: string;
 };
 
-function useMyMentions(): MentionEntry[] {
+function useMyMentions(teamIndex: TeamNameIndex): MentionEntry[] {
   const { tasks } = useTaskStore();
   const currentUserId = useCurrentUserId();
 
   return useMemo(() => {
-    // Cache local: evita reprocessar o mesmo texto (descrição/comentário)
-    // dentro deste memo. `extractMentions` faz backtracking O(n²) por match.
+    // Cache local — `extractMentions` faz backtracking O(n) por match;
+    // muitos comentários repetem @menções, então cachear por texto ajuda.
     const mentionCache = new Map<string, string[]>();
-    const mentionsOf = (text: string) => {
-      const cached = mentionCache.get(text);
-      if (cached) return cached;
-      const result = extractMentions(text);
-      mentionCache.set(text, result);
-      return result;
-    };
     const hit = (text: string) =>
-      mentionsOf(text).some((m) => {
-        if (m.toLowerCase() === "todos") return true;
-        return nameToId(m) === currentUserId;
-      });
+      textMentionsUser(text, currentUserId, teamIndex, mentionCache);
 
     const out: MentionEntry[] = [];
     tasks.forEach((task) => {
-      // Descrição da task (autor = assigneeId como proxy, já que não temos createdBy)
+      // Descrição da task (autor = assigneeId como proxy — ainda não temos createdBy)
       if (task.description && hit(task.description)) {
         out.push({
           taskId: task.id,
@@ -175,11 +165,18 @@ function useMyMentions(): MentionEntry[] {
         return true;
       })
       .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-  }, [tasks, currentUserId]);
+  }, [tasks, currentUserId, teamIndex]);
 }
 
-function MentionsSection({ onOpenTaskId }: { onOpenTaskId: (id: string) => void }) {
-  const entries = useMyMentions();
+function MentionsSection({
+  teamIndex,
+  onOpenTaskId,
+}: {
+  teamIndex: TeamNameIndex;
+  onOpenTaskId: (id: string) => void;
+}) {
+  const { members } = useTeam();
+  const entries = useMyMentions(teamIndex);
   return (
     <SectionCard
       icon={<AtSign className="h-4 w-4" />}
