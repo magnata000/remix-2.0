@@ -97,6 +97,26 @@ export function useTeam() {
   return ctx;
 }
 
+/**
+ * Hook reativo: retorna um índice `lowercase name → id` derivado do estado
+ * atual do provider. Ideal para código React.
+ */
+export function useTeamNameIndex(): TeamNameIndex {
+  const { members } = useTeam();
+  return useMemo(() => buildTeamNameIndex(members), [members]);
+}
+
+/**
+ * Helper síncrono, consumível fora de componentes React (funções puras,
+ * utilitários). Cacheado por módulo — hoje reflete apenas o seed mock;
+ * quando a fonte for real, este helper vira o ponto único de swap.
+ */
+let cachedIndex: TeamNameIndex | null = null;
+export function getTeamNameIndex(): TeamNameIndex {
+  if (!cachedIndex) cachedIndex = buildTeamNameIndex(initialMembers);
+  return cachedIndex;
+}
+
 export function buildInviteLink(token: string) {
   if (typeof window === "undefined") return `/invite/${token}`;
   return `${window.location.origin}/invite/${token}`;
