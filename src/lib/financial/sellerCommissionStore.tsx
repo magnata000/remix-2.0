@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Branch, Commission, Policy } from "@/lib/mock/data";
 import { useTeam } from "@/lib/team/teamStore";
@@ -69,6 +70,7 @@ export function SellerCommissionStoreProvider({ children }: { children: ReactNod
 
 export function useSellerCommissionStore() {
   const ctx = useContext(SellerCtx);
-  if (!ctx) throw new Error("useSellerCommissionStore must be used inside SellerCommissionStoreProvider");
+  if (!ctx)
+    throw new Error("useSellerCommissionStore must be used inside SellerCommissionStoreProvider");
   return ctx;
 }

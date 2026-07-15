@@ -96,11 +96,7 @@ export function PolicyTaxOverrideFields({
             : "sem imposto"}
         </span>
         {overriding && (
-          <button
-            type="button"
-            onClick={resetToDefault}
-            className="text-brand hover:underline"
-          >
+          <button type="button" onClick={resetToDefault} className="text-brand hover:underline">
             Usar padrão
           </button>
         )}

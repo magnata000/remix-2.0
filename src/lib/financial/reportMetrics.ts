@@ -125,7 +125,20 @@ export function revenueLosses(commissions: Commission[], r: DateRange): RevenueL
   const canc = commissions.filter((c) => c.status === "cancelada" && inRange(c.dueDate, r));
   const dev = commissions.filter((c) => c.status === "devolvido" && inRange(c.refundedAt, r));
 
-  const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const MONTHS = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
   const serieMensal: Array<{ month: string; canceladas: number; devolvidas: number }> = [];
   const cur = new Date(r.start.getFullYear(), r.start.getMonth(), 1);
   const end = new Date(r.end.getFullYear(), r.end.getMonth(), 1);
@@ -213,8 +226,14 @@ export function computeDre(
     margem,
     breakdown: {
       receita: { comissoes, manuais },
-      custosByCat: Array.from(split.custosByCat.entries()).map(([name, value]) => ({ name, value })),
-      despesasByCat: Array.from(split.despesasByCat.entries()).map(([name, value]) => ({ name, value })),
+      custosByCat: Array.from(split.custosByCat.entries()).map(([name, value]) => ({
+        name,
+        value,
+      })),
+      despesasByCat: Array.from(split.despesasByCat.entries()).map(([name, value]) => ({
+        name,
+        value,
+      })),
     },
   };
 }
@@ -241,7 +260,12 @@ export function projectedCashFlow(
   const saldoAtual = paidComm + manualIn - paidOut;
 
   const recebimentos = commissions
-    .filter((c) => (c.status === "pendente" || c.status === "atrasado") && new Date(c.dueDate).getTime() > now && new Date(c.dueDate).getTime() <= horizon)
+    .filter(
+      (c) =>
+        (c.status === "pendente" || c.status === "atrasado") &&
+        new Date(c.dueDate).getTime() > now &&
+        new Date(c.dueDate).getTime() <= horizon,
+    )
     .reduce((s, c) => s + c.amount, 0);
 
   // pagamentos futuros: recorrentes mensais projetados por dueDay dentro do horizonte
@@ -276,7 +300,20 @@ export function delinquency(commissions: Commission[], asOf = new Date()) {
   const y = asOf.getFullYear();
   const m = asOf.getMonth();
   const serieMensal: Array<{ month: string; value: number }> = [];
-  const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const MONTHS = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
   for (let i = 11; i >= 0; i--) {
     const dt = new Date(y, m - i, 1);
     const label = MONTHS[dt.getMonth()];
@@ -295,7 +332,8 @@ export function delinquency(commissions: Commission[], asOf = new Date()) {
 export function compareDelta(current: number, previous: number) {
   const delta = current - previous;
   const deltaPct = previous === 0 ? (current === 0 ? 0 : 100) : (delta / Math.abs(previous)) * 100;
-  const trend: "up" | "down" | "flat" = Math.abs(deltaPct) < 0.01 ? "flat" : delta >= 0 ? "up" : "down";
+  const trend: "up" | "down" | "flat" =
+    Math.abs(deltaPct) < 0.01 ? "flat" : delta >= 0 ? "up" : "down";
   return { delta, deltaPct, trend };
 }
 
@@ -303,7 +341,20 @@ export function monthlySeries(
   r: DateRange,
   fn: (start: Date, end: Date) => number,
 ): Array<{ month: string; value: number; key: string }> {
-  const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const MONTHS = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
   const out: Array<{ month: string; value: number; key: string }> = [];
   const cur = new Date(r.start.getFullYear(), r.start.getMonth(), 1);
   const end = new Date(r.end.getFullYear(), r.end.getMonth(), 1);

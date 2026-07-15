@@ -1,5 +1,20 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { commissions as seedCommissions, type Commission, type CommissionStatusValue, type Policy } from "@/lib/mock/data";
+/* eslint-disable react-refresh/only-export-components */
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  commissions as seedCommissions,
+  type Commission,
+  type CommissionStatusValue,
+  type Policy,
+} from "@/lib/mock/data";
 import {
   generateCommissionSchedule,
   expectedRecurrencesUntil,
@@ -99,7 +114,12 @@ export function CommissionStoreProvider({ children }: { children: ReactNode }) {
         if (!t) return c;
         if (c.status === "pago") {
           devolvidas += 1;
-          return { ...c, status: "devolvido" as const, refundedAt, refundReason: `Cancelamento da apólice ${t.policy.number}` };
+          return {
+            ...c,
+            status: "devolvido" as const,
+            refundedAt,
+            refundReason: `Cancelamento da apólice ${t.policy.number}`,
+          };
         }
         if (c.status === "pendente" || c.status === "atrasado") {
           canceladas += 1;
@@ -130,8 +150,22 @@ export function CommissionStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<Ctx>(
-    () => ({ commissions, updateCommissionStatus, patchCommission, generateForPolicy, scheduleOfPolicy, deleteByPolicy }),
-    [commissions, updateCommissionStatus, patchCommission, generateForPolicy, scheduleOfPolicy, deleteByPolicy],
+    () => ({
+      commissions,
+      updateCommissionStatus,
+      patchCommission,
+      generateForPolicy,
+      scheduleOfPolicy,
+      deleteByPolicy,
+    }),
+    [
+      commissions,
+      updateCommissionStatus,
+      patchCommission,
+      generateForPolicy,
+      scheduleOfPolicy,
+      deleteByPolicy,
+    ],
   );
 
   return <CommissionContext.Provider value={value}>{children}</CommissionContext.Provider>;

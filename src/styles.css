@@ -116,11 +116,11 @@
   --input: oklch(0.92 0.005 250);
   --ring: oklch(0.82 0.08 235);
 
-  --chart-1: oklch(0.82 0.08 235);    /* azul bebê */
-  --chart-2: oklch(0.78 0.16 60);     /* laranja */
-  --chart-3: oklch(0.7 0.15 155);     /* verde */
-  --chart-4: oklch(0.62 0.22 27);     /* vermelho */
-  --chart-5: oklch(0.72 0.1 280);     /* lilás suave */
+  --chart-1: oklch(0.82 0.08 235); /* azul bebê */
+  --chart-2: oklch(0.78 0.16 60); /* laranja */
+  --chart-3: oklch(0.7 0.15 155); /* verde */
+  --chart-4: oklch(0.62 0.22 27); /* vermelho */
+  --chart-5: oklch(0.72 0.1 280); /* lilás suave */
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.18 0.015 260);
@@ -181,7 +181,8 @@
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }

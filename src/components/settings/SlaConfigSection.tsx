@@ -10,7 +10,8 @@ import type { KanbanStage } from "@/lib/mock/data";
 const PIPELINE_STAGES: KanbanStage[] = ["lead", "cotacao", "negociacao"];
 
 export function SlaConfigSection() {
-  const { taskColumnHours, pipelineStageHours, setTaskColumnHours, setPipelineStageHours } = useSlaConfig();
+  const { taskColumnHours, pipelineStageHours, setTaskColumnHours, setPipelineStageHours } =
+    useSlaConfig();
   const { columns } = useTaskStore();
 
   return (
@@ -22,7 +23,8 @@ export function SlaConfigSection() {
         <div>
           <h2 className="text-lg font-semibold">SLA — prazos padrão</h2>
           <p className="text-xs text-muted-foreground">
-            Defina em horas o SLA padrão de cada etapa do Pipeline e coluna de Tarefas. Etapas terminais (Fechado, Perdido, Concluído) não têm SLA ativo.
+            Defina em horas o SLA padrão de cada etapa do Pipeline e coluna de Tarefas. Etapas
+            terminais (Fechado, Perdido, Concluído) não têm SLA ativo.
           </p>
         </div>
       </div>
@@ -72,7 +74,13 @@ export function SlaConfigSection() {
   );
 }
 
-function HoursInput({ value, onChange }: { value: number | undefined; onChange: (v: number | undefined) => void }) {
+function HoursInput({
+  value,
+  onChange,
+}: {
+  value: number | undefined;
+  onChange: (v: number | undefined) => void;
+}) {
   return (
     <div className="flex items-center gap-2">
       <Input

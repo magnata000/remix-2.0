@@ -23,7 +23,9 @@ const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 function nextOccurrence(from: Date, month: number, day: number): Date {
   const y = from.getFullYear();
   const candidate = new Date(y, month, day);
-  if (candidate.getTime() < new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()) {
+  if (
+    candidate.getTime() < new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()
+  ) {
     return new Date(y + 1, month, day);
   }
   return candidate;
@@ -42,8 +44,15 @@ function parseISODate(s: string): Date | null {
  * Calcula cards de workflow a serem criados.
  * Dedupe via `sourceKey = "wf:<tipo>:<policyId>[:<beneficiaryId>]:<yyyy-mm-dd>"`.
  */
-export function runWorkflows({ policies, existingTasks, defaultColumnId, now = new Date() }: WorkflowDeps): NewTaskInput[] {
-  const existingKeys = new Set(existingTasks.map((t) => t.sourceKey).filter((k): k is string => !!k));
+export function runWorkflows({
+  policies,
+  existingTasks,
+  defaultColumnId,
+  now = new Date(),
+}: WorkflowDeps): NewTaskInput[] {
+  const existingKeys = new Set(
+    existingTasks.map((t) => t.sourceKey).filter((k): k is string => !!k),
+  );
   const out: NewTaskInput[] = [];
 
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

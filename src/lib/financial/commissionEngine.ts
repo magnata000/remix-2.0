@@ -12,16 +12,16 @@ export type CommissionConfig = {
   insurer: Insurer;
   product: CommissionProduct;
   comissaoLiquida: boolean;
-  taxaImposto: number;           // ex: 0.115 (11,5%)
+  taxaImposto: number; // ex: 0.115 (11,5%)
   // Saúde
-  agenciamento: number[];        // ex: [1.0, 0.5, 0.3, 0.2]
-  recorrenciaPct: number;        // ex: 0.03
+  agenciamento: number[]; // ex: [1.0, 0.5, 0.3, 0.2]
+  recorrenciaPct: number; // ex: 0.03
   vitalicioStartInstallment?: number; // p/ scheme "vitalicio" — a partir da parcela X
-  malhaId?: string;                   // p/ Saúde — classificação interna
+  malhaId?: string; // p/ Saúde — classificação interna
   // Auto / Seguros
-  pctMin: number;                // ex: 0.10
-  pctMax: number;                // ex: 0.25
-  parceladoMinInstallments?: number;   // "Parcelado" disponível a partir de X parcelas
+  pctMin: number; // ex: 0.10
+  pctMax: number; // ex: 0.25
+  parceladoMinInstallments?: number; // "Parcelado" disponível a partir de X parcelas
   adiantamentoMaxInstallments?: number; // "Adiantamento" disponível até X parcelas
   defaultScheme: CommissionScheme;
 };
@@ -183,7 +183,7 @@ export function expectedRecurrencesUntil(
   firstRecurrenceMonth.setMonth(firstRecurrenceMonth.getMonth() + startOffsetMonths);
 
   const out: Commission[] = [];
-  let cursor = new Date(firstRecurrenceMonth);
+  const cursor = new Date(firstRecurrenceMonth);
   let i = 1;
   while (
     cursor.getFullYear() < reference.getFullYear() ||
@@ -212,13 +212,19 @@ export function expectedRecurrencesUntil(
 
 export function commissionKindLabel(kind?: Commission["kind"]): string {
   switch (kind) {
-    case "agenciamento": return "Agenciamento";
-    case "recorrencia": return "Recorrência";
-    case "vitalicio": return "Vitalício";
-    case "esgotamento": return "Adiantamento";
-    case "parcela": return "Parcelado";
-    case "unica": return "Única";
-    default: return "Comissão";
+    case "agenciamento":
+      return "Agenciamento";
+    case "recorrencia":
+      return "Recorrência";
+    case "vitalicio":
+      return "Vitalício";
+    case "esgotamento":
+      return "Adiantamento";
+    case "parcela":
+      return "Parcelado";
+    case "unica":
+      return "Única";
+    default:
+      return "Comissão";
   }
 }
-

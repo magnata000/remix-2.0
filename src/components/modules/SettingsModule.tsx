@@ -35,7 +35,6 @@ import { SlaConfigSection } from "@/components/settings/SlaConfigSection";
 
 import { toast } from "sonner";
 
-
 const integrations = [
   { name: "Porto Seguro", connected: true },
   { name: "Bradesco", connected: true },
@@ -63,11 +62,17 @@ export function SettingsModule() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerencie sua corretora, equipe e integrações</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Gerencie sua corretora, equipe e integrações
+        </p>
       </div>
 
       {/* Perfil */}
-      <Section icon={Building2} title="Perfil da corretora" desc="Informações exibidas em propostas">
+      <Section
+        icon={Building2}
+        title="Perfil da corretora"
+        desc="Informações exibidas em propostas"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Razão social" defaultValue="InsuranceOS Corretora Ltda" />
           <Field label="CNPJ" defaultValue="00.000.000/0001-00" />
@@ -149,11 +154,7 @@ export function SettingsModule() {
           ))}
         </div>
         <div className="mt-4 flex justify-end">
-          <Button
-            variant="outline"
-            className="rounded-xl"
-            onClick={() => setInviteOpen(true)}
-          >
+          <Button variant="outline" className="rounded-xl" onClick={() => setInviteOpen(true)}>
             Convidar membro
           </Button>
         </div>
@@ -203,8 +204,6 @@ export function SettingsModule() {
       {/* SLA */}
       <SlaConfigSection />
 
-
-
       {/* Preferências */}
       <Section icon={Bell} title="Preferências" desc="Notificações e alertas">
         <div className="space-y-3">
@@ -216,7 +215,11 @@ export function SettingsModule() {
       </Section>
 
       {/* Plano */}
-      <Section icon={CreditCard} title="Plano & Faturamento" desc="Plano Pro • Renova em 12/05/2026">
+      <Section
+        icon={CreditCard}
+        title="Plano & Faturamento"
+        desc="Plano Pro • Renova em 12/05/2026"
+      >
         <div className="rounded-2xl bg-brand/15 p-5 flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-xs text-muted-foreground">Plano atual</p>

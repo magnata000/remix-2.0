@@ -17,10 +17,7 @@ export function buildTeamNameIndex(
 }
 
 /** Resolve um nome (ou "todos") para um id — ou `null`. */
-export function resolveMentionId(
-  name: string,
-  index: TeamNameIndex,
-): string | null {
+export function resolveMentionId(name: string, index: TeamNameIndex): string | null {
   return index.get(name.toLowerCase()) ?? null;
 }
 

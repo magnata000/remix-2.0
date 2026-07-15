@@ -1,9 +1,24 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, TrendingDown, TrendingUp, Trophy, AlertTriangle, Target, DollarSign, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  TrendingDown,
+  TrendingUp,
+  Trophy,
+  AlertTriangle,
+  Target,
+  DollarSign,
+  Users,
+} from "lucide-react";
 import { formatBRL, team } from "@/lib/mock/data";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { computePipelineAnalytics, formatHours, STAGE_ORDER } from "@/lib/pipeline/salesStats";
@@ -31,13 +46,22 @@ export function PipelineAnalytics({ onBack }: Props) {
     });
   }, [opportunities, period, assignee]);
 
-  const maxPassed = Math.max(...analytics.stages.filter((s) => s.stage !== "perdido").map((s) => s.totalPassed), 1);
+  const maxPassed = Math.max(
+    ...analytics.stages.filter((s) => s.stage !== "perdido").map((s) => s.totalPassed),
+    1,
+  );
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="rounded-xl" onClick={onBack} aria-label="Voltar">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-xl"
+            onClick={onBack}
+            aria-label="Voltar"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -47,7 +71,9 @@ export function PipelineAnalytics({ onBack }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
-            <SelectTrigger className="w-40 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40 rounded-xl bg-muted border-0">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="30">Últimos 30 dias</SelectItem>
               <SelectItem value="90">Últimos 90 dias</SelectItem>
@@ -56,10 +82,23 @@ export function PipelineAnalytics({ onBack }: Props) {
             </SelectContent>
           </Select>
           <Select value={assignee} onValueChange={setAssignee}>
-            <SelectTrigger className="w-48 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-48 rounded-xl bg-muted border-0">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os responsáveis</SelectItem>
-              {team.map((m) => <SelectItem key={m.id} value={m.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}>{m.name}</SelectItem>)}
+              {team.map((m) => (
+                <SelectItem
+                  key={m.id}
+                  value={m.name
+                    .split(" ")
+                    .map((p) => p[0])
+                    .slice(0, 2)
+                    .join("")}
+                >
+                  {m.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -102,7 +141,11 @@ export function PipelineAnalytics({ onBack }: Props) {
                 <p className="text-xs text-muted-foreground">Maior gargalo</p>
                 <p className="font-semibold">{stageLabels[analytics.bottleneckStage]}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Tempo médio: {formatHours(analytics.stages.find((s) => s.stage === analytics.bottleneckStage)!.avgHoursInStage)}
+                  Tempo médio:{" "}
+                  {formatHours(
+                    analytics.stages.find((s) => s.stage === analytics.bottleneckStage)!
+                      .avgHoursInStage,
+                  )}
                 </p>
               </div>
             </div>
@@ -116,7 +159,8 @@ export function PipelineAnalytics({ onBack }: Props) {
                 <p className="text-xs text-muted-foreground">Etapa com maior perda</p>
                 <p className="font-semibold">{stageLabels[analytics.worstLossStage]}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {analytics.stages.find((s) => s.stage === analytics.worstLossStage)!.lostFromHere} leads perdidos aqui
+                  {analytics.stages.find((s) => s.stage === analytics.worstLossStage)!.lostFromHere}{" "}
+                  leads perdidos aqui
                 </p>
               </div>
             </div>
@@ -191,7 +235,9 @@ export function PipelineAnalytics({ onBack }: Props) {
                   <td className="px-5 py-3 font-medium">{stageLabels[s.stage]}</td>
                   <td className="px-5 py-3">{s.currentCount}</td>
                   <td className="px-5 py-3 text-muted-foreground">{s.totalPassed}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{formatHours(s.avgHoursInStage)}</td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {formatHours(s.avgHoursInStage)}
+                  </td>
                   <td className="px-5 py-3 text-success">{s.advancedFromHere}</td>
                   <td className="px-5 py-3 text-destructive">{s.lostFromHere}</td>
                 </tr>
@@ -221,10 +267,14 @@ export function PipelineAnalytics({ onBack }: Props) {
                       className="h-full bg-destructive/70 rounded-lg flex items-center justify-end px-2"
                       style={{ width: `${Math.max(pct, 6)}%` }}
                     >
-                      <span className="text-[10px] font-bold text-destructive-foreground">{r.count}</span>
+                      <span className="text-[10px] font-bold text-destructive-foreground">
+                        {r.count}
+                      </span>
                     </div>
                   </div>
-                  <Badge variant="outline" className="rounded-full text-[10px] shrink-0">{pct.toFixed(0)}%</Badge>
+                  <Badge variant="outline" className="rounded-full text-[10px] shrink-0">
+                    {pct.toFixed(0)}%
+                  </Badge>
                 </div>
               );
             })}
@@ -235,7 +285,17 @@ export function PipelineAnalytics({ onBack }: Props) {
   );
 }
 
-function Kpi({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint?: string }) {
+function Kpi({
+  icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
   return (
     <Card className="p-4 rounded-2xl">
       <div className="flex items-center gap-2 text-muted-foreground">

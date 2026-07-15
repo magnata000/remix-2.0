@@ -15,7 +15,7 @@ type Props = {
 export function QuoteCompare({ selectedIds, onBack }: Props) {
   const { records } = useQuoteStore();
   const [mode, setMode] = useState<"tabela" | "timeline">(
-    typeof window !== "undefined" && window.innerWidth < 768 ? "timeline" : "tabela"
+    typeof window !== "undefined" && window.innerWidth < 768 ? "timeline" : "tabela",
   );
 
   const versions = useMemo(() => {
@@ -41,7 +41,9 @@ export function QuoteCompare({ selectedIds, onBack }: Props) {
   if (branchSet.size > 1) {
     return (
       <Card className="p-10 rounded-2xl border-border shadow-none text-center text-sm">
-        <p className="font-medium text-destructive">Não é possível comparar cotações de ramos diferentes.</p>
+        <p className="font-medium text-destructive">
+          Não é possível comparar cotações de ramos diferentes.
+        </p>
         <p className="text-muted-foreground mt-1">
           Ramos selecionados: {Array.from(branchSet).join(", ")}. Selecione versões do mesmo ramo.
         </p>
@@ -79,7 +81,11 @@ export function QuoteCompare({ selectedIds, onBack }: Props) {
         </div>
       </div>
 
-      {mode === "tabela" ? <CompareTable versions={versions} /> : <CompareTimeline versions={versions} />}
+      {mode === "tabela" ? (
+        <CompareTable versions={versions} />
+      ) : (
+        <CompareTimeline versions={versions} />
+      )}
     </div>
   );
 }
@@ -100,7 +106,7 @@ function CompareTable({ versions }: { versions: QuoteRecord[] }) {
   const insurers = Array.from(new Set(versions.flatMap((v) => v.results.map((r) => r.insurer))));
   const cheapestByVersion = versions.map((v) => Math.min(...v.results.map((r) => r.price)));
 
-  const isDiffRow = (row: typeof ROWS[number]) => {
+  const isDiffRow = (row: (typeof ROWS)[number]) => {
     const vals = versions.map((v) => row.get(v));
     return new Set(vals).size > 1;
   };
@@ -118,7 +124,9 @@ function CompareTable({ versions }: { versions: QuoteRecord[] }) {
                     <span>v{v.version}</span>
                     <span className="text-xs text-muted-foreground">{v.clientName}</span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground font-normal">{formatDateShort(v.createdAt)}</div>
+                  <div className="text-[11px] text-muted-foreground font-normal">
+                    {formatDateShort(v.createdAt)}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -130,7 +138,10 @@ function CompareTable({ versions }: { versions: QuoteRecord[] }) {
                 <tr key={row.label} className="border-t border-border">
                   <td className="px-4 py-2.5 text-muted-foreground">{row.label}</td>
                   {versions.map((v) => (
-                    <td key={v.id} className={`px-4 py-2.5 ${highlight ? "bg-warning/10 font-medium" : ""}`}>
+                    <td
+                      key={v.id}
+                      className={`px-4 py-2.5 ${highlight ? "bg-warning/10 font-medium" : ""}`}
+                    >
                       {row.get(v) || "—"}
                     </td>
                   ))}
@@ -138,7 +149,10 @@ function CompareTable({ versions }: { versions: QuoteRecord[] }) {
               );
             })}
             <tr className="border-t-2 border-border bg-muted/30">
-              <td className="px-4 py-2.5 font-semibold text-muted-foreground" colSpan={versions.length + 1}>
+              <td
+                className="px-4 py-2.5 font-semibold text-muted-foreground"
+                colSpan={versions.length + 1}
+              >
                 Preços por seguradora
               </td>
             </tr>
@@ -149,7 +163,10 @@ function CompareTable({ versions }: { versions: QuoteRecord[] }) {
                   const r = v.results.find((x) => x.insurer === ins);
                   const isCheapest = r && r.price === cheapestByVersion[vi];
                   return (
-                    <td key={v.id} className={`px-4 py-2.5 ${isCheapest ? "text-success font-semibold" : ""}`}>
+                    <td
+                      key={v.id}
+                      className={`px-4 py-2.5 ${isCheapest ? "text-success font-semibold" : ""}`}
+                    >
                       {r ? formatBRL(r.price) : "—"}
                     </td>
                   );
@@ -157,7 +174,9 @@ function CompareTable({ versions }: { versions: QuoteRecord[] }) {
               </tr>
             ))}
             <tr className="border-t-2 border-border bg-brand/15">
-              <td className="px-4 py-3 font-semibold flex items-center gap-1"><Trophy className="h-4 w-4" /> Melhor preço</td>
+              <td className="px-4 py-3 font-semibold flex items-center gap-1">
+                <Trophy className="h-4 w-4" /> Melhor preço
+              </td>
               {versions.map((v, vi) => (
                 <td key={v.id} className="px-4 py-3 font-bold">
                   {formatBRL(cheapestByVersion[vi])}
@@ -190,7 +209,9 @@ function CompareTimeline({ versions }: { versions: QuoteRecord[] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{v.clientName}</span>
-                  <Badge variant="outline" className="bg-muted border-0">{v.branch}</Badge>
+                  <Badge variant="outline" className="bg-muted border-0">
+                    {v.branch}
+                  </Badge>
                   <StatusBadge status={v.status} />
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -205,8 +226,11 @@ function CompareTimeline({ versions }: { versions: QuoteRecord[] }) {
                   {prev && (
                     <div className="rounded-xl bg-muted/50 p-3">
                       <p className="text-[11px] text-muted-foreground">vs versão anterior</p>
-                      <p className={`text-xl font-bold tracking-tight ${delta > 0 ? "text-destructive" : delta < 0 ? "text-success" : ""}`}>
-                        {delta > 0 ? "+" : ""}{formatBRL(delta)}
+                      <p
+                        className={`text-xl font-bold tracking-tight ${delta > 0 ? "text-destructive" : delta < 0 ? "text-success" : ""}`}
+                      >
+                        {delta > 0 ? "+" : ""}
+                        {formatBRL(delta)}
                       </p>
                     </div>
                   )}
@@ -222,8 +246,12 @@ function CompareTimeline({ versions }: { versions: QuoteRecord[] }) {
                     <p className="text-xs font-medium text-muted-foreground mb-1.5">O que mudou:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {diffs.map((d) => (
-                        <span key={d.field} className="inline-flex items-center gap-1 text-xs bg-warning/15 text-warning-foreground px-2 py-1 rounded-md">
-                          <strong>{d.label}:</strong> <s className="opacity-60">{d.from || "—"}</s> → {d.to || "—"}
+                        <span
+                          key={d.field}
+                          className="inline-flex items-center gap-1 text-xs bg-warning/15 text-warning-foreground px-2 py-1 rounded-md"
+                        >
+                          <strong>{d.label}:</strong> <s className="opacity-60">{d.from || "—"}</s>{" "}
+                          → {d.to || "—"}
                         </span>
                       ))}
                     </div>

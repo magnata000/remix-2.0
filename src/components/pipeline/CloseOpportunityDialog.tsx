@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -24,7 +30,13 @@ export function CloseOpportunityDialog({ open, onOpenChange, opportunity, onConf
       .filter((r) => r.groupId === opportunity.quoteGroupId)
       .map((r) => {
         const winnerPrice = r.results.find((q) => q.insurer === r.winnerInsurer)?.price ?? 0;
-        return { id: r.id, version: r.version, createdAt: r.createdAt, winner: r.winnerInsurer, price: winnerPrice };
+        return {
+          id: r.id,
+          version: r.version,
+          createdAt: r.createdAt,
+          winner: r.winnerInsurer,
+          price: winnerPrice,
+        };
       })
       .sort((a, b) => b.version - a.version);
   }, [records, opportunity?.quoteGroupId]);
@@ -79,7 +91,9 @@ export function CloseOpportunityDialog({ open, onOpenChange, opportunity, onConf
                       <p className="text-sm font-medium">
                         v{v.version} · {v.winner}
                       </p>
-                      <p className="text-xs text-muted-foreground">{formatDateShort(v.createdAt)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateShort(v.createdAt)}
+                      </p>
                     </div>
                     <p className="text-sm font-bold">{formatBRL(v.price)}</p>
                   </label>
@@ -98,7 +112,9 @@ export function CloseOpportunityDialog({ open, onOpenChange, opportunity, onConf
               inputMode="numeric"
               value={manualValue}
               onChange={(e) => setManualValue(e.target.value.replace(/\D/g, ""))}
-              onBlur={() => { if (numericValue > 0) setManualValue(formatBRLInt(numericValue)); }}
+              onBlur={() => {
+                if (numericValue > 0) setManualValue(formatBRLInt(numericValue));
+              }}
               onFocus={() => setManualValue(String(numericValue || ""))}
               placeholder="R$ 0"
               className="mt-1.5 rounded-xl bg-muted border-0"

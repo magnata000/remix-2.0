@@ -3,7 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MulticalcWizard } from "@/components/multicalc/MulticalcWizard";
 import { QuoteHistory } from "@/components/multicalc/QuoteHistory";
 import { QuoteCompare } from "@/components/multicalc/QuoteCompare";
-import { useQuoteStore, QuoteRecord, QuoteFormData, generateResults } from "@/lib/multicalc/quoteStore";
+import {
+  useQuoteStore,
+  QuoteRecord,
+  QuoteFormData,
+  generateResults,
+} from "@/lib/multicalc/quoteStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { useNavigation } from "@/lib/navigation";
 import { toast } from "sonner";
@@ -16,12 +21,19 @@ export function MulticalcModule() {
   const [view, setView] = useState<"historico" | "comparar">("historico");
   const [wizardOpen, setWizardOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
-  const [focusedGroupId, setFocusedGroupId] = useState<string | null>(initialFocus.quoteGroupId ?? null);
+  const [focusedGroupId, setFocusedGroupId] = useState<string | null>(
+    initialFocus.quoteGroupId ?? null,
+  );
   const selectedBranches = new Set(
-    selected.map((id) => records.find((r) => r.id === id)?.branch).filter(Boolean) as string[]
+    selected.map((id) => records.find((r) => r.id === id)?.branch).filter(Boolean) as string[],
   );
   const mixedBranches = selectedBranches.size > 1;
-  const [editing, setEditing] = useState<{ groupId: string; version: number; clientName: string; data: QuoteFormData } | null>(null);
+  const [editing, setEditing] = useState<{
+    groupId: string;
+    version: number;
+    clientName: string;
+    data: QuoteFormData;
+  } | null>(null);
 
   const openNewQuote = () => {
     setEditing(null);
@@ -29,7 +41,12 @@ export function MulticalcModule() {
   };
 
   const handleEditVersion = (rec: QuoteRecord) => {
-    setEditing({ groupId: rec.groupId, version: rec.version, clientName: rec.clientName, data: rec.formData });
+    setEditing({
+      groupId: rec.groupId,
+      version: rec.version,
+      clientName: rec.clientName,
+      data: rec.formData,
+    });
     setWizardOpen(true);
   };
 
@@ -42,7 +59,11 @@ export function MulticalcModule() {
     toast.success(`Cotação recalculada — nova versão v${newRec.version} salva`);
   };
 
-  const handleComplete = (payload: { formData: QuoteFormData; results: QuoteRecord["results"]; winner: QuoteRecord["winnerInsurer"] }) => {
+  const handleComplete = (payload: {
+    formData: QuoteFormData;
+    results: QuoteRecord["results"];
+    winner: QuoteRecord["winnerInsurer"];
+  }) => {
     if (editing) {
       const rec = addVersion(editing.groupId, payload.formData, payload.results, payload.winner);
       toast.success(`Nova versão v${rec.version} salva no histórico`);
@@ -56,7 +77,7 @@ export function MulticalcModule() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   };
 
   const clearSelection = () => setSelected([]);
@@ -73,12 +94,18 @@ export function MulticalcModule() {
     setView("comparar");
   };
 
-  const onStatusChanged = (groupId: string, status: "ganha" | "perdida", lostReason?: import("@/lib/multicalc/quoteStore").LostReason) => {
+  const onStatusChanged = (
+    groupId: string,
+    status: "ganha" | "perdida",
+    lostReason?: import("@/lib/multicalc/quoteStore").LostReason,
+  ) => {
     const opp = byQuoteGroup(groupId);
     if (!opp) return;
     if (status === "ganha") {
       const grp = groups.find((g) => g.groupId === groupId);
-      const winnerPrice = grp ? Math.min(...grp.latest.results.map((r) => r.price)) : opp.estimatedValue;
+      const winnerPrice = grp
+        ? Math.min(...grp.latest.results.map((r) => r.price))
+        : opp.estimatedValue;
       moveStage(opp.id, "fechado");
       setEstimatedValue(opp.id, winnerPrice);
       toast.success(`Pipeline atualizado: ${opp.clientName} → Fechado`);
@@ -135,7 +162,9 @@ export function MulticalcModule() {
           <MulticalcWizard
             key={editing?.groupId ?? "new"}
             initialData={editing?.data}
-            editingLabel={editing ? `Editando v${editing.version} de ${editing.clientName}` : undefined}
+            editingLabel={
+              editing ? `Editando v${editing.version} de ${editing.clientName}` : undefined
+            }
             onComplete={handleComplete}
           />
         </DialogContent>

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -17,7 +18,13 @@ const statusColor: Record<CommissionStatusValue, string> = {
   cancelada: "bg-muted text-muted-foreground border-0",
 };
 
-const STATUSES: CommissionStatusValue[] = ["pago", "pendente", "atrasado", "devolvido", "cancelada"];
+const STATUSES: CommissionStatusValue[] = [
+  "pago",
+  "pendente",
+  "atrasado",
+  "devolvido",
+  "cancelada",
+];
 
 type Props = { commission: Commission };
 
@@ -38,7 +45,9 @@ export function CommissionStatusMenu({ commission }: Props) {
           title="Clique para alterar o status"
           className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
         >
-          <Badge className={`${statusColor[commission.status]} cursor-pointer hover:opacity-80 transition`}>
+          <Badge
+            className={`${statusColor[commission.status]} cursor-pointer hover:opacity-80 transition`}
+          >
             {commission.status}
           </Badge>
         </button>
@@ -54,7 +63,9 @@ export function CommissionStatusMenu({ commission }: Props) {
             className="capitalize"
           >
             <Badge className={`${statusColor[s]} mr-2`}>{s}</Badge>
-            {s === commission.status && <span className="text-xs text-muted-foreground ml-auto">atual</span>}
+            {s === commission.status && (
+              <span className="text-xs text-muted-foreground ml-auto">atual</span>
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

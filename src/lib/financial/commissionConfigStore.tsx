@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Insurer, Policy } from "@/lib/mock/data";
 import {
@@ -19,7 +20,7 @@ const baseAuto = (insurer: Insurer, comissaoLiquida = false): CommissionConfig =
   taxaImposto: DEFAULT_TAX_RATE,
   agenciamento: DEFAULT_AGENCIAMENTO,
   recorrenciaPct: DEFAULT_RECORRENCIA,
-  pctMin: 0.10,
+  pctMin: 0.1,
   pctMax: 0.25,
   defaultScheme: "esgotamento",
   parceladoMinInstallments: 5,
@@ -67,7 +68,11 @@ type Ctx = {
   malhas: Malha[];
   getConfig: (insurer: Insurer, product: CommissionProduct) => CommissionConfig;
   configForPolicy: (policy: Policy) => CommissionConfig;
-  updateConfig: (insurer: Insurer, product: CommissionProduct, patch: Partial<CommissionConfig>) => void;
+  updateConfig: (
+    insurer: Insurer,
+    product: CommissionProduct,
+    patch: Partial<CommissionConfig>,
+  ) => void;
   listMalhas: (insurer: Insurer) => Malha[];
   addMalha: (insurer: Insurer, name: string) => Malha;
   updateMalha: (id: string, patch: Partial<Omit<Malha, "id" | "insurer">>) => void;
@@ -85,7 +90,11 @@ export function CommissionConfigStoreProvider({ children }: { children: ReactNod
     (insurer: Insurer, product: CommissionProduct) => {
       const found = configs.find((c) => c.insurer === insurer && c.product === product);
       if (found) return found;
-      return product === "saude" ? baseSaude(insurer) : product === "consorcio" ? baseConsorcio(insurer) : baseAuto(insurer);
+      return product === "saude"
+        ? baseSaude(insurer)
+        : product === "consorcio"
+          ? baseConsorcio(insurer)
+          : baseAuto(insurer);
     },
     [configs],
   );
@@ -129,12 +138,9 @@ export function CommissionConfigStoreProvider({ children }: { children: ReactNod
     return malha;
   }, []);
 
-  const updateMalha = useCallback(
-    (id: string, patch: Partial<Omit<Malha, "id" | "insurer">>) => {
-      setMalhas((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
-    },
-    [],
-  );
+  const updateMalha = useCallback((id: string, patch: Partial<Omit<Malha, "id" | "insurer">>) => {
+    setMalhas((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  }, []);
 
   const removeMalha = useCallback((id: string) => {
     setMalhas((prev) => prev.filter((m) => m.id !== id));
@@ -156,7 +162,18 @@ export function CommissionConfigStoreProvider({ children }: { children: ReactNod
       removeMalha,
       findMalha,
     }),
-    [configs, malhas, getConfig, configForPolicy, updateConfig, listMalhas, addMalha, updateMalha, removeMalha, findMalha],
+    [
+      configs,
+      malhas,
+      getConfig,
+      configForPolicy,
+      updateConfig,
+      listMalhas,
+      addMalha,
+      updateMalha,
+      removeMalha,
+      findMalha,
+    ],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
@@ -164,6 +181,7 @@ export function CommissionConfigStoreProvider({ children }: { children: ReactNod
 
 export function useCommissionConfigStore() {
   const ctx = useContext(Context);
-  if (!ctx) throw new Error("useCommissionConfigStore must be used inside CommissionConfigStoreProvider");
+  if (!ctx)
+    throw new Error("useCommissionConfigStore must be used inside CommissionConfigStoreProvider");
   return ctx;
 }

@@ -1,15 +1,44 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
-import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import {
+  team,
+  formatBRL,
+  formatDateShort,
+  type Beneficiary,
+  type Branch,
+  type Insurer,
+  type Policy,
+  type PolicyStatus,
+} from "@/lib/mock/data";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
@@ -35,7 +64,9 @@ const STATUSES: { key: PolicyStatus; label: string }[] = [
 ];
 
 const addYears = (d: Date, n: number) => {
-  const r = new Date(d); r.setFullYear(r.getFullYear() + n); return r;
+  const r = new Date(d);
+  r.setFullYear(r.getFullYear() + n);
+  return r;
 };
 
 export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy }: Props) {
@@ -80,8 +111,10 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
     if (sourcePolicy) {
       const src = sourcePolicy;
       const c = clients.find((x) => x.name === src.clientName);
-      setClientId(c?.id ?? ""); setClientName(src.clientName);
-      setBranch(src.branch); setInsurer(src.insurer);
+      setClientId(c?.id ?? "");
+      setClientName(src.clientName);
+      setBranch(src.branch);
+      setInsurer(src.insurer);
       setPremium(formatBRLDecimal(src.premium));
       const newStart = new Date(src.endDate || src.startDate);
       setStartDate(newStart);
@@ -89,7 +122,9 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       setStatus("ativa");
       setAssigneeId(src.assigneeId ?? team[0]?.id ?? "");
       setTouched(false);
-      setCommissionStr(src.commissionPct != null ? String(src.commissionPct).replace(".", ",") : "");
+      setCommissionStr(
+        src.commissionPct != null ? String(src.commissionPct).replace(".", ",") : "",
+      );
       setAutoScheme(src.commissionScheme === "parcela" ? "parcela" : "esgotamento");
       setAutoInstallments(src.commissionInstallments ? String(src.commissionInstallments) : "10");
       setHealthScheme(src.commissionScheme === "vitalicio" ? "vitalicio" : "agenciamento");
@@ -104,30 +139,53 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       setConsortiumType(src.consortiumType);
       return;
     }
-    setClientId(""); setClientName(""); setBranch("Auto"); setInsurer("Porto Seguro");
-    setPremium(""); setStartDate(new Date()); setEndDate(addYears(new Date(), 1));
-    setStatus("ativa"); setAssigneeId(team[0]?.id ?? ""); setTouched(false);
-    setCommissionStr(""); setAutoScheme("esgotamento"); setAutoInstallments("10");
+    setClientId("");
+    setClientName("");
+    setBranch("Auto");
+    setInsurer("Porto Seguro");
+    setPremium("");
+    setStartDate(new Date());
+    setEndDate(addYears(new Date(), 1));
+    setStatus("ativa");
+    setAssigneeId(team[0]?.id ?? "");
+    setTouched(false);
+    setCommissionStr("");
+    setAutoScheme("esgotamento");
+    setAutoInstallments("10");
     setHealthScheme("agenciamento");
-    setHealthAnniversary(""); setAnniversaryTouched(false); setHealthInitialValue("");
-    setHealthCategory(""); setHealthCoparticipation(false); setBeneficiaries([]);
-    setConsortiumGroup(""); setConsortiumQuota(""); setConsortiumType(undefined);
+    setHealthAnniversary("");
+    setAnniversaryTouched(false);
+    setHealthInitialValue("");
+    setHealthCategory("");
+    setHealthCoparticipation(false);
+    setBeneficiaries([]);
+    setConsortiumGroup("");
+    setConsortiumQuota("");
+    setConsortiumType(undefined);
     if (defaultClientName) {
       const c = clients.find((x) => x.name === defaultClientName);
-      if (c) { setClientId(c.id); setClientName(c.name); }
+      if (c) {
+        setClientId(c.id);
+        setClientName(c.name);
+      }
     }
   }, [open, defaultClientName, clients, sourcePolicy]);
 
   const selectClient = (id: string) => {
     const c = clients.find((x) => x.id === id);
     if (!c) return;
-    setClientId(id); setClientName(c.name); setClientOpen(false);
+    setClientId(id);
+    setClientName(c.name);
+    setClientOpen(false);
   };
 
   const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
 
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
-  const commissionValue = useMemo(() => (premiumNum * commissionPct) / 100, [premiumNum, commissionPct]);
+  const commissionValue = useMemo(
+    () => (premiumNum * commissionPct) / 100,
+    [premiumNum, commissionPct],
+  );
 
   const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
 
@@ -154,7 +212,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
     if (premiumNum <= 0) e.premium = "Prêmio deve ser maior que zero";
     if (!startDate) e.startDate = "Selecione a data de início";
     if (endDateRequired && !endDate) e.endDate = "Selecione a data de fim";
-    if (endDateRequired && startDate && endDate && endDate <= startDate) e.endDate = "Fim deve ser após início";
+    if (endDateRequired && startDate && endDate && endDate <= startDate)
+      e.endDate = "Fim deve ser após início";
     return e;
   }, [clientId, premiumNum, startDate, endDate, endDateRequired]);
 
@@ -180,7 +239,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       commissionPct: commissionPct || undefined,
       ...(isAutoLike && {
         commissionScheme: autoScheme,
-        commissionInstallments: autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
+        commissionInstallments:
+          autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
       }),
       ...(branch === "Saúde" && {
         healthAnniversary: healthAnniversary || undefined,
@@ -197,9 +257,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
         commissionScheme: "unica" as const,
       }),
     };
-    const created = isRenewal && sourcePolicy
-      ? renewPolicy(sourcePolicy.id, payload)
-      : addPolicy(payload);
+    const created =
+      isRenewal && sourcePolicy ? renewPolicy(sourcePolicy.id, payload) : addPolicy(payload);
     ensurePolicyRoots({
       policyId: created.id,
       policyNumber: created.number,
@@ -208,7 +267,9 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       startDate: created.startDate,
     });
     const gerados = generateForPolicy(created);
-    const baseMsg = isRenewal ? `Renovação ${created.number} criada` : `Apólice ${created.number} criada`;
+    const baseMsg = isRenewal
+      ? `Renovação ${created.number} criada`
+      : `Apólice ${created.number} criada`;
     toast.success(
       gerados.length > 0
         ? `${baseMsg} · ${gerados.length} parcela(s) de comissão geradas`
@@ -216,7 +277,6 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
     );
     onOpenChange(false);
   };
-
 
   const showErr = (key: string) => touched && errors[key];
 
@@ -227,7 +287,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
           <DialogTitle>{isRenewal ? "Renovar apólice" : "Nova apólice"}</DialogTitle>
           {isRenewal && sourcePolicy && (
             <DialogDescription>
-              Renovando <span className="font-mono">{sourcePolicy.number}</span> — {sourcePolicy.clientName}
+              Renovando <span className="font-mono">{sourcePolicy.number}</span> —{" "}
+              {sourcePolicy.clientName}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -237,7 +298,13 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
             <Label className="text-xs text-muted-foreground">Cliente *</Label>
             <Popover open={clientOpen} onOpenChange={setClientOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !clientName && "text-muted-foreground")}>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                    !clientName && "text-muted-foreground",
+                  )}
+                >
                   {clientName || "Buscar cliente..."}
                 </Button>
               </PopoverTrigger>
@@ -264,40 +331,64 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
             <div>
               <Label className="text-xs text-muted-foreground">Ramo *</Label>
               <Select value={branch} onValueChange={(v) => setBranch(v as Branch)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {BRANCHES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                  {BRANCHES.map((b) => (
+                    <SelectItem key={b} value={b}>
+                      {b}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Seguradora *</Label>
               <Select value={insurer} onValueChange={(v) => setInsurer(v as Insurer)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                  {INSURERS.map((i) => (
+                    <SelectItem key={i} value={i}>
+                      {i}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">{branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}</Label>
+              <Label className="text-xs text-muted-foreground">
+                {branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}
+              </Label>
               <Input
                 inputMode="decimal"
                 value={premium}
                 onChange={(e) => setPremium(e.target.value.replace(/[^\d.,]/g, ""))}
-                onBlur={() => { if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum)); }}
+                onBlur={() => {
+                  if (premiumNum > 0) setPremium(formatBRLDecimal(premiumNum));
+                }}
                 onFocus={() => setPremium(premiumNum ? String(premiumNum).replace(".", ",") : "")}
                 placeholder="R$ 0,00"
                 className="mt-1.5 rounded-xl bg-muted border-0"
               />
-              {showErr("premium") && <p className="text-xs text-destructive mt-1">{errors.premium}</p>}
+              {showErr("premium") && (
+                <p className="text-xs text-destructive mt-1">{errors.premium}</p>
+              )}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Status *</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as PolicyStatus)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s.key} value={s.key}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -305,7 +396,13 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
               <Label className="text-xs text-muted-foreground">Início vigência *</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !startDate && "text-muted-foreground")}>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                      !startDate && "text-muted-foreground",
+                    )}
+                  >
                     <CalendarIcon className="h-4 w-4 mr-2" />
                     {startDate ? formatDateShort(startDate.toISOString()) : "Selecionar"}
                   </Button>
@@ -323,14 +420,22 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
                   />
                 </PopoverContent>
               </Popover>
-              {showErr("startDate") && <p className="text-xs text-destructive mt-1">{errors.startDate}</p>}
+              {showErr("startDate") && (
+                <p className="text-xs text-destructive mt-1">{errors.startDate}</p>
+              )}
             </div>
             {endDateRequired && (
               <div>
                 <Label className="text-xs text-muted-foreground">Fim vigência *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal", !endDate && "text-muted-foreground")}>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "mt-1.5 w-full justify-start rounded-xl bg-muted border-0 font-normal",
+                        !endDate && "text-muted-foreground",
+                      )}
+                    >
                       <CalendarIcon className="h-4 w-4 mr-2" />
                       {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
                     </Button>
@@ -345,7 +450,9 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
                     />
                   </PopoverContent>
                 </Popover>
-                {showErr("endDate") && <p className="text-xs text-destructive mt-1">{errors.endDate}</p>}
+                {showErr("endDate") && (
+                  <p className="text-xs text-destructive mt-1">{errors.endDate}</p>
+                )}
               </div>
             )}
           </div>
@@ -376,10 +483,14 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
           <div>
             <Label className="text-xs text-muted-foreground">Vendedor</Label>
             <Select value={assigneeId} onValueChange={setAssigneeId}>
-              <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {team.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -420,8 +531,13 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
-                <Select value={autoScheme} onValueChange={(v) => setAutoScheme(v as typeof autoScheme)}>
-                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+                <Select
+                  value={autoScheme}
+                  onValueChange={(v) => setAutoScheme(v as typeof autoScheme)}
+                >
+                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="esgotamento" disabled={!adiantamentoAllowed}>
                       Adiantamento{!adiantamentoAllowed ? ` (máx ${maxAdiantamento} parcelas)` : ""}
@@ -440,8 +556,13 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
           {branch === "Saúde" && (
             <div>
               <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
-              <Select value={healthScheme} onValueChange={(v) => setHealthScheme(v as typeof healthScheme)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0"><SelectValue /></SelectTrigger>
+              <Select
+                value={healthScheme}
+                onValueChange={(v) => setHealthScheme(v as typeof healthScheme)}
+              >
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="agenciamento">Agenciamento + recorrência</SelectItem>
                   <SelectItem value="vitalicio">Vitalício</SelectItem>
@@ -459,13 +580,18 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
               Modelo provisório: 1 comissão única (% sobre o valor do crédito).
             </div>
           )}
-
         </div>
 
-
         <DialogFooter>
-          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={submit}>{isRenewal ? "Confirmar renovação" : "Criar apólice"}</Button>
+          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            onClick={submit}
+          >
+            {isRenewal ? "Confirmar renovação" : "Criar apólice"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

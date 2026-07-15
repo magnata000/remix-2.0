@@ -53,9 +53,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set(rootFolders.map((f) => f.id)),
   );
-  const [selectedId, setSelectedId] = useState<string | null>(
-    rootFolders[0]?.id ?? null,
-  );
+  const [selectedId, setSelectedId] = useState<string | null>(rootFolders[0]?.id ?? null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<DocFolder | null>(null);
@@ -82,7 +80,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
   };
 
   const selected = useMemo(
-    () => (selectedId ? store.folders.find((f) => f.id === selectedId) ?? null : null),
+    () => (selectedId ? (store.folders.find((f) => f.id === selectedId) ?? null) : null),
     [selectedId, store.folders],
   );
 
@@ -102,7 +100,9 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
   };
 
   return (
-    <div className={cn("grid gap-4", dense ? "md:grid-cols-[260px_1fr]" : "md:grid-cols-[300px_1fr]")}>
+    <div
+      className={cn("grid gap-4", dense ? "md:grid-cols-[260px_1fr]" : "md:grid-cols-[300px_1fr]")}
+    >
       {/* Tree */}
       <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
         <div className="px-3 py-2 border-b border-border flex items-center justify-between bg-muted/40">
@@ -157,9 +157,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
         <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-muted/40">
           <div className="min-w-0 flex-1">
             <div className="text-xs text-muted-foreground">Pasta selecionada</div>
-            <div className="text-sm font-semibold truncate">
-              {selected ? selected.name : "—"}
-            </div>
+            <div className="text-sm font-semibold truncate">{selected ? selected.name : "—"}</div>
           </div>
           {selected && (
             <div className="flex items-center gap-1">
@@ -224,7 +222,11 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
           ) : (
             <ul className="divide-y divide-border">
               {selectedFiles.map((file) => (
-                <FileRow key={file.id} file={file} onRequestDelete={() => setConfirmDeleteFile(file)} />
+                <FileRow
+                  key={file.id}
+                  file={file}
+                  onRequestDelete={() => setConfirmDeleteFile(file)}
+                />
               ))}
             </ul>
           )}
@@ -232,10 +234,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
       </div>
 
       {/* Dialog: nova pasta */}
-      <Dialog
-        open={!!newFolderParent}
-        onOpenChange={(o) => !o && setNewFolderParent(null)}
-      >
+      <Dialog open={!!newFolderParent} onOpenChange={(o) => !o && setNewFolderParent(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nova pasta</DialogTitle>
@@ -326,10 +325,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
       </Dialog>
 
       {/* Confirm delete */}
-      <AlertDialog
-        open={!!confirmDelete}
-        onOpenChange={(o) => !o && setConfirmDelete(null)}
-      >
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir pasta?</AlertDialogTitle>
@@ -365,7 +361,8 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir documento?</AlertDialogTitle>
             <AlertDialogDescription>
-              O arquivo <span className="font-medium">{confirmDeleteFile?.name}</span> será removido permanentemente.
+              O arquivo <span className="font-medium">{confirmDeleteFile?.name}</span> será removido
+              permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -504,7 +501,9 @@ function TreeNode({
         {isOpen && hasChildren ? (
           <FolderOpen className="h-4 w-4 text-brand shrink-0" />
         ) : (
-          <Folder className={cn("h-4 w-4 shrink-0", isRoot ? "text-brand" : "text-muted-foreground")} />
+          <Folder
+            className={cn("h-4 w-4 shrink-0", isRoot ? "text-brand" : "text-muted-foreground")}
+          />
         )}
         {isRenaming ? (
           <Input
@@ -521,10 +520,7 @@ function TreeNode({
           />
         ) : (
           <span
-            className={cn(
-              "flex-1 truncate",
-              isRoot && showRootName ? "font-semibold" : "",
-            )}
+            className={cn("flex-1 truncate", isRoot && showRootName ? "font-semibold" : "")}
             title={node.name}
           >
             {node.name}
@@ -632,4 +628,3 @@ function FileRow({ file, onRequestDelete }: { file: DocFile; onRequestDelete: ()
     </li>
   );
 }
-

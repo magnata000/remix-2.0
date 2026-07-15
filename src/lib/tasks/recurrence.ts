@@ -105,7 +105,12 @@ export function describeRecurrence(rule: Recurrence): string {
   if (rule.freq === "weekly") {
     const base = every ? `A cada ${rule.interval} semanas` : "Toda semana";
     const days = rule.byWeekday?.length
-      ? " · " + rule.byWeekday.slice().sort().map((d) => WD[d]).join(", ")
+      ? " · " +
+        rule.byWeekday
+          .slice()
+          .sort()
+          .map((d) => WD[d])
+          .join(", ")
       : "";
     return base + days;
   }

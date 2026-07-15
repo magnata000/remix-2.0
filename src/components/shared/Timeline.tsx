@@ -1,26 +1,46 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, FileText, Image as ImageIcon, Pause, Pencil, Pin, PinOff, Play, Trash2, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Image as ImageIcon,
+  Pause,
+  Pencil,
+  Pin,
+  PinOff,
+  Play,
+  Trash2,
+  X,
+} from "lucide-react";
 import { team } from "@/lib/mock/data";
 import type { TaskAttachment, TaskComment } from "@/lib/tasks/taskStore";
 import { MESSAGE_PREVIEW_LIMIT } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "@/components/tasks/MentionInput";
-
-
 
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const initialsOf = (id: string) => {
   if (id === "all") return "TD";
   const m = team.find((x) => x.id === id);
-  return m?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
+  return (
+    m?.name
+      .split(" ")
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join("") ?? "??"
+  );
 };
 export const nameOf = (id: string) =>
-  id === "all" ? "Todos" : team.find((x) => x.id === id)?.name ?? "—";
+  id === "all" ? "Todos" : (team.find((x) => x.id === id)?.name ?? "—");
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", {
-    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 const formatBytes = (n: number) => {
   if (n < 1024) return `${n} B`;
@@ -56,7 +76,10 @@ function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void
     const el = audioRef.current;
     if (!el) return;
     if (el.paused) {
-      void el.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      void el
+        .play()
+        .then(() => setPlaying(true))
+        .catch(() => setPlaying(false));
     } else {
       el.pause();
       setPlaying(false);
@@ -92,7 +115,10 @@ function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void
         onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        onEnded={() => { setPlaying(false); setCurrent(0); }}
+        onEnded={() => {
+          setPlaying(false);
+          setCurrent(0);
+        }}
       />
       <button
         type="button"
@@ -111,7 +137,10 @@ function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void
           aria-valuemax={100}
           aria-valuenow={Math.round(pct)}
         >
-          <div className="h-full bg-brand transition-[width] duration-100" style={{ width: `${pct}%` }} />
+          <div
+            className="h-full bg-brand transition-[width] duration-100"
+            style={{ width: `${pct}%` }}
+          />
         </div>
         <div className="mt-0.5 flex items-center justify-between text-[10px] font-mono text-muted-foreground">
           <span>{fmt(playing || current > 0 ? current : shown)}</span>
@@ -119,7 +148,12 @@ function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void
         </div>
       </div>
       {onRemove && (
-        <button type="button" onClick={onRemove} aria-label="Remover áudio" className="text-muted-foreground hover:text-destructive shrink-0">
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Remover áudio"
+          className="text-muted-foreground hover:text-destructive shrink-0"
+        >
           <X className="h-3 w-3" />
         </button>
       )}
@@ -128,8 +162,14 @@ function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void
 }
 
 export function TimelineRow({
-  authorId, at, children,
-}: { authorId: string; at: string; children: React.ReactNode }) {
+  authorId,
+  at,
+  children,
+}: {
+  authorId: string;
+  at: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex gap-2">
       <Avatar className="h-7 w-7 shrink-0">
@@ -149,10 +189,7 @@ export function TimelineRow({
 }
 
 export function PendingChip({ file, onRemove }: { file: File; onRemove: () => void }) {
-  const previewUrl = useMemo(
-    () => (isImage(file.type) ? URL.createObjectURL(file) : null),
-    [file],
-  );
+  const previewUrl = useMemo(() => (isImage(file.type) ? URL.createObjectURL(file) : null), [file]);
   return (
     <div className="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border pl-1 pr-1.5 py-1 text-xs max-w-[220px]">
       {previewUrl ? (
@@ -162,9 +199,16 @@ export function PendingChip({ file, onRemove }: { file: File; onRemove: () => vo
           <FileText className="h-3.5 w-3.5" />
         </span>
       )}
-      <span className="truncate flex-1" title={file.name}>{file.name}</span>
+      <span className="truncate flex-1" title={file.name}>
+        {file.name}
+      </span>
       <span className="text-[10px] text-muted-foreground">{formatBytes(file.size)}</span>
-      <button type="button" onClick={onRemove} aria-label="Remover" className="text-muted-foreground hover:text-foreground">
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remover"
+        className="text-muted-foreground hover:text-foreground"
+      >
         <X className="h-3 w-3" />
       </button>
     </div>
@@ -176,15 +220,29 @@ export function AttachmentChip({ a, onRemove }: { a: TaskAttachment; onRemove?: 
   return (
     <div className="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border pl-1 pr-1.5 py-1 text-xs max-w-[220px]">
       <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-muted-foreground">
-
-        {isImage(a.type) ? <ImageIcon className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+        {isImage(a.type) ? (
+          <ImageIcon className="h-3.5 w-3.5" />
+        ) : (
+          <FileText className="h-3.5 w-3.5" />
+        )}
       </span>
-      <a href={a.url} target="_blank" rel="noreferrer" className="truncate flex-1 text-brand hover:underline" title={a.name}>
+      <a
+        href={a.url}
+        target="_blank"
+        rel="noreferrer"
+        className="truncate flex-1 text-brand hover:underline"
+        title={a.name}
+      >
         {a.name}
       </a>
       <span className="text-[10px] text-muted-foreground">{formatBytes(a.size)}</span>
       {onRemove && (
-        <button type="button" onClick={onRemove} aria-label="Remover anexo" className="text-muted-foreground hover:text-destructive">
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Remover anexo"
+          className="text-muted-foreground hover:text-destructive"
+        >
           <X className="h-3 w-3" />
         </button>
       )}
@@ -193,7 +251,16 @@ export function AttachmentChip({ a, onRemove }: { a: TaskAttachment; onRemove?: 
 }
 
 export function CommentBubble({
-  comment, attachments, canEdit, canDelete, pinned, canPin, onTogglePin, onSaveText, onRemoveAttachment, onDelete,
+  comment,
+  attachments,
+  canEdit,
+  canDelete,
+  pinned,
+  canPin,
+  onTogglePin,
+  onSaveText,
+  onRemoveAttachment,
+  onDelete,
 }: {
   comment: TaskComment;
   attachments: TaskAttachment[];
@@ -210,10 +277,10 @@ export function CommentBubble({
   const [draft, setDraft] = useState(comment.text);
   const [expanded, setExpanded] = useState(false);
   const isLong = comment.text.length > MESSAGE_PREVIEW_LIMIT;
-  const displayText = !isLong || expanded
-    ? comment.text
-    : comment.text.slice(0, MESSAGE_PREVIEW_LIMIT).trimEnd() + "…";
-
+  const displayText =
+    !isLong || expanded
+      ? comment.text
+      : comment.text.slice(0, MESSAGE_PREVIEW_LIMIT).trimEnd() + "…";
 
   const save = () => {
     const clean = draft.trim();
@@ -222,7 +289,11 @@ export function CommentBubble({
   };
 
   const handleDelete = () => {
-    if (typeof window !== "undefined" && !window.confirm("Excluir esta mensagem? Esta ação não pode ser desfeita.")) return;
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm("Excluir esta mensagem? Esta ação não pode ser desfeita.")
+    )
+      return;
     onDelete();
   };
 
@@ -241,17 +312,35 @@ export function CommentBubble({
         )}
         <div className="flex gap-1.5 items-center">
           {showDeleteAction ? (
-            <Button size="sm" variant="destructive" className="h-6 px-2 text-xs rounded-md"
-              onClick={() => { onDelete(); setEditing(false); }}>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-6 px-2 text-xs rounded-md"
+              onClick={() => {
+                onDelete();
+                setEditing(false);
+              }}
+            >
               <Trash2 className="h-3 w-3 mr-1" /> Excluir mensagem
             </Button>
           ) : (
-            <Button size="sm" className="h-6 px-2 text-xs rounded-md bg-brand text-brand-foreground hover:bg-brand/90" onClick={save}>
+            <Button
+              size="sm"
+              className="h-6 px-2 text-xs rounded-md bg-brand text-brand-foreground hover:bg-brand/90"
+              onClick={save}
+            >
               Salvar
             </Button>
           )}
-          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs"
-            onClick={() => { setDraft(comment.text); setEditing(false); }}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-xs"
+            onClick={() => {
+              setDraft(comment.text);
+              setEditing(false);
+            }}
+          >
             Cancelar
           </Button>
         </div>
@@ -273,7 +362,11 @@ export function CommentBubble({
                   className="ml-1 inline-flex items-center gap-0.5 text-[11px] text-brand hover:underline align-middle"
                   aria-label={expanded ? "Recolher mensagem" : "Expandir mensagem"}
                 >
-                  {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  {expanded ? (
+                    <ChevronUp className="h-3 w-3" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3" />
+                  )}
                   {expanded ? "recolher" : "expandir"}
                 </button>
               )}
@@ -281,7 +374,9 @@ export function CommentBubble({
           )}
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {attachments.map((a) => <AttachmentChip key={a.id} a={a} />)}
+              {attachments.map((a) => (
+                <AttachmentChip key={a.id} a={a} />
+              ))}
             </div>
           )}
         </div>
@@ -291,7 +386,13 @@ export function CommentBubble({
               type="button"
               onClick={onTogglePin}
               disabled={!pinned && canPin === false}
-              title={pinned ? "Desafixar" : (canPin === false ? "Limite de 3 mensagens fixadas" : "Fixar mensagem")}
+              title={
+                pinned
+                  ? "Desafixar"
+                  : canPin === false
+                    ? "Limite de 3 mensagens fixadas"
+                    : "Fixar mensagem"
+              }
               aria-label={pinned ? "Desafixar mensagem" : "Fixar mensagem"}
               className={`transition shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${pinned ? "text-brand" : "opacity-0 group-hover/comment:opacity-100 text-muted-foreground hover:text-foreground"}`}
             >
@@ -299,19 +400,26 @@ export function CommentBubble({
             </button>
           )}
           {canEdit && (
-            <button type="button"
-              onClick={() => { setDraft(comment.text); setEditing(true); }}
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(comment.text);
+                setEditing(true);
+              }}
               className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-foreground shrink-0"
-              aria-label="Editar mensagem">
+              aria-label="Editar mensagem"
+            >
               <Pencil className="h-3 w-3" />
             </button>
           )}
           {canDelete && (
-            <button type="button"
+            <button
+              type="button"
               onClick={handleDelete}
               className="opacity-0 group-hover/comment:opacity-100 transition text-muted-foreground hover:text-destructive shrink-0"
               aria-label="Excluir mensagem"
-              title="Excluir mensagem">
+              title="Excluir mensagem"
+            >
               <Trash2 className="h-3 w-3" />
             </button>
           )}
@@ -325,4 +433,3 @@ export function CommentBubble({
     </div>
   );
 }
-

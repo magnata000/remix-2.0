@@ -1,71 +1,96 @@
+## Objetivo
 
-# Plano de execução aprovado — QW1 + QW2 + QW3
+Subir de **9.1 → 9.5+/10** com dois ciclos independentes: limpeza cosmética + primeira bateria de testes unitários nos utilitários puros de domínio.
 
-Escopo dos 3 quick wins do relatório de saúde, com os ajustes que você pediu (compat via `mock/data`, teamStore expandido, DailyModule endurecido, zero supressões).
+## Escopo protegido (não tocar)
 
-Nada da lista de preservação é tocado: `DashboardModule.tsx`, `RenewPolicyDialog.tsx`, `ComingSoonOverlay.tsx`, `use-mobile.tsx`, `router.tsx`, `components/ui/*`, mocks `salesByMonth`/`insurerLogos`.
+`DashboardModule.tsx`, `RenewPolicyDialog.tsx`, `ComingSoonOverlay.tsx`, `use-mobile.tsx`, `router.tsx`, `components/ui/*`, `routeTree.gen.ts`.
 
 ---
 
-## QW1 — Extrair utilitários, tirar `team`/`formatDateShort` do mock
+## Fase 1 — Limpeza cosmética e dívida de lint
 
-**Criar** `src/lib/format.ts` — casa nova do `formatDateShort` (função pura, sem dependência de mock).
+1. **Rodar `bun run format`** (Prettier já configurado) para zerar todos os erros de formatação pré-existentes reportados pelo `eslint-plugin-prettier`.
+2. **Neutralizar warnings de `react-refresh/only-export-components`** nos stores mistos (`teamStore.tsx`, `clientStore.tsx`, `policyStore.tsx`, `commissionStore.tsx`, etc.) que exportam Provider + hooks + helpers no mesmo arquivo. Estratégia:
+   - Onde o helper é pequeno (ex.: `buildInviteLink`, `getTeamNameIndex`), manter no arquivo e adicionar comentário `// eslint-disable-next-line react-refresh/only-export-components` **apenas** na linha do export não-componente — não em bloco.
+   - Preferir mover helpers síncronos "puros" (ex.: `getInsurers`, `getBranches` já estão em `.ts` — OK) para arquivo irmão quando o custo for baixo. Não vou renomear arquivos protegidos.
+3. Validar com `bun run lint` — meta: zero errors, zero warnings evitáveis.
 
-**Criar** `src/lib/daily/dateUtils.ts` — `DAY_MS`, `daysBetween`, `relativeDueLabel`, `toneClass`, tipo `DueTone`. `relativeDueLabel` ganha guarda de `NaN` (retorna `"Data inválida"` tone `muted`) — endurece contra datas ruins vindas do futuro Cloud.
+## Fase 2 — Setup Vitest
 
-**Criar** `src/lib/daily/mentions.ts` — API pura:
-- `TeamNameIndex` (Map imutável `lowercase name → id`)
-- `buildTeamNameIndex(members)`
-- `resolveMentionId(name, index)`
-- `extractMentions(text, index)` — recebe o índice como parâmetro, evita O(n) por match
-- `textMentionsUser(text, userId, index, cache?)` — encapsula o teste de menção + cache opcional
+1. Instalar devDeps: `vitest`, `@vitest/ui` (opcional), `@types/node` (já existe).
+2. Criar `vitest.config.ts` mínimo compatível com o alias `@/*` do `tsconfig.json` — reusar `vite-tsconfig-paths` para resolver alias sem duplicar config.
+3. Adicionar scripts em `package.json`:
+   - `"test": "vitest run"`
+   - `"test:watch": "vitest"`
+4. Criar `src/test/setup.ts` (vazio por ora, ponto de extensão futuro).
+5. Atualizar `eslint.config.js` para ignorar `coverage/` (se aparecer) — opcional, não bloqueante.
 
-**Editar** `src/lib/mock/data.ts` — remover a implementação local de `formatDateShort` e substituir por `export { formatDateShort } from "@/lib/format";` com JSDoc `@deprecated` recomendando `@/lib/format`. Nenhum outro import legado quebra.
+## Fase 3 — Testes unitários (utilitários puros)
 
-**Editar** `src/lib/team/teamStore.tsx` — expor:
-- `getTeamNameIndex()` — helper síncrono, calcula uma vez a partir do `seedTeam` do mock, cacheado em módulo. Consumível por funções puras (fora de React).
-- `useTeamNameIndex()` — hook derivado do `members` do provider (index reativo aos members do estado, útil para o dia em que houver CRUD real).
+Estrutura: cada arquivo testado ganha um vizinho `*.test.ts`.
 
-Nenhum consumidor atual é forçado a migrar de `import { team } from "@/lib/mock/data"` agora — a extração completa fica como próximo passo (fora deste QW). Este QW deixa a porta aberta.
+### `src/lib/daily/dateUtils.test.ts` — `relativeDueLabel`
 
-## QW2 — Endurecer e otimizar o DailyModule
+- `undefined` → `"Sem prazo"`, tone `muted`.
+- ISO inválida → `"Data inválida"`, tone `muted`.
+- Passado (-3d, -1d) → `"Atrasada Nd"`, tone `danger`.
+- Hoje (mesmo dia, horas diferentes) → `"Hoje"`, tone `warning`.
+- Amanhã → `"Amanhã"`, tone `warning`.
+- +5d, +30d → `"Em Nd"`, tone `info`.
+- Fronteira: `daysBetween` ignora horas (data no fim do dia vs início).
 
-**Editar** `src/components/modules/DailyModule.tsx`:
-- Remover as versões locais de `DAY_MS`, `daysBetween`, `relativeDueLabel`, `toneClass`, `nameToId`, `extractMentions` — passam a vir de `@/lib/daily/dateUtils` e `@/lib/daily/mentions`.
-- Remover `import { team, formatDateShort } from "@/lib/mock/data"`. Passar a importar `formatDateShort` de `@/lib/format` e usar `useTeamNameIndex()` + `useTeam` para obter `members` (para o `authorId → name` da MentionsSection e para o nome do usuário logado no cabeçalho).
-- `useMyTasks`: guardar `Number.isNaN(new Date(t.dueDate!).getTime())` antes de comparar/ordenar, ignorando datas inválidas em vez de deixá-las virar `NaN` no `sort`.
-- `useMyMentions`: passar a receber o `teamIndex` do módulo (via prop / closure) — o `mentionCache` fica local ao memo, como já está, mas `resolveMention` deixa de ser O(n).
-- `useAgeBandChanges`: manter casamento por `clientName` (o schema atual não tem `clientId` em `Policy`), mas comentar como dívida a resolver com o schema real do Cloud.
-- Passar `currentUserId` como prop das seções que dependem dele em vez de cada uma chamar `useCurrentUserId()`.
-- Manter `SectionCard`/`EmptyState` locais (conforme sua diretriz anterior).
+### `src/lib/daily/mentions.test.ts` — `buildTeamNameIndex`, `extractMentions`, `textMentionsUser`, `resolveMentionId`
 
-## QW3 — Zerar as 8 supressões
+- Índice lowercase: `"João Silva"` casa `"@joão silva"`.
+- Match guloso: em `"@João Silva Santos"`, com apenas `"João Silva"` no time, retorna `"João Silva"` (maior prefixo casável).
+- `@todos` sempre casa.
+- Nome não cadastrado → não incluído.
+- Múltiplas menções no mesmo texto.
+- Acentos (À-ÿ) na regex.
+- `textMentionsUser`: direto por id, via `@todos`, ignora outros.
+- Cache: chamando duas vezes com o mesmo texto, `extractMentions` só é executado uma vez (spy).
 
-**`src/lib/multicalc/quoteStore.ts`** (2 supressões) — substituir os dois `@ts-expect-error dynamic` por um acessor tipado:
-```ts
-function getField(data: QuoteFormData, path: string): string {
-  const [g, k] = path.split(".") as [keyof QuoteFormData, string];
-  const group = data[g] as Record<string, string | undefined>;
-  return String(group[k] ?? "");
-}
+### `src/lib/financial/commissionEngine.test.ts` — `generateCommissionSchedule`, `branchToProduct`, `expectedRecurrencesUntil`, `commissionKindLabel`
+
+Fixtures inline (Policy + CommissionConfig mínimos).
+
+- `branchToProduct`: Saúde→saude, Consórcio→consorcio, Auto/Vida/Residencial/Empresarial→auto.
+- Policy `cancelada`/`vencida` → retorna `[]`.
+- **Saúde agenciamento**: N parcelas = length do schedule, mensal, `amount = mensalidade * pct` (com/sem imposto).
+- **Saúde vitalício**: `generateCommissionSchedule` → `[]` (recorrência gerada à parte).
+- **Consórcio**: 1 parcela única, `amount = premium * (pct/100)`, `dueDate = startDate + 30 dias`.
+- **Auto parcela**: N parcelas iguais, soma = `premium * pct`.
+- **Auto esgotamento (default)**: 1 parcela, `dueDate = startDate + 30d`.
+- **Imposto**: `comissaoLiquida: true` reduz por `(1 - taxaImposto)` e arredonda a 2 casas.
+- **`expectedRecurrencesUntil`**:
+  - Não-saúde → `[]`.
+  - Começa após `schedule.length` meses (recorrência) ou `vitalicioStartInstallment - 1` (vitalício).
+  - Respeita `existingDueDates` (não duplica).
+  - Retorna a quantidade correta de meses até a `reference`.
+- **`commissionKindLabel`**: cada branch + default `"Comissão"`.
+
+## Fase 4 — Validação
+
+```bash
+bun run test         # todos passam
+tsgo                 # zero erros
+bun run lint         # zero erros
 ```
-Usar em `computeDiff`.
 
-**`src/components/tasks/TasksBoard.tsx:53`** — trocar `useEffect(..., [])` + disable por guarda com `useRef` (`workflowsRanRef`), listar todas as deps reais (`defaultColumnId`, `policies`, `tasks`, `bulkAddTasks`); o ref garante rodar-só-uma-vez.
+Metas de nota:
 
-**`src/components/tasks/NewTaskDialog.tsx:55`** — inline o corpo do `reset` dentro do próprio `useEffect`, evitando a dependência instável em `reset` (mantém deps `[open, task]` sem disable, pois todas as demais referências são setters do `useState` estáveis).
+- Prettier limpo + warnings do react-refresh reduzidos: **+0.05**
+- Bateria de testes cobrindo os 3 núcleos de lógica pura: **+0.35**
+- **Nova nota estimada: 9.5/10**
 
-**`src/components/pipeline/NewOpportunityDialog.tsx:65`** — mesmo padrão: inline o reset dentro do effect (ou envolver `reset` em `useCallback` com deps explícitas e adicioná-la).
+---
 
-**`src/components/portfolio/BranchSpecificFields.tsx:73`** — capturar `p.setHealthAnniversary` em um `useRef` atualizado a cada render; o effect depende só de `p.branch`, `p.startDate`, `p.anniversaryTouched` — sem disable, sem risco de loop caso o pai não memoize o setter.
+## Detalhes técnicos
 
-**`src/components/shared/AudioRecorder.tsx:33`** — mover `previewUrl` para um `useRef<string | null>` atualizado em cada set; effect de cleanup passa a não ter deps externas e roda unicamente no unmount, sem disable.
-
-## Verificação final
-
-1. `bunx tsgo --noEmit` — deve continuar limpo.
-2. `rg -n "eslint-disable|@ts-ignore|@ts-expect-error" src -g '!ui/*' -g '!routeTree*'` — deve retornar **zero** ocorrências fora de `routeTree.gen.ts`.
-3. Console do preview sem `Hydration failed` ao abrir `/`.
-4. Playwright headless para screenshot da Daily e conferir que o layout não regrediu.
-
-Se quiser, digo "pode ir" e eu executo a bateria toda em uma rodada, sem parar no meio.
+- **Vitest sem jsdom**: os utilitários testados são 100% puros (nenhum toca DOM/React). `environment: "node"` (default) é suficiente e mantém a suíte rápida.
+- **Datas determinísticas**: nos testes de `relativeDueLabel` e `commissionEngine`, injetar `now` explicitamente ou construir datas com `new Date(2026, 6, 15)` — nunca depender de `Date.now()` livre.
+- **`crypto.randomUUID` em `commissionEngine`**: os testes verificam propriedades (contagem, valores, kind), nunca os IDs literais. Sem necessidade de mockar `crypto`.
+- **Aliases `@/*`**: `vite-tsconfig-paths` já está instalado e resolve para Vitest via `vitest.config.ts` que reusa o mesmo plugin.
+- **Compat com o Vite 7 do projeto**: instalar `vitest@^2` (compatível com Vite 7 e Node 20+). Sem `@vitest/coverage-*` nesta fase — cobertura fica pro próximo ciclo.
+- **Sem regressão de tipos**: nenhum arquivo de produção muda de assinatura — só formatação e testes adicionais.

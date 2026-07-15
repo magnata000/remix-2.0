@@ -91,7 +91,10 @@ export function TopBar({
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden md:flex items-center relative">
             <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar..." className="h-9 w-48 rounded-full pl-9 bg-muted border-0" />
+            <Input
+              placeholder="Buscar..."
+              className="h-9 w-48 rounded-full pl-9 bg-muted border-0"
+            />
           </div>
           <Button variant="ghost" size="icon" className="rounded-full relative">
             <Bell className="h-4 w-4" />

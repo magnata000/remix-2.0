@@ -1,4 +1,12 @@
-import { tasks, type Client, type ClientStatus, type Branch, type Commission, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import {
+  tasks,
+  type Client,
+  type ClientStatus,
+  type Branch,
+  type Commission,
+  type Policy,
+  type PolicyStatus,
+} from "@/lib/mock/data";
 
 export type { ClientStatus };
 
@@ -35,13 +43,19 @@ export function listClientsWithStats(
   return clientsArr.map((c) => computeStats(c, policiesArr, commissionsArr));
 }
 
-function computeStats(client: Client, policiesArr: Policy[], commissionsArr: Commission[]): ClientStats {
+function computeStats(
+  client: Client,
+  policiesArr: Policy[],
+  commissionsArr: Commission[],
+): ClientStats {
   const myPolicies = policiesArr.filter((p) => p.clientName === client.name);
   const activePolicies = myPolicies.filter((p) => isActiveStatus(p.status));
   const annualPremium = activePolicies.reduce((sum, p) => sum + p.premium, 0);
   const ltv = myPolicies.reduce((sum, p) => sum + p.premium, 0);
   const myTasks = tasks.filter((t) => t.clientName === client.name);
-  const openOpportunities = myTasks.filter((t) => t.stage !== "fechado" && t.stage !== "perdido").length;
+  const openOpportunities = myTasks.filter(
+    (t) => t.stage !== "fechado" && t.stage !== "perdido",
+  ).length;
   const myCommissions = commissionsArr.filter((cm) => cm.clientName === client.name);
   const branches = Array.from(new Set(myPolicies.map((p) => p.branch))) as Branch[];
 
@@ -71,4 +85,9 @@ function computeStats(client: Client, policiesArr: Policy[], commissionsArr: Com
 }
 
 export const initialsOf = (name: string) =>
-  name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();

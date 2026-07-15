@@ -5,11 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Minus, Calculator, ChevronDown, Trash2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
-import type { CommissionConfig, CommissionProduct, CommissionScheme } from "@/lib/financial/commissionEngine";
+import type {
+  CommissionConfig,
+  CommissionProduct,
+  CommissionScheme,
+} from "@/lib/financial/commissionEngine";
 import type { Insurer } from "@/lib/mock/data";
 import { toast } from "sonner";
 
@@ -19,17 +29,18 @@ const PRODUCT_LABEL: Record<CommissionProduct, string> = {
   consorcio: "Consórcio",
 };
 
-const SCHEMES_BY_PRODUCT: Record<CommissionProduct, { value: CommissionScheme; label: string }[]> = {
-  auto: [
-    { value: "esgotamento", label: "Adiantamento" },
-    { value: "parcela", label: "Parcelado" },
-  ],
-  saude: [
-    { value: "agenciamento", label: "Agenciamento + recorrência" },
-    { value: "vitalicio", label: "Vitalício" },
-  ],
-  consorcio: [{ value: "unica", label: "Comissão única" }],
-};
+const SCHEMES_BY_PRODUCT: Record<CommissionProduct, { value: CommissionScheme; label: string }[]> =
+  {
+    auto: [
+      { value: "esgotamento", label: "Adiantamento" },
+      { value: "parcela", label: "Parcelado" },
+    ],
+    saude: [
+      { value: "agenciamento", label: "Agenciamento + recorrência" },
+      { value: "vitalicio", label: "Vitalício" },
+    ],
+    consorcio: [{ value: "unica", label: "Comissão única" }],
+  };
 
 const pctToStr = (v: number) => (v * 100).toString().replace(".", ",");
 const strToPct = (s: string) => {
@@ -45,17 +56,15 @@ export function CommissionConfigSection() {
     <Card className="p-5 rounded-2xl border-border shadow-none">
       <Collapsible defaultOpen={false} className="group/collap">
         <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="flex items-start gap-3 w-full text-left cursor-pointer"
-          >
+          <button type="button" className="flex items-start gap-3 w-full text-left cursor-pointer">
             <div className="h-10 w-10 rounded-full bg-brand-soft flex items-center justify-center shrink-0">
               <Calculator className="h-5 w-5 text-brand-foreground" />
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-semibold">Comissionamento</h2>
               <p className="text-xs text-muted-foreground">
-                Regras padrão por seguradora e produto. Alterações aplicam-se apenas a novas apólices.
+                Regras padrão por seguradora e produto. Alterações aplicam-se apenas a novas
+                apólices.
               </p>
             </div>
             <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]/collap:rotate-180" />
@@ -104,7 +113,10 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
       return;
     }
     if (local.product === "auto") {
-      if ((local.parceladoMinInstallments ?? 0) < 1 || (local.adiantamentoMaxInstallments ?? 0) < 1) {
+      if (
+        (local.parceladoMinInstallments ?? 0) < 1 ||
+        (local.adiantamentoMaxInstallments ?? 0) < 1
+      ) {
         toast.error("Limites de parcelas devem ser ≥ 1");
         return;
       }
@@ -124,8 +136,7 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
     arr[i] = strToPct(str);
     setLocal({ ...local, agenciamento: arr });
   };
-  const addAg = () =>
-    setLocal({ ...local, agenciamento: [...local.agenciamento, 0] });
+  const addAg = () => setLocal({ ...local, agenciamento: [...local.agenciamento, 0] });
   const removeAg = (i: number) =>
     setLocal({ ...local, agenciamento: local.agenciamento.filter((_, idx) => idx !== i) });
 
@@ -165,7 +176,6 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
       </div>
 
       <div className="space-y-4">
-
         {/* Tipo */}
         <div>
           <Label className="text-xs text-muted-foreground">Tipo</Label>
@@ -205,14 +215,24 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
               <Field
                 label="A partir de X parcelas (Parcelado)"
                 value={String(local.parceladoMinInstallments ?? 5)}
-                onChange={(v) => setLocal({ ...local, parceladoMinInstallments: Math.max(1, parseInt(v, 10) || 1) })}
+                onChange={(v) =>
+                  setLocal({
+                    ...local,
+                    parceladoMinInstallments: Math.max(1, parseInt(v, 10) || 1),
+                  })
+                }
               />
             )}
             {local.defaultScheme === "esgotamento" && (
               <Field
                 label="Até X parcelas (Adiantamento)"
                 value={String(local.adiantamentoMaxInstallments ?? 4)}
-                onChange={(v) => setLocal({ ...local, adiantamentoMaxInstallments: Math.max(1, parseInt(v, 10) || 1) })}
+                onChange={(v) =>
+                  setLocal({
+                    ...local,
+                    adiantamentoMaxInstallments: Math.max(1, parseInt(v, 10) || 1),
+                  })
+                }
               />
             )}
             <p className="text-[11px] text-muted-foreground -mt-2">
@@ -233,7 +253,12 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
               <Field
                 label="A partir da parcela (Vitalício)"
                 value={String(local.vitalicioStartInstallment ?? 13)}
-                onChange={(v) => setLocal({ ...local, vitalicioStartInstallment: Math.max(1, parseInt(v, 10) || 1) })}
+                onChange={(v) =>
+                  setLocal({
+                    ...local,
+                    vitalicioStartInstallment: Math.max(1, parseInt(v, 10) || 1),
+                  })
+                }
               />
             )}
             {!isVitalicio && (
@@ -292,7 +317,9 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
                   </SelectTrigger>
                   <SelectContent>
                     {malhasForInsurer.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -319,7 +346,12 @@ function ConfigCard({ config }: { config: CommissionConfig }) {
                   value={newMalhaName}
                   onChange={(e) => setNewMalhaName(e.target.value)}
                   className="rounded-lg bg-card"
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddMalha(); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddMalha();
+                    }
+                  }}
                 />
                 <Button
                   type="button"

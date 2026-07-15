@@ -12,12 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search, FileText, Plus } from "lucide-react";
-import {
-  formatBRL,
-  formatDateShort,
-  type Policy,
-  type PolicyStatus,
-} from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
@@ -72,8 +67,6 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
     [policies, q, status, branch, insurer],
   );
 
-
-
   return (
     <div className="space-y-5">
       {/* Header com botão Nova */}
@@ -86,7 +79,6 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
           <span className="hidden md:inline">Nova apólice</span>
         </Button>
       </div>
-
 
       {/* Filtros */}
       <Card className="p-4 rounded-2xl border-border shadow-none">
@@ -133,12 +125,13 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
             <SelectContent>
               <SelectItem value="all">Todas as seguradoras</SelectItem>
               {insurers.map((i) => (
-                <SelectItem key={i} value={i}>{i}</SelectItem>
+                <SelectItem key={i} value={i}>
+                  {i}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-
       </Card>
 
       {/* Lista */}
@@ -162,11 +155,18 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                   <p className="font-mono text-xs text-muted-foreground">{p.number}</p>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); cycleStatus(p.id, p.status); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cycleStatus(p.id, p.status);
+                    }}
                     title="Clique para alterar o status"
                     className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
                   >
-                    <Badge className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}>{p.status}</Badge>
+                    <Badge
+                      className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}
+                    >
+                      {p.status}
+                    </Badge>
                   </button>
                 </div>
                 <p className="mt-2 font-semibold">{p.clientName}</p>
@@ -225,11 +225,18 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                       <td className="px-5 py-3">
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); cycleStatus(p.id, p.status); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cycleStatus(p.id, p.status);
+                          }}
                           title="Clique para alterar o status"
                           className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
                         >
-                          <Badge className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}>{p.status}</Badge>
+                          <Badge
+                            className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}
+                          >
+                            {p.status}
+                          </Badge>
                         </button>
                       </td>
                     </tr>

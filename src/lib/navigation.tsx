@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useRef, ReactNode, useCallback } from "react";
 import type { ModuleKey } from "@/components/shell/TopBar";
 
@@ -22,10 +23,13 @@ export function NavigationProvider({
 }) {
   const focusRef = useRef<Focus>({});
 
-  const goTo = useCallback((module: ModuleKey, f?: Focus) => {
-    focusRef.current = f ?? {};
-    setActive(module);
-  }, [setActive]);
+  const goTo = useCallback(
+    (module: ModuleKey, f?: Focus) => {
+      focusRef.current = f ?? {};
+      setActive(module);
+    },
+    [setActive],
+  );
 
   const consumeFocus = useCallback(() => {
     const current = focusRef.current;

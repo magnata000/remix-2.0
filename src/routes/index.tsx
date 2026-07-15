@@ -45,7 +45,8 @@ export const Route = createFileRoute("/")({
 function AppShell() {
   const [rawActive, setActive] = useState<ModuleKey>("dashboard");
   // Guard: se Multicálculo está desabilitado, força fallback para dashboard.
-  const active: ModuleKey = rawActive === "multicalc" && !FEATURES.multicalc ? "dashboard" : rawActive;
+  const active: ModuleKey =
+    rawActive === "multicalc" && !FEATURES.multicalc ? "dashboard" : rawActive;
 
   return (
     <PipelineStoreProvider>
@@ -59,21 +60,23 @@ function AppShell() {
                     <CommissionStoreProvider>
                       <SellerCommissionStoreProvider>
                         <SlaConfigProvider>
-                        <DreConfigProvider>
-                        <NavigationProvider active={active} setActive={setActive}>
-                          <div className="min-h-screen bg-background">
-                            <TopBar active={active} onChange={setActive} />
-                            <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
-                              {active === "dashboard" && <DailyModule />}
-                              {active === "policies" && <PortfolioModule />}
-                              {active === "kanban" && <KanbanModule />}
-                              {active === "multicalc" && FEATURES.multicalc && <MulticalcModule />}
-                              {active === "financial" && <FinancialModule />}
-                              {active === "settings" && <SettingsModule />}
-                            </main>
-                          </div>
-                        </NavigationProvider>
-                        </DreConfigProvider>
+                          <DreConfigProvider>
+                            <NavigationProvider active={active} setActive={setActive}>
+                              <div className="min-h-screen bg-background">
+                                <TopBar active={active} onChange={setActive} />
+                                <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
+                                  {active === "dashboard" && <DailyModule />}
+                                  {active === "policies" && <PortfolioModule />}
+                                  {active === "kanban" && <KanbanModule />}
+                                  {active === "multicalc" && FEATURES.multicalc && (
+                                    <MulticalcModule />
+                                  )}
+                                  {active === "financial" && <FinancialModule />}
+                                  {active === "settings" && <SettingsModule />}
+                                </main>
+                              </div>
+                            </NavigationProvider>
+                          </DreConfigProvider>
                         </SlaConfigProvider>
                       </SellerCommissionStoreProvider>
                     </CommissionStoreProvider>
@@ -85,6 +88,5 @@ function AppShell() {
         </TaskStoreProvider>
       </QuoteStoreProvider>
     </PipelineStoreProvider>
-
   );
 }

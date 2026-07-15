@@ -7,7 +7,6 @@ import { MESSAGE_PREVIEW_LIMIT, PRIORITY_META, TaskItem } from "@/lib/tasks/task
 import { SlaBadge } from "@/components/shared/SlaBadge";
 import { nameOf } from "@/components/shared/Timeline";
 
-
 type Props = {
   task: TaskItem;
   onClick: () => void;
@@ -18,18 +17,22 @@ type Props = {
 export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
   const isAll = task.assigneeId === "all";
   const assignee = team.find((m) => m.id === task.assigneeId);
-  const initials = assignee?.name.split(" ").map((p) => p[0]).slice(0, 2).join("") ?? "??";
+  const initials =
+    assignee?.name
+      .split(" ")
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join("") ?? "??";
   const pr = PRIORITY_META[task.priority];
   const lastComment = task.comments.length ? task.comments[task.comments.length - 1] : null;
   const lastCommentAttCount = lastComment?.attachmentIds?.length ?? 0;
   const lastCommentPreview = lastComment
-    ? (lastComment.text
-        ? (lastComment.text.length > MESSAGE_PREVIEW_LIMIT
-            ? lastComment.text.slice(0, MESSAGE_PREVIEW_LIMIT).trimEnd() + "…"
-            : lastComment.text)
-        : `📎 ${lastCommentAttCount} anexo${lastCommentAttCount === 1 ? "" : "s"}`)
+    ? lastComment.text
+      ? lastComment.text.length > MESSAGE_PREVIEW_LIMIT
+        ? lastComment.text.slice(0, MESSAGE_PREVIEW_LIMIT).trimEnd() + "…"
+        : lastComment.text
+      : `📎 ${lastCommentAttCount} anexo${lastCommentAttCount === 1 ? "" : "s"}`
     : null;
-
 
   return (
     <div
@@ -48,7 +51,10 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
         <button
           type="button"
           aria-label="Editar tarefa"
-          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
           className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <Pencil className="h-3.5 w-3.5" />
@@ -56,7 +62,10 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
         <button
           type="button"
           aria-label="Excluir tarefa"
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
           className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-destructive"
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -79,12 +88,16 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
       )}
       {task.slaDueAt && (
         <div className="mt-2">
-          <SlaBadge slaDueAt={task.slaDueAt} slaHours={task.slaHours} paused={!!task.slaPausedAt} compact />
+          <SlaBadge
+            slaDueAt={task.slaDueAt}
+            slaHours={task.slaHours}
+            paused={!!task.slaPausedAt}
+            compact
+          />
         </div>
       )}
 
       <div className="mt-3 flex items-center justify-between">
-
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {task.dueDate && (
             <span className="flex items-center gap-1">
@@ -94,12 +107,14 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
           )}
           {task.comments.length > 0 && (
             <span className="flex items-center gap-1">
-              <MessageSquare className="h-3 w-3" />{task.comments.length}
+              <MessageSquare className="h-3 w-3" />
+              {task.comments.length}
             </span>
           )}
           {task.attachments.length > 0 && (
             <span className="flex items-center gap-1">
-              <Paperclip className="h-3 w-3" />{task.attachments.length}
+              <Paperclip className="h-3 w-3" />
+              {task.attachments.length}
             </span>
           )}
         </div>

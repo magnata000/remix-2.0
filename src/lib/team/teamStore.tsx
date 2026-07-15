@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from "react";
 import { team as seedTeam } from "@/lib/mock/data";
 import { buildTeamNameIndex, type TeamNameIndex } from "@/lib/daily/mentions";
@@ -37,7 +38,12 @@ type TeamCtx = {
   members: Member[];
   updateMember: (id: string, patch: Partial<Omit<Member, "id">>) => void;
   removeMember: (id: string) => void;
-  addMember: (input: { name: string; email: string; role: TeamRole; status?: MemberStatus }) => Member;
+  addMember: (input: {
+    name: string;
+    email: string;
+    role: TeamRole;
+    status?: MemberStatus;
+  }) => Member;
   resendInvite: (id: string) => Member | undefined;
 };
 
@@ -79,7 +85,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           invitedAt: new Date().toISOString(),
         };
         return updated;
-      })
+      }),
     );
     return updated;
   }, []);

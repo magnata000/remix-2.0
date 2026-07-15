@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 export type CategoryKind = "custo_operacional" | "despesa_operacional";
@@ -13,10 +14,7 @@ const DEFAULT_CATEGORY_KIND: Record<string, CategoryKind> = {
   Outros: "despesa_operacional",
 };
 
-function classifyCategory(
-  category: string,
-  overrides: Record<string, CategoryKind>,
-): CategoryKind {
+function classifyCategory(category: string, overrides: Record<string, CategoryKind>): CategoryKind {
   if (overrides[category]) return overrides[category];
   if (DEFAULT_CATEGORY_KIND[category]) return DEFAULT_CATEGORY_KIND[category];
   // fallback: despesa operacional

@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { LostReason, lostReasonLabel } from "@/lib/mock/data";
 
@@ -15,7 +27,12 @@ type Props = {
 
 const REASONS: LostReason[] = ["preco", "cobertura", "prazo", "sem-retorno", "outro"];
 
-export function LostReasonDialog({ open, onOpenChange, title = "Marcar como perdida", onConfirm }: Props) {
+export function LostReasonDialog({
+  open,
+  onOpenChange,
+  title = "Marcar como perdida",
+  onConfirm,
+}: Props) {
   const [reason, setReason] = useState<LostReason>("preco");
   const [note, setNote] = useState("");
 
@@ -46,7 +63,9 @@ export function LostReasonDialog({ open, onOpenChange, title = "Marcar como perd
               </SelectTrigger>
               <SelectContent>
                 {REASONS.map((r) => (
-                  <SelectItem key={r} value={r}>{lostReasonLabel[r]}</SelectItem>
+                  <SelectItem key={r} value={r}>
+                    {lostReasonLabel[r]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -65,8 +84,15 @@ export function LostReasonDialog({ open, onOpenChange, title = "Marcar como perd
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={handleConfirm}>Confirmar</Button>
+          <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            onClick={handleConfirm}
+          >
+            Confirmar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

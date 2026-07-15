@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
 import { team } from "@/lib/mock/data";
 
@@ -18,7 +19,6 @@ export type TaskComment = {
 
 export const MESSAGE_PREVIEW_LIMIT = 120;
 export const MAX_PINNED_COMMENTS = 3;
-
 
 export type TaskAttachment = {
   id: string;
@@ -95,13 +95,22 @@ const me = team[0]?.id ?? "u1";
 
 const seedTasks = (): TaskItem[] => [
   {
-    id: "tk1", title: "Renovar apólice Auto — João Silva",
+    id: "tk1",
+    title: "Renovar apólice Auto — João Silva",
     description: "Apólice vence em breve. Confirmar coberturas e enviar proposta de renovação.",
-    dueDate: isoDaysFromNow(2), priority: "alta", assigneeId: team[1]?.id ?? "u2",
-    clientName: "João Silva", columnId: "c-demanda",
+    dueDate: isoDaysFromNow(2),
+    priority: "alta",
+    assigneeId: team[1]?.id ?? "u2",
+    clientName: "João Silva",
+    columnId: "c-demanda",
     createdAt: isoDaysFromNow(-2),
     comments: [
-      { id: "cm1", authorId: me, text: "Cliente pediu revisão de franquia. @Carlos Lima pode olhar?", createdAt: isoDaysFromNow(-1) },
+      {
+        id: "cm1",
+        authorId: me,
+        text: "Cliente pediu revisão de franquia. @Carlos Lima pode olhar?",
+        createdAt: isoDaysFromNow(-1),
+      },
     ],
     attachments: [],
     timeline: [
@@ -110,22 +119,36 @@ const seedTasks = (): TaskItem[] => [
     ],
   },
   {
-    id: "tk2", title: "Coletar documentos PME — Rafael Mendes",
+    id: "tk2",
+    title: "Coletar documentos PME — Rafael Mendes",
     description: "Solicitar contrato social, último balanço e RG dos sócios.",
-    dueDate: isoDaysFromNow(5), priority: "media", assigneeId: me,
-    clientName: "Rafael Mendes", columnId: "c-demanda",
+    dueDate: isoDaysFromNow(5),
+    priority: "media",
+    assigneeId: me,
+    clientName: "Rafael Mendes",
+    columnId: "c-demanda",
     createdAt: isoDaysFromNow(-3),
-    comments: [], attachments: [],
+    comments: [],
+    attachments: [],
     timeline: [{ kind: "created", at: isoDaysFromNow(-3), by: me }],
   },
   {
-    id: "tk3", title: "Cotação Residencial — Carlos Lima",
+    id: "tk3",
+    title: "Cotação Residencial — Carlos Lima",
     description: "Realizar multicálculo e levar 3 melhores ofertas ao cliente.",
-    dueDate: isoDaysFromNow(3), priority: "alta", assigneeId: team[2]?.id ?? "u3",
-    clientName: "Carlos Lima", columnId: "c-processando",
+    dueDate: isoDaysFromNow(3),
+    priority: "alta",
+    assigneeId: team[2]?.id ?? "u3",
+    clientName: "Carlos Lima",
+    columnId: "c-processando",
     createdAt: isoDaysFromNow(-4),
     comments: [
-      { id: "cm2", authorId: team[2]?.id ?? "u3", text: "Comparativo pronto. Aguardando feedback do @João Pereira sobre comissão.", createdAt: isoDaysFromNow(-1) },
+      {
+        id: "cm2",
+        authorId: team[2]?.id ?? "u3",
+        text: "Comparativo pronto. Aguardando feedback do @João Pereira sobre comissão.",
+        createdAt: isoDaysFromNow(-1),
+      },
     ],
     attachments: [],
     timeline: [
@@ -135,21 +158,31 @@ const seedTasks = (): TaskItem[] => [
     ],
   },
   {
-    id: "tk4", title: "Atualizar cadastro — Beatriz Costa",
+    id: "tk4",
+    title: "Atualizar cadastro — Beatriz Costa",
     description: "Trocar telefone e endereço de cobrança.",
-    dueDate: isoDaysFromNow(7), priority: "baixa", assigneeId: me,
-    clientName: "Beatriz Costa", columnId: "c-processando",
+    dueDate: isoDaysFromNow(7),
+    priority: "baixa",
+    assigneeId: me,
+    clientName: "Beatriz Costa",
+    columnId: "c-processando",
     createdAt: isoDaysFromNow(-1),
-    comments: [], attachments: [],
+    comments: [],
+    attachments: [],
     timeline: [{ kind: "created", at: isoDaysFromNow(-1), by: me }],
   },
   {
-    id: "tk5", title: "Envio de proposta — Mariana Alves",
+    id: "tk5",
+    title: "Envio de proposta — Mariana Alves",
     description: "Proposta finalizada e enviada por e-mail.",
-    dueDate: isoDaysFromNow(-1), priority: "media", assigneeId: team[1]?.id ?? "u2",
-    clientName: "Mariana Alves", columnId: "c-concluido",
+    dueDate: isoDaysFromNow(-1),
+    priority: "media",
+    assigneeId: team[1]?.id ?? "u2",
+    clientName: "Mariana Alves",
+    columnId: "c-concluido",
     createdAt: isoDaysFromNow(-6),
-    comments: [], attachments: [],
+    comments: [],
+    attachments: [],
     timeline: [
       { kind: "created", at: isoDaysFromNow(-6), by: me },
       { kind: "moved", at: isoDaysFromNow(-3), by: me, from: "Demanda", to: "Processando" },
@@ -160,9 +193,14 @@ const seedTasks = (): TaskItem[] => [
 
 const seedScheduled = (): ScheduledTask[] => [
   {
-    id: "sch1", title: "Felicitar aniversariantes do mês",
-    assigneeId: team[2]?.id ?? "u3", priority: "baixa",
-    kind: "data", startDate: isoDaysFromNow(20), endDate: isoDaysFromNow(20), period: "anual",
+    id: "sch1",
+    title: "Felicitar aniversariantes do mês",
+    assigneeId: team[2]?.id ?? "u3",
+    priority: "baixa",
+    kind: "data",
+    startDate: isoDaysFromNow(20),
+    endDate: isoDaysFromNow(20),
+    period: "anual",
   },
 ];
 
@@ -171,11 +209,31 @@ type Ctx = {
   tasks: TaskItem[];
   scheduled: ScheduledTask[];
   currentUserId: string;
-  addTask: (t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">) => TaskItem;
-  bulkAddTasks: (records: Array<Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">>) => void;
+  addTask: (
+    t: Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">,
+  ) => TaskItem;
+  bulkAddTasks: (
+    records: Array<Omit<TaskItem, "id" | "createdAt" | "comments" | "attachments" | "timeline">>,
+  ) => void;
   moveTask: (id: string, columnId: string) => void;
   deleteTask: (id: string) => void;
-  updateTaskFields: (id: string, patch: Partial<Pick<TaskItem, "title" | "description" | "dueDate" | "priority" | "assigneeId" | "clientName" | "columnId" | "slaDueAt" | "slaHours">>) => void;
+  updateTaskFields: (
+    id: string,
+    patch: Partial<
+      Pick<
+        TaskItem,
+        | "title"
+        | "description"
+        | "dueDate"
+        | "priority"
+        | "assigneeId"
+        | "clientName"
+        | "columnId"
+        | "slaDueAt"
+        | "slaHours"
+      >
+    >,
+  ) => void;
   addComment: (taskId: string, text: string) => void;
   addMessage: (taskId: string, text: string, files: File[]) => void;
   addAudioMessage: (taskId: string, blob: Blob, durationSec: number) => void;
@@ -202,213 +260,297 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
   const [scheduled, setScheduled] = useState<ScheduledTask[]>(() => seedScheduled());
   const currentUserId = me;
 
-  const addTask = useCallback<Ctx["addTask"]>((t) => {
-    const id = `tk${Date.now()}`;
-    const now = new Date().toISOString();
-    const rec: TaskItem = {
-      ...t, id, createdAt: now,
-      comments: [], attachments: [],
-      timeline: [{ kind: "created", at: now, by: currentUserId }],
-    };
-    setTasks((arr) => [rec, ...arr]);
-    return rec;
-  }, [currentUserId]);
+  const addTask = useCallback<Ctx["addTask"]>(
+    (t) => {
+      const id = `tk${Date.now()}`;
+      const now = new Date().toISOString();
+      const rec: TaskItem = {
+        ...t,
+        id,
+        createdAt: now,
+        comments: [],
+        attachments: [],
+        timeline: [{ kind: "created", at: now, by: currentUserId }],
+      };
+      setTasks((arr) => [rec, ...arr]);
+      return rec;
+    },
+    [currentUserId],
+  );
 
-  const bulkAddTasks = useCallback<Ctx["bulkAddTasks"]>((records) => {
-    if (!records.length) return;
-    setTasks((arr) => {
-      const existingKeys = new Set(arr.map((t) => t.sourceKey).filter((k): k is string => !!k));
-      const toAdd: TaskItem[] = [];
-      records.forEach((r, i) => {
-        if (r.sourceKey && existingKeys.has(r.sourceKey)) return;
-        if (r.sourceKey) existingKeys.add(r.sourceKey);
-        const at = new Date().toISOString();
-        toAdd.push({
-          ...r,
-          id: `tk${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
-          createdAt: at,
-          comments: [],
-          attachments: [],
-          timeline: [{ kind: "created", at, by: currentUserId }],
+  const bulkAddTasks = useCallback<Ctx["bulkAddTasks"]>(
+    (records) => {
+      if (!records.length) return;
+      setTasks((arr) => {
+        const existingKeys = new Set(arr.map((t) => t.sourceKey).filter((k): k is string => !!k));
+        const toAdd: TaskItem[] = [];
+        records.forEach((r, i) => {
+          if (r.sourceKey && existingKeys.has(r.sourceKey)) return;
+          if (r.sourceKey) existingKeys.add(r.sourceKey);
+          const at = new Date().toISOString();
+          toAdd.push({
+            ...r,
+            id: `tk${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+            createdAt: at,
+            comments: [],
+            attachments: [],
+            timeline: [{ kind: "created", at, by: currentUserId }],
+          });
         });
+        return toAdd.length ? [...toAdd, ...arr] : arr;
       });
-      return toAdd.length ? [...toAdd, ...arr] : arr;
-    });
-  }, [currentUserId]);
+    },
+    [currentUserId],
+  );
 
-  const moveTask = useCallback((id: string, columnId: string) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== id || t.columnId === columnId) return t;
-      const from = columns.find((c) => c.id === t.columnId)?.title ?? "?";
-      const toCol = columns.find((c) => c.id === columnId);
-      const to = toCol?.title ?? "?";
-      const terminal = !!toCol && /conclu|finaliz|done/i.test(toCol.title);
-      return {
-        ...t, columnId,
-        timeline: [...t.timeline, { kind: "moved", at: new Date().toISOString(), by: currentUserId, from, to }],
-        slaPausedAt: terminal ? new Date().toISOString() : undefined,
-      };
-    }));
-  }, [columns, currentUserId]);
+  const moveTask = useCallback(
+    (id: string, columnId: string) => {
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== id || t.columnId === columnId) return t;
+          const from = columns.find((c) => c.id === t.columnId)?.title ?? "?";
+          const toCol = columns.find((c) => c.id === columnId);
+          const to = toCol?.title ?? "?";
+          const terminal = !!toCol && /conclu|finaliz|done/i.test(toCol.title);
+          return {
+            ...t,
+            columnId,
+            timeline: [
+              ...t.timeline,
+              { kind: "moved", at: new Date().toISOString(), by: currentUserId, from, to },
+            ],
+            slaPausedAt: terminal ? new Date().toISOString() : undefined,
+          };
+        }),
+      );
+    },
+    [columns, currentUserId],
+  );
 
-  const addAudioMessage = useCallback((taskId: string, blob: Blob, durationSec: number) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      const at = new Date().toISOString();
-      const attId = `at${Date.now()}-a-${Math.random().toString(36).slice(2, 7)}`;
-      const att: TaskAttachment = {
-        id: attId,
-        name: `Áudio ${Math.floor(durationSec / 60)}:${String(durationSec % 60).padStart(2, "0")}`,
-        size: blob.size,
-        type: "audio/webm",
-        url: URL.createObjectURL(blob),
-        uploadedAt: at,
-      };
-      const commentId = `cm${Date.now()}`;
-      const comment: TaskComment = { id: commentId, authorId: currentUserId, text: "", createdAt: at, attachmentIds: [attId] };
-      return {
-        ...t,
-        attachments: [...t.attachments, att],
-        comments: [...t.comments, comment],
-        timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId }],
-      };
-    }));
-  }, [currentUserId]);
+  const addAudioMessage = useCallback(
+    (taskId: string, blob: Blob, durationSec: number) => {
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== taskId) return t;
+          const at = new Date().toISOString();
+          const attId = `at${Date.now()}-a-${Math.random().toString(36).slice(2, 7)}`;
+          const att: TaskAttachment = {
+            id: attId,
+            name: `Áudio ${Math.floor(durationSec / 60)}:${String(durationSec % 60).padStart(2, "0")}`,
+            size: blob.size,
+            type: "audio/webm",
+            url: URL.createObjectURL(blob),
+            uploadedAt: at,
+          };
+          const commentId = `cm${Date.now()}`;
+          const comment: TaskComment = {
+            id: commentId,
+            authorId: currentUserId,
+            text: "",
+            createdAt: at,
+            attachmentIds: [attId],
+          };
+          return {
+            ...t,
+            attachments: [...t.attachments, att],
+            comments: [...t.comments, comment],
+            timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId }],
+          };
+        }),
+      );
+    },
+    [currentUserId],
+  );
 
-  const addComment = useCallback((taskId: string, text: string) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      const id = `cm${Date.now()}`;
-      const at = new Date().toISOString();
-      const comment: TaskComment = { id, authorId: currentUserId, text, createdAt: at };
-      return {
-        ...t,
-        comments: [...t.comments, comment],
-        timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId: id }],
-      };
-    }));
-  }, [currentUserId]);
+  const addComment = useCallback(
+    (taskId: string, text: string) => {
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== taskId) return t;
+          const id = `cm${Date.now()}`;
+          const at = new Date().toISOString();
+          const comment: TaskComment = { id, authorId: currentUserId, text, createdAt: at };
+          return {
+            ...t,
+            comments: [...t.comments, comment],
+            timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId: id }],
+          };
+        }),
+      );
+    },
+    [currentUserId],
+  );
 
-  const editComment = useCallback((taskId: string, commentId: string, text: string) => {
-    const clean = text.trim();
-    if (!clean) return;
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      return {
-        ...t,
-        comments: t.comments.map((c) =>
-          c.id === commentId && c.authorId === currentUserId && c.text !== clean
-            ? { ...c, text: clean, editedAt: new Date().toISOString(), editedBy: currentUserId }
-            : c
-        ),
-      };
-    }));
-  }, [currentUserId]);
+  const editComment = useCallback(
+    (taskId: string, commentId: string, text: string) => {
+      const clean = text.trim();
+      if (!clean) return;
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== taskId) return t;
+          return {
+            ...t,
+            comments: t.comments.map((c) =>
+              c.id === commentId && c.authorId === currentUserId && c.text !== clean
+                ? { ...c, text: clean, editedAt: new Date().toISOString(), editedBy: currentUserId }
+                : c,
+            ),
+          };
+        }),
+      );
+    },
+    [currentUserId],
+  );
 
-  const addAttachment = useCallback((taskId: string, file: File) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      const id = `at${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      const at = new Date().toISOString();
-      const att: TaskAttachment = {
-        id, name: file.name, size: file.size, type: file.type || "file",
-        url: URL.createObjectURL(file), uploadedAt: at,
-      };
-      return {
-        ...t,
-        attachments: [...t.attachments, att],
-        timeline: [...t.timeline, { kind: "attachment", at, by: currentUserId, attachmentId: id }],
-      };
-    }));
-  }, [currentUserId]);
+  const addAttachment = useCallback(
+    (taskId: string, file: File) => {
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== taskId) return t;
+          const id = `at${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          const at = new Date().toISOString();
+          const att: TaskAttachment = {
+            id,
+            name: file.name,
+            size: file.size,
+            type: file.type || "file",
+            url: URL.createObjectURL(file),
+            uploadedAt: at,
+          };
+          return {
+            ...t,
+            attachments: [...t.attachments, att],
+            timeline: [
+              ...t.timeline,
+              { kind: "attachment", at, by: currentUserId, attachmentId: id },
+            ],
+          };
+        }),
+      );
+    },
+    [currentUserId],
+  );
 
-  const addMessage = useCallback((taskId: string, text: string, files: File[]) => {
-    const clean = text.trim();
-    if (!clean && files.length === 0) return;
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      const at = new Date().toISOString();
-      const newAtts: TaskAttachment[] = files.map((f, i) => ({
-        id: `at${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
-        name: f.name, size: f.size, type: f.type || "file",
-        url: URL.createObjectURL(f), uploadedAt: at,
-      }));
-      const commentId = `cm${Date.now()}`;
-      const comment: TaskComment = {
-        id: commentId, authorId: currentUserId, text: clean, createdAt: at,
-        attachmentIds: newAtts.length ? newAtts.map((a) => a.id) : undefined,
-      };
-      return {
-        ...t,
-        attachments: [...t.attachments, ...newAtts],
-        comments: [...t.comments, comment],
-        timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId }],
-      };
-    }));
-  }, [currentUserId]);
+  const addMessage = useCallback(
+    (taskId: string, text: string, files: File[]) => {
+      const clean = text.trim();
+      if (!clean && files.length === 0) return;
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== taskId) return t;
+          const at = new Date().toISOString();
+          const newAtts: TaskAttachment[] = files.map((f, i) => ({
+            id: `at${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+            name: f.name,
+            size: f.size,
+            type: f.type || "file",
+            url: URL.createObjectURL(f),
+            uploadedAt: at,
+          }));
+          const commentId = `cm${Date.now()}`;
+          const comment: TaskComment = {
+            id: commentId,
+            authorId: currentUserId,
+            text: clean,
+            createdAt: at,
+            attachmentIds: newAtts.length ? newAtts.map((a) => a.id) : undefined,
+          };
+          return {
+            ...t,
+            attachments: [...t.attachments, ...newAtts],
+            comments: [...t.comments, comment],
+            timeline: [...t.timeline, { kind: "comment", at, by: currentUserId, commentId }],
+          };
+        }),
+      );
+    },
+    [currentUserId],
+  );
 
-  const removeCommentAttachment = useCallback((taskId: string, commentId: string, attachmentId: string) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      const c = t.comments.find((x) => x.id === commentId);
-      if (!c || c.authorId !== currentUserId) return t;
-      return {
-        ...t,
-        attachments: t.attachments.filter((a) => a.id !== attachmentId),
-        comments: t.comments.map((x) =>
-          x.id === commentId
-            ? { ...x, attachmentIds: (x.attachmentIds ?? []).filter((id) => id !== attachmentId), editedAt: new Date().toISOString(), editedBy: currentUserId }
-            : x
-        ),
-      };
-    }));
-  }, [currentUserId]);
+  const removeCommentAttachment = useCallback(
+    (taskId: string, commentId: string, attachmentId: string) => {
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== taskId) return t;
+          const c = t.comments.find((x) => x.id === commentId);
+          if (!c || c.authorId !== currentUserId) return t;
+          return {
+            ...t,
+            attachments: t.attachments.filter((a) => a.id !== attachmentId),
+            comments: t.comments.map((x) =>
+              x.id === commentId
+                ? {
+                    ...x,
+                    attachmentIds: (x.attachmentIds ?? []).filter((id) => id !== attachmentId),
+                    editedAt: new Date().toISOString(),
+                    editedBy: currentUserId,
+                  }
+                : x,
+            ),
+          };
+        }),
+      );
+    },
+    [currentUserId],
+  );
 
-  const deleteComment = useCallback((taskId: string, commentId: string) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      const c = t.comments.find((x) => x.id === commentId);
-      if (!c || c.authorId !== currentUserId) return t;
-      const attIds = new Set(c.attachmentIds ?? []);
-      return {
-        ...t,
-        comments: t.comments.filter((x) => x.id !== commentId),
-        attachments: t.attachments.filter((a) => !attIds.has(a.id)),
-        timeline: t.timeline.filter((ev) => !(ev.kind === "comment" && ev.commentId === commentId)),
-      };
-    }));
-  }, [currentUserId]);
+  const deleteComment = useCallback(
+    (taskId: string, commentId: string) => {
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== taskId) return t;
+          const c = t.comments.find((x) => x.id === commentId);
+          if (!c || c.authorId !== currentUserId) return t;
+          const attIds = new Set(c.attachmentIds ?? []);
+          return {
+            ...t,
+            comments: t.comments.filter((x) => x.id !== commentId),
+            attachments: t.attachments.filter((a) => !attIds.has(a.id)),
+            timeline: t.timeline.filter(
+              (ev) => !(ev.kind === "comment" && ev.commentId === commentId),
+            ),
+          };
+        }),
+      );
+    },
+    [currentUserId],
+  );
 
   const togglePinComment = useCallback((taskId: string, commentId: string) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== taskId) return t;
-      const target = t.comments.find((c) => c.id === commentId);
-      if (!target) return t;
-      const pinnedCount = t.comments.filter((c) => c.pinned).length;
-      if (!target.pinned && pinnedCount >= MAX_PINNED_COMMENTS) return t;
-      return {
-        ...t,
-        comments: t.comments.map((c) => c.id === commentId ? { ...c, pinned: !c.pinned } : c),
-      };
-    }));
+    setTasks((arr) =>
+      arr.map((t) => {
+        if (t.id !== taskId) return t;
+        const target = t.comments.find((c) => c.id === commentId);
+        if (!target) return t;
+        const pinnedCount = t.comments.filter((c) => c.pinned).length;
+        if (!target.pinned && pinnedCount >= MAX_PINNED_COMMENTS) return t;
+        return {
+          ...t,
+          comments: t.comments.map((c) => (c.id === commentId ? { ...c, pinned: !c.pinned } : c)),
+        };
+      }),
+    );
   }, []);
 
   const addColumn = useCallback((title: string, color: string) => {
-    setColumns((arr) => [...arr, { id: `c-${Date.now()}`, title: title.trim() || "Nova coluna", color }]);
+    setColumns((arr) => [
+      ...arr,
+      { id: `c-${Date.now()}`, title: title.trim() || "Nova coluna", color },
+    ]);
   }, []);
 
   const renameColumn = useCallback((id: string, title: string) => {
-    setColumns((arr) => arr.map((c) => c.id === id ? { ...c, title } : c));
+    setColumns((arr) => arr.map((c) => (c.id === id ? { ...c, title } : c)));
   }, []);
   const recolorColumn = useCallback((id: string, color: string) => {
-    setColumns((arr) => arr.map((c) => c.id === id ? { ...c, color } : c));
+    setColumns((arr) => arr.map((c) => (c.id === id ? { ...c, color } : c)));
   }, []);
   const deleteColumn = useCallback((id: string) => {
     setColumns((arr) => {
       if (arr.length <= 1) return arr;
       const remaining = arr.filter((c) => c.id !== id);
       const fallback = remaining[0].id;
-      setTasks((ts) => ts.map((t) => t.columnId === id ? { ...t, columnId: fallback } : t));
+      setTasks((ts) => ts.map((t) => (t.columnId === id ? { ...t, columnId: fallback } : t)));
       return remaining;
     });
   }, []);
@@ -427,26 +569,81 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     setTasks((arr) => arr.filter((t) => t.id !== id));
   }, []);
 
-  const updateTaskFields = useCallback<Ctx["updateTaskFields"]>((id, patch) => {
-    setTasks((arr) => arr.map((t) => {
-      if (t.id !== id) return t;
-      let timeline = t.timeline;
-      if (patch.columnId && patch.columnId !== t.columnId) {
-        const from = columns.find((c) => c.id === t.columnId)?.title ?? "?";
-        const to = columns.find((c) => c.id === patch.columnId)?.title ?? "?";
-        timeline = [...t.timeline, { kind: "moved", at: new Date().toISOString(), by: currentUserId, from, to }];
-      }
-      return { ...t, ...patch, timeline };
-    }));
-  }, [columns, currentUserId]);
+  const updateTaskFields = useCallback<Ctx["updateTaskFields"]>(
+    (id, patch) => {
+      setTasks((arr) =>
+        arr.map((t) => {
+          if (t.id !== id) return t;
+          let timeline = t.timeline;
+          if (patch.columnId && patch.columnId !== t.columnId) {
+            const from = columns.find((c) => c.id === t.columnId)?.title ?? "?";
+            const to = columns.find((c) => c.id === patch.columnId)?.title ?? "?";
+            timeline = [
+              ...t.timeline,
+              { kind: "moved", at: new Date().toISOString(), by: currentUserId, from, to },
+            ];
+          }
+          return { ...t, ...patch, timeline };
+        }),
+      );
+    },
+    [columns, currentUserId],
+  );
 
-  const value = useMemo<Ctx>(() => ({
-    columns, tasks, scheduled, currentUserId,
-    addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment,
-    addColumn, renameColumn, recolorColumn, deleteColumn,
-    addScheduled, updateScheduled, removeScheduled,
-  }), [columns, tasks, scheduled, currentUserId, addTask, bulkAddTasks, moveTask, deleteTask, updateTaskFields, addComment, addMessage, addAudioMessage, editComment, removeCommentAttachment, deleteComment, togglePinComment, addAttachment, addColumn, renameColumn, recolorColumn, deleteColumn, addScheduled, updateScheduled, removeScheduled]);
-
+  const value = useMemo<Ctx>(
+    () => ({
+      columns,
+      tasks,
+      scheduled,
+      currentUserId,
+      addTask,
+      bulkAddTasks,
+      moveTask,
+      deleteTask,
+      updateTaskFields,
+      addComment,
+      addMessage,
+      addAudioMessage,
+      editComment,
+      removeCommentAttachment,
+      deleteComment,
+      togglePinComment,
+      addAttachment,
+      addColumn,
+      renameColumn,
+      recolorColumn,
+      deleteColumn,
+      addScheduled,
+      updateScheduled,
+      removeScheduled,
+    }),
+    [
+      columns,
+      tasks,
+      scheduled,
+      currentUserId,
+      addTask,
+      bulkAddTasks,
+      moveTask,
+      deleteTask,
+      updateTaskFields,
+      addComment,
+      addMessage,
+      addAudioMessage,
+      editComment,
+      removeCommentAttachment,
+      deleteComment,
+      togglePinComment,
+      addAttachment,
+      addColumn,
+      renameColumn,
+      recolorColumn,
+      deleteColumn,
+      addScheduled,
+      updateScheduled,
+      removeScheduled,
+    ],
+  );
 
   return <TaskCtx.Provider value={value}>{children}</TaskCtx.Provider>;
 }

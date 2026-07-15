@@ -4,7 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCashStore, MONTHS_PT, type TaxKind } from "@/lib/cash/cashStore";
 import { toast } from "sonner";
 
@@ -36,7 +42,9 @@ export function NewTaxSheet({
   const [kind, setKind] = useState<TaxKind | "">("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [compMonth, setCompMonth] = useState<number>(defaultCompetenceMonth ?? new Date().getMonth());
+  const [compMonth, setCompMonth] = useState<number>(
+    defaultCompetenceMonth ?? new Date().getMonth(),
+  );
   const [compYear, setCompYear] = useState<number>(defaultCompetenceYear ?? currentYear);
   const [paidAt, setPaidAt] = useState<string>(todayISO());
   const [notes, setNotes] = useState("");
@@ -112,7 +120,9 @@ export function NewTaxSheet({
               placeholder="Ex.: PIS/COFINS Julho"
               className="mt-1.5 rounded-xl bg-muted border-0"
             />
-            {errors.description && <p className="text-xs text-destructive mt-1">{errors.description}</p>}
+            {errors.description && (
+              <p className="text-xs text-destructive mt-1">{errors.description}</p>
+            )}
           </div>
 
           <div>
@@ -136,7 +146,9 @@ export function NewTaxSheet({
                 </SelectTrigger>
                 <SelectContent>
                   {MONTHS_PT.map((m, i) => (
-                    <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                    <SelectItem key={i} value={String(i)}>
+                      {m}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -149,7 +161,9 @@ export function NewTaxSheet({
                 </SelectTrigger>
                 <SelectContent>
                   {YEARS.map((y) => (
-                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

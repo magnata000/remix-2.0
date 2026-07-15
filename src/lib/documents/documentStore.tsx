@@ -1,11 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { policies } from "@/lib/mock/data";
 
 export type DocFolder = {
@@ -66,13 +60,17 @@ type Ctx = {
   renameFolder: (id: string, name: string) => void;
   deleteFolder: (id: string) => void;
   moveFolder: (id: string, newParentId: string) => boolean;
-  addFile: (input: { name: string; folderId: string; mime?: string; sizeKB?: number }) => DocFile | null;
+  addFile: (input: {
+    name: string;
+    folderId: string;
+    mime?: string;
+    sizeKB?: number;
+  }) => DocFile | null;
   renameFile: (id: string, name: string) => void;
   deleteFile: (id: string) => void;
   moveFile: (id: string, newFolderId: string) => boolean;
   deleteByPolicy: (policyId: string) => void;
 };
-
 
 const DocCtx = createContext<Ctx | null>(null);
 
@@ -102,21 +100,27 @@ function yearOf(iso?: string): string {
 type TreeNode = [string, TreeNode[]];
 
 const SAUDE_TREE: TreeNode[] = [
-  ["Documentação Preliminar", [
-    ["Empresa", []],
-    ["Titular", []],
-    ["Beneficiários", []],
-    ["Cartas de Permanência e Carteirinhas", []],
-    ["Documentação Complementar", []],
-    ["Informações Pessoais", []],
-  ]],
-  ["Pós-venda", [
-    ["Acesso", []],
-    ["Cotações", []],
-    ["Proposta Contratada", []],
-    ["Demonstrativos", []],
-    ["Outros", []],
-  ]],
+  [
+    "Documentação Preliminar",
+    [
+      ["Empresa", []],
+      ["Titular", []],
+      ["Beneficiários", []],
+      ["Cartas de Permanência e Carteirinhas", []],
+      ["Documentação Complementar", []],
+      ["Informações Pessoais", []],
+    ],
+  ],
+  [
+    "Pós-venda",
+    [
+      ["Acesso", []],
+      ["Cotações", []],
+      ["Proposta Contratada", []],
+      ["Demonstrativos", []],
+      ["Outros", []],
+    ],
+  ],
 ];
 
 const SEGUROS_YEAR_TREE: TreeNode[] = [
@@ -126,9 +130,7 @@ const SEGUROS_YEAR_TREE: TreeNode[] = [
   ["Proposta Contratada", []],
 ];
 
-const CONSORCIO_TREE: TreeNode[] = [
-  ["Geral", []],
-];
+const CONSORCIO_TREE: TreeNode[] = [["Geral", []]];
 
 function expandTree(
   nodes: TreeNode[],
@@ -209,17 +211,13 @@ function seed(): { folders: DocFolder[]; files: DocFile[] } {
         clientName: p.clientName,
         createdAt: p.startDate,
       });
-      subfolders.push(
-        ...expandTree(SEGUROS_YEAR_TREE, yearId, { ...ctxBase, prefix: yearId }),
-      );
+      subfolders.push(...expandTree(SEGUROS_YEAR_TREE, yearId, { ...ctxBase, prefix: yearId }));
     }
     folders.push(...subfolders);
 
     // arquivos fake leves nas folhas das primeiras apólices
     if (idx < 6) {
-      const leaves = subfolders.filter(
-        (f) => !subfolders.some((c) => c.parentId === f.id),
-      );
+      const leaves = subfolders.filter((f) => !subfolders.some((c) => c.parentId === f.id));
       leaves.slice(0, 2).forEach((leaf, k) => {
         files.push({
           id: `file-${p.id}-${leaf.id}-${k}`,
@@ -248,8 +246,7 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const clientRootOf = useCallback(
-    (clientName: string) =>
-      folders.find((f) => f.isClientRoot && f.clientName === clientName),
+    (clientName: string) => folders.find((f) => f.isClientRoot && f.clientName === clientName),
     [folders],
   );
 
@@ -286,10 +283,7 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     [files],
   );
 
-  const findFolder = useCallback(
-    (id: string) => folders.find((f) => f.id === id),
-    [folders],
-  );
+  const findFolder = useCallback((id: string) => folders.find((f) => f.id === id), [folders]);
 
   const searchFilesByClient = useCallback(
     (clientName: string, query: string): DocSearchHit[] => {
@@ -362,9 +356,7 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
           createdAt,
         };
 
-        let rootId = next.find(
-          (f) => f.parentId === null && f.policyId === input.policyId,
-        )?.id;
+        let rootId = next.find((f) => f.parentId === null && f.policyId === input.policyId)?.id;
 
         if (!rootId) {
           rootId = `f-root-${input.policyId}`;
@@ -378,9 +370,13 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
           });
 
           if (product === "Saúde") {
-            next.push(...expandTree(SAUDE_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }));
+            next.push(
+              ...expandTree(SAUDE_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }),
+            );
           } else if (product === "Consórcio") {
-            next.push(...expandTree(CONSORCIO_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }));
+            next.push(
+              ...expandTree(CONSORCIO_TREE, rootId, { ...ctxBase, prefix: `f-${input.policyId}` }),
+            );
           } else {
             const year = yearOf(input.startDate);
             const yearId = `f-${input.policyId}-${year}`;
@@ -418,9 +414,6 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
-
-
-
 
   const renameFolder = useCallback((id: string, name: string) => {
     const trimmed = name.trim();
@@ -515,29 +508,36 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     setFiles((arr) => arr.filter((f) => f.id !== id));
   }, []);
 
-  const moveFile = useCallback((id: string, newFolderId: string): boolean => {
-    let ok = false;
-    setFiles((arr) => {
-      const file = arr.find((f) => f.id === id);
-      if (!file || file.folderId === newFolderId) return arr;
-      const parent = folders.find((f) => f.id === newFolderId);
-      if (!parent) return arr;
-      if (parent.clientName !== file.clientName) return arr;
-      ok = true;
-      return arr.map((f) =>
-        f.id === id
-          ? { ...f, folderId: newFolderId, policyId: parent.policyId, clientName: parent.clientName }
-          : f,
-      );
-    });
-    return ok;
-  }, [folders]);
+  const moveFile = useCallback(
+    (id: string, newFolderId: string): boolean => {
+      let ok = false;
+      setFiles((arr) => {
+        const file = arr.find((f) => f.id === id);
+        if (!file || file.folderId === newFolderId) return arr;
+        const parent = folders.find((f) => f.id === newFolderId);
+        if (!parent) return arr;
+        if (parent.clientName !== file.clientName) return arr;
+        ok = true;
+        return arr.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                folderId: newFolderId,
+                policyId: parent.policyId,
+                clientName: parent.clientName,
+              }
+            : f,
+        );
+      });
+      return ok;
+    },
+    [folders],
+  );
 
   const deleteByPolicy = useCallback((policyId: string) => {
     setFolders((arr) => arr.filter((f) => f.policyId !== policyId));
     setFiles((arr) => arr.filter((f) => f.policyId !== policyId));
   }, []);
-
 
   const value: Ctx = {
     folders,

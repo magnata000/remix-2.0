@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { policies as seedPolicies, type Policy } from "@/lib/mock/data";
 
@@ -51,7 +52,14 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     setPolicies((arr) =>
       arr.map((p) =>
         p.id === id
-          ? { ...p, ...patch, id: p.id, number: p.number, renewedFromId: p.renewedFromId, renewedToId: p.renewedToId }
+          ? {
+              ...p,
+              ...patch,
+              id: p.id,
+              number: p.number,
+              renewedFromId: p.renewedFromId,
+              renewedToId: p.renewedToId,
+            }
           : p,
       ),
     );
@@ -72,9 +80,7 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
       return [
         created,
         ...arr.map((p) =>
-          p.id === sourceId
-            ? { ...p, status: "renovada" as const, renewedToId: newId }
-            : p,
+          p.id === sourceId ? { ...p, status: "renovada" as const, renewedToId: newId } : p,
         ),
       ];
     });
@@ -101,11 +107,7 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-
-  const findPolicy = useCallback(
-    (id: string) => policies.find((p) => p.id === id),
-    [policies],
-  );
+  const findPolicy = useCallback((id: string) => policies.find((p) => p.id === id), [policies]);
 
   const isAlreadyRenewed = useCallback(
     (policyId: string) => policies.some((p) => p.renewedFromId === policyId),
@@ -151,7 +153,17 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
       renewalIndexOf,
       findPolicy,
     }),
-    [policies, addPolicy, updatePolicy, deletePolicy, renewPolicy, isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy],
+    [
+      policies,
+      addPolicy,
+      updatePolicy,
+      deletePolicy,
+      renewPolicy,
+      isAlreadyRenewed,
+      renewalChainOf,
+      renewalIndexOf,
+      findPolicy,
+    ],
   );
 
   return <PolicyCtx.Provider value={value}>{children}</PolicyCtx.Provider>;
