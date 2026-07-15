@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from "react";
 import { team as seedTeam } from "@/lib/mock/data";
+import { buildTeamNameIndex, type TeamNameIndex } from "@/lib/daily/mentions";
 
 export type TeamRole = "Administrador" | "Pós-venda" | "Vendedor";
 export const TEAM_ROLES: TeamRole[] = ["Administrador", "Pós-venda", "Vendedor"];
