@@ -9,7 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { clients, team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { useClients } from "@/lib/portfolio/clientStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { toast } from "sonner";
 
