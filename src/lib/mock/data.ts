@@ -372,10 +372,8 @@ export const formatBRL = (v: number) =>
 export const formatBRLInt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-export const formatDateShort = (iso: string) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  const d = m
-    ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-    : new Date(iso);
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
+/**
+ * @deprecated Importe de `@/lib/format` em vez de `@/lib/mock/data`.
+ * Re-export mantido para compatibilidade durante a migração incremental.
+ */
+export { formatDateShort } from "@/lib/format";
