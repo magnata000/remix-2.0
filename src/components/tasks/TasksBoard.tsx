@@ -26,6 +26,7 @@ export function TasksBoard() {
   useSlaTicker();
   const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
   const { policies } = usePolicies();
+  const { clients } = useClients();
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [editTask, setEditTask] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
