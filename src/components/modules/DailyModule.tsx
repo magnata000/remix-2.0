@@ -189,7 +189,7 @@ function MentionsSection({
       ) : (
         <ul className="divide-y divide-border">
           {entries.slice(0, 8).map((e, i) => {
-            const author = team.find((t) => t.id === e.authorId);
+            const author = members.find((t) => t.id === e.authorId);
             return (
               <li key={`${e.taskId}-${i}`}>
                 <button
