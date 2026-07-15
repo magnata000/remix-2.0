@@ -33,7 +33,7 @@ const addYears = (d: Date, n: number) => {
 };
 
 export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
-  const { renewPolicy } = usePolicies();
+  const { renewPolicy } = usePolicyStore();
   const { ensurePolicyRoots } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
 
