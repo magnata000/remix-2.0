@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from "react";
 import { team as seedTeam } from "@/lib/mock/data";
 import { buildTeamNameIndex, type TeamNameIndex } from "@/lib/daily/mentions";

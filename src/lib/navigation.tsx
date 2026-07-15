@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useRef, ReactNode, useCallback } from "react";
 import type { ModuleKey } from "@/components/shell/TopBar";
 

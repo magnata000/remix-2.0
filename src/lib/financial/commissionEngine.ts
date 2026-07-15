@@ -183,7 +183,7 @@ export function expectedRecurrencesUntil(
   firstRecurrenceMonth.setMonth(firstRecurrenceMonth.getMonth() + startOffsetMonths);
 
   const out: Commission[] = [];
-  let cursor = new Date(firstRecurrenceMonth);
+  const cursor = new Date(firstRecurrenceMonth);
   let i = 1;
   while (
     cursor.getFullYear() < reference.getFullYear() ||
