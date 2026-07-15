@@ -320,6 +320,47 @@ AS $$
 $$;
 ```
 
+> **Aviso — não use `has_role` em policies da própria `user_roles`.** A função consulta `public.user_roles`; se uma policy dessa mesma tabela chamar `has_role`, o Postgres entra em recursão infinita ao avaliar a RLS. Use `has_role` livremente nas demais tabelas (clients, policies, tasks, opportunities). Para `user_roles`, a checagem de admin vai contra `public.team_members` (ver [2.4 Políticas RLS](#24-políticas-rls)).
+
+#### Sincronização automática `auth.users → public.team_members`
+
+Novos usuários criados via Supabase Auth são clonados para `team_members` e recebem uma entrada em `user_roles` **na mesma transação**, evitando que fiquem em "limbo" (sem `assignee_id` válido para clients/policies/tasks).
+
+```sql
+-- 1. Função que sincroniza o cadastro do Auth com o schema público
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  -- Clona para team_members usando metadados do cadastro (ou fallbacks seguros)
+  INSERT INTO public.team_members (id, name, role, email)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+    COALESCE(NEW.raw_user_meta_data->>'role', 'broker'),
+    NEW.email
+  );
+
+  -- Espelha em user_roles para manter o controle de acesso consistente
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (
+    NEW.id,
+    COALESCE((NEW.raw_user_meta_data->>'role')::public.app_role, 'broker'::public.app_role)
+  )
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+-- 2. Trigger que dispara imediatamente APÓS a inserção em auth.users
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+```
+
 ### `clients`
 
 ```sql
