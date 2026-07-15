@@ -27,7 +27,7 @@ export type ModuleKey =
   | "settings";
 
 const allModules: { key: ModuleKey; label: string; icon: typeof LayoutDashboard }[] = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "dashboard", label: "Daily", icon: Sparkles },
   { key: "policies", label: "Carteira", icon: FileText },
   { key: "kanban", label: "Kanban", icon: KanbanSquare },
   { key: "multicalc", label: "Multicálculo", icon: Calculator },
