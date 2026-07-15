@@ -17,7 +17,7 @@ import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { commissionKindLabel } from "@/lib/financial/commissionEngine";
 import { commissionStatusColor } from "@/components/financial/CommissionStatusMenu";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 
 export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
@@ -47,7 +47,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
   const { scheduleOfPolicy } = useCommissionStore();
-  const { findPolicy } = usePolicyStore();
+  const { findPolicy } = usePolicies();
   const { configForPolicy, findMalha } = useCommissionConfigStore();
   if (!movement) return null;
   const isEntry = movement.kind === "entrada";

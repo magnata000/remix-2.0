@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useClientStore } from "@/lib/portfolio/clientStore";
+import { useClients } from "@/lib/portfolio/clientStore";
 import type { Client } from "@/lib/mock/data";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -62,7 +62,7 @@ function maskCpfCnpj(input: string): string {
 }
 
 export function EditClientDialog({ open, onOpenChange, client }: Props) {
-  const { updateClient } = useClientStore();
+  const { updateClient } = useClients();
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");

@@ -12,8 +12,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useTaskStore, type TaskItem, PRIORITY_META } from "@/lib/tasks/taskStore";
-import { useClientStore } from "@/lib/portfolio/clientStore";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useClients } from "@/lib/portfolio/clientStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import { useTeam, useTeamNameIndex } from "@/lib/team/teamStore";
 import { type Policy, type Beneficiary } from "@/lib/mock/data";
@@ -228,8 +228,8 @@ type BirthdayEntry = {
 };
 
 function useTodayBirthdays(now: Date): BirthdayEntry[] {
-  const { clients } = useClientStore();
-  const { policies } = usePolicyStore();
+  const { clients } = useClients();
+  const { policies } = usePolicies();
   return useMemo(() => {
     const out: BirthdayEntry[] = [];
     clients.forEach((c) => {
@@ -303,7 +303,7 @@ function BirthdaysSection({ now }: { now: Date }) {
 type RenewalEntry = { policy: Policy; daysLeft: number };
 
 function useUpcomingRenewals(now: Date): RenewalEntry[] {
-  const { policies } = usePolicyStore();
+  const { policies } = usePolicies();
   return useMemo(() => {
     const out: RenewalEntry[] = [];
     policies.forEach((p) => {
@@ -390,8 +390,8 @@ type AgeBandEntry = {
 };
 
 function useAgeBandChanges(now: Date): AgeBandEntry[] {
-  const { policies } = usePolicyStore();
-  const { clients } = useClientStore();
+  const { policies } = usePolicies();
+  const { clients } = useClients();
   return useMemo(() => {
     const out: AgeBandEntry[] = [];
     const healthPolicies = policies.filter((p) => p.branch === "Saúde");

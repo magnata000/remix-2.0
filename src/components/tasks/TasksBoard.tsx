@@ -10,7 +10,7 @@ import { team, clients } from "@/lib/mock/data";
 import { TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { searchTasks } from "@/lib/tasks/searchTasks";
 import { runWorkflows } from "@/lib/tasks/workflowEngine";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { TaskCard } from "./TaskCard";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
@@ -24,7 +24,7 @@ import { toast } from "sonner";
 export function TasksBoard() {
   useSlaTicker();
   const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
-  const { policies } = usePolicyStore();
+  const { policies } = usePolicies();
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [editTask, setEditTask] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);

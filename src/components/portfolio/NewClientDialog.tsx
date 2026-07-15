@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/lib/mock/data";
-import { useClientStore } from "@/lib/portfolio/clientStore";
+import { useClients } from "@/lib/portfolio/clientStore";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -61,7 +61,7 @@ function maskCpfCnpj(input: string): string {
 
 
 export function NewClientDialog({ open, onOpenChange }: Props) {
-  const { addClient, clients } = useClientStore();
+  const { addClient, clients } = useClients();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");

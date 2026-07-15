@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 import { formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
@@ -27,7 +27,7 @@ const BASE_STATUSES: { key: PolicyStatus; label: string }[] = [
 ];
 
 export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
-  const { updatePolicy } = usePolicyStore();
+  const { updatePolicy } = usePolicies();
   const { getConfig } = useCommissionConfigStore();
 
   const [branch, setBranch] = useState<Branch>("Auto");

@@ -164,4 +164,4 @@ export function usePolicies() {
 }
 
 /** @deprecated Use `usePolicies()`. Alias mantido para compatibilidade. */
-export const usePolicyStore = usePolicies;
+export const usePolicies = usePolicies;

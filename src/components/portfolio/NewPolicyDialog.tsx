@@ -10,8 +10,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 import { team, formatBRL, formatDateShort, type Beneficiary, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
-import { useClientStore } from "@/lib/portfolio/clientStore";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useClients } from "@/lib/portfolio/clientStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
@@ -40,8 +40,8 @@ const addYears = (d: Date, n: number) => {
 
 export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy }: Props) {
   const isRenewal = !!sourcePolicy;
-  const { clients } = useClientStore();
-  const { addPolicy, renewPolicy } = usePolicyStore();
+  const { clients } = useClients();
+  const { addPolicy, renewPolicy } = usePolicies();
   const { ensurePolicyRoots } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
   const { getConfig } = useCommissionConfigStore();

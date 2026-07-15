@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 import { formatDateShort, type Branch, type Insurer, type Policy, type PolicyStatus } from "@/lib/mock/data";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
@@ -33,7 +33,7 @@ const addYears = (d: Date, n: number) => {
 };
 
 export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
-  const { renewPolicy } = usePolicyStore();
+  const { renewPolicy } = usePolicies();
   const { ensurePolicyRoots } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
 

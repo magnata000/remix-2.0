@@ -6,7 +6,7 @@ import {
   branchToProduct,
 } from "@/lib/financial/commissionEngine";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { toast } from "sonner";
 
 export type CommissionStatus = CommissionStatusValue;
@@ -25,7 +25,7 @@ const CommissionContext = createContext<Ctx | null>(null);
 export function CommissionStoreProvider({ children }: { children: ReactNode }) {
   const [commissions, setCommissions] = useState<Commission[]>(seedCommissions);
   const { configForPolicy } = useCommissionConfigStore();
-  const { policies } = usePolicyStore();
+  const { policies } = usePolicies();
 
   const updateCommissionStatus = useCallback((id: string, status: CommissionStatus) => {
     setCommissions((prev) =>

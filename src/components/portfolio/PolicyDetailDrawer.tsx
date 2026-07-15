@@ -38,7 +38,7 @@ import {
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
 import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
@@ -85,7 +85,7 @@ export function PolicyDetailDrawer({
   onSelectPolicy?: (p: Policy) => void;
 }) {
   const docStore = useDocumentStore();
-  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy, deletePolicy } = usePolicyStore();
+  const { isAlreadyRenewed, renewalChainOf, renewalIndexOf, findPolicy, deletePolicy } = usePolicies();
   const { deleteByPolicy: deleteCommissionsByPolicy } = useCommissionStore();
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
