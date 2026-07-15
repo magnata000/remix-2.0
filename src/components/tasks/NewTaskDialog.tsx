@@ -24,6 +24,7 @@ type Props = {
 
 export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Props) {
   const { columns, addTask, updateTaskFields } = useTaskStore();
+  const { clients } = useClients();
   const isEdit = !!task;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
