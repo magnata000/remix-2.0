@@ -28,6 +28,7 @@ const initialsOf = (name: string) =>
 
 export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: Props) {
   const { createOpportunity } = usePipelineStore();
+  const { clients } = useClients();
 
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
   const [clientId, setClientId] = useState<string>("");
