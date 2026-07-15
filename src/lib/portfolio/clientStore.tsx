@@ -49,4 +49,4 @@ export function useClients() {
 }
 
 /** @deprecated Use `useClients()`. Alias mantido para compatibilidade. */
-export const useClients = useClients;
+export { useClients as useClientStore };
