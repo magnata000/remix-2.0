@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { TopBar, type ModuleKey } from "@/components/shell/TopBar";
-import { DashboardModule } from "@/components/modules/DashboardModule";
+import { DailyModule } from "@/components/modules/DailyModule";
 import { PortfolioModule } from "@/components/modules/PortfolioModule";
 import { KanbanModule } from "@/components/modules/KanbanModule";
 import { MulticalcModule } from "@/components/modules/MulticalcModule";
