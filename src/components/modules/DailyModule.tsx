@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,67 +15,23 @@ import { useTaskStore, type TaskItem, PRIORITY_META } from "@/lib/tasks/taskStor
 import { useClientStore } from "@/lib/portfolio/clientStore";
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
-import { team, formatDateShort, type Policy, type Beneficiary } from "@/lib/mock/data";
+import { useTeam, useTeamNameIndex } from "@/lib/team/teamStore";
+import { type Policy, type Beneficiary } from "@/lib/mock/data";
+import { formatDateShort } from "@/lib/format";
 import { ageAt, findBandChange, isBirthdayToday } from "@/lib/daily/ageBands";
+import {
+  daysBetween,
+  relativeDueLabel,
+  toneClass,
+  type RelativeDue,
+} from "@/lib/daily/dateUtils";
+import { textMentionsUser, type TeamNameIndex } from "@/lib/daily/mentions";
 import { TaskDetailDialog } from "@/components/tasks/TaskDetailDialog";
 import { useNavigation } from "@/lib/navigation";
 
-// ---------- helpers ----------
-
-const DAY_MS = 1000 * 60 * 60 * 24;
-
-function daysBetween(a: Date, b: Date) {
-  const da = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
-  const db = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
-  return Math.round((db - da) / DAY_MS);
-}
-
-function relativeDueLabel(dueISO: string | undefined, now: Date) {
-  if (!dueISO) return { text: "Sem prazo", tone: "muted" as const };
-  const d = daysBetween(now, new Date(dueISO));
-  if (d < 0) return { text: `Atrasada ${Math.abs(d)}d`, tone: "danger" as const };
-  if (d === 0) return { text: "Hoje", tone: "warning" as const };
-  if (d === 1) return { text: "Amanhã", tone: "warning" as const };
-  return { text: `Em ${d}d`, tone: "info" as const };
-}
-
-const toneClass: Record<"muted" | "danger" | "warning" | "info", string> = {
-  muted: "bg-muted text-muted-foreground",
-  danger: "bg-destructive/15 text-destructive",
-  warning: "bg-warning/15 text-warning",
-  info: "bg-info/15 text-info",
-};
-
-function nameToId(name: string): string | null {
-  const m = team.find((t) => t.name.toLowerCase() === name.toLowerCase());
-  return m?.id ?? null;
-}
-
-function extractMentions(text: string): string[] {
-  if (!text) return [];
-  // Matches @Nome Sobrenome (para de capturar em pontuação/quebra)
-  const re = /@([A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)*)/g;
-  const found: string[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(text))) {
-    // Tenta casar com um membro do time (nome mais longo primeiro)
-    const raw = match[1].trim();
-    // greedy: procura o maior prefixo que casa com um nome do time
-    const words = raw.split(/\s+/);
-    for (let n = words.length; n >= 1; n--) {
-      const candidate = words.slice(0, n).join(" ");
-      if (nameToId(candidate) || candidate.toLowerCase() === "todos") {
-        found.push(candidate);
-        break;
-      }
-    }
-  }
-  return found;
-}
-
 // ---------- section: Tasks ----------
 
-type TaskEntry = { task: TaskItem; relative: ReturnType<typeof relativeDueLabel> };
+type TaskEntry = { task: TaskItem; relative: RelativeDue };
 
 function useMyTasks(now: Date): TaskEntry[] {
   const { tasks, columns } = useTaskStore();
