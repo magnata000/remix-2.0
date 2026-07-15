@@ -6,11 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Plus, Settings, CalendarClock, Search, X, MessageSquare, Paperclip, User as UserIcon } from "lucide-react";
-import { team, clients } from "@/lib/mock/data";
+import { team } from "@/lib/mock/data";
 import { TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { searchTasks } from "@/lib/tasks/searchTasks";
 import { runWorkflows } from "@/lib/tasks/workflowEngine";
 import { usePolicies } from "@/lib/portfolio/policyStore";
+import { useClients } from "@/lib/portfolio/clientStore";
 import { TaskCard } from "./TaskCard";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
