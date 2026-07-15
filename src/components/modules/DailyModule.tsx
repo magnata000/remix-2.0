@@ -543,7 +543,9 @@ export function DailyModule() {
   }, []);
 
   const currentUserId = useCurrentUserId();
-  const meName = team.find((t) => t.id === currentUserId)?.name ?? "";
+  const { members } = useTeam();
+  const teamIndex = useTeamNameIndex();
+  const meName = members.find((m) => m.id === currentUserId)?.name ?? "";
   const firstName = meName.split(" ")[0] || "por aí";
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const { tasks } = useTaskStore();
@@ -595,7 +597,7 @@ export function DailyModule() {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <TasksSection now={now} onOpenTask={setSelectedTask} />
-            <MentionsSection onOpenTaskId={openTaskById} />
+            <MentionsSection teamIndex={teamIndex} onOpenTaskId={openTaskById} />
             <BirthdaysSection now={now} />
             <RenewalsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
           </div>
