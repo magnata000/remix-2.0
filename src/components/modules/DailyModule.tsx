@@ -47,6 +47,7 @@ function useMyTasks(now: Date): TaskEntry[] {
       .filter((t) => {
         if (!t.dueDate) return false;
         const d = new Date(t.dueDate);
+        if (Number.isNaN(d.getTime())) return false; // datas ruins não entram na Daily
         return d <= horizon; // inclui atrasadas
       })
       .map((task) => ({ task, relative: relativeDueLabel(task.dueDate, now) }))
