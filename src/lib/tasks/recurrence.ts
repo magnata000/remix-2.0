@@ -34,7 +34,7 @@ const addMonths = (d: Date, n: number) => {
  * Expande ocorrências da recorrência entre [from, to].
  * `anchor` é a data-âncora (start) da série.
  */
-export function expandOccurrences(rule: Recurrence, anchor: Date, from: Date, to: Date): Date[] {
+function expandOccurrences(rule: Recurrence, anchor: Date, from: Date, to: Date): Date[] {
   const out: Date[] = [];
   const start = dayStart(anchor);
   const until = rule.until ? dayStart(new Date(rule.until)) : null;

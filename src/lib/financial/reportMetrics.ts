@@ -3,7 +3,7 @@ import type { ExpenseEntry, ManualIncome, Expense, TaxEntry } from "@/lib/cash/c
 import type { CategoryKind } from "@/lib/financial/dreConfigStore";
 
 /** Verifica se um lançamento de imposto pertence ao período por competência (mês/ano). */
-export function taxInRangeByCompetence(t: TaxEntry, r: DateRange): boolean {
+function taxInRangeByCompetence(t: TaxEntry, r: DateRange): boolean {
   const compStart = new Date(t.competenceYear, t.competenceMonth, 1, 0, 0, 0).getTime();
   const compEnd = new Date(t.competenceYear, t.competenceMonth + 1, 0, 23, 59, 59).getTime();
   // considera o imposto no período se sua competência intersecta o range
@@ -64,7 +64,7 @@ export function revenueBruta(
   return c + i;
 }
 
-export function expensesByCategory(entries: ExpenseEntry[], r: DateRange) {
+function expensesByCategory(entries: ExpenseEntry[], r: DateRange) {
   const map = new Map<string, number>();
   entries
     .filter((e) => inRange(e.paidAt, r))
@@ -72,7 +72,7 @@ export function expensesByCategory(entries: ExpenseEntry[], r: DateRange) {
   return map;
 }
 
-export function expensesSplit(
+function expensesSplit(
   entries: ExpenseEntry[],
   r: DateRange,
   resolveKind: (entry: ExpenseEntry) => CategoryKind,
@@ -115,7 +115,7 @@ export type DreResult = {
   };
 };
 
-export type RevenueLosses = {
+type RevenueLosses = {
   canceladas: { valor: number; parcelas: number; clientes: number };
   devolvidas: { valor: number; parcelas: number; clientes: number };
   serieMensal: Array<{ month: string; canceladas: number; devolvidas: number }>;

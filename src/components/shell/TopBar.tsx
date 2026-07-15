@@ -36,7 +36,7 @@ const allModules: { key: ModuleKey; label: string; icon: typeof LayoutDashboard 
   { key: "settings", label: "Configurações", icon: Settings },
 ];
 
-export const modules = allModules.filter((m) => m.key !== "multicalc" || FEATURES.multicalc);
+const modules = allModules.filter((m) => m.key !== "multicalc" || FEATURES.multicalc);
 
 export function TopBar({
   active,

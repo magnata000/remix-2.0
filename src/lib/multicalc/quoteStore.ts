@@ -172,7 +172,7 @@ export const effectiveStatus = (r: QuoteRecord, allInGroup: QuoteRecord[]): Quot
   return ageDays > 10 ? "expirada" : "aberto";
 };
 
-export type FieldDiff = { field: string; label: string; from: string; to: string };
+type FieldDiff = { field: string; label: string; from: string; to: string };
 
 const FIELD_LABELS: Record<string, string> = {
   "cliente.nome": "Nome", "cliente.cpf": "CPF", "cliente.email": "E-mail", "cliente.telefone": "Telefone",

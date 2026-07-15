@@ -15,7 +15,7 @@ import { QuoteFormData, emptyForm, generateResults } from "@/lib/multicalc/quote
 
 const steps = ["Cliente", "Objeto", "Coberturas", "Resultado"];
 
-export type WizardCompletePayload = {
+type WizardCompletePayload = {
   formData: QuoteFormData;
   results: Quote[];
   winner: Insurer;

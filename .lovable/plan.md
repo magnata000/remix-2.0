@@ -1,81 +1,81 @@
-## Objetivo
 
-Substituir o `DashboardModule` atual por uma página **Daily**: central de notificações e alertas focada no dia a dia do colaborador logado. KPIs, gráfico de vendas, taxa de renovação e apólices recentes são removidos.
+# Plano de Execução Aprovado — Refatoração pré-integração
 
-## Escopo por seção
+Ajustes seguindo os dois refinamentos que você pediu:
+- **Item 3.1 (extrair SectionCard)**: NÃO fazer. Cards permanecem locais em `DailyModule.tsx`.
+- **Item 1.6 (deduplicar `useTaskStore`)**: só aplicar se limpo. No caso, exige prop drilling de `tasks` para `MentionsSection` → **mantido como está**, duas chamadas independentes à store.
 
-Todas as seções operam sobre os stores existentes (`taskStore`, `clientStore`, `policyStore`, `teamStore`). "Usuário logado" = `me` do `teamStore` (mesmo padrão já usado em Tarefas). Quando o login real existir, basta trocar essa referência por uma central única — encapsulo o acesso num hook `useCurrentUserId()` para facilitar essa troca futura.
+Todo o resto listado no relatório de auditoria é executado.
 
-### 1. Minhas tarefas — próximos 3 dias (+ atrasadas)
-- Filtro: `assigneeId === currentUserId`, `columnId !== "concluido"` (coluna de concluído do quadro), `dueDate` entre hoje e +3 dias **ou** vencida.
-- Ordenação: atrasadas no topo (mais antigas primeiro) → depois por `dueDate` asc → desempate por `priority` (alta > media > baixa).
-- Card mostra: título, cliente, prazo relativo ("Atrasada 2d", "Hoje", "Amanhã", "Em 3d"), badge de prioridade, SLA se houver.
-- Clique abre `TaskDetailDialog` existente.
+---
 
-### 2. Menções em tarefas
-- Origem: campo `description` das tarefas (o `MentionInput` já grava `@Nome`). Preciso resolver "Nome" → `teamMember.id` via `teamStore` e casar com `currentUserId`. Menções a "@Todos" também contam.
-- Também considero menções em comentários (se o taskStore já os tiver; caso contrário, apenas description — verifico ao implementar).
-- Mostra: quem mencionou (autor da task ou última edição — uso `assigneeId` como proxy inicial se não houver campo dedicado), trecho da descrição, link para a tarefa.
-- Deduplico por task; ordeno pela `dueDate` (ou `createdAt` se existir) desc.
+## Passo 1 — Bug 1.1: Hydration mismatch na Daily
 
-### 3. Aniversariantes do dia
-- Clientes: `client.birthDate` com `MM-DD` == hoje.
-- Beneficiários: percorro `policies[].beneficiaries[]` do ramo Saúde e comparo `MM-DD`.
-- Card mostra: nome, idade que completa, tipo (Cliente / Beneficiário — Titular do cliente X), telefone/email quando disponível.
+Arquivo: `src/components/modules/DailyModule.tsx`
 
-### 4. Apólices vencendo em 30 dias
-- Filtro: `status === "ativa"` e `endDate` entre hoje e +30 dias.
-- Ordenação: `endDate` asc.
-- Card: número, cliente, ramo, seguradora, dias restantes, botão "Abrir apólice" (reaproveita drawer da Carteira via navegação).
-- Não filtro por colaborador (é visão geral da corretora); marco no card se `assigneeId` bate com `currentUserId`.
+- Trocar `import { useMemo, useState } from "react"` por `import { useEffect, useMemo, useState } from "react"`.
+- Substituir `const now = useMemo(() => new Date(), [])` por:
+  ```ts
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => { setNow(new Date()); }, []);
+  ```
+- `greeting` retorna `"Olá"` quando `now` é `null`; `dateLabel` fica `""` e o `Badge` de data só renderiza quando `dateLabel` existe.
+- As seções que dependem de `now` (Tasks, Birthdays, Renewals, AgeBand) são renderizadas dentro de um `{now && (...)}`, evitando qualquer render server-side dependente de hora local.
+- Efeito colateral positivo: SSR e primeiro paint do cliente renderizam HTML idêntico → some o warning `Hydration failed`.
 
-### 5. Troca de faixa etária em 3 meses (Saúde)
-- Faixas ANS padrão: `0-18, 19-23, 24-28, 29-33, 34-38, 39-43, 44-48, 49-53, 54-58, 59+`.
-- Considero cliente titular **quando ele é beneficiário do plano de Saúde** e todos os `beneficiaries[]` do ramo Saúde.
-- Para cada pessoa: computo idade hoje e idade em +90 dias; se cruzam limites de faixa diferentes, entra na lista.
-- Card: nome, apólice, faixa atual → nova faixa, data prevista da troca. Ordeno por data asc.
+## Passo 2 — Bugs 1.2, 1.3, 1.4: limpezas do DailyModule
 
-## Arquivos
+Mesmo arquivo:
+- **1.2** Remover `const myName = ...` e tirar `myName` das deps do `useMemo` em `useMyMentions`.
+- **1.3** Em `MentionsSection`, remover o `useTaskStore()` local e trocar o `onClick` por `() => onOpenTaskId(e.taskId)` — o consumidor já faz o lookup.
+- **1.4** Dentro de `useMyMentions`, envolver `extractMentions` num cache local `Map<string, string[]>` para não reprocessar o mesmo texto (descrição + comentários repetidos). Sem mudança visual.
 
-**Novos**
-- `src/lib/daily/ageBands.ts` — constante `ANS_AGE_BANDS` + `getBand(age)` + `findBandChange(birthDate, withinDays)`.
-- `src/lib/daily/dailyQueries.ts` — funções puras que recebem stores e retornam as 5 listas.
-- `src/hooks/useCurrentUserId.ts` — hoje retorna `teamStore.me`; ponto único de troca quando houver login.
-- `src/components/modules/DailyModule.tsx` — layout em grid com 5 cards/seções + estados vazios amigáveis.
-- `src/components/daily/DailyTasksSection.tsx`
-- `src/components/daily/DailyMentionsSection.tsx`
-- `src/components/daily/DailyBirthdaysSection.tsx`
-- `src/components/daily/DailyRenewalsSection.tsx`
-- `src/components/daily/DailyAgeBandSection.tsx`
+## Passo 3 — Item 3.5: Header responsivo da Daily
 
-**Editados**
-- `src/routes/index.tsx` — trocar `<DashboardModule />` por `<DailyModule />` no branch `active === "dashboard"` (mantenho a chave `"dashboard"` para não mexer em `ModuleKey`/roteamento).
-- `src/components/shell/TopBar.tsx` — renomear label "Dashboard" → "Daily" (ícone opcional: `Bell` ou manter `LayoutDashboard`); a chave `"dashboard"` permanece.
-- `src/components/modules/DashboardModule.tsx` — **preservado no repositório** (dead code, igual ao `RenewPolicyDialog`) para permitir volta rápida se necessário.
-
-## Layout
-
-```text
-┌───────────────────────────────────────────────────────────┐
-│ Daily — Bom dia, {nome}                     {data de hoje}│
-├───────────────────────────────┬───────────────────────────┤
-│ Minhas tarefas (3d + atrasos) │ Menções para mim          │
-│ [rolagem interna]              │ [rolagem interna]         │
-├───────────────────────────────┼───────────────────────────┤
-│ Aniversariantes do dia         │ Apólices vencendo (30d)  │
-├───────────────────────────────┴───────────────────────────┤
-│ Troca de faixa etária — próximos 3 meses (Saúde)          │
-└───────────────────────────────────────────────────────────┘
+Ainda em `DailyModule.tsx`, trocar o wrapper do cabeçalho:
+```diff
+- <div className="flex flex-wrap items-end justify-between gap-3">
++ <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
 ```
+Adicionar `min-w-0` no bloco de texto e `shrink-0` no ícone `Sparkles` e no `Badge` de data. Padrão exigido pelo template para não quebrar em ~780px.
 
-Cada seção com contador no header, empty state (“Sem tarefas para os próximos dias 🎉” etc.) e limite visual (mostrar 5–8, com "ver todas" que expande — ou remove se preferir tudo aberto).
+## Passo 4 — Item 2.4: rebaixar exports não usados
 
-## Fora de escopo
-- Notificações push/toasts em tempo real (a Daily é a página; sino do TopBar segue como está).
-- Configuração de faixas ANS em Ajustes (uso constante; migro para configurável se pedir depois).
-- Preservar KPIs/gráficos (removidos da tela, arquivo antigo fica no repo).
-- Integração com login real — deixo o hook `useCurrentUserId` isolado para trocar em uma linha.
+Nenhuma remoção, apenas troca de `export ...` por declaração local em símbolos que não são consumidos por outros arquivos (confirmado com `knip` + `rg`):
 
-## Riscos
-- Menções: se o `taskStore` não tiver histórico/comentários, só detecto `@Nome` no `description`. Confirmo ao implementar; se necessário, viro só "tarefas em que sou mencionado" (assignee ≠ eu mas meu nome aparece na descrição).
-- Aniversariantes/faixa etária dependem de `birthDate` populado nos mocks; adiciono fallback silencioso quando ausente.
+- `src/components/shared/SlaBadge.tsx` → `slaBorderClass`
+- `src/components/shared/Timeline.tsx` → `formatTime`, `formatBytes`, `isImage`, `isAudio`, `AudioBubble`
+- `src/components/shell/TopBar.tsx` → `modules` (mantido interno)
+- `src/lib/daily/ageBands.ts` → `ANS_AGE_BANDS`, `bandOf`
+- `src/lib/financial/dreConfigStore.tsx` → `classifyCategory`
+- `src/lib/financial/reportMetrics.ts` → `taxInRangeByCompetence`, `expensesByCategory`, `expensesSplit`, tipo `RevenueLosses`
+- `src/lib/pipeline/salesStats.ts` → `OPEN_STAGES`, `salesByMonthFromPipeline`, `revenueInMonth`, remoção da linha `export { MS_DAY }`
+- `src/lib/tasks/recurrence.ts` → `expandOccurrences`
+- `src/lib/multicalc/quoteStore.ts` → tipo `FieldDiff`
+- `src/lib/mock/data.ts` → tipo `TeamMember`
+- `src/components/multicalc/MulticalcWizard.tsx` → tipo `WizardCompletePayload`
+
+Ficam intactos por serem consumidos em algum lugar (ex.: `ButtonProps` importado em `pagination.tsx`, `salesByMonth`/`insurerLogos` usados no `DashboardModule` preservado, mocks e etc).
+
+## Passo 5 — Verificação
+
+- `bunx tsgo --noEmit` para garantir zero erro de tipo.
+- `bunx knip` para conferir redução da lista de exports.
+- Smoke visual: Daily (aguardar montar, ver saudação/data), Carteira, Kanban, Financeiro, Configurações — nenhum arquivo de UI foi tocado além do header da Daily.
+- Console limpo de `Hydration failed`.
+
+---
+
+## Preservação (não tocar)
+
+- `src/components/modules/DashboardModule.tsx`
+- `src/components/portfolio/RenewPolicyDialog.tsx`
+- `src/components/shared/ComingSoonOverlay.tsx`
+- `src/hooks/use-mobile.tsx`
+- `src/router.tsx`
+- Todos os componentes shadcn (`accordion`, `alert`, `carousel`, `chart`, ...)
+- Todos os pacotes em `package.json`
+- Mocks `salesByMonth` e `insurerLogos` em `src/lib/mock/data.ts`
+- Cores, espaçamentos, tipografia, animações
+
+Nada além dos passos 1–5 acima é executado.

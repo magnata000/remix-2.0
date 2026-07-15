@@ -13,7 +13,7 @@ const DEFAULT_CATEGORY_KIND: Record<string, CategoryKind> = {
   Outros: "despesa_operacional",
 };
 
-export function classifyCategory(
+function classifyCategory(
   category: string,
   overrides: Record<string, CategoryKind>,
 ): CategoryKind {

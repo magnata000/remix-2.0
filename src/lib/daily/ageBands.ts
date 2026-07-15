@@ -1,6 +1,6 @@
 // Faixas etárias ANS (Resolução Normativa nº 63/2003) para planos de Saúde.
 // Cada faixa cobre idades no intervalo [min, max] inclusive.
-export const ANS_AGE_BANDS: Array<{ min: number; max: number; label: string }> = [
+const ANS_AGE_BANDS: Array<{ min: number; max: number; label: string }> = [
   { min: 0, max: 18, label: "0-18" },
   { min: 19, max: 23, label: "19-23" },
   { min: 24, max: 28, label: "24-28" },
@@ -22,7 +22,7 @@ export function ageAt(birthDateISO: string, ref: Date): number {
   return age;
 }
 
-export function bandOf(age: number) {
+function bandOf(age: number) {
   return ANS_AGE_BANDS.find((b) => age >= b.min && age <= b.max) ?? null;
 }
 

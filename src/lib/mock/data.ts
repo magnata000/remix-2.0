@@ -98,7 +98,7 @@ export type Commission = {
   refundedAt?: string;
   refundReason?: string;
 };
-export type TeamMember = { id: string; name: string; role: string; email: string };
+type TeamMember = { id: string; name: string; role: string; email: string };
 
 const insurers: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const branches: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];

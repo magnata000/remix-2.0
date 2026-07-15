@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -162,18 +163,25 @@ type MentionEntry = {
 function useMyMentions(): MentionEntry[] {
   const { tasks } = useTaskStore();
   const currentUserId = useCurrentUserId();
-  const myName = team.find((t) => t.id === currentUserId)?.name ?? "";
 
   return useMemo(() => {
-    const out: MentionEntry[] = [];
-    const hit = (text: string) => {
-      const mentions = extractMentions(text);
-      return mentions.some((m) => {
+    // Cache local: evita reprocessar o mesmo texto (descrição/comentário)
+    // dentro deste memo. `extractMentions` faz backtracking O(n²) por match.
+    const mentionCache = new Map<string, string[]>();
+    const mentionsOf = (text: string) => {
+      const cached = mentionCache.get(text);
+      if (cached) return cached;
+      const result = extractMentions(text);
+      mentionCache.set(text, result);
+      return result;
+    };
+    const hit = (text: string) =>
+      mentionsOf(text).some((m) => {
         if (m.toLowerCase() === "todos") return true;
         return nameToId(m) === currentUserId;
       });
-    };
 
+    const out: MentionEntry[] = [];
     tasks.forEach((task) => {
       // Descrição da task (autor = assigneeId como proxy, já que não temos createdBy)
       if (task.description && hit(task.description)) {
@@ -211,12 +219,11 @@ function useMyMentions(): MentionEntry[] {
         return true;
       })
       .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-  }, [tasks, currentUserId, myName]);
+  }, [tasks, currentUserId]);
 }
 
 function MentionsSection({ onOpenTaskId }: { onOpenTaskId: (id: string) => void }) {
   const entries = useMyMentions();
-  const { tasks } = useTaskStore();
   return (
     <SectionCard
       icon={<AtSign className="h-4 w-4" />}
@@ -234,10 +241,7 @@ function MentionsSection({ onOpenTaskId }: { onOpenTaskId: (id: string) => void 
               <li key={`${e.taskId}-${i}`}>
                 <button
                   type="button"
-                  onClick={() => {
-                    const t = tasks.find((x) => x.id === e.taskId);
-                    if (t) onOpenTaskId(e.taskId);
-                  }}
+                  onClick={() => onOpenTaskId(e.taskId)}
                   className="w-full text-left py-2.5 px-1 hover:bg-muted/40 rounded-lg transition"
                 >
                   <div className="flex items-center gap-2">
@@ -577,7 +581,14 @@ function EmptyState({ text }: { text: string }) {
 // ---------- module ----------
 
 export function DailyModule() {
-  const now = useMemo(() => new Date(), []);
+  // `now` inicia como null: SSR e primeiro paint do cliente renderizam o mesmo
+  // HTML (sem saudação/data), eliminando o hydration mismatch. O useEffect
+  // popula o horário real logo após montar.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
+
   const currentUserId = useCurrentUserId();
   const meName = team.find((t) => t.id === currentUserId)?.name ?? "";
   const firstName = meName.split(" ")[0] || "por aí";
@@ -591,44 +602,53 @@ export function DailyModule() {
   };
 
   const greeting = (() => {
+    if (!now) return "Olá";
     const h = now.getHours();
     if (h < 12) return "Bom dia";
     if (h < 18) return "Boa tarde";
     return "Boa noite";
   })();
 
-  const dateLabel = now.toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-  });
+  const dateLabel = now
+    ? now.toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+      })
+    : "";
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-brand" />
+            <Sparkles className="h-6 w-6 shrink-0 text-brand" />
             Daily
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {greeting}, {firstName}. Aqui está o que precisa da sua atenção hoje.
           </p>
         </div>
-        <Badge variant="outline" className="rounded-full bg-card capitalize">
-          {dateLabel}
-        </Badge>
+        {dateLabel && (
+          <Badge variant="outline" className="rounded-full bg-card capitalize shrink-0">
+            {dateLabel}
+          </Badge>
+        )}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TasksSection now={now} onOpenTask={setSelectedTask} />
-        <MentionsSection onOpenTaskId={openTaskById} />
-        <BirthdaysSection now={now} />
-        <RenewalsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
-      </div>
-      <AgeBandSection now={now} />
+      {/* Grid — seções só renderizam depois que `now` foi definido no cliente */}
+      {now && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <TasksSection now={now} onOpenTask={setSelectedTask} />
+            <MentionsSection onOpenTaskId={openTaskById} />
+            <BirthdaysSection now={now} />
+            <RenewalsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
+          </div>
+          <AgeBandSection now={now} />
+        </>
+      )}
 
       <TaskDetailDialog
         task={selectedTask}
