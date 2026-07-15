@@ -18,23 +18,23 @@ export const initialsOf = (id: string) => {
 };
 export const nameOf = (id: string) =>
   id === "all" ? "Todos" : team.find((x) => x.id === id)?.name ?? "—";
-export const formatTime = (iso: string) =>
+const formatTime = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   });
-export const formatBytes = (n: number) => {
+const formatBytes = (n: number) => {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 };
-export const isImage = (type: string) => type.startsWith("image/");
-export const isAudio = (type: string) => type.startsWith("audio/");
+const isImage = (type: string) => type.startsWith("image/");
+const isAudio = (type: string) => type.startsWith("audio/");
 
 /**
  * Player de áudio embutido estilo WhatsApp. Toca dentro da bolha sem abrir aba.
  * Pausa qualquer outro AudioBubble ao dar play (um por vez).
  */
-export function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void }) {
+function AudioBubble({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);

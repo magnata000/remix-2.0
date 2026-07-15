@@ -198,7 +198,7 @@ export function DashboardModule() {
                     formatter={(v: number) => formatBRL(v)}
                   />
                   <Bar dataKey="receita" radius={[8, 8, 0, 0]}>
-                    {salesData.map((_, i) => (
+                    {salesData.map((_: unknown, i: number) => (
                       <Cell
                         key={i}
                         fill={i === currentMonthIdx ? "var(--brand)" : "var(--muted)"}

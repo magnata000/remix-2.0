@@ -7,7 +7,7 @@ const MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "S
 export type SalesMonthPoint = { month: string; vendas: number; receita: number };
 
 export const STAGE_ORDER: KanbanStage[] = ["lead", "cotacao", "negociacao", "fechado", "perdido"];
-export const OPEN_STAGES: KanbanStage[] = ["lead", "cotacao", "negociacao"];
+const OPEN_STAGES: KanbanStage[] = ["lead", "cotacao", "negociacao"];
 
 const MS_HOUR = 3_600_000;
 const MS_DAY = 24 * MS_HOUR;
@@ -200,4 +200,4 @@ export function formatHours(h: number): string {
   return `${(d / 30).toFixed(1)} meses`;
 }
 
-export { MS_DAY };
+

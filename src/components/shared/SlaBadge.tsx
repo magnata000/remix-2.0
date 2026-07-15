@@ -33,7 +33,7 @@ export function SlaBadge({ slaDueAt, slaHours, paused, compact }: Props) {
   );
 }
 
-export function slaBorderClass(status: SlaStatus) {
+function slaBorderClass(status: SlaStatus) {
   if (status === "red") return "border-l-[3px] border-l-destructive";
   if (status === "yellow") return "border-l-[3px] border-l-warning";
   if (status === "green") return "border-l-[3px] border-l-success";
