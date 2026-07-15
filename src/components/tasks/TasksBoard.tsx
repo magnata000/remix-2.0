@@ -62,7 +62,7 @@ export function TasksBoard() {
     if (!term) return [];
     const q = term.toLowerCase();
     return clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 5);
-  }, [term]);
+  }, [term, clients]);
   const taskMatches = useMemo(() => (term ? searchTasks(tasks, term) : []), [tasks, term]);
 
   const filtered = useMemo(() => {
