@@ -673,15 +673,35 @@ CREATE POLICY "Admin manage" ON public.team_members
 
 ### `user_roles`
 
+> **Fim do loop de recursão.** A policy de admin **não** pode chamar `has_role` (que lê `user_roles`), senão a própria RLS entra em loop infinito. Verificamos o cargo direto em `public.team_members`, que é uma tabela física distinta.
+
 ```sql
+-- Limpa versões antigas que dependiam de has_role
+DROP POLICY IF EXISTS "Self read roles"    ON public.user_roles;
+DROP POLICY IF EXISTS "Admin manage roles" ON public.user_roles;
+
+-- Leitura: cada usuário lê apenas as próprias funções (sem recursão)
 CREATE POLICY "Self read roles" ON public.user_roles
   FOR SELECT TO authenticated
-  USING (user_id = auth.uid() OR public.has_role(auth.uid(), 'admin'));
+  USING (user_id = auth.uid());
 
+-- Gerenciamento total para admins — checagem via team_members quebra o ciclo
 CREATE POLICY "Admin manage roles" ON public.user_roles
   FOR ALL TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'))
-  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.team_members
+      WHERE team_members.id = auth.uid()
+        AND team_members.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.team_members
+      WHERE team_members.id = auth.uid()
+        AND team_members.role = 'admin'
+    )
+  );
 ```
 
 ### `clients`, `policies`, `opportunities`, `tasks` (mesmo padrão)
