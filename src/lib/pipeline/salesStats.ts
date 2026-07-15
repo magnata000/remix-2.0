@@ -13,7 +13,7 @@ const MS_HOUR = 3_600_000;
 const MS_DAY = 24 * MS_HOUR;
 
 /** Vendas e faturamento por mês, derivados das oportunidades em estágio "Fechado". */
-function salesByMonthFromPipeline(
+export function salesByMonthFromPipeline(
   opportunities: Opportunity[],
   year: number = new Date().getFullYear(),
 ): SalesMonthPoint[] {
@@ -30,7 +30,7 @@ function salesByMonthFromPipeline(
 }
 
 /** Faturamento total das oportunidades fechadas no mês/ano informados. */
-function revenueInMonth(
+export function revenueInMonth(
   opportunities: Opportunity[],
   month: number = new Date().getMonth(),
   year: number = new Date().getFullYear(),
