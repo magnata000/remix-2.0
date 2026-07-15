@@ -45,7 +45,7 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
 
   const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setClientMode("existing"); setClientId(""); setClientName(""); setPhone(""); setEmail("");
     setTitle(""); setBranch("Auto"); setStage("lead"); setEstimatedValue("");
     const d = new Date(); d.setDate(d.getDate() + 7); setDueDate(d);
@@ -60,9 +60,9 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
         setClientName(defaultClientName);
       }
     }
-  };
+  }, [defaultClientName]);
 
-  useEffect(() => { if (open) reset(); /* eslint-disable-next-line */ }, [open]);
+  useEffect(() => { if (open) reset(); }, [open, reset]);
 
   const selectClient = (id: string) => {
     const c = clients.find((x) => x.id === id);
