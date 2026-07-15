@@ -6,11 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Plus, Settings, CalendarClock, Search, X, MessageSquare, Paperclip, User as UserIcon } from "lucide-react";
-import { team, clients } from "@/lib/mock/data";
+import { team } from "@/lib/mock/data";
 import { TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { searchTasks } from "@/lib/tasks/searchTasks";
 import { runWorkflows } from "@/lib/tasks/workflowEngine";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
+import { useClients } from "@/lib/portfolio/clientStore";
 import { TaskCard } from "./TaskCard";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
@@ -24,7 +25,8 @@ import { toast } from "sonner";
 export function TasksBoard() {
   useSlaTicker();
   const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
-  const { policies } = usePolicyStore();
+  const { policies } = usePolicies();
+  const { clients } = useClients();
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [editTask, setEditTask] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
@@ -60,7 +62,7 @@ export function TasksBoard() {
     if (!term) return [];
     const q = term.toLowerCase();
     return clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 5);
-  }, [term]);
+  }, [term, clients]);
   const taskMatches = useMemo(() => (term ? searchTasks(tasks, term) : []), [tasks, term]);
 
   const filtered = useMemo(() => {

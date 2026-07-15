@@ -9,7 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { clients, team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { useClients } from "@/lib/portfolio/clientStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { toast } from "sonner";
 
@@ -27,6 +28,7 @@ const initialsOf = (name: string) =>
 
 export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: Props) {
   const { createOpportunity } = usePipelineStore();
+  const { clients } = useClients();
 
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
   const [clientId, setClientId] = useState<string>("");
@@ -60,7 +62,7 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
         setClientName(defaultClientName);
       }
     }
-  }, [defaultClientName]);
+  }, [defaultClientName, clients]);
 
   useEffect(() => { if (open) reset(); }, [open, reset]);
 

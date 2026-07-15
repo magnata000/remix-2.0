@@ -157,8 +157,11 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
   return <PolicyCtx.Provider value={value}>{children}</PolicyCtx.Provider>;
 }
 
-export function usePolicyStore() {
+export function usePolicies() {
   const c = useContext(PolicyCtx);
-  if (!c) throw new Error("usePolicyStore must be used within PolicyStoreProvider");
+  if (!c) throw new Error("usePolicies must be used within PolicyStoreProvider");
   return c;
 }
+
+/** @deprecated Use `usePolicies()`. Alias mantido para compatibilidade. */
+export { usePolicies as usePolicyStore };

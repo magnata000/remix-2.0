@@ -18,7 +18,7 @@ import {
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
 
@@ -43,7 +43,7 @@ type Props = {
 };
 
 export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) {
-  const { policies, updatePolicy } = usePolicyStore();
+  const { policies, updatePolicy } = usePolicies();
   const cycleStatus = (id: string, current: PolicyStatus) =>
     updatePolicy(id, { status: nextPolicyStatus(current) });
   const [q, setQ] = useState(initialClientFilter ?? "");

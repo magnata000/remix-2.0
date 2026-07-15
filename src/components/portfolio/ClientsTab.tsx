@@ -23,8 +23,8 @@ import {
   type ClientStats,
   type ClientStatus,
 } from "@/lib/portfolio/clientStats";
-import { useClientStore } from "@/lib/portfolio/clientStore";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useClients } from "@/lib/portfolio/clientStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { NewClientDialog } from "@/components/portfolio/NewClientDialog";
 
@@ -51,8 +51,8 @@ type Props = {
 };
 
 export function ClientsTab({ onSelectClient }: Props) {
-  const { clients, setClientStatus } = useClientStore();
-  const { policies } = usePolicyStore();
+  const { clients, setClientStatus } = useClients();
+  const { policies } = usePolicies();
   const { commissions } = useCommissionStore();
   const cycleStatus = (id: string, current: ClientStatus) =>
     setClientStatus(id, nextClientStatus(current));

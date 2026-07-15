@@ -10,7 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, clients, formatDateShort } from "@/lib/mock/data";
+import { team, formatDateShort } from "@/lib/mock/data";
+import { useClients } from "@/lib/portfolio/clientStore";
 import { Priority, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ type Props = {
 
 export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Props) {
   const { columns, addTask, updateTaskFields } = useTaskStore();
+  const { clients } = useClients();
   const isEdit = !!task;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

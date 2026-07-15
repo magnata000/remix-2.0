@@ -42,8 +42,11 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useClientStore() {
+export function useClients() {
   const c = useContext(ClientCtx);
-  if (!c) throw new Error("useClientStore must be used within ClientStoreProvider");
+  if (!c) throw new Error("useClients must be used within ClientStoreProvider");
   return c;
 }
+
+/** @deprecated Use `useClients()`. Alias mantido para compatibilidade. */
+export { useClients as useClientStore };

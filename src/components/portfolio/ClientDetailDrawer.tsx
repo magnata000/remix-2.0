@@ -31,8 +31,8 @@ import {
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
-import { useClientStore } from "@/lib/portfolio/clientStore";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useClients } from "@/lib/portfolio/clientStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { useNavigation } from "@/lib/navigation";
 import {
@@ -78,8 +78,8 @@ export function ClientDetailDrawer({
   onOpenChange,
   onOpenPolicy,
 }: Props) {
-  const { clients } = useClientStore();
-  const { policies } = usePolicyStore();
+  const { clients } = useClients();
+  const { policies } = usePolicies();
   const { commissions } = useCommissionStore();
   const { goTo } = useNavigation();
   const docStore = useDocumentStore();

@@ -9,7 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { clients, team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { useClients } from "@/lib/portfolio/clientStore";
 import { usePipelineStore, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ const parseMoney = (raw: string): number => {
 
 export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
   const { updateOpportunity, moveStage } = usePipelineStore();
+  const { clients } = useClients();
 
   const [clientName, setClientName] = useState("");
   const [clientOpen, setClientOpen] = useState(false);

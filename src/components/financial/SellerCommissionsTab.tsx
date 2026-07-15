@@ -10,7 +10,7 @@ import { Users, Wallet } from "lucide-react";
 import { formatBRL, type Branch } from "@/lib/mock/data";
 import { useTeam } from "@/lib/team/teamStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useSellerCommissionStore } from "@/lib/financial/sellerCommissionStore";
 import { formatDateBR, MONTHS_PT } from "@/lib/cash/cashStore";
 
@@ -19,7 +19,7 @@ const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúd
 export function SellerCommissionsTab() {
   const { members } = useTeam();
   const { commissions } = useCommissionStore();
-  const { policies } = usePolicyStore();
+  const { policies } = usePolicies();
   const { getRate, updateRate, computePayout } = useSellerCommissionStore();
 
   const sellers = useMemo(() => members.filter((m) => m.role === "Vendedor"), [members]);

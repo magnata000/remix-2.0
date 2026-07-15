@@ -4,16 +4,16 @@ import { PoliciesTab } from "@/components/portfolio/PoliciesTab";
 import { ClientsTab } from "@/components/portfolio/ClientsTab";
 import { ClientDetailDrawer } from "@/components/portfolio/ClientDetailDrawer";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
-import { useClientStore } from "@/lib/portfolio/clientStore";
-import { usePolicyStore } from "@/lib/portfolio/policyStore";
+import { useClients } from "@/lib/portfolio/clientStore";
+import { usePolicies } from "@/lib/portfolio/policyStore";
 import type { Policy } from "@/lib/mock/data";
 
 export function PortfolioModule() {
   const [tab, setTab] = useState("policies");
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
-  const { clients } = useClientStore();
-  const { policies } = usePolicyStore();
+  const { clients } = useClients();
+  const { policies } = usePolicies();
 
   const policiesCount = policies.length;
   const clientsCount = clients.length;
