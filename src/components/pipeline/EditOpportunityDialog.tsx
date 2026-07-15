@@ -42,6 +42,7 @@ const parseMoney = (raw: string): number => {
 
 export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
   const { updateOpportunity, moveStage } = usePipelineStore();
+  const { clients } = useClients();
 
   const [clientName, setClientName] = useState("");
   const [clientOpen, setClientOpen] = useState(false);
