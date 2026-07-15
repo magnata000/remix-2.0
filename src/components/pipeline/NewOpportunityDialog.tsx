@@ -62,7 +62,7 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
         setClientName(defaultClientName);
       }
     }
-  }, [defaultClientName]);
+  }, [defaultClientName, clients]);
 
   useEffect(() => { if (open) reset(); }, [open, reset]);
 
