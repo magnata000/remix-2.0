@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -11,11 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, FileText, Plus } from "lucide-react";
+import { Search, FileText, Plus, FileUp, Loader2 } from "lucide-react";
 import { formatBRL, formatDateShort, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicies } from "@/lib/portfolio/policyStore";
-import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
+import { NewPolicyDialog, type PolicyPrefill } from "@/components/portfolio/NewPolicyDialog";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
+import { ImportPolicyReviewDialog } from "@/components/portfolio/ImportPolicyReviewDialog";
+import { extractPolicyFromPdf, type PolicyExtractionResult } from "@/lib/portfolio/policyExtraction.functions";
+import { toast } from "sonner";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
@@ -47,6 +51,12 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
   const [insurer, setInsurer] = useState<string>("all");
   const [selected, setSelected] = useState<Policy | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [prefill, setPrefill] = useState<PolicyPrefill | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [extraction, setExtraction] = useState<PolicyExtractionResult | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const extract = useServerFn(extractPolicyFromPdf);
 
   const insurers = useMemo(
     () => Array.from(new Set(policies.map((p) => p.insurer))).sort(),
@@ -67,12 +77,72 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
     [policies, q, status, branch, insurer],
   );
 
+  const handleFileSelected = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("PDF muito grande (máx. 10MB)");
+      return;
+    }
+    setImporting(true);
+    const toastId = toast.loading("Lendo PDF com IA...");
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1] ?? "");
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const result = await extract({
+        data: { fileBase64: base64, mimeType: file.type || "application/pdf", fileName: file.name },
+      });
+      toast.dismiss(toastId);
+      toast.success("Dados extraídos — revise antes de aplicar");
+      setExtraction(result);
+      setReviewOpen(true);
+    } catch (err) {
+      toast.dismiss(toastId);
+      toast.error(err instanceof Error ? err.message : "Falha ao ler PDF");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
-      {/* Header com botão Nova */}
-      <div className="flex items-center justify-end">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFileSelected(f);
+          e.target.value = "";
+        }}
+      />
+
+      {/* Header com botões */}
+      <div className="flex items-center justify-end gap-2">
         <Button
-          onClick={() => setNewOpen(true)}
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={importing}
+          className="rounded-xl h-9"
+        >
+          {importing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileUp className="h-4 w-4" />
+          )}
+          <span className="hidden md:inline">Importar PDF</span>
+        </Button>
+        <Button
+          onClick={() => {
+            setPrefill(null);
+            setNewOpen(true);
+          }}
           className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90 h-9"
         >
           <Plus className="h-4 w-4" />
@@ -255,7 +325,25 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
         onSelectPolicy={(p) => setSelected(p)}
       />
 
-      <NewPolicyDialog open={newOpen} onOpenChange={setNewOpen} />
+      <NewPolicyDialog
+        open={newOpen}
+        onOpenChange={(o) => {
+          setNewOpen(o);
+          if (!o) setPrefill(null);
+        }}
+        prefill={prefill}
+      />
+
+      <ImportPolicyReviewDialog
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        extraction={extraction}
+        onConfirm={(p) => {
+          setPrefill(p);
+          setReviewOpen(false);
+          setNewOpen(true);
+        }}
+      />
     </div>
   );
 }

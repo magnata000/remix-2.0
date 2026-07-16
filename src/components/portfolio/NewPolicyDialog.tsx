@@ -47,11 +47,21 @@ import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSp
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { toast } from "sonner";
 
+export type PolicyPrefill = {
+  clientName?: string;
+  insurer?: string;
+  policyNumber?: string;
+  premium?: number;
+  startDate?: string;
+  endDate?: string;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   defaultClientName?: string;
   sourcePolicy?: Policy | null;
+  prefill?: PolicyPrefill | null;
 };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
@@ -69,7 +79,7 @@ const addYears = (d: Date, n: number) => {
   return r;
 };
 
-export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy }: Props) {
+export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy, prefill }: Props) {
   const isRenewal = !!sourcePolicy;
   const { clients } = useClients();
   const { addPolicy, renewPolicy } = usePolicies();
@@ -169,7 +179,35 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
         setClientName(c.name);
       }
     }
-  }, [open, defaultClientName, clients, sourcePolicy]);
+    if (prefill) {
+      if (prefill.clientName) {
+        const c = clients.find((x) => x.name.toLowerCase() === prefill.clientName!.toLowerCase());
+        if (c) {
+          setClientId(c.id);
+          setClientName(c.name);
+        } else {
+          setClientName(prefill.clientName);
+        }
+      }
+      if (prefill.insurer && (INSURERS as string[]).includes(prefill.insurer)) {
+        setInsurer(prefill.insurer as Insurer);
+      }
+      if (prefill.premium && prefill.premium > 0) {
+        setPremium(formatBRLDecimal(prefill.premium));
+      }
+      if (prefill.startDate) {
+        const d = new Date(prefill.startDate);
+        if (!isNaN(d.getTime())) {
+          setStartDate(d);
+          if (!prefill.endDate) setEndDate(addYears(d, 1));
+        }
+      }
+      if (prefill.endDate) {
+        const d = new Date(prefill.endDate);
+        if (!isNaN(d.getTime())) setEndDate(d);
+      }
+    }
+  }, [open, defaultClientName, clients, sourcePolicy, prefill]);
 
   const selectClient = (id: string) => {
     const c = clients.find((x) => x.id === id);
