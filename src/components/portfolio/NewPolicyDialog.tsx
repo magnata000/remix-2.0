@@ -47,11 +47,21 @@ import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSp
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { toast } from "sonner";
 
+export type PolicyPrefill = {
+  clientName?: string;
+  insurer?: string;
+  policyNumber?: string;
+  premium?: number;
+  startDate?: string;
+  endDate?: string;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   defaultClientName?: string;
   sourcePolicy?: Policy | null;
+  prefill?: PolicyPrefill | null;
 };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
@@ -69,7 +79,7 @@ const addYears = (d: Date, n: number) => {
   return r;
 };
 
-export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy }: Props) {
+export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy, prefill }: Props) {
   const isRenewal = !!sourcePolicy;
   const { clients } = useClients();
   const { addPolicy, renewPolicy } = usePolicies();
