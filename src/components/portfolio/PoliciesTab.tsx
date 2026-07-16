@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -11,11 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, FileText, Plus } from "lucide-react";
+import { Search, FileText, Plus, FileUp, Loader2 } from "lucide-react";
 import { formatBRL, formatDateShort, type Policy, type PolicyStatus } from "@/lib/mock/data";
 import { usePolicies } from "@/lib/portfolio/policyStore";
-import { NewPolicyDialog } from "@/components/portfolio/NewPolicyDialog";
+import { NewPolicyDialog, type PolicyPrefill } from "@/components/portfolio/NewPolicyDialog";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
+import { ImportPolicyReviewDialog } from "@/components/portfolio/ImportPolicyReviewDialog";
+import { extractPolicyFromPdf, type PolicyExtractionResult } from "@/lib/portfolio/policyExtraction.functions";
+import { toast } from "sonner";
 
 const statusColor: Record<PolicyStatus, string> = {
   ativa: "bg-success/15 text-success border-0",
