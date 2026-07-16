@@ -325,7 +325,25 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
         onSelectPolicy={(p) => setSelected(p)}
       />
 
-      <NewPolicyDialog open={newOpen} onOpenChange={setNewOpen} />
+      <NewPolicyDialog
+        open={newOpen}
+        onOpenChange={(o) => {
+          setNewOpen(o);
+          if (!o) setPrefill(null);
+        }}
+        prefill={prefill}
+      />
+
+      <ImportPolicyReviewDialog
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        extraction={extraction}
+        onConfirm={(p) => {
+          setPrefill(p);
+          setReviewOpen(false);
+          setNewOpen(true);
+        }}
+      />
     </div>
   );
 }
