@@ -179,7 +179,35 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
         setClientName(c.name);
       }
     }
-  }, [open, defaultClientName, clients, sourcePolicy]);
+    if (prefill) {
+      if (prefill.clientName) {
+        const c = clients.find((x) => x.name.toLowerCase() === prefill.clientName!.toLowerCase());
+        if (c) {
+          setClientId(c.id);
+          setClientName(c.name);
+        } else {
+          setClientName(prefill.clientName);
+        }
+      }
+      if (prefill.insurer && (INSURERS as string[]).includes(prefill.insurer)) {
+        setInsurer(prefill.insurer as Insurer);
+      }
+      if (prefill.premium && prefill.premium > 0) {
+        setPremium(formatBRLDecimal(prefill.premium));
+      }
+      if (prefill.startDate) {
+        const d = new Date(prefill.startDate);
+        if (!isNaN(d.getTime())) {
+          setStartDate(d);
+          if (!prefill.endDate) setEndDate(addYears(d, 1));
+        }
+      }
+      if (prefill.endDate) {
+        const d = new Date(prefill.endDate);
+        if (!isNaN(d.getTime())) setEndDate(d);
+      }
+    }
+  }, [open, defaultClientName, clients, sourcePolicy, prefill]);
 
   const selectClient = (id: string) => {
     const c = clients.find((x) => x.id === id);
