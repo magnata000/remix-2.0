@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -17,13 +18,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, Wallet } from "lucide-react";
+import { Users, Wallet, HandCoins } from "lucide-react";
 import { formatBRL, type Branch } from "@/lib/mock/data";
 import { useTeam } from "@/lib/team/teamStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useSellerCommissionStore } from "@/lib/financial/sellerCommissionStore";
+import { useSellerPayoutStore } from "@/lib/financial/sellerPayoutStore";
 import { formatDateBR, MONTHS_PT } from "@/lib/cash/cashStore";
+import { PaySellerPayoutDialog } from "@/components/financial/PaySellerPayoutDialog";
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 
@@ -32,13 +35,14 @@ export function SellerCommissionsTab() {
   const { commissions } = useCommissionStore();
   const { policies } = usePolicies();
   const { getRate, updateRate, computePayout } = useSellerCommissionStore();
+  const { payouts, totalPaid } = useSellerPayoutStore();
 
   const sellers = useMemo(() => members.filter((m) => m.role === "Vendedor"), [members]);
   const currentYear = new Date().getFullYear();
   const [month, setMonth] = useState<number>(new Date().getMonth());
   const [sellerId, setSellerId] = useState<string>("");
+  const [payOpen, setPayOpen] = useState(false);
 
-  // Garante que sempre haja um vendedor selecionado válido
   useEffect(() => {
     if (sellers.length === 0) {
       if (sellerId) setSellerId("");
@@ -57,40 +61,43 @@ export function SellerCommissionsTab() {
     return m;
   }, [policies]);
 
-  // Comissões pagas no mês (fallback dueDate quando paidAt ausente)
-  const paidThisMonth = useMemo(() => {
+  // Saldo devedor (all-time): soma dos repasses computados sobre comissões pagas do vendedor,
+  // descontando o que já foi repassado.
+  const owedAllTime = useMemo(() => {
+    if (!sellerId) return 0;
+    return commissions.reduce((sum, c) => {
+      if (c.status !== "pago") return sum;
+      const p = c.policyId ? policyById.get(c.policyId) : undefined;
+      if (!p || p.assigneeId !== sellerId) return sum;
+      return sum + computePayout(c, p);
+    }, 0);
+  }, [commissions, policyById, sellerId, computePayout]);
+
+  const paidAllTime = sellerId ? totalPaid(sellerId) : 0;
+  const balance = Math.max(0, Math.round((owedAllTime - paidAllTime) * 100) / 100);
+
+  const commissionsCounted = useMemo(() => {
+    if (!sellerId) return 0;
     return commissions.filter((c) => {
       if (c.status !== "pago") return false;
-      const ref = c.paidAt ?? c.dueDate;
-      if (!ref) return false;
-      const d = new Date(ref);
-      return d.getMonth() === month && d.getFullYear() === currentYear;
-    });
-  }, [commissions, month, currentYear]);
+      const p = c.policyId ? policyById.get(c.policyId) : undefined;
+      return !!p && p.assigneeId === sellerId;
+    }).length;
+  }, [commissions, policyById, sellerId]);
 
-  const sellerHistory = useMemo(() => {
+  // Histórico de repasses (filtrado por mês/ano e vendedor).
+  const payoutHistory = useMemo(() => {
     if (!sellerId) return [];
-    return paidThisMonth
-      .map((c) => {
-        const p = c.policyId ? policyById.get(c.policyId) : undefined;
-        if (!p || p.assigneeId !== sellerId) return null;
-        return {
-          commission: c,
-          policy: p,
-          pct: getRate(sellerId, p.branch),
-          payout: computePayout(c, p),
-        };
+    return payouts
+      .filter((p) => {
+        if (p.sellerId !== sellerId) return false;
+        const d = new Date(p.paidAt);
+        return d.getMonth() === month && d.getFullYear() === currentYear;
       })
-      .filter(Boolean) as Array<{
-      commission: (typeof commissions)[number];
-      policy: (typeof policies)[number];
-      pct: number;
-      payout: number;
-    }>;
-  }, [paidThisMonth, sellerId, policyById, getRate, computePayout, commissions, policies]);
+      .sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime());
+  }, [payouts, sellerId, month, currentYear]);
 
-  const sellerTotal = sellerHistory.reduce((s, r) => s + r.payout, 0);
-  const branchesServed = new Set(sellerHistory.map((r) => r.policy.branch)).size;
+  const historyTotal = payoutHistory.reduce((s, p) => s + p.amount, 0);
 
   if (sellers.length === 0) {
     return (
@@ -111,10 +118,10 @@ export function SellerCommissionsTab() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <div className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-              Filtro global
+              Filtros
             </div>
             <div className="text-sm text-muted-foreground mt-0.5">
-              Toda a página reflete o vendedor e mês selecionados.
+              O vendedor afeta toda a página. O mês filtra apenas o histórico de repasses.
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -134,7 +141,7 @@ export function SellerCommissionsTab() {
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground">Mês</Label>
+              <Label className="text-xs text-muted-foreground">Mês (histórico)</Label>
               <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
                 <SelectTrigger className="h-9 w-[140px] rounded-full text-sm">
                   <SelectValue />
@@ -152,20 +159,37 @@ export function SellerCommissionsTab() {
         </div>
       </Card>
 
-      {/* KPI do vendedor selecionado */}
+      {/* KPI Total a Repassar */}
       <Card className="rounded-2xl border-border shadow-none p-5">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground font-medium">
-          <Wallet className="h-3.5 w-3.5" />
-          Total a repassar · {MONTHS_PT[month]} / {currentYear}
-        </div>
-        <div className="mt-2 text-3xl font-bold">{formatBRL(sellerTotal)}</div>
-        <div className="text-xs text-muted-foreground mt-1">
-          {selectedSeller?.name ?? "—"} · {sellerHistory.length} comissão(ões) paga(s) ·{" "}
-          {branchesServed} ramo(s) atendido(s)
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground font-medium">
+              <Wallet className="h-3.5 w-3.5" />
+              Total a repassar
+            </div>
+            <div className="mt-2 text-3xl font-bold">{formatBRL(balance)}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {selectedSeller?.name ?? "—"} · Saldo devedor acumulado ·{" "}
+              {commissionsCounted} comissão(ões) contabilizada(s)
+            </div>
+            {paidAllTime > 0 && (
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Já repassado: {formatBRL(paidAllTime)} · Total gerado: {formatBRL(owedAllTime)}
+              </div>
+            )}
+          </div>
+          <Button
+            className="rounded-full"
+            onClick={() => setPayOpen(true)}
+            disabled={!selectedSeller || balance <= 0}
+          >
+            <HandCoins className="h-4 w-4 mr-1.5" />
+            Pagar
+          </Button>
         </div>
       </Card>
 
-      {/* Configuração de % (apenas o vendedor selecionado) */}
+      {/* Configuração de % */}
       <Card className="rounded-2xl border-border shadow-none">
         <div className="p-5 pb-3">
           <h2 className="text-lg font-semibold">Configuração de comissão (%)</h2>
@@ -216,19 +240,20 @@ export function SellerCommissionsTab() {
         </div>
       </Card>
 
-      {/* Histórico do vendedor selecionado */}
+      {/* Histórico de repasses */}
       <Card className="rounded-2xl border-border shadow-none">
         <div className="p-5 pb-3">
-          <h2 className="text-lg font-semibold">Histórico de comissões pagas</h2>
+          <h2 className="text-lg font-semibold">Histórico de repasses</h2>
           <p className="text-xs text-muted-foreground">
-            Comissões da corretora marcadas como pagas em {MONTHS_PT[month]} de {currentYear}.
+            Repasses efetuados a {selectedSeller?.name ?? "—"} em {MONTHS_PT[month]} de{" "}
+            {currentYear}.
           </p>
         </div>
         <div className="overflow-x-auto">
-          {sellerHistory.length === 0 ? (
+          {payoutHistory.length === 0 ? (
             <div className="px-5 pb-5">
               <div className="text-sm text-muted-foreground py-8 text-center bg-muted/30 rounded-xl">
-                Nenhuma comissão paga para {selectedSeller?.name ?? "—"} em {MONTHS_PT[month]}.
+                Nenhum repasse registrado neste mês.
               </div>
             </div>
           ) : (
@@ -236,40 +261,32 @@ export function SellerCommissionsTab() {
               <TableHeader>
                 <TableRow className="border-y border-border bg-muted/40">
                   <TableHead className="text-xs">Data</TableHead>
-                  <TableHead className="text-xs">Cliente</TableHead>
-                  <TableHead className="text-xs">Apólice</TableHead>
-                  <TableHead className="text-xs">Ramo</TableHead>
-                  <TableHead className="text-xs text-right">Comissão corretora</TableHead>
-                  <TableHead className="text-xs text-center">%</TableHead>
-                  <TableHead className="text-xs text-right">Repasse</TableHead>
+                  <TableHead className="text-xs">Vendedor</TableHead>
+                  <TableHead className="text-xs">Observações</TableHead>
+                  <TableHead className="text-xs text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sellerHistory.map((r) => (
-                  <TableRow key={r.commission.id}>
+                {payoutHistory.map((p) => (
+                  <TableRow key={p.id}>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {formatDateBR(r.commission.paidAt ?? r.commission.dueDate)}
+                      {formatDateBR(p.paidAt)}
                     </TableCell>
-                    <TableCell className="text-sm">{r.commission.clientName}</TableCell>
-                    <TableCell className="text-xs font-mono">{r.commission.policyNumber}</TableCell>
-                    <TableCell className="text-xs">{r.policy.branch}</TableCell>
-                    <TableCell className="text-right text-sm">
-                      {formatBRL(r.commission.amount)}
+                    <TableCell className="text-sm">{selectedSeller?.name ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.notes ?? "—"}
                     </TableCell>
-                    <TableCell className="text-center text-xs">
-                      {r.pct.toLocaleString("pt-BR")}%
-                    </TableCell>
-                    <TableCell className="text-right font-semibold text-success">
-                      {formatBRL(r.payout)}
+                    <TableCell className="text-right font-semibold text-destructive">
+                      {formatBRL(p.amount)}
                     </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="bg-muted/40">
-                  <TableCell colSpan={6} className="text-right font-semibold">
-                    Total a repassar
+                  <TableCell colSpan={3} className="text-right font-semibold">
+                    Total no mês
                   </TableCell>
-                  <TableCell className="text-right font-bold text-success">
-                    {formatBRL(sellerTotal)}
+                  <TableCell className="text-right font-bold text-destructive">
+                    {formatBRL(historyTotal)}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -277,6 +294,13 @@ export function SellerCommissionsTab() {
           )}
         </div>
       </Card>
+
+      <PaySellerPayoutDialog
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        seller={selectedSeller ? { id: selectedSeller.id, name: selectedSeller.name } : null}
+        suggestedAmount={balance}
+      />
     </div>
   );
 }
