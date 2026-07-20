@@ -1,114 +1,119 @@
+
 ## Objetivo
 
-Adicionar, na aba **Carteira → Apólices**, um botão **"Importar PDF"** que lê uma apólice em PDF, extrai os campos via IA (Google Gemini pela Lovable AI Gateway) e abre a `NewPolicyDialog` já preenchida, após uma tela de revisão (diff) onde o usuário confirma/edita cada campo antes de aplicar.
+Transformar a aba **Repasses de vendedores** em fluxo transacional real: calcular saldo devedor acumulado por vendedor, permitir quitação (total ou parcial) via botão **Pagar**, registrar a transação em **Movimentações** e substituir a box atual por um **Histórico de repasses**.
 
-Escopo inicial: **ramo Auto** apenas. Demais ramos ficam para um próximo ciclo (o mesmo pipeline será reaproveitado).
+## 1. Novo store `sellerPayoutStore.tsx`
 
----
+Arquivo: `src/lib/financial/sellerPayoutStore.tsx` (padrão Context+Provider, igual a `cashStore`).
 
-## Arquitetura recomendada
-
-```text
-[User] → Botão "Importar PDF" (PoliciesTab)
-      → Envia PDF (base64) para server function
-      → Server function chama Lovable AI Gateway
-         (google/gemini-3.1-flash-lite, PDF nativo, output estruturado)
-      → Retorna JSON validado por Zod
-      → Modal de revisão (ImportPolicyReviewDialog): diff + edição campo-a-campo
-      → Ao confirmar: abre NewPolicyDialog com defaults preenchidos
-      → Usuário revisa uma última vez e salva (fluxo atual)
+Tipo:
+```ts
+type SellerPayout = {
+  id: string;
+  sellerId: string;
+  amount: number;
+  paidAt: string;   // ISO
+  notes?: string;
+};
 ```
 
-**Por que Gemini e não GPT:** Gemini aceita PDF nativamente como `inlineData` (multi-página, com OCR de páginas escaneadas). Custa uma fração do GPT-5.5 para o mesmo trabalho. `gemini-3.1-flash-lite` é o modelo mais barato do catálogo com input multimodal — ideal para extração estruturada de alta volume.
+API:
+- `payouts: SellerPayout[]`
+- `addPayout(data)` → cria e retorna
+- `removePayout(id)` → para casos de estorno futuro (não usaremos na UI ainda, mas expor)
+- `totalPaid(sellerId)` → soma histórica de repasses do vendedor
+- Seed vazio.
 
-**Por que server function e não client-side:**
-- `LOVABLE_API_KEY` só existe no servidor (nunca expor no browser).
-- Permite anexar PDF grande sem passar por CORS/limites do browser.
-- Vai bater com o padrão TanStack já usado no projeto (`createServerFn` + `.functions.ts`).
+Provider registrado no root (mesmo lugar de `SellerCommissionStoreProvider`).
 
----
+## 2. Extensões em `sellerCommissionStore`
 
-## Detalhes técnicos
+Adicionar helpers (sem alterar contrato existente):
 
-### 1. Novo módulo: `src/lib/portfolio/policyExtraction.functions.ts`
+- `computeSellerOwed(sellerId, commissions, policies)`: soma `computePayout(c, p)` para todas as comissões `status === "pago"` cuja `policy.assigneeId === sellerId` (all-time — não filtra por mês).
+- `getSellerBalance(sellerId, ...)`: `computeSellerOwed - totalPaid` (do payout store).
 
-Server function `extractPolicyFromPdf`:
-- Input: `{ fileBase64: string; mimeType: string }` (validado com Zod; limite ~10MB).
-- Handler:
-  1. Lê `LOVABLE_API_KEY` de `process.env`.
-  2. Monta request `/v1/chat/completions` com `google/gemini-3.1-flash-lite`, `messages` contendo bloco `text` (prompt) + bloco `file` (PDF em `data:application/pdf;base64,…`).
-  3. Usa `response_format: { type: "json_object" }` + prompt explícito com a shape esperada (não usa `Output.object` com `structuredOutputs` porque Gemini funciona melhor com json_object livre + validação Zod no retorno).
-  4. Parseia o JSON, valida com Zod, retorna `{ fields, confidence, warnings }`.
-- Prompt: pede extração para ramo Auto — `clientName`, `clientDocument` (CPF/CNPJ), `insurer` (enum: Porto Seguro/Bradesco/SulAmérica/Allianz/Mapfre), `premium` (número), `startDate` / `endDate` (ISO), `policyNumber`, e um `confidence` por campo (0..1). Instrui a retornar `null` quando não encontrar, nunca alucinar.
+Alternativa mais limpa: manter esses cálculos como funções puras dentro do próprio `SellerCommissionsTab` usando `useMemo`, sem tocar no store. **Escolha:** manter puro no componente (menor acoplamento), já que ambos os stores estão disponíveis.
 
-### 2. Helper `src/lib/ai-gateway.server.ts` (novo)
+## 3. Novo modal `PaySellerPayoutDialog.tsx`
 
-Copiar exatamente o padrão do knowledge `ai-sdk-lovable-gateway` — mesmo se aqui não usarmos AI SDK, o helper isola URL/headers/`Lovable-API-Key` num único ponto para uso futuro (chat, embeddings). Para este caso vamos usar `fetch` direto porque é mais leve que o AI SDK para uma chamada única multimodal.
+Local: `src/components/financial/PaySellerPayoutDialog.tsx`.
 
-### 3. Client middleware para bearer token
+Props: `{ open, onOpenChange, seller, suggestedAmount }`.
 
-O projeto já roda com Supabase; verificar se `src/start.ts` tem middleware que anexa token. Como a função `extractPolicyFromPdf` **não** precisa de auth (não toca banco), fica pública — mas colocá-la sob `_authenticated` conceitualmente exigiria auth. Decisão: manter sem `requireSupabaseAuth` para simplicidade, com rate-limit via UI (botão desabilita enquanto processa).
+Conteúdo:
+- Título: "Confirmar repasse".
+- Texto explicativo: "Você está registrando um repasse para **{seller.name}**."
+- Campo **Valor** (Input numérico, formato BRL): pré-preenchido com `suggestedAmount` (saldo total), **editável**.
+- Validações:
+  - `> 0`
+  - `≤ saldo devedor atual` (bloquear overpay; mostrar helper "Saldo devedor: R$ …")
+- Campo **Data de pagamento** (default hoje).
+- Campo **Observações** (opcional).
+- Botão "Confirmar" → chama `addPayout({ sellerId, amount, paidAt, notes })` + toast de sucesso.
 
-### 4. UI — mudanças em `src/components/portfolio/PoliciesTab.tsx`
+## 4. Integração em `CaixaTab` (Movimentações)
 
-Adicionar botão **"Importar PDF"** ao lado de **"Nova apólice"**, com ícone `FileUp` (lucide). Abre um `<input type="file" accept="application/pdf">` oculto.
+Em `src/components/financial/CaixaTab.tsx`, adicionar quarta fonte no `useMemo` de `movements`:
 
-Ao selecionar arquivo:
-- Converte para base64 no browser (`FileReader.readAsDataURL`).
-- Chama `extractPolicyFromPdf` via `useServerFn`.
-- Enquanto processa: `toast.loading("Lendo PDF...")` + spinner no botão.
-- Ao concluir: abre `ImportPolicyReviewDialog`.
+```ts
+const fromPayouts = payouts.map((p) => ({
+  id: `pay-${p.id}`,
+  kind: "saida" as const,
+  date: formatDateTimeBR(p.paidAt),
+  description: `Repasse · ${sellerNameById(p.sellerId)}`,
+  amount: p.amount,
+  details: { kind: "repasse", payout: p },
+  _sortIso: p.paidAt,
+}));
+```
 
-### 5. Novo componente: `src/components/portfolio/ImportPolicyReviewDialog.tsx`
+- Estender `Movement` type em `MovementDetailsSheet.tsx` com variante `{ kind: "repasse"; payout: SellerPayout; sellerName: string }`.
+- Renderizar detalhes básicos no sheet (vendedor, valor, data, notas).
+- KPIs de Caixa: repasses já entram como `saida` naturalmente (Entradas/Saídas/Saldo atualizados).
 
-Modal com:
-- Lista de campos extraídos, cada linha: `Label`, `Input` editável, badge de confiança (verde ≥0.8, amarelo 0.5–0.8, vermelho <0.5), e ícone de "extraído da IA".
-- `Alert` no topo listando warnings do modelo (ex.: "Campo prêmio ambíguo").
-- Cliente é matched com `useClients().findByName` — se não bater, oferece "criar cliente com estes dados" (fora do escopo v1: só mostra o nome extraído e deixa o usuário selecionar/criar na `NewPolicyDialog`).
-- Botão **"Continuar"** → fecha este modal e abre `NewPolicyDialog` passando um novo prop `prefill` com os valores validados.
+## 5. Reformulação da `SellerCommissionsTab`
 
-### 6. `NewPolicyDialog` — adicionar prop `prefill`
+Arquivo: `src/components/financial/SellerCommissionsTab.tsx`.
 
-Estender o `useEffect` de reset para, quando `prefill` estiver presente e `open=true`, popular os states iniciais (branch fixo em "Auto" por enquanto, insurer/premium/startDate/endDate/clientName vindos do prefill). Match do `clientId` pelo nome via `clients.find`.
+Mudanças cirúrgicas:
 
----
+**5.1 Card "Total a Repassar"**
+- Deixa de depender do mês. Mostra `sellerBalance = totalOwedAllTime - totalPaidAllTime`.
+- Subtítulo: "Saldo devedor acumulado · {sellerHistoryCount} comissão(ões) contabilizada(s)".
+- Botão **Pagar** no canto superior direito do card, desabilitado se `sellerBalance <= 0`.
+- Ao clicar → abre `PaySellerPayoutDialog` com `suggestedAmount = sellerBalance`.
 
-## Custo estimado (Lovable AI Gateway)
+**5.2 Filtro global**
+- Escopo do seletor de mês passa a ser apenas o Histórico de repasses. Ajustar texto: "Filtro do histórico".
 
-`google/gemini-3.1-flash-lite` — precificação por token via AI Gateway (créditos Lovable):
+**5.3 Configuração de %**
+- Sem alteração.
 
-- **Input típico** por PDF de apólice Auto (2–4 páginas, ~3-8k tokens incluindo imagens processadas pelo Gemini): ~5k tokens.
-- **Output típico** (JSON estruturado com ~10 campos): ~300 tokens.
-- **Custo real por leitura:** valor exato depende da precificação corrente do modelo no AI Gateway. Ordem de grandeza estimada: **menos de 0,05 crédito Lovable por PDF** (fração mínima). Para 1.000 PDFs/mês, estimativa < 50 créditos.
+**5.4 Substituição da box "Histórico de comissões pagas"**
+- **Remover** o Card atual completamente.
+- **Novo Card "Histórico de repasses"** — mesmo estilo visual do Caixa/Movimentações:
+  - Colunas: Data · Vendedor (sempre o selecionado, mas útil pra clareza) · Valor · Observações · Ações (excluir opcional; por ora só visual).
+  - Filtrado por: `payout.sellerId === sellerId && mês/ano do filtro`.
+  - Linha de total no rodapé: soma dos repasses exibidos.
+  - Empty state coerente.
 
-**Não posso cravar o valor exato** — a tabela de preços por milhão de tokens do gateway varia por modelo e é ajustada pelo Lovable. Para o número real:
-1. Após implementar, executar 1 extração de teste.
-2. Consultar via `ai_gateway_logs--list_ai_gateway_requests` (retorna `cost` em créditos por request).
-3. Ou verificar em Settings → Plans & credits o consumo antes/depois.
+## 6. Registro do Provider
 
-Se o custo se mostrar relevante em produção, mudar para modelo ainda mais barato (`google/gemini-2.5-flash-lite`) é uma linha de código.
+Localizar onde `SellerCommissionStoreProvider` está montado (provavelmente `src/routes/__root.tsx` ou `router.tsx`) e adicionar `SellerPayoutStoreProvider` ao lado — antes de `SellerCommissionStoreProvider` para permitir importar seu hook em componentes descendentes.
 
----
+## 7. Fora de escopo
 
-## Ordem de execução (build mode)
+- **DRE**: repasses não são tratados como despesa do DRE nesta iteração (não foi solicitado). Se necessário depois, mapear em `computeDre`.
+- **Estorno** de repasse: `removePayout` fica exposto no store mas sem UI.
+- **Multi-vendedor lump sum** (pagar vários de uma vez): não solicitado.
 
-1. Criar `src/lib/ai-gateway.server.ts` (helper mínimo com `LOVABLE_AI_GATEWAY_URL` + header).
-2. Criar `src/lib/portfolio/policyExtraction.functions.ts` (server function + Zod schema + prompt).
-3. Criar `src/components/portfolio/ImportPolicyReviewDialog.tsx`.
-4. Estender `NewPolicyDialog` com prop `prefill?: Partial<PolicyPrefill>`.
-5. Adicionar botão "Importar PDF" + orquestração em `PoliciesTab.tsx`.
-6. Testar com 1 PDF real de apólice Auto (usuário fornece), medir custo via `ai_gateway_logs`.
-7. Reportar custo real ao usuário.
+## Arquivos afetados
 
-## Fora de escopo desta iteração
-
-- Ramos Saúde/Consórcio/Vida/etc. (mesma pipeline, prompt diferente — próximo ciclo).
-- Criação automática de cliente quando não bate.
-- Persistência do PDF original como anexo da apólice (o `useDocumentStore` já existe, integração fica para depois).
-- Fallback client-side (pdfjs + regex).
-
-## Verificação
-
-- Typecheck 100% verde.
-- Teste manual: subir PDF → ver toast de progresso → ver diff modal → confirmar → ver `NewPolicyDialog` preenchida.
-- `ai_gateway_logs--list_ai_gateway_requests` retorna a chamada com status 200 e o `cost`.
+- `src/lib/financial/sellerPayoutStore.tsx` (novo)
+- `src/components/financial/PaySellerPayoutDialog.tsx` (novo)
+- `src/components/financial/SellerCommissionsTab.tsx` (refatoração)
+- `src/components/financial/CaixaTab.tsx` (adiciona fonte payouts)
+- `src/components/financial/MovementDetailsSheet.tsx` (nova variante repasse)
+- `src/routes/__root.tsx` ou equivalente (registro do provider)
