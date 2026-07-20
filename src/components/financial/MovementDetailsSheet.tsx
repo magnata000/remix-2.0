@@ -23,7 +23,8 @@ export type MovementDetails =
   | { kind: "comissao"; commission: Commission }
   | { kind: "manual"; income: ManualIncome }
   | { kind: "saida"; entry: ExpenseEntry; expense?: Expense }
-  | { kind: "imposto"; tax: TaxEntry };
+  | { kind: "imposto"; tax: TaxEntry }
+  | { kind: "repasse"; sellerName: string; paidAt: string; notes?: string };
 
 export type Movement = {
   id: string;
@@ -176,6 +177,16 @@ export function MovementDetailsSheet({ movement, open, onOpenChange }: Props) {
                 </>
               );
             })()}
+          {movement.details.kind === "repasse" && (
+            <>
+              <Row label="Tipo" value="Repasse de comissão" />
+              <Row label="Vendedor" value={movement.details.sellerName} />
+              <Row label="Pago em" value={formatDateTimeBR(movement.details.paidAt)} />
+              {movement.details.notes && (
+                <Row label="Observações" value={movement.details.notes} />
+              )}
+            </>
+          )}
         </div>
 
         {schedule.length > 1 && (
