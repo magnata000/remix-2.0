@@ -43,6 +43,8 @@ import {
 } from "@/lib/cash/cashStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { commissionKindLabel } from "@/lib/financial/commissionEngine";
+import { useSellerPayoutStore } from "@/lib/financial/sellerPayoutStore";
+import { useTeam } from "@/lib/team/teamStore";
 import { NewExpenseSheet } from "@/components/financial/NewExpenseSheet";
 import { NewIncomeDialog } from "@/components/financial/NewIncomeDialog";
 import { NewTaxSheet } from "@/components/financial/NewTaxSheet";
@@ -57,6 +59,8 @@ type StatusFilter = "all" | "pago" | "pendente" | "atrasado" | "devolvido" | "ca
 export function CaixaTab() {
   const { expenses, entries, incomes, taxes, removeExpense, removeTax } = useCashStore();
   const { commissions } = useCommissionStore();
+  const { payouts } = useSellerPayoutStore();
+  const { members } = useTeam();
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [openExpense, setOpenExpense] = useState(false);
@@ -137,10 +141,27 @@ export function CaixaTab() {
       details: { kind: "imposto" as const, tax: t },
       _sortIso: t.paidAt,
     }));
-    return [...fromCommissions, ...fromManual, ...out, ...fromTaxes].sort(
+    const fromPayouts = payouts.map((p) => {
+      const sellerName = members.find((m) => m.id === p.sellerId)?.name ?? "Vendedor";
+      return {
+        id: `pay-${p.id}`,
+        kind: "saida" as const,
+        date: formatDateTimeBR(p.paidAt),
+        description: `Repasse · ${sellerName}`,
+        amount: p.amount,
+        details: {
+          kind: "repasse" as const,
+          sellerName,
+          paidAt: p.paidAt,
+          notes: p.notes,
+        },
+        _sortIso: p.paidAt,
+      };
+    });
+    return [...fromCommissions, ...fromManual, ...out, ...fromTaxes, ...fromPayouts].sort(
       (a, b) => new Date(b._sortIso).getTime() - new Date(a._sortIso).getTime(),
     );
-  }, [commissions, incomes, entries, expenses, taxes]);
+  }, [commissions, incomes, entries, expenses, taxes, payouts, members]);
 
   const monthMovements = movements.filter((m) => inMonth(m._sortIso));
 
