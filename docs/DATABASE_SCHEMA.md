@@ -569,6 +569,149 @@ CREATE TRIGGER trg_tasks_updated BEFORE UPDATE ON public.tasks
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ```
 
+### Caixa & Despesas (`expenses`, `expense_entries`, `manual_incomes`, `tax_entries`)
+
+```sql
+CREATE TYPE public.expense_recurrence AS ENUM ('avulsa','mensal');
+CREATE TYPE public.tax_kind           AS ENUM ('sobre_receita','sobre_lucro');
+CREATE TYPE public.dre_category_kind  AS ENUM ('fixa','variavel','pessoal','imposto','outra');
+
+CREATE TABLE public.expenses (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  description TEXT NOT NULL,
+  category    TEXT NOT NULL,
+  dre_kind    public.dre_category_kind NOT NULL,
+  amount      NUMERIC(14,2) NOT NULL CHECK (amount >= 0),
+  recurrence  public.expense_recurrence NOT NULL DEFAULT 'avulsa',
+  due_day     SMALLINT CHECK (due_day BETWEEN 1 AND 31),
+  notes       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.expenses TO authenticated;
+GRANT ALL ON public.expenses TO service_role;
+ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+CREATE TRIGGER trg_expenses_updated BEFORE UPDATE ON public.expenses
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+CREATE TABLE public.expense_entries (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  expense_id  UUID NOT NULL REFERENCES public.expenses(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  category    TEXT NOT NULL,
+  amount      NUMERIC(14,2) NOT NULL CHECK (amount >= 0),
+  paid_at     TIMESTAMPTZ NOT NULL,
+  notes       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_expense_entries_expense ON public.expense_entries(expense_id);
+CREATE INDEX idx_expense_entries_paid_at ON public.expense_entries(paid_at);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.expense_entries TO authenticated;
+GRANT ALL ON public.expense_entries TO service_role;
+ALTER TABLE public.expense_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.manual_incomes (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  description TEXT NOT NULL,
+  source      TEXT NOT NULL,
+  amount      NUMERIC(14,2) NOT NULL CHECK (amount >= 0),
+  received_at TIMESTAMPTZ NOT NULL,
+  notes       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_manual_incomes_received_at ON public.manual_incomes(received_at);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.manual_incomes TO authenticated;
+GRANT ALL ON public.manual_incomes TO service_role;
+ALTER TABLE public.manual_incomes ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.tax_entries (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind             public.tax_kind NOT NULL,
+  description      TEXT NOT NULL,
+  amount           NUMERIC(14,2) NOT NULL CHECK (amount >= 0),
+  competence_month SMALLINT NOT NULL CHECK (competence_month BETWEEN 0 AND 11),
+  competence_year  INT NOT NULL,
+  paid_at          TIMESTAMPTZ NOT NULL,
+  notes            TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_tax_entries_competence ON public.tax_entries(competence_year, competence_month);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.tax_entries TO authenticated;
+GRANT ALL ON public.tax_entries TO service_role;
+ALTER TABLE public.tax_entries ENABLE ROW LEVEL SECURITY;
+```
+
+### Repasses de vendedores (`seller_commission_rates`, `seller_payouts`)
+
+```sql
+CREATE TABLE public.seller_commission_rates (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id  UUID NOT NULL REFERENCES public.team_members(id) ON DELETE CASCADE,
+  branch     public.branch NOT NULL,
+  pct        NUMERIC(5,2) NOT NULL DEFAULT 30 CHECK (pct >= 0 AND pct <= 100),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (member_id, branch)
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.seller_commission_rates TO authenticated;
+GRANT ALL ON public.seller_commission_rates TO service_role;
+ALTER TABLE public.seller_commission_rates ENABLE ROW LEVEL SECURITY;
+CREATE TRIGGER trg_seller_rates_updated BEFORE UPDATE ON public.seller_commission_rates
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+CREATE TABLE public.seller_payouts (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  seller_id  UUID NOT NULL REFERENCES public.team_members(id) ON DELETE RESTRICT,
+  amount     NUMERIC(14,2) NOT NULL CHECK (amount > 0),
+  paid_at    TIMESTAMPTZ NOT NULL,
+  notes      TEXT,
+  created_by UUID REFERENCES public.team_members(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_seller_payouts_seller  ON public.seller_payouts(seller_id);
+CREATE INDEX idx_seller_payouts_paid_at ON public.seller_payouts(paid_at);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.seller_payouts TO authenticated;
+GRANT ALL ON public.seller_payouts TO service_role;
+ALTER TABLE public.seller_payouts ENABLE ROW LEVEL SECURITY;
+```
+
+### Documentos (`doc_folders`, `doc_files`)
+
+```sql
+CREATE TABLE public.doc_folders (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           TEXT NOT NULL,
+  parent_id      UUID REFERENCES public.doc_folders(id) ON DELETE CASCADE,
+  policy_id      UUID REFERENCES public.policies(id) ON DELETE CASCADE,
+  client_id      UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  is_client_root BOOLEAN NOT NULL DEFAULT false,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_doc_folders_client ON public.doc_folders(client_id);
+CREATE INDEX idx_doc_folders_parent ON public.doc_folders(parent_id);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.doc_folders TO authenticated;
+GRANT ALL ON public.doc_folders TO service_role;
+ALTER TABLE public.doc_folders ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.doc_files (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         TEXT NOT NULL,
+  folder_id    UUID NOT NULL REFERENCES public.doc_folders(id) ON DELETE CASCADE,
+  policy_id    UUID REFERENCES public.policies(id) ON DELETE SET NULL,
+  client_id    UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  storage_path TEXT,
+  mime         TEXT NOT NULL,
+  size_kb      INT NOT NULL DEFAULT 0,
+  uploaded_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_doc_files_folder ON public.doc_files(folder_id);
+CREATE INDEX idx_doc_files_client ON public.doc_files(client_id);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.doc_files TO authenticated;
+GRANT ALL ON public.doc_files TO service_role;
+ALTER TABLE public.doc_files ENABLE ROW LEVEL SECURITY;
+```
+
+
+
 ## 2.3 Mapeamento TypeScript ↔ Postgres
 
 ### `Client`
