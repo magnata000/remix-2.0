@@ -931,6 +931,49 @@ CREATE POLICY "Admin manage configs" ON public.commission_configs
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 ```
 
+### Financeiro operacional (caixa, despesas, impostos, repasses)
+
+Dados da corretora — visíveis a todo colaborador autenticado; escrita restrita a admin/manager.
+
+```sql
+-- Aplicar o mesmo par de políticas para:
+-- expenses, expense_entries, manual_incomes, tax_entries,
+-- seller_commission_rates, seller_payouts
+CREATE POLICY "Staff read" ON public.seller_payouts
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Admin manage" ON public.seller_payouts
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'manager'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'manager'));
+```
+
+### `doc_folders` / `doc_files` (escopo herdado do cliente)
+
+```sql
+CREATE POLICY "Read via client" ON public.doc_files
+  FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.id = doc_files.client_id
+      AND (c.assignee_id = auth.uid() OR public.has_role(auth.uid(), 'admin'))
+  ));
+
+CREATE POLICY "Write via client" ON public.doc_files
+  FOR ALL TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.id = doc_files.client_id
+      AND (c.assignee_id = auth.uid() OR public.has_role(auth.uid(), 'admin'))
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.id = doc_files.client_id
+      AND (c.assignee_id = auth.uid() OR public.has_role(auth.uid(), 'admin'))
+  ));
+-- Análogo para doc_folders.
+```
+
 ## 2.5 Variáveis de Ambiente
 
 | Variável | Escopo | Uso |
