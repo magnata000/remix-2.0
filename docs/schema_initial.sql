@@ -371,7 +371,7 @@ CREATE TABLE public.seller_commission_rates (
 );
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.seller_commission_rates TO authenticated;
 GRANT ALL ON public.seller_commission_rates TO service_role;
-ALTER TABLE public.seller_rates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.seller_commission_rates ENABLE ROW LEVEL SECURITY;
 CREATE TRIGGER trg_seller_rates_updated BEFORE UPDATE ON public.seller_commission_rates
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
