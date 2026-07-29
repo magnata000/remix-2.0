@@ -5,6 +5,7 @@
 -- 1. EXTENSÕES
 -- =============================================================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA public;
 
 -- =============================================================================
 -- 2. ENUMS
