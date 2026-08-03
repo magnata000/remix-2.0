@@ -1,4 +1,4 @@
--- TheInsuranceOS — Schema inicial
+-- TheInsuranceOS — Schema inicial (CORRIGIDO)
 -- Aplicar via Supabase SQL Editor ou `supabase db push`
 
 -- =============================================================================
@@ -26,50 +26,19 @@ CREATE TYPE public.expense_recurrence  AS ENUM ('avulsa','mensal');
 CREATE TYPE public.tax_kind            AS ENUM ('sobre_receita','sobre_lucro');
 CREATE TYPE public.dre_category_kind   AS ENUM ('fixa','variavel','pessoal','imposto','outra');
 
--- =============================================================================
--- 3. FUNÇÕES AUXILIARES
--- =============================================================================
+
+
+-- CORRIGIDO: adicionado SET search_path = public (evita warning de
+-- "function_search_path_mutable" do linter do Supabase e protege contra
+-- search_path hijacking).
 CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS trigger LANGUAGE plpgsql AS $$
+RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
-RETURNS BOOLEAN
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role
-  )
-$$;
-
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = public
-AS $$
-BEGIN
-  INSERT INTO public.team_members (id, name, role, email)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    COALESCE(NEW.raw_user_meta_data->>'role', 'broker'),
-    NEW.email
-  );
-
-  INSERT INTO public.user_roles (user_id, role)
-  VALUES (
-    NEW.id,
-    COALESCE((NEW.raw_user_meta_data->>'role')::public.app_role, 'broker'::public.app_role)
-  )
-  ON CONFLICT (user_id, role) DO NOTHING;
-
-  RETURN NEW;
-END;
-$$;
 
 -- =============================================================================
 -- 4. TABELAS CORE
@@ -97,7 +66,11 @@ CREATE TABLE public.user_roles (
   role     public.app_role NOT NULL,
   UNIQUE (user_id, role)
 );
-GRANT SELECT ON public.user_roles TO authenticated;
+-- CORRIGIDO: era `GRANT SELECT ...` apenas. A política "Admin manage roles"
+-- é FOR ALL (permite admin fazer INSERT/UPDATE/DELETE via RLS), mas sem o
+-- GRANT correspondente na tabela, o Postgres bloqueava a operação antes
+-- mesmo de avaliar a RLS.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_roles TO authenticated;
 GRANT ALL ON public.user_roles TO service_role;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
@@ -233,7 +206,10 @@ CREATE TABLE public.commission_configs (
   updated_at                     TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (insurer, product)
 );
-GRANT SELECT ON public.commission_configs TO authenticated;
+-- CORRIGIDO: era `GRANT SELECT ...` apenas. A política "Admin manage configs"
+-- é FOR ALL, mas sem GRANT de INSERT/UPDATE/DELETE o admin não conseguia
+-- de fato criar/editar/excluir configurações de comissão.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.commission_configs TO authenticated;
 GRANT ALL ON public.commission_configs TO service_role;
 ALTER TABLE public.commission_configs ENABLE ROW LEVEL SECURITY;
 CREATE TRIGGER trg_commission_configs_updated BEFORE UPDATE ON public.commission_configs
@@ -284,6 +260,52 @@ GRANT ALL ON public.tasks TO service_role;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 CREATE TRIGGER trg_tasks_updated BEFORE UPDATE ON public.tasks
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- =============================================================================
+-- 3. FUNÇÕES AUXILIARES
+-- =============================================================================
+
+
+CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role
+  )
+$$;
+
+-- CORRIGIDO: o cast direto para public.app_role quebrava o signup caso
+-- raw_user_meta_data->>'role' viesse com um valor fora do enum (typo,
+-- string vazia, role customizada etc). Agora valida antes de converter.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.team_members (id, name, role, email)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+    COALESCE(NEW.raw_user_meta_data->>'role', 'broker'),
+    NEW.email
+  );
+
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (
+    NEW.id,
+    CASE
+      WHEN NEW.raw_user_meta_data->>'role' IN ('admin', 'manager', 'broker')
+        THEN (NEW.raw_user_meta_data->>'role')::public.app_role
+      ELSE 'broker'::public.app_role
+    END
+  )
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
 
 -- =============================================================================
 -- 5. CAIXA & DESPESAS
