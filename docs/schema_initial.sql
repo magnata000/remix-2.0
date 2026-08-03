@@ -26,7 +26,9 @@ CREATE TYPE public.expense_recurrence  AS ENUM ('avulsa','mensal');
 CREATE TYPE public.tax_kind            AS ENUM ('sobre_receita','sobre_lucro');
 CREATE TYPE public.dre_category_kind   AS ENUM ('fixa','variavel','pessoal','imposto','outra');
 
-
+-- =============================================================================
+-- FUNÇÃO AUXILIAR ESSENCIAL PARA A CRIAÇÃO DAS TABELAS CORE
+-- =============================================================================
 
 -- CORRIGIDO: adicionado SET search_path = public (evita warning de
 -- "function_search_path_mutable" do linter do Supabase e protege contra
@@ -41,7 +43,7 @@ $$;
 
 
 -- =============================================================================
--- 4. TABELAS CORE
+-- 3. TABELAS CORE
 -- =============================================================================
 
 -- team_members
@@ -262,7 +264,7 @@ CREATE TRIGGER trg_tasks_updated BEFORE UPDATE ON public.tasks
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- =============================================================================
--- 3. FUNÇÕES AUXILIARES
+-- 4. FUNÇÕES AUXILIARES
 -- =============================================================================
 
 
