@@ -1,7 +1,35 @@
 // Mock data para vitrine TheInsuranceOS
 export type PolicyStatus = "ativa" | "vencida" | "pendente" | "cancelada" | "renovada";
-export type Branch = "Auto" | "Vida" | "Residencial" | "Empresarial" | "Saúde" | "Consórcio";
-export type Insurer = "Porto Seguro" | "Bradesco" | "SulAmérica" | "Allianz" | "Mapfre";
+export type Branch =
+  | "Auto"
+  | "Vida"
+  | "Residencial"
+  | "Empresarial"
+  | "Saúde"
+  | "Consórcio"
+  | "Embarcador"
+  | "Transporte"
+  | "Viagem"
+  | "Porto RC Profissional"
+  | "Tuba/Instrumento";
+export type Insurer =
+  | "Porto Seguro"
+  | "Bradesco"
+  | "SulAmérica"
+  | "Allianz"
+  | "Mapfre"
+  | "Suhai"
+  | "Amil"
+  | "Tokio Marine"
+  | "Azul"
+  | "Prevent Sênior"
+  | "MedSênior"
+  | "São Cristóvão"
+  | "Transmontano"
+  | "São Miguel"
+  | "Itaú Seguros"
+  | "NotreDame"
+  | "Aliro";
 
 export type ClientStatus = "ativo" | "inativo" | "lead";
 export type Client = {
@@ -225,6 +253,18 @@ export const insurerLogos: Record<Insurer, string> = {
   SulAmérica: "SA",
   Allianz: "AL",
   Mapfre: "MP",
+  Suhai: "SH",
+  Amil: "AM",
+  "Tokio Marine": "TM",
+  Azul: "AZ",
+  "Prevent Sênior": "PV",
+  MedSênior: "MS",
+  "São Cristóvão": "SC",
+  Transmontano: "TR",
+  "São Miguel": "SM",
+  "Itaú Seguros": "IT",
+  NotreDame: "ND",
+  Aliro: "AR",
 };
 
 export const formatBRL = (v: number) =>
