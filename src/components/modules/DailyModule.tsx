@@ -10,13 +10,20 @@ import {
   TrendingUp,
   ArrowRight,
   Sparkles,
+  Phone,
+  MessageCircle,
+  Mail,
+  Users,
+  Video,
+  StickyNote,
 } from "lucide-react";
 import { useTaskStore, type TaskItem, PRIORITY_META } from "@/lib/tasks/taskStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
+import { useFollowUps } from "@/lib/portfolio/followUpStore";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import { useTeam, useTeamNameIndex } from "@/lib/team/teamStore";
-import { type Policy, type Beneficiary } from "@/lib/mock/data";
+import { type Policy, type Beneficiary, type FollowUpType } from "@/lib/mock/data";
 import { formatDateShort } from "@/lib/format";
 import { ageAt, findBandChange, isBirthdayToday } from "@/lib/daily/ageBands";
 import { daysBetween, relativeDueLabel, toneClass, type RelativeDue } from "@/lib/daily/dateUtils";
@@ -200,6 +207,85 @@ function MentionsSection({
                   <p className="text-sm truncate mt-0.5">{e.taskTitle}</p>
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{e.preview}</p>
                 </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </SectionCard>
+  );
+}
+
+// ---------- section: Follow-ups ----------
+
+const typeIcon: Record<FollowUpType, typeof Phone> = {
+  ligacao: Phone,
+  email: Mail,
+  whatsapp: MessageCircle,
+  reuniao: Users,
+  videocall: Video,
+  nota: StickyNote,
+};
+
+function useTodayFollowUps(now: Date) {
+  const { followUps } = useFollowUps();
+  const today = now.toISOString().slice(0, 10);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+  return useMemo(
+    () =>
+      followUps
+        .filter((f) => (f.date === today || f.date === tomorrowStr) && f.status === "agendado")
+        .sort((a, b) => {
+          const ta = a.time ?? "23:59";
+          const tb = b.time ?? "23:59";
+          if (ta !== tb) return ta.localeCompare(tb);
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        }),
+    [followUps, today, tomorrowStr],
+  );
+}
+
+function FollowUpsSection({ now, onGoToPortfolio }: { now: Date; onGoToPortfolio: () => void }) {
+  const entries = useTodayFollowUps(now);
+  return (
+    <SectionCard
+      icon={<Phone className="h-4 w-4" />}
+      title="Follow-ups"
+      subtitle="Agendados para hoje e amanhã"
+      count={entries.length}
+      action={
+        entries.length > 0 ? (
+          <Button variant="ghost" size="sm" onClick={onGoToPortfolio} className="text-xs h-7">
+            Ver carteira <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
+        ) : null
+      }
+    >
+      {entries.length === 0 ? (
+        <EmptyState text="Nenhum follow-up agendado para hoje/amanhã." />
+      ) : (
+        <ul className="divide-y divide-border">
+          {entries.map((f) => {
+            const Icon = typeIcon[f.type];
+            return (
+              <li key={f.id} className="py-2.5 px-1 flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-foreground">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">
+                    {f.clientName}
+                    <span className="text-xs text-muted-foreground font-normal ml-1">
+                      · {f.time ?? "sem horário"}
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {f.date === now.toISOString().slice(0, 10) ? "Hoje" : "Amanhã"} · {f.type}
+                  </p>
+                </div>
               </li>
             );
           })}
@@ -578,6 +664,7 @@ export function DailyModule() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <TasksSection now={now} onOpenTask={setSelectedTask} />
             <MentionsSection teamIndex={teamIndex} onOpenTaskId={openTaskById} />
+            <FollowUpsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
             <BirthdaysSection now={now} />
             <RenewalsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
           </div>

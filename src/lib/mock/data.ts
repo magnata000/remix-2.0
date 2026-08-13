@@ -14,6 +14,23 @@ export type Client = {
   statusOverride?: ClientStatus;
 };
 
+export type FollowUpType = "ligacao" | "email" | "whatsapp" | "reuniao" | "videocall" | "nota";
+export type FollowUpStatus = "agendado" | "realizado" | "cancelado" | "adiado";
+export type FollowUp = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  date: string; // ISO date
+  time?: string; // HH:MM
+  type: FollowUpType;
+  status: FollowUpStatus;
+  notes: string;
+  createdTaskId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+
 export type BeneficiaryTitle =
   | "titular"
   | "conjuge"
@@ -497,6 +514,161 @@ export const team: TeamMember[] = [
   { id: "u3", name: "Mariana Alves", role: "Atendimento", email: "mariana@insuranceos.com" },
   { id: "u4", name: "João Pereira", role: "Financeiro", email: "joao@insuranceos.com" },
 ];
+
+const followUpTypes: FollowUpType[] = ["ligacao", "email", "whatsapp", "reuniao", "videocall", "nota"];
+const followUpStatuses: FollowUpStatus[] = ["agendado", "realizado", "cancelado", "adiado"];
+
+const isoDaysFromNow = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+const timeSlots = ["09:00", "10:30", "14:00", "15:30", "17:00"];
+
+export const followUps: FollowUp[] = [
+  {
+    id: "fu1",
+    clientId: "c2",
+    clientName: "Carlos Lima",
+    date: isoDaysFromNow(0),
+    time: "10:30",
+    type: "ligacao",
+    status: "agendado",
+    notes: "Ligar para confirmar interesse no seguro de vida corporativo.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu2",
+    clientId: "c3",
+    clientName: "Mariana Alves",
+    date: isoDaysFromNow(1),
+    time: "14:00",
+    type: "whatsapp",
+    status: "agendado",
+    notes: "Enviar lembrete sobre vistoria do veículo.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu3",
+    clientId: "c5",
+    clientName: "Rafael Mendes",
+    date: isoDaysFromNow(-2),
+    time: "09:00",
+    type: "reuniao",
+    status: "realizado",
+    notes: "Reunião presencial. Cliente quer revisar cobertura empresarial.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu4",
+    clientId: "c7",
+    clientName: "Beatriz Costa",
+    date: isoDaysFromNow(5),
+    time: "15:30",
+    type: "email",
+    status: "agendado",
+    notes: "Disparar proposta de renovação com comparativo.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu5",
+    clientId: "c10",
+    clientName: "Bruno Carvalho",
+    date: isoDaysFromNow(-5),
+    time: "11:00",
+    type: "ligacao",
+    status: "cancelado",
+    notes: "Não atendeu. Cliente pediu para cancelar agendamento.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu6",
+    clientId: "c1",
+    clientName: "Ana Souza",
+    date: isoDaysFromNow(2),
+    time: "16:00",
+    type: "videocall",
+    status: "agendado",
+    notes: "Apresentação de plano de saúde PME.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu7",
+    clientId: "c4",
+    clientName: "João Pereira",
+    date: isoDaysFromNow(-1),
+    time: "10:00",
+    type: "nota",
+    status: "realizado",
+    notes: "Registro interno: cliente atualizou endereço de cobrança.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu8",
+    clientId: "c6",
+    clientName: "Juliana Rocha",
+    date: isoDaysFromNow(0),
+    time: "17:00",
+    type: "whatsapp",
+    status: "adiado",
+    notes: "Cliente pediu para adiar para a próxima semana.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu9",
+    clientId: "c8",
+    clientName: "Pedro Henrique",
+    date: isoDaysFromNow(3),
+    time: "09:30",
+    type: "ligacao",
+    status: "agendado",
+    notes: "Ligar sobre cotação de residencial.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "fu10",
+    clientId: "c9",
+    clientName: "Larissa Dias",
+    date: isoDaysFromNow(-3),
+    time: "13:30",
+    type: "email",
+    status: "realizado",
+    notes: "Proposta enviada. Aguardando retorno.",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  // follow-ups extras para popular
+  ...Array.from({ length: 12 }, (_, i) => {
+    const client = clients[i % clients.length];
+    const dateOffset = ((i % 7) - 3); // -3 .. +3
+    const type = followUpTypes[i % followUpTypes.length];
+    const status = followUpStatuses[i % followUpStatuses.length];
+    const time = timeSlots[i % timeSlots.length];
+    return {
+      id: `fu-extra-${i + 1}`,
+      clientId: client.id,
+      clientName: client.name,
+      date: isoDaysFromNow(dateOffset),
+      time,
+      type,
+      status,
+      notes: `Follow-up ${type} - ${status}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }),
+];
+
 
 export const salesByMonth = [
   { month: "Jan", vendas: 18, receita: 22000 },

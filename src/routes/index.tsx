@@ -12,6 +12,7 @@ import { QuoteStoreProvider } from "@/lib/multicalc/quoteStore";
 import { TaskStoreProvider } from "@/lib/tasks/taskStore";
 import { DocumentStoreProvider } from "@/lib/documents/documentStore";
 import { ClientStoreProvider } from "@/lib/portfolio/clientStore";
+import { FollowUpStoreProvider } from "@/lib/portfolio/followUpStore";
 import { PolicyStoreProvider } from "@/lib/portfolio/policyStore";
 import { CashProvider } from "@/lib/cash/cashStore";
 import { CommissionStoreProvider } from "@/lib/financial/commissionStore";
@@ -52,8 +53,9 @@ function AppShell() {
   return (
     <PipelineStoreProvider>
       <QuoteStoreProvider>
-        <TaskStoreProvider>
-          <ClientStoreProvider>
+      <TaskStoreProvider>
+        <ClientStoreProvider>
+          <FollowUpStoreProvider>
             <PolicyStoreProvider>
               <DocumentStoreProvider>
                 <CashProvider>
@@ -87,8 +89,9 @@ function AppShell() {
                 </CashProvider>
               </DocumentStoreProvider>
             </PolicyStoreProvider>
-          </ClientStoreProvider>
-        </TaskStoreProvider>
+          </FollowUpStoreProvider>
+        </ClientStoreProvider>
+      </TaskStoreProvider>
       </QuoteStoreProvider>
     </PipelineStoreProvider>
   );

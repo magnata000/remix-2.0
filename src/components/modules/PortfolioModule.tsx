@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PoliciesTab } from "@/components/portfolio/PoliciesTab";
 import { ClientsTab } from "@/components/portfolio/ClientsTab";
+import { FollowUpsTab } from "@/components/portfolio/FollowUpsTab";
 import { ClientDetailDrawer } from "@/components/portfolio/ClientDetailDrawer";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
 import { useClients } from "@/lib/portfolio/clientStore";
+import { useFollowUps } from "@/lib/portfolio/followUpStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import type { Policy } from "@/lib/mock/data";
 
@@ -13,10 +15,12 @@ export function PortfolioModule() {
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const { clients } = useClients();
+  const { followUps } = useFollowUps();
   const { policies } = usePolicies();
 
   const policiesCount = policies.length;
   const clientsCount = clients.length;
+  const followUpsCount = followUps.length;
 
   const openClient = (name: string) => setSelectedClient(name);
 
@@ -35,6 +39,9 @@ export function PortfolioModule() {
           <TabsTrigger value="clients" className="rounded-lg">
             Clientes <span className="ml-1.5 text-xs text-muted-foreground">({clientsCount})</span>
           </TabsTrigger>
+          <TabsTrigger value="followups" className="rounded-lg">
+            Follow-ups <span className="ml-1.5 text-xs text-muted-foreground">({followUpsCount})</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="policies" className="mt-5">
@@ -42,6 +49,9 @@ export function PortfolioModule() {
         </TabsContent>
         <TabsContent value="clients" className="mt-5">
           <ClientsTab onSelectClient={openClient} />
+        </TabsContent>
+        <TabsContent value="followups" className="mt-5">
+          <FollowUpsTab />
         </TabsContent>
       </Tabs>
 
