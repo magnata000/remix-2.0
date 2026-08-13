@@ -10,8 +10,6 @@ import {
   Building2,
   Users,
   Plug,
-  Bell,
-  CreditCard,
   Check,
   Pencil,
   Trash2,
@@ -31,7 +29,7 @@ import { useTeam, buildInviteLink, type Member } from "@/lib/team/teamStore";
 import { EditMemberDialog } from "@/components/settings/EditMemberDialog";
 import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
 import { CommissionConfigSection } from "@/components/settings/CommissionConfigSection";
-import { SlaConfigSection } from "@/components/settings/SlaConfigSection";
+
 
 import { toast } from "sonner";
 
@@ -201,38 +199,6 @@ export function SettingsModule() {
       {/* Comissionamento */}
       <CommissionConfigSection />
 
-      {/* SLA */}
-      <SlaConfigSection />
-
-      {/* Preferências */}
-      <Section icon={Bell} title="Preferências" desc="Notificações e alertas">
-        <div className="space-y-3">
-          <Toggle label="E-mail de novas propostas" defaultChecked />
-          <Toggle label="Alerta de apólices a vencer (30 dias)" defaultChecked />
-          <Toggle label="Resumo semanal de comissões" defaultChecked />
-          <Toggle label="Notificações push" />
-        </div>
-      </Section>
-
-      {/* Plano */}
-      <Section
-        icon={CreditCard}
-        title="Plano & Faturamento"
-        desc="Plano Pro • Renova em 12/05/2026"
-      >
-        <div className="rounded-2xl bg-brand/15 p-5 flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <p className="text-xs text-muted-foreground">Plano atual</p>
-            <p className="text-2xl font-bold">Pro</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Até 2.000 apólices • 5 usuários • Multicálculo ilimitado
-            </p>
-          </div>
-          <Button variant="outline" className="rounded-xl bg-card">
-            Alterar plano
-          </Button>
-        </div>
-      </Section>
 
       <EditMemberDialog
         member={editing}
