@@ -539,25 +539,25 @@ function AgeBandSection({ now }: { now: Date }) {
                 className="py-3 px-2 md:py-2 md:px-0 md:grid md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,0.5fr)] md:gap-2 md:items-center hover:bg-muted/40 md:hover:bg-transparent rounded-lg md:rounded-none transition"
               >
                 {/* Nome */}
-                <div className="min-w-0">
+                <div className="min-w-0 px-2">
                   <p className="font-medium truncate">{e.name}</p>
                   <p className="text-xs text-muted-foreground md:hidden">{e.contextLabel}</p>
                 </div>
 
                 {/* Vínculo - desktop only */}
-                <p className="hidden md:block text-xs text-muted-foreground truncate">
+                <p className="hidden md:block text-xs text-muted-foreground truncate px-2">
                   {e.contextLabel}
                 </p>
 
                 {/* Faixa */}
-                <div className="flex items-center gap-2 mt-2 md:mt-0 text-xs">
+                <div className="flex items-center gap-2 mt-2 md:mt-0 text-xs px-2">
                   <span className="text-muted-foreground shrink-0">{e.currentBand}</span>
                   <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
                   <span className="font-semibold text-warning shrink-0">{e.nextBand}</span>
                 </div>
 
                 {/* Data */}
-                <p className="text-right text-xs mt-1 md:mt-0 text-muted-foreground md:text-foreground">
+                <p className="text-right text-xs mt-1 md:mt-0 text-muted-foreground md:text-foreground px-2">
                   {e.changeDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                 </p>
               </div>
