@@ -10,8 +10,6 @@ import {
   Building2,
   Users,
   Plug,
-  Bell,
-  CreditCard,
   Check,
   Pencil,
   Trash2,
