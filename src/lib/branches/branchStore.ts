@@ -11,6 +11,11 @@ const BRANCHES: readonly Branch[] = [
   "Empresarial",
   "Saúde",
   "Consórcio",
+  "Embarcador",
+  "Transporte",
+  "Viagem",
+  "Porto RC Profissional",
+  "Tuba/Instrumento",
 ] as const;
 
 export type UseBranchesResult = {

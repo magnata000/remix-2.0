@@ -11,6 +11,18 @@ const INSURERS: readonly Insurer[] = [
   "SulAmérica",
   "Allianz",
   "Mapfre",
+  "Suhai",
+  "Amil",
+  "Tokio Marine",
+  "Azul",
+  "Prevent Sênior",
+  "MedSênior",
+  "São Cristóvão",
+  "Transmontano",
+  "São Miguel",
+  "Itaú Seguros",
+  "NotreDame",
+  "Aliro",
 ] as const;
 
 const LOGOS: Readonly<Record<Insurer, string>> = seedLogos;

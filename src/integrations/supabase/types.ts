@@ -930,6 +930,11 @@ export type Database = {
         | "Empresarial"
         | "Saúde"
         | "Consórcio"
+        | "Embarcador"
+        | "Transporte"
+        | "Viagem"
+        | "Porto RC Profissional"
+        | "Tuba/Instrumento"
       client_status: "ativo" | "inativo" | "lead"
       commission_kind:
         | "agenciamento"
@@ -961,7 +966,24 @@ export type Database = {
         | "reuniao"
         | "videocall"
         | "nota"
-      insurer: "Porto Seguro" | "Bradesco" | "SulAmérica" | "Allianz" | "Mapfre"
+      insurer:
+        | "Porto Seguro"
+        | "Bradesco"
+        | "SulAmérica"
+        | "Allianz"
+        | "Mapfre"
+        | "Suhai"
+        | "Amil"
+        | "Tokio Marine"
+        | "Azul"
+        | "Prevent Sênior"
+        | "MedSênior"
+        | "São Cristóvão"
+        | "Transmontano"
+        | "São Miguel"
+        | "Itaú Seguros"
+        | "NotreDame"
+        | "Aliro"
       kanban_stage: "lead" | "cotacao" | "negociacao" | "fechado" | "perdido"
       lost_reason: "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro"
       policy_status: "ativa" | "vencida" | "pendente" | "cancelada" | "renovada"
@@ -1110,6 +1132,11 @@ export const Constants = {
         "Empresarial",
         "Saúde",
         "Consórcio",
+        "Embarcador",
+        "Transporte",
+        "Viagem",
+        "Porto RC Profissional",
+        "Tuba/Instrumento",
       ],
       client_status: ["ativo", "inativo", "lead"],
       commission_kind: [
@@ -1146,7 +1173,25 @@ export const Constants = {
         "videocall",
         "nota",
       ],
-      insurer: ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"],
+      insurer: [
+        "Porto Seguro",
+        "Bradesco",
+        "SulAmérica",
+        "Allianz",
+        "Mapfre",
+        "Suhai",
+        "Amil",
+        "Tokio Marine",
+        "Azul",
+        "Prevent Sênior",
+        "MedSênior",
+        "São Cristóvão",
+        "Transmontano",
+        "São Miguel",
+        "Itaú Seguros",
+        "NotreDame",
+        "Aliro",
+      ],
       kanban_stage: ["lead", "cotacao", "negociacao", "fechado", "perdido"],
       lost_reason: ["preco", "cobertura", "prazo", "sem-retorno", "outro"],
       policy_status: ["ativa", "vencida", "pendente", "cancelada", "renovada"],
