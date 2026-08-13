@@ -393,11 +393,20 @@ function useUpcomingRenewals(now: Date): RenewalEntry[] {
   }, [policies, now]);
 }
 
-function RenewalsSection({ now, onGoToPortfolio }: { now: Date; onGoToPortfolio: () => void }) {
+function RenewalsSection({
+  now,
+  onGoToPortfolio,
+  className,
+}: {
+  now: Date;
+  onGoToPortfolio: () => void;
+  className?: string;
+}) {
   const entries = useUpcomingRenewals(now);
   const currentUserId = useCurrentUserId();
   return (
     <SectionCard
+      className={className}
       icon={<CalendarClock className="h-4 w-4" />}
       title="Apólices vencendo em 30 dias"
       subtitle="Priorize renovações"
