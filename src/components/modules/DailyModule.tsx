@@ -570,6 +570,7 @@ function SectionCard({
   count,
   action,
   children,
+  className,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -577,9 +578,10 @@ function SectionCard({
   count: number;
   action?: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <Card className="p-5 rounded-2xl border-border shadow-none">
+    <Card className={`p-5 rounded-2xl border-border shadow-none ${className ?? ""}`}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-start gap-2.5 min-w-0">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-foreground shrink-0">
