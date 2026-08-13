@@ -95,13 +95,13 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
 
   const valid = Object.keys(errors).length === 0;
 
-  const submit = () => {
+  const submit = async () => {
     setTouched(true);
     if (!sourcePolicy || !valid || !startDate || !endDate) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
-    const created = renewPolicy(sourcePolicy.id, {
+    const created = await renewPolicy(sourcePolicy.id, {
       clientName: sourcePolicy.clientName,
       branch,
       insurer,

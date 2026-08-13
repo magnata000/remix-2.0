@@ -257,7 +257,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
 
   const valid = Object.keys(errors).length === 0;
 
-  const submit = () => {
+  const submit = async () => {
     setTouched(true);
     if (!valid || !startDate) {
       toast.error("Revise os campos obrigatórios");
@@ -296,7 +296,9 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       }),
     };
     const created =
-      isRenewal && sourcePolicy ? renewPolicy(sourcePolicy.id, payload) : addPolicy(payload);
+      isRenewal && sourcePolicy
+        ? await renewPolicy(sourcePolicy.id, payload)
+        : await addPolicy(payload);
     ensurePolicyRoots({
       policyId: created.id,
       policyNumber: created.number,

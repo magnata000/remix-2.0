@@ -1,29 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { TopBar, type ModuleKey } from "@/components/shell/TopBar";
-import { DailyModule } from "@/components/modules/DailyModule";
-import { PortfolioModule } from "@/components/modules/PortfolioModule";
-import { KanbanModule } from "@/components/modules/KanbanModule";
-import { MulticalcModule } from "@/components/modules/MulticalcModule";
-import { FinancialModule } from "@/components/modules/FinancialModule";
-import { SettingsModule } from "@/components/modules/SettingsModule";
-import { PipelineStoreProvider } from "@/lib/pipeline/opportunityStore";
-import { QuoteStoreProvider } from "@/lib/multicalc/quoteStore";
-import { TaskStoreProvider } from "@/lib/tasks/taskStore";
-import { DocumentStoreProvider } from "@/lib/documents/documentStore";
-import { ClientStoreProvider } from "@/lib/portfolio/clientStore";
-import { FollowUpStoreProvider } from "@/lib/portfolio/followUpStore";
-import { PolicyStoreProvider } from "@/lib/portfolio/policyStore";
-import { CashProvider } from "@/lib/cash/cashStore";
-import { CommissionStoreProvider } from "@/lib/financial/commissionStore";
-import { CommissionConfigStoreProvider } from "@/lib/financial/commissionConfigStore";
-import { SellerCommissionStoreProvider } from "@/lib/financial/sellerCommissionStore";
-import { SellerPayoutStoreProvider } from "@/lib/financial/sellerPayoutStore";
-import { SlaConfigProvider } from "@/lib/sla/slaConfig";
-import { DreConfigProvider } from "@/lib/financial/dreConfigStore";
-
-import { NavigationProvider } from "@/lib/navigation";
-import { FEATURES } from "@/lib/featureFlags";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,67 +10,48 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Vitrine interativa do TheInsuranceOS: dashboard, apólices, kanban, multicálculo e financeiro em um só lugar.",
+          "Gestão de carteira, apólices, pipeline e comissões para corretoras de seguros em uma única plataforma.",
       },
       { property: "og:title", content: "TheInsuranceOS" },
       {
         property: "og:description",
         content: "O sistema operacional das corretoras de seguros modernas.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AppShell,
+  component: Landing,
 });
 
-function AppShell() {
-  const [rawActive, setActive] = useState<ModuleKey>("dashboard");
-  // Guard: se Multicálculo está desabilitado, força fallback para dashboard.
-  const active: ModuleKey =
-    rawActive === "multicalc" && !FEATURES.multicalc ? "dashboard" : rawActive;
+function Landing() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) void navigate({ to: "/app", replace: true });
+    });
+  }, [navigate]);
 
   return (
-    <PipelineStoreProvider>
-      <QuoteStoreProvider>
-      <TaskStoreProvider>
-        <ClientStoreProvider>
-          <FollowUpStoreProvider>
-            <PolicyStoreProvider>
-              <DocumentStoreProvider>
-                <CashProvider>
-                  <CommissionConfigStoreProvider>
-                    <CommissionStoreProvider>
-                      <SellerCommissionStoreProvider>
-                        <SellerPayoutStoreProvider>
-                          <SlaConfigProvider>
-                            <DreConfigProvider>
-                              <NavigationProvider active={active} setActive={setActive}>
-                                <div className="min-h-screen bg-background">
-                                  <TopBar active={active} onChange={setActive} />
-                                  <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
-                                    {active === "dashboard" && <DailyModule />}
-                                    {active === "policies" && <PortfolioModule />}
-                                    {active === "kanban" && <KanbanModule />}
-                                    {active === "multicalc" && FEATURES.multicalc && (
-                                      <MulticalcModule />
-                                    )}
-                                    {active === "financial" && <FinancialModule />}
-                                    {active === "settings" && <SettingsModule />}
-                                  </main>
-                                </div>
-                              </NavigationProvider>
-                            </DreConfigProvider>
-                          </SlaConfigProvider>
-                        </SellerPayoutStoreProvider>
-                      </SellerCommissionStoreProvider>
-                    </CommissionStoreProvider>
-                  </CommissionConfigStoreProvider>
-                </CashProvider>
-              </DocumentStoreProvider>
-            </PolicyStoreProvider>
-          </FollowUpStoreProvider>
-        </ClientStoreProvider>
-      </TaskStoreProvider>
-      </QuoteStoreProvider>
-    </PipelineStoreProvider>
+    <main className="flex min-h-screen items-center justify-center bg-background px-6">
+      <div className="max-w-xl text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          TheInsuranceOS
+        </p>
+        <h1 className="mt-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+          O sistema operacional da sua corretora
+        </h1>
+        <p className="mt-4 text-base text-muted-foreground">
+          Carteira de clientes, apólices, follow-ups, pipeline comercial e financeiro — tudo em um
+          só lugar, com dados reais e seguros.
+        </p>
+        <div className="mt-8 flex justify-center gap-3">
+          <Button asChild size="lg">
+            <Link to="/auth">Entrar</Link>
+          </Button>
+        </div>
+      </div>
+    </main>
   );
 }

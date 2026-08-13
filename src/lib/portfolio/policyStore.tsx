@@ -1,16 +1,26 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { policies as seedPolicies, type Policy } from "@/lib/mock/data";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import type { Policy } from "@/lib/mock/data";
+import {
+  createPolicy as createPolicyFn,
+  deletePolicy as deletePolicyFn,
+  listPolicies,
+  renewPolicy as renewPolicyFn,
+  updatePolicy as updatePolicyFn,
+} from "@/lib/portfolio/carteira.functions";
 
 type AddPolicyInput = Omit<Policy, "id" | "number" | "renewedFromId" | "renewedToId">;
 type RenewPolicyInput = AddPolicyInput;
 
 type Ctx = {
   policies: Policy[];
-  addPolicy: (input: AddPolicyInput) => Policy;
-  updatePolicy: (id: string, patch: Partial<AddPolicyInput>) => void;
-  deletePolicy: (id: string) => void;
-  renewPolicy: (sourceId: string, input: RenewPolicyInput) => Policy;
+  isLoading: boolean;
+  addPolicy: (input: AddPolicyInput) => Promise<Policy>;
+  updatePolicy: (id: string, patch: Partial<AddPolicyInput>) => Promise<void>;
+  deletePolicy: (id: string) => Promise<void>;
+  renewPolicy: (sourceId: string, input: RenewPolicyInput) => Promise<Policy>;
   isAlreadyRenewed: (policyId: string) => boolean;
   renewalChainOf: (policyId: string) => Policy[];
   renewalIndexOf: (policyId: string) => number;
@@ -19,93 +29,65 @@ type Ctx = {
 
 const PolicyCtx = createContext<Ctx | null>(null);
 
-function nextPolicyNumber(existing: Policy[]): string {
-  const year = new Date().getFullYear();
-  let max = 0;
-  existing.forEach((p) => {
-    const m = p.number.match(/(\d+)$/);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n > max) max = n;
-    }
-  });
-  return `APO-${year}-${String(max + 1).padStart(4, "0")}`;
-}
+export const POLICIES_KEY = ["policies"] as const;
 
 export function PolicyStoreProvider({ children }: { children: ReactNode }) {
-  const [policies, setPolicies] = useState<Policy[]>(() => seedPolicies);
+  const qc = useQueryClient();
+  const fetchPolicies = useServerFn(listPolicies);
+  const create = useServerFn(createPolicyFn);
+  const update = useServerFn(updatePolicyFn);
+  const remove = useServerFn(deletePolicyFn);
+  const renew = useServerFn(renewPolicyFn);
 
-  const addPolicy = useCallback((input: AddPolicyInput) => {
-    let created!: Policy;
-    setPolicies((arr) => {
-      created = {
-        id: `p${Date.now()}`,
-        number: nextPolicyNumber(arr),
-        ...input,
-      };
-      return [created, ...arr];
-    });
-    return created;
-  }, []);
+  const { data, isLoading } = useQuery({
+    queryKey: POLICIES_KEY,
+    queryFn: () => fetchPolicies(),
+  });
 
-  const updatePolicy = useCallback((id: string, patch: Partial<AddPolicyInput>) => {
-    setPolicies((arr) =>
-      arr.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              ...patch,
-              id: p.id,
-              number: p.number,
-              renewedFromId: p.renewedFromId,
-              renewedToId: p.renewedToId,
-            }
-          : p,
-      ),
-    );
-  }, []);
+  const policies = data ?? [];
 
-  const renewPolicy = useCallback((sourceId: string, input: RenewPolicyInput) => {
-    let created!: Policy;
-    setPolicies((arr) => {
-      const source = arr.find((p) => p.id === sourceId);
-      if (!source) return arr;
-      const newId = `p${Date.now()}`;
-      created = {
-        id: newId,
-        number: nextPolicyNumber(arr),
-        ...input,
-        renewedFromId: sourceId,
-      };
-      return [
-        created,
-        ...arr.map((p) =>
-          p.id === sourceId ? { ...p, status: "renovada" as const, renewedToId: newId } : p,
-        ),
-      ];
-    });
-    return created;
-  }, []);
+  const invalidate = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: POLICIES_KEY });
+    void qc.invalidateQueries({ queryKey: ["clients"] });
+  }, [qc]);
 
-  const deletePolicy = useCallback((id: string) => {
-    setPolicies((arr) => {
-      const target = arr.find((p) => p.id === id);
-      if (!target) return arr;
-      return arr
-        .filter((p) => p.id !== id)
-        .map((p) => {
-          if (target.renewedFromId && p.id === target.renewedFromId) {
-            const { renewedToId: _t, ...rest } = p;
-            return rest as Policy;
-          }
-          if (target.renewedToId && p.id === target.renewedToId) {
-            const { renewedFromId: _f, ...rest } = p;
-            return rest as Policy;
-          }
-          return p;
-        });
-    });
-  }, []);
+  const createMutation = useMutation({
+    mutationFn: (input: AddPolicyInput) => create({ data: input }),
+    onSuccess: invalidate,
+  });
+  const updateMutation = useMutation({
+    mutationFn: (vars: { id: string; patch: Partial<AddPolicyInput> }) => update({ data: vars }),
+    onSuccess: invalidate,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => remove({ data: { id } }),
+    onSuccess: invalidate,
+  });
+  const renewMutation = useMutation({
+    mutationFn: (vars: { sourceId: string; input: RenewPolicyInput }) => renew({ data: vars }),
+    onSuccess: invalidate,
+  });
+
+  const addPolicy = useCallback(
+    (input: AddPolicyInput) => createMutation.mutateAsync(input),
+    [createMutation],
+  );
+  const updatePolicy = useCallback(
+    async (id: string, patch: Partial<AddPolicyInput>) => {
+      await updateMutation.mutateAsync({ id, patch });
+    },
+    [updateMutation],
+  );
+  const deletePolicy = useCallback(
+    async (id: string) => {
+      await deleteMutation.mutateAsync(id);
+    },
+    [deleteMutation],
+  );
+  const renewPolicy = useCallback(
+    (sourceId: string, input: RenewPolicyInput) => renewMutation.mutateAsync({ sourceId, input }),
+    [renewMutation],
+  );
 
   const findPolicy = useCallback((id: string) => policies.find((p) => p.id === id), [policies]);
 
@@ -117,7 +99,6 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
   const renewalChainOf = useCallback(
     (policyId: string): Policy[] => {
       const byId = new Map(policies.map((p) => [p.id, p]));
-      // walk backwards to the original
       let head = byId.get(policyId);
       while (head?.renewedFromId && byId.get(head.renewedFromId)) {
         head = byId.get(head.renewedFromId);
@@ -134,16 +115,14 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const renewalIndexOf = useCallback(
-    (policyId: string) => {
-      const chain = renewalChainOf(policyId);
-      return chain.findIndex((p) => p.id === policyId);
-    },
+    (policyId: string) => renewalChainOf(policyId).findIndex((p) => p.id === policyId),
     [renewalChainOf],
   );
 
-  const value = useMemo(
+  const value = useMemo<Ctx>(
     () => ({
       policies,
+      isLoading,
       addPolicy,
       updatePolicy,
       deletePolicy,
@@ -155,6 +134,7 @@ export function PolicyStoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       policies,
+      isLoading,
       addPolicy,
       updatePolicy,
       deletePolicy,
