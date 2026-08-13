@@ -84,10 +84,10 @@ type Ctx = {
 const CashContext = createContext<Ctx | null>(null);
 
 export function CashProvider({ children }: { children: ReactNode }) {
-  const [expenses, setExpenses] = useState<Expense[]>(seedExpenses);
-  const [entries, setEntries] = useState<ExpenseEntry[]>(seedEntries);
-  const [incomes, setIncomes] = useState<ManualIncome[]>(seedIncomes);
-  const [taxes, setTaxes] = useState<TaxEntry[]>(seedTaxes);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [entries, setEntries] = useState<ExpenseEntry[]>([]);
+  const [incomes, setIncomes] = useState<ManualIncome[]>([]);
+  const [taxes, setTaxes] = useState<TaxEntry[]>([]);
 
   const addExpense = useCallback((data: Omit<Expense, "id" | "createdAt">) => {
     const exp: Expense = { ...data, id: newId(), createdAt: now() };
