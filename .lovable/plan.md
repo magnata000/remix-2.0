@@ -17,9 +17,20 @@ Isso é comportamento correto das regras de segurança, não um bug de código. 
 3. **Remover os corretores placeholder** após a reatribuição, deixando apenas usuários reais na equipe.
 4. **Verificar na interface** que a página Carteira lista clientes e apólices, e que a Daily e o Caixa passam a calcular comissões.
 
+## Limpeza dos dados mock do Financeiro
+
+A página Financeiro ainda parte de dados fictícios embutidos no código (aluguel, software CRM, campanha de marketing, bônus de performance, PIS/COFINS e IRPJ). Nesta etapa:
+
+1. **Zerar as sementes fictícias** de despesas, lançamentos pagos, receitas manuais e impostos — o Caixa e o DRE passam a iniciar vazios e refletir apenas o que for registrado de verdade.
+2. **Comissões calculadas das apólices reais** — o motor de comissionamento passa a gerar as parcelas a partir das 152 apólices importadas (agenciamento, recorrência Saúde, parcelado Auto etc.), sem nenhuma comissão fictícia de base.
+3. **Verificar Caixa, Repasses, Relatório e DRE** com os números reais: receita vinda das comissões geradas, despesas em zero até o primeiro registro do usuário.
+
 ## Detalhes técnicos
 
 - Migração SQL: `INSERT INTO user_roles (user_id, role) VALUES ('<uid do Caio>', 'admin')` com `ON CONFLICT DO NOTHING`; `UPDATE team_members SET role='admin'` para o mesmo id.
 - `UPDATE public.clients SET assignee_id = '<uid>' WHERE assignee_id IN (placeholders)`; idem para `public.policies`. Beneficiários e follow-ups herdam acesso via cliente/apólice.
 - `DELETE FROM public.team_members WHERE email LIKE '%@insuranceos.local'` após a reatribuição (sem registros dependentes restantes).
 - Nenhuma alteração de política RLS é necessária.
+- `src/lib/cash/cashStore.tsx`: remover `seedExpenses`, `seedEntries`, `seedIncomes`, `seedTaxes` e os helpers de datas mock, inicializando os estados com `[]`.
+- `src/lib/financial/commissionStore.tsx`: já parte de `commissions` vazio em `src/lib/mock/data.ts`; as comissões passam a vir do efeito de geração sobre as apólices reais. Remover o import da semente mock.
+
