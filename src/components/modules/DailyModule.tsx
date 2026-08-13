@@ -666,7 +666,11 @@ export function DailyModule() {
             <MentionsSection teamIndex={teamIndex} onOpenTaskId={openTaskById} />
             <FollowUpsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
             <BirthdaysSection now={now} />
-            <RenewalsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
+            <RenewalsSection
+              now={now}
+              onGoToPortfolio={() => nav.goTo("policies")}
+              className="lg:col-span-2"
+            />
           </div>
           <AgeBandSection now={now} />
         </>
