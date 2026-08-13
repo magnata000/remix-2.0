@@ -393,11 +393,20 @@ function useUpcomingRenewals(now: Date): RenewalEntry[] {
   }, [policies, now]);
 }
 
-function RenewalsSection({ now, onGoToPortfolio }: { now: Date; onGoToPortfolio: () => void }) {
+function RenewalsSection({
+  now,
+  onGoToPortfolio,
+  className,
+}: {
+  now: Date;
+  onGoToPortfolio: () => void;
+  className?: string;
+}) {
   const entries = useUpcomingRenewals(now);
   const currentUserId = useCurrentUserId();
   return (
     <SectionCard
+      className={className}
       icon={<CalendarClock className="h-4 w-4" />}
       title="Apólices vencendo em 30 dias"
       subtitle="Priorize renovações"
@@ -514,38 +523,46 @@ function AgeBandSection({ now }: { now: Date }) {
       {entries.length === 0 ? (
         <EmptyState text="Ninguém muda de faixa nos próximos 3 meses." />
       ) : (
-        <div className="overflow-x-auto -mx-2">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="px-2 py-2 font-medium">Nome</th>
-                <th className="px-2 py-2 font-medium hidden md:table-cell">Vínculo</th>
-                <th className="px-2 py-2 font-medium">Faixa</th>
-                <th className="px-2 py-2 font-medium text-right">Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e) => (
-                <tr key={e.key} className="border-b border-border last:border-0 hover:bg-muted/40">
-                  <td className="px-2 py-2 font-medium">
-                    {e.name}
-                    <p className="text-xs text-muted-foreground md:hidden">{e.contextLabel}</p>
-                  </td>
-                  <td className="px-2 py-2 hidden md:table-cell text-xs text-muted-foreground">
-                    {e.contextLabel}
-                  </td>
-                  <td className="px-2 py-2 text-xs">
-                    <span className="text-muted-foreground">{e.currentBand}</span>
-                    <ArrowRight className="inline h-3 w-3 mx-1 text-muted-foreground" />
-                    <span className="font-semibold text-warning">{e.nextBand}</span>
-                  </td>
-                  <td className="px-2 py-2 text-right text-xs">
-                    {e.changeDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="text-sm">
+          {/* Header desktop */}
+          <div className="hidden md:grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,0.5fr)] gap-2 text-left text-xs text-muted-foreground border-b border-border pb-2 mb-1">
+            <span className="font-medium px-2">Nome</span>
+            <span className="font-medium px-2">Vínculo</span>
+            <span className="font-medium px-2">Faixa</span>
+            <span className="font-medium px-2 text-right">Data</span>
+          </div>
+
+          <div className="divide-y divide-border md:divide-none">
+            {entries.map((e) => (
+              <div
+                key={e.key}
+                className="py-3 px-2 md:py-2 md:px-0 md:grid md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,0.5fr)] md:gap-2 md:items-center hover:bg-muted/40 md:hover:bg-transparent rounded-lg md:rounded-none transition"
+              >
+                {/* Nome */}
+                <div className="min-w-0 px-2">
+                  <p className="font-medium truncate">{e.name}</p>
+                  <p className="text-xs text-muted-foreground md:hidden">{e.contextLabel}</p>
+                </div>
+
+                {/* Vínculo - desktop only */}
+                <p className="hidden md:block text-xs text-muted-foreground truncate px-2">
+                  {e.contextLabel}
+                </p>
+
+                {/* Faixa */}
+                <div className="flex items-center gap-2 mt-2 md:mt-0 text-xs px-2">
+                  <span className="text-muted-foreground shrink-0">{e.currentBand}</span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <span className="font-semibold text-warning shrink-0">{e.nextBand}</span>
+                </div>
+
+                {/* Data */}
+                <p className="text-right text-xs mt-1 md:mt-0 text-muted-foreground md:text-foreground px-2">
+                  {e.changeDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </SectionCard>
@@ -561,6 +578,7 @@ function SectionCard({
   count,
   action,
   children,
+  className,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -568,9 +586,10 @@ function SectionCard({
   count: number;
   action?: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <Card className="p-5 rounded-2xl border-border shadow-none">
+    <Card className={`p-5 rounded-2xl border-border shadow-none ${className ?? ""}`}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-start gap-2.5 min-w-0">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-foreground shrink-0">
@@ -666,7 +685,11 @@ export function DailyModule() {
             <MentionsSection teamIndex={teamIndex} onOpenTaskId={openTaskById} />
             <FollowUpsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
             <BirthdaysSection now={now} />
-            <RenewalsSection now={now} onGoToPortfolio={() => nav.goTo("policies")} />
+            <RenewalsSection
+              now={now}
+              onGoToPortfolio={() => nav.goTo("policies")}
+              className="lg:col-span-2"
+            />
           </div>
           <AgeBandSection now={now} />
         </>
