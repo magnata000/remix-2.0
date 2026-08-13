@@ -3,9 +3,10 @@
 ## O que muda
 
 1. **Aba Apólices**: a coluna "Número" sai da tabela (desktop) e o número deixa de aparecer no topo dos cards (mobile). A busca continua funcionando por nome do cliente.
-2. **Ordenação por prefixo**: apólices e clientes passam a ser listados em ordem numérica crescente conforme o número do prefixo do nome do cliente (ex.: `AND.1` → `AND.9` → `AND.14` → `AND.100`). A ordenação é numérica, não alfabética, então 9 vem antes de 100.
-3. Nomes sem prefixo reconhecível (variações como `OCT.138` e `AND-ELDA.134` também são lidas) vão para o fim da lista, ordenados alfabeticamente.
-4. Quando o mesmo cliente tem várias apólices, elas ficam agrupadas e ordenadas entre si pela data de início (mais recente primeiro).
+2. **Aba Clientes**: ordenada da mesma forma — pelo número do prefixo do nome, do menor para o maior, independentemente da posição do cliente na tela (cards mobile ou tabela desktop).
+3. **Ordenação por prefixo**: apólices e clientes passam a ser listados em ordem numérica crescente conforme o número do prefixo do nome do cliente (ex.: `AND.1` → `AND.9` → `AND.14` → `AND.100`). A ordenação é numérica, não alfabética, então 9 vem antes de 100.
+4. Nomes sem prefixo reconhecível (variações como `OCT.138` e `AND-ELDA.134` também são lidas) vão para o fim da lista, ordenados alfabeticamente.
+5. Quando o mesmo cliente tem várias apólices, elas ficam agrupadas e ordenadas entre si pela data de início (mais recente primeiro).
 
 Nenhuma alteração no banco de dados nesta etapa: o prefixo permanece no nome do cliente e o campo número da apólice continua existindo no cadastro e no drawer de detalhes — apenas não é mais exibido na listagem.
 
