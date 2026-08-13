@@ -37,7 +37,7 @@ type Ctx = {
 const CommissionContext = createContext<Ctx | null>(null);
 
 export function CommissionStoreProvider({ children }: { children: ReactNode }) {
-  const [commissions, setCommissions] = useState<Commission[]>(seedCommissions);
+  const [commissions, setCommissions] = useState<Commission[]>([]);
   const { configForPolicy } = useCommissionConfigStore();
   const { policies } = usePolicies();
 
