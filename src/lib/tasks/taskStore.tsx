@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
-import { team } from "@/lib/mock/data";
+import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 
 export type Priority = "alta" | "media" | "baixa";
 
@@ -85,125 +85,6 @@ const SEED_COLUMNS: TaskColumn[] = [
   { id: "c-concluido", title: "Concluído", color: "#059669" },
 ];
 
-const isoDaysFromNow = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString();
-};
-
-const me = team[0]?.id ?? "u1";
-
-const seedTasks = (): TaskItem[] => [
-  {
-    id: "tk1",
-    title: "Renovar apólice Auto — João Silva",
-    description: "Apólice vence em breve. Confirmar coberturas e enviar proposta de renovação.",
-    dueDate: isoDaysFromNow(2),
-    priority: "alta",
-    assigneeId: team[1]?.id ?? "u2",
-    clientName: "João Silva",
-    columnId: "c-demanda",
-    createdAt: isoDaysFromNow(-2),
-    comments: [
-      {
-        id: "cm1",
-        authorId: me,
-        text: "Cliente pediu revisão de franquia. @Carlos Lima pode olhar?",
-        createdAt: isoDaysFromNow(-1),
-      },
-    ],
-    attachments: [],
-    timeline: [
-      { kind: "created", at: isoDaysFromNow(-2), by: me },
-      { kind: "comment", at: isoDaysFromNow(-1), by: me, commentId: "cm1" },
-    ],
-  },
-  {
-    id: "tk2",
-    title: "Coletar documentos PME — Rafael Mendes",
-    description: "Solicitar contrato social, último balanço e RG dos sócios.",
-    dueDate: isoDaysFromNow(5),
-    priority: "media",
-    assigneeId: me,
-    clientName: "Rafael Mendes",
-    columnId: "c-demanda",
-    createdAt: isoDaysFromNow(-3),
-    comments: [],
-    attachments: [],
-    timeline: [{ kind: "created", at: isoDaysFromNow(-3), by: me }],
-  },
-  {
-    id: "tk3",
-    title: "Cotação Residencial — Carlos Lima",
-    description: "Realizar multicálculo e levar 3 melhores ofertas ao cliente.",
-    dueDate: isoDaysFromNow(3),
-    priority: "alta",
-    assigneeId: team[2]?.id ?? "u3",
-    clientName: "Carlos Lima",
-    columnId: "c-processando",
-    createdAt: isoDaysFromNow(-4),
-    comments: [
-      {
-        id: "cm2",
-        authorId: team[2]?.id ?? "u3",
-        text: "Comparativo pronto. Aguardando feedback do @João Pereira sobre comissão.",
-        createdAt: isoDaysFromNow(-1),
-      },
-    ],
-    attachments: [],
-    timeline: [
-      { kind: "created", at: isoDaysFromNow(-4), by: me },
-      { kind: "moved", at: isoDaysFromNow(-2), by: me, from: "Demanda", to: "Processando" },
-      { kind: "comment", at: isoDaysFromNow(-1), by: team[2]?.id ?? "u3", commentId: "cm2" },
-    ],
-  },
-  {
-    id: "tk4",
-    title: "Atualizar cadastro — Beatriz Costa",
-    description: "Trocar telefone e endereço de cobrança.",
-    dueDate: isoDaysFromNow(7),
-    priority: "baixa",
-    assigneeId: me,
-    clientName: "Beatriz Costa",
-    columnId: "c-processando",
-    createdAt: isoDaysFromNow(-1),
-    comments: [],
-    attachments: [],
-    timeline: [{ kind: "created", at: isoDaysFromNow(-1), by: me }],
-  },
-  {
-    id: "tk5",
-    title: "Envio de proposta — Mariana Alves",
-    description: "Proposta finalizada e enviada por e-mail.",
-    dueDate: isoDaysFromNow(-1),
-    priority: "media",
-    assigneeId: team[1]?.id ?? "u2",
-    clientName: "Mariana Alves",
-    columnId: "c-concluido",
-    createdAt: isoDaysFromNow(-6),
-    comments: [],
-    attachments: [],
-    timeline: [
-      { kind: "created", at: isoDaysFromNow(-6), by: me },
-      { kind: "moved", at: isoDaysFromNow(-3), by: me, from: "Demanda", to: "Processando" },
-      { kind: "moved", at: isoDaysFromNow(-1), by: me, from: "Processando", to: "Concluído" },
-    ],
-  },
-];
-
-const seedScheduled = (): ScheduledTask[] => [
-  {
-    id: "sch1",
-    title: "Felicitar aniversariantes do mês",
-    assigneeId: team[2]?.id ?? "u3",
-    priority: "baixa",
-    kind: "data",
-    startDate: isoDaysFromNow(20),
-    endDate: isoDaysFromNow(20),
-    period: "anual",
-  },
-];
-
 type Ctx = {
   columns: TaskColumn[];
   tasks: TaskItem[];
@@ -256,9 +137,9 @@ const TaskCtx = createContext<Ctx | null>(null);
 
 export function TaskStoreProvider({ children }: { children: ReactNode }) {
   const [columns, setColumns] = useState<TaskColumn[]>(SEED_COLUMNS);
-  const [tasks, setTasks] = useState<TaskItem[]>(() => seedTasks());
-  const [scheduled, setScheduled] = useState<ScheduledTask[]>(() => seedScheduled());
-  const currentUserId = me;
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [scheduled, setScheduled] = useState<ScheduledTask[]>([]);
+  const currentUserId = useCurrentUserId();
 
   const addTask = useCallback<Ctx["addTask"]>(
     (t) => {
