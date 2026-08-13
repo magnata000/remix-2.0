@@ -19,6 +19,7 @@ import { NewPolicyDialog, type PolicyPrefill } from "@/components/portfolio/NewP
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
 import { ImportPolicyReviewDialog } from "@/components/portfolio/ImportPolicyReviewDialog";
 import { extractPolicyFromPdf, type PolicyExtractionResult } from "@/lib/portfolio/policyExtraction.functions";
+import { compareByPrefixNumber } from "@/lib/prefixSort";
 import { toast } from "sonner";
 
 const statusColor: Record<PolicyStatus, string> = {
@@ -65,15 +66,20 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
 
   const filtered = useMemo(
     () =>
-      policies.filter(
-        (p) =>
-          (status === "all" || p.status === status) &&
-          (branch === "all" || p.branch === branch) &&
-          (insurer === "all" || p.insurer === insurer) &&
-          (q === "" ||
-            p.clientName.toLowerCase().includes(q.toLowerCase()) ||
-            p.number.toLowerCase().includes(q.toLowerCase())),
-      ),
+      policies
+        .filter(
+          (p) =>
+            (status === "all" || p.status === status) &&
+            (branch === "all" || p.branch === branch) &&
+            (insurer === "all" || p.insurer === insurer) &&
+            (q === "" ||
+              p.clientName.toLowerCase().includes(q.toLowerCase()) ||
+              p.number.toLowerCase().includes(q.toLowerCase())),
+        )
+        .sort((a, b) => {
+          const byPrefix = compareByPrefixNumber(a.clientName, b.clientName);
+          return byPrefix !== 0 ? byPrefix : a.startDate.localeCompare(b.startDate);
+        }),
     [policies, q, status, branch, insurer],
   );
 
@@ -156,7 +162,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por cliente ou número..."
+              placeholder="Buscar por cliente..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="pl-9 rounded-xl bg-muted border-0"
@@ -221,29 +227,30 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                 onClick={() => setSelected(p)}
                 className="text-left bg-card border border-border rounded-2xl p-4 hover:border-brand transition"
               >
-                <div className="flex items-start justify-between">
-                  <p className="font-mono text-xs text-muted-foreground">{p.number}</p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      cycleStatus(p.id, p.status);
-                    }}
-                    title="Clique para alterar o status"
-                    className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
-                  >
-                    <Badge
-                      className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}
-                    >
-                      {p.status}
-                    </Badge>
-                  </button>
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0 pr-2">
+                  <p className="font-semibold truncate">{p.clientName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {p.branch} • {p.insurer}
+                  </p>
+                  <p className="mt-3 text-lg font-bold">{formatBRL(p.premium)}</p>
                 </div>
-                <p className="mt-2 font-semibold">{p.clientName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {p.branch} • {p.insurer}
-                </p>
-                <p className="mt-3 text-lg font-bold">{formatBRL(p.premium)}</p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    cycleStatus(p.id, p.status);
+                  }}
+                  title="Clique para alterar o status"
+                  className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                >
+                  <Badge
+                    className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}
+                  >
+                    {p.status}
+                  </Badge>
+                </button>
+              </div>
               </button>
             ))}
           </div>
@@ -254,7 +261,6 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-muted-foreground border-b border-border bg-muted/40">
-                    <th className="px-5 py-3 font-medium">Número</th>
                     <th className="px-5 py-3 font-medium">Cliente</th>
                     <th className="px-5 py-3 font-medium">Ramo</th>
                     <th className="px-5 py-3 font-medium">Seguradora</th>
@@ -270,7 +276,6 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                       onClick={() => setSelected(p)}
                       className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer"
                     >
-                      <td className="px-5 py-3 font-mono text-xs">{p.number}</td>
                       <td className="px-5 py-3 font-medium">
                         {onClientClick ? (
                           <button

@@ -22,6 +22,7 @@ import {
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { compareByPrefixNumber } from "@/lib/prefixSort";
 import { NewClientDialog } from "@/components/portfolio/NewClientDialog";
 
 const statusColor: Record<ClientStatus, string> = {
@@ -63,20 +64,22 @@ export function ClientsTab({ onSelectClient }: Props) {
 
   const filtered = useMemo(
     () =>
-      all.filter((s: ClientStats) => {
-        if (status !== "all" && s.status !== status) return false;
-        if (branch !== "all" && !s.branches.includes(branch as Branch)) return false;
-        if (q !== "") {
-          const t = q.toLowerCase();
-          if (
-            !s.client.name.toLowerCase().includes(t) &&
-            !s.client.email.toLowerCase().includes(t) &&
-            !s.client.document.toLowerCase().includes(t)
-          )
-            return false;
-        }
-        return true;
-      }),
+      all
+        .filter((s: ClientStats) => {
+          if (status !== "all" && s.status !== status) return false;
+          if (branch !== "all" && !s.branches.includes(branch as Branch)) return false;
+          if (q !== "") {
+            const t = q.toLowerCase();
+            if (
+              !s.client.name.toLowerCase().includes(t) &&
+              !s.client.email.toLowerCase().includes(t) &&
+              !s.client.document.toLowerCase().includes(t)
+            )
+              return false;
+          }
+          return true;
+        })
+        .sort((a, b) => compareByPrefixNumber(a.client.name, b.client.name)),
     [all, q, status, branch],
   );
 
