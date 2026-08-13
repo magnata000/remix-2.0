@@ -63,93 +63,6 @@ const newId = () =>
 
 const now = () => new Date().toISOString();
 
-// Seed mock — current year
-const Y = new Date().getFullYear();
-const iso = (m: number, d: number, h = 10) => new Date(Y, m, d, h, 0, 0).toISOString();
-
-const seedExpenses: Expense[] = [
-  {
-    id: "e1",
-    description: "Aluguel do escritório",
-    category: "Aluguel",
-    dreKind: "custo_operacional",
-    amount: 4200,
-    recurrence: "mensal",
-    dueDay: 5,
-    createdAt: iso(0, 1),
-    notes: "Sala 802",
-  },
-  {
-    id: "e2",
-    description: "Software CRM",
-    category: "Software",
-    dreKind: "custo_operacional",
-    amount: 480,
-    recurrence: "mensal",
-    dueDay: 10,
-    createdAt: iso(0, 1),
-  },
-  {
-    id: "e3",
-    description: "Campanha de marketing",
-    category: "Marketing",
-    dreKind: "despesa_operacional",
-    amount: 2500,
-    recurrence: "avulsa",
-    createdAt: iso(new Date().getMonth(), 8),
-  },
-];
-
-const seedEntries: ExpenseEntry[] = [
-  {
-    id: "n1",
-    expenseId: "e1",
-    description: "Aluguel do escritório",
-    category: "Aluguel",
-    amount: 4200,
-    paidAt: iso(new Date().getMonth(), 5),
-  },
-  {
-    id: "n2",
-    expenseId: "e2",
-    description: "Software CRM",
-    category: "Software",
-    amount: 480,
-    paidAt: iso(new Date().getMonth(), 10),
-  },
-];
-
-const seedIncomes: ManualIncome[] = [
-  {
-    id: "i1",
-    description: "Bônus de performance",
-    source: "Porto Seguro",
-    amount: 1500,
-    receivedAt: iso(new Date().getMonth(), 12),
-  },
-];
-
-const curMonth = new Date().getMonth();
-const seedTaxes: TaxEntry[] = [
-  {
-    id: "t1",
-    kind: "sobre_receita",
-    description: "PIS/COFINS",
-    amount: 820,
-    competenceMonth: curMonth,
-    competenceYear: Y,
-    paidAt: iso(curMonth, 20),
-  },
-  {
-    id: "t2",
-    kind: "sobre_lucro",
-    description: "IRPJ estimativa",
-    amount: 1250,
-    competenceMonth: curMonth,
-    competenceYear: Y,
-    paidAt: iso(curMonth, 25),
-  },
-];
 
 type Ctx = {
   expenses: Expense[];
@@ -171,10 +84,10 @@ type Ctx = {
 const CashContext = createContext<Ctx | null>(null);
 
 export function CashProvider({ children }: { children: ReactNode }) {
-  const [expenses, setExpenses] = useState<Expense[]>(seedExpenses);
-  const [entries, setEntries] = useState<ExpenseEntry[]>(seedEntries);
-  const [incomes, setIncomes] = useState<ManualIncome[]>(seedIncomes);
-  const [taxes, setTaxes] = useState<TaxEntry[]>(seedTaxes);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [entries, setEntries] = useState<ExpenseEntry[]>([]);
+  const [incomes, setIncomes] = useState<ManualIncome[]>([]);
+  const [taxes, setTaxes] = useState<TaxEntry[]>([]);
 
   const addExpense = useCallback((data: Omit<Expense, "id" | "createdAt">) => {
     const exp: Expense = { ...data, id: newId(), createdAt: now() };
