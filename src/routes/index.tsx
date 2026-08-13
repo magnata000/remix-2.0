@@ -12,10 +12,10 @@ export const Route = createFileRoute("/")({
         content:
           "Gestão de carteira, apólices, pipeline e comissões para corretoras de seguros em uma única plataforma.",
       },
-      { property: "og:title", content: "TheInsuranceOS" },
+      { property: "og:title", content: "TheInsuranceOS — Sistema operacional para corretoras" },
       {
         property: "og:description",
-        content: "O sistema operacional das corretoras de seguros modernas.",
+        content: "Gestão de carteira, apólices, pipeline e comissões para corretoras de seguros em uma única plataforma.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
