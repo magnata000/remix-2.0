@@ -1,4 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   FileText,
@@ -46,6 +58,27 @@ export function TopBar({
   onChange: (k: ModuleKey) => void;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const email = user?.email ?? "";
+  const displayName =
+    (user?.user_metadata?.["name"] as string | undefined)?.trim() || email.split("@")[0] || "Conta";
+  const initials =
+    displayName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? "")
+      .join("") || "--";
+
+  const signOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    void navigate({ to: "/auth", replace: true });
+  };
+
 
   const navItem = (m: (typeof modules)[number], onClick?: () => void) => {
     const isActive = m.key === active;
@@ -101,15 +134,26 @@ export function TopBar({
             <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-warning" />
           </Button>
           <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-border">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-brand-soft text-brand-foreground text-xs font-semibold">
-                AS
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden xl:block">
-              <p className="text-sm font-semibold leading-tight">Ana Souza</p>
-              <p className="text-xs text-muted-foreground leading-tight">Corretora</p>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 rounded-full outline-none">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-brand-soft text-brand-foreground text-xs font-semibold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden xl:block text-left">
+                    <p className="text-sm font-semibold leading-tight">{displayName}</p>
+                    <p className="text-xs text-muted-foreground leading-tight">{email}</p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate">{email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>Sair</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile menu */}
@@ -158,16 +202,21 @@ export function TopBar({
                   );
                 })}
               </div>
-              <div className="mt-auto border-t border-border p-4 flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-brand-soft text-brand-foreground font-semibold">
-                    AS
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-semibold">Ana Souza</p>
-                  <p className="text-xs text-muted-foreground">ana@insuranceos.com</p>
+              <div className="mt-auto border-t border-border p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-brand-soft text-brand-foreground font-semibold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{displayName}</p>
+                    <p className="truncate text-xs text-muted-foreground">{email}</p>
+                  </div>
                 </div>
+                <Button variant="outline" className="mt-3 w-full" onClick={signOut}>
+                  Sair
+                </Button>
               </div>
             </SheetContent>
           </Sheet>

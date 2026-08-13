@@ -85,7 +85,7 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
     }
   }, [open]);
 
-  const submit = () => {
+  const submit = async () => {
     if (!isValidISODate(birthDate)) {
       const parsed = schema.safeParse({ name, email, phone, document, birthDate: "" });
       const errs: Record<string, string> = {};
@@ -112,7 +112,7 @@ export function NewClientDialog({ open, onOpenChange }: Props) {
       setErrors({ name: "Já existe um cliente com esse nome" });
       return;
     }
-    addClient(parsed.data);
+    await addClient(parsed.data);
     toast.success("Cliente criado");
     onOpenChange(false);
   };
