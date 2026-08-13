@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useTeam, TEAM_ROLES, type Member, type TeamRole } from "@/lib/team/teamStore";
+import { useTeam, TEAM_ROLES, roleLabel, type Member, type TeamRole } from "@/lib/team/teamStore";
 
 export function EditMemberDialog({
   member,
@@ -32,7 +32,7 @@ export function EditMemberDialog({
   const { updateMember } = useTeam();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<TeamRole>("Vendedor");
+  const [role, setRole] = useState<TeamRole>("vendedor");
 
   useEffect(() => {
     if (member) {
@@ -85,7 +85,7 @@ export function EditMemberDialog({
               <SelectContent>
                 {TEAM_ROLES.map((r) => (
                   <SelectItem key={r} value={r}>
-                    {r}
+                    {roleLabel(r)}
                   </SelectItem>
                 ))}
               </SelectContent>

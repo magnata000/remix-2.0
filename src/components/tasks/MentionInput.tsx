@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Users } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { team } from "@/lib/mock/data";
+import { getTeamMembers, useTeam } from "@/lib/team/teamStore";
 
 type Props = {
   value: string;
@@ -17,17 +17,18 @@ type Props = {
 type MentionOption = { id: string; name: string; role: string };
 
 const ALL_OPTION: MentionOption = { id: "__all__", name: "Todos", role: "Toda a corretora" };
-const KNOWN_NAMES = new Set<string>(["Todos", ...team.map((m) => m.name)]);
+const knownNames = () => new Set<string>(["Todos", ...getTeamMembers().map((m) => m.name)]);
 
 function extractMentioned(text: string): Set<string> {
   const set = new Set<string>();
+  const known = knownNames();
   const re = /@([A-Za-zÀ-ÿ]+(?:\s[A-Za-zÀ-ÿ]+)?)(?=\s|$|[.,;:!?])/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
-    if (KNOWN_NAMES.has(m[1])) set.add(m[1]);
+    if (known.has(m[1])) set.add(m[1]);
     else {
       const first = m[1].split(" ")[0];
-      if (KNOWN_NAMES.has(first)) set.add(first);
+      if (known.has(first)) set.add(first);
     }
   }
   return set;
@@ -42,6 +43,7 @@ export function MentionInput({
   className,
 }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const { members } = useTeam();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [hoverIndex, setHoverIndex] = useState(0);
@@ -56,8 +58,8 @@ export function MentionInput({
 
   const hasAll = mentionedNames.has("Todos");
   const baseOptions: MentionOption[] = useMemo(
-    () => [ALL_OPTION, ...team.map((t) => ({ id: t.id, name: t.name, role: t.role }))],
-    [],
+    () => [ALL_OPTION, ...members.map((t) => ({ id: t.id, name: t.name, role: t.role }))],
+    [members],
   );
   const options = useMemo(() => {
     const q = query.toLowerCase();
@@ -268,7 +270,7 @@ export function MentionInput({
 export function renderMentions(text: string) {
   const parts = text.split(/(@[A-Za-zÀ-ÿ]+(?:\s[A-Za-zÀ-ÿ]+)?)/g);
   return parts.map((p, i) =>
-    p.startsWith("@") && KNOWN_NAMES.has(p.slice(1)) ? (
+    p.startsWith("@") && knownNames().has(p.slice(1)) ? (
       <strong key={i} className="text-brand font-semibold">
         {p}
       </strong>

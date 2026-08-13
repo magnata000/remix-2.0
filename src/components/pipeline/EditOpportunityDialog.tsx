@@ -28,7 +28,9 @@ import {
 } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
+import { useRole } from "@/lib/auth/roleStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePipelineStore, type Opportunity } from "@/lib/pipeline/opportunityStore";
 import { toast } from "sonner";
@@ -78,7 +80,11 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
   const [stage, setStage] = useState<KanbanStage>("lead");
   const [estimatedValue, setEstimatedValue] = useState<string>("");
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
-  const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
+  const { members: team } = useTeam();
+  const { appRole, userId } = useRole();
+  const canAssignOthers = appRole !== "vendedor";
+  const assignable = canAssignOthers ? team : team.filter((m) => m.id === userId);
+  const [assigneeId, setAssigneeId] = useState(userId);
 
   useEffect(() => {
     if (!opportunity) return;
@@ -89,7 +95,7 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
     setEstimatedValue(opportunity.estimatedValue > 0 ? formatBRL(opportunity.estimatedValue) : "");
     setDueDate(opportunity.dueDate ? new Date(opportunity.dueDate) : undefined);
     const m = team.find((t) => initialsOf(t.name) === opportunity.assignee);
-    setAssigneeId(m?.id ?? team[0]?.id ?? "");
+    setAssigneeId(m?.id ?? userId);
   }, [opportunity]);
 
   const valueNum = useMemo(() => parseMoney(estimatedValue), [estimatedValue]);
@@ -282,12 +288,12 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
             </h3>
             <div>
               <Label className="text-xs text-muted-foreground">Responsável</Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <Select value={assigneeId} onValueChange={setAssigneeId} disabled={!canAssignOthers}>
                 <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {team.map((m) => (
+                  {assignable.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       <span className="inline-flex items-center gap-2">
                         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-soft text-[10px] font-semibold text-brand-foreground">

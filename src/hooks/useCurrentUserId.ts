@@ -1,11 +1,9 @@
-import { team } from "@/lib/mock/data";
+import { useRole } from "@/lib/auth/roleStore";
 
 /**
- * Ponto único de acesso ao usuário logado.
- * Hoje: retorna o `me` do mock (team[0]).
- * Quando o login real for implementado, esta função passa a ler
- * a sessão de autenticação e todo o app segue funcionando.
+ * Ponto único de acesso ao usuário logado: retorna o id do usuário
+ * autenticado (mesmo id usado em `team_members.assignee_id`).
  */
 export function useCurrentUserId(): string {
-  return team[0]?.id ?? "u1";
+  return useRole().userId;
 }

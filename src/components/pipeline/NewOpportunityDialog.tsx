@@ -28,7 +28,9 @@ import {
 } from "@/components/ui/command";
 import { CalendarIcon, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { formatBRL, formatDateShort, type Branch, type KanbanStage } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
+import { useRole } from "@/lib/auth/roleStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { toast } from "sonner";
@@ -71,7 +73,11 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
     return d;
   });
 
-  const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
+  const { members: team } = useTeam();
+  const { appRole, userId } = useRole();
+  const canAssignOthers = appRole !== "vendedor";
+  const assignable = canAssignOthers ? team : team.filter((m) => m.id === userId);
+  const [assigneeId, setAssigneeId] = useState(userId);
 
   const reset = useCallback(() => {
     setClientMode("existing");
@@ -365,12 +371,12 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
             </h3>
             <div>
               <Label className="text-xs text-muted-foreground">Responsável</Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <Select value={assigneeId} onValueChange={setAssigneeId} disabled={!canAssignOthers}>
                 <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {team.map((m) => (
+                  {assignable.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       <span className="inline-flex items-center gap-2">
                         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-soft text-[10px] font-semibold text-brand-foreground">

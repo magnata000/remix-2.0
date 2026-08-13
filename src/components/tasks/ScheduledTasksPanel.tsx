@@ -19,7 +19,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, formatDateShort } from "@/lib/mock/data";
+import { formatDateShort } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
 import {
   PeriodKind,
   Priority,
@@ -54,7 +55,8 @@ export function ScheduledTasksPanel({
   const { scheduled, addScheduled, updateScheduled, removeScheduled } = useTaskStore();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
+  const { members } = useTeam();
+  const [assigneeId, setAssigneeId] = useState(members[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("media");
   const [kind, setKind] = useState<ScheduledKind>("data");
   const [range, setRange] = useState<DateRange | undefined>();
@@ -70,7 +72,7 @@ export function ScheduledTasksPanel({
   const resetForm = () => {
     setTitle("");
     setDescription("");
-    setAssigneeId(team[0]?.id ?? "");
+    setAssigneeId(members[0]?.id ?? "");
     setPriority("media");
     setKind("data");
     setRange(undefined);
@@ -181,7 +183,7 @@ export function ScheduledTasksPanel({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os colaboradores</SelectItem>
-                  {team.map((m) => (
+                  {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.name}
                     </SelectItem>

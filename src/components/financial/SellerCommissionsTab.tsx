@@ -37,7 +37,7 @@ export function SellerCommissionsTab() {
   const { getRate, updateRate, computePayout } = useSellerCommissionStore();
   const { payouts, totalPaid } = useSellerPayoutStore();
 
-  const sellers = useMemo(() => members.filter((m) => m.role === "Vendedor"), [members]);
+  const sellers = useMemo(() => members.filter((m) => m.role === "vendedor"), [members]);
   const currentYear = new Date().getFullYear();
   const [month, setMonth] = useState<number>(new Date().getMonth());
   const [sellerId, setSellerId] = useState<string>("");

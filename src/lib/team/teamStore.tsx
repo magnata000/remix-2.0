@@ -1,10 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from "react";
-import { team as seedTeam } from "@/lib/mock/data";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { buildTeamNameIndex, type TeamNameIndex } from "@/lib/daily/mentions";
+import { ROLE_LABELS, type AppRole } from "@/lib/auth/profile.functions";
+import { listTeam, removeTeamMember, updateTeamMember } from "@/lib/auth/team.functions";
+import { useAuth } from "@/hooks/useAuth";
 
-export type TeamRole = "Administrador" | "Pós-venda" | "Vendedor";
-export const TEAM_ROLES: TeamRole[] = ["Administrador", "Pós-venda", "Vendedor"];
+export type TeamRole = AppRole;
+export const TEAM_ROLES: TeamRole[] = ["admin", "pos_venda", "vendedor"];
+export const roleLabel = (role: TeamRole) => ROLE_LABELS[role];
 
 export type MemberStatus = "active" | "pending";
 
@@ -18,24 +23,9 @@ export type Member = {
   invitedAt?: string;
 };
 
-// Map seed roles to the new enum
-const mapSeedRole = (role: string): TeamRole => {
-  const r = role.toLowerCase();
-  if (r.includes("sóci") || r.includes("financ")) return "Administrador";
-  if (r.includes("atend") || r.includes("pós")) return "Pós-venda";
-  return "Vendedor";
-};
-
-const initialMembers: Member[] = seedTeam.map((m) => ({
-  id: m.id,
-  name: m.name,
-  email: m.email,
-  role: mapSeedRole(m.role),
-  status: "active" as const,
-}));
-
 type TeamCtx = {
   members: Member[];
+  loading: boolean;
   updateMember: (id: string, patch: Partial<Omit<Member, "id">>) => void;
   removeMember: (id: string) => void;
   addMember: (input: {
@@ -49,34 +39,109 @@ type TeamCtx = {
 
 const Ctx = createContext<TeamCtx | null>(null);
 
+/**
+ * Espelho síncrono da equipe carregada, para helpers puros que rodam fora do
+ * React (ex.: `initialsOf`/`nameOf`, parsing de menções).
+ */
+let registry: Member[] = [];
+export function getTeamMembers(): Member[] {
+  return registry;
+}
+
 export function TeamProvider({ children }: { children: ReactNode }) {
-  const [members, setMembers] = useState<Member[]>(initialMembers);
+  const queryClient = useQueryClient();
+  const fetchTeam = useServerFn(listTeam);
+  const updateFn = useServerFn(updateTeamMember);
+  const removeFn = useServerFn(removeTeamMember);
 
-  const updateMember: TeamCtx["updateMember"] = useCallback((id, patch) => {
-    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
-  }, []);
+  const { isAuthenticated } = useAuth();
+  const { data, isLoading } = useQuery({
+    queryKey: ["team"],
+    queryFn: () => fetchTeam(),
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  });
 
-  const removeMember: TeamCtx["removeMember"] = useCallback((id) => {
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-  }, []);
+  /** Convites ainda não aceitos vivem apenas na sessão (não há tabela de convites). */
+  const [pending, setPending] = useState<Member[]>([]);
+
+  const invalidate = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["team"] });
+  }, [queryClient]);
+
+  const updateMutation = useMutation({
+    mutationFn: (input: { id: string; name: string; email: string; appRole: AppRole }) =>
+      updateFn({ data: input }),
+    onSuccess: invalidate,
+  });
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => removeFn({ data: { id } }),
+    onSuccess: invalidate,
+  });
+
+  const persisted: Member[] = useMemo(
+    () =>
+      (data ?? []).map((m) => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.appRole,
+        status: "active" as const,
+      })),
+    [data],
+  );
+
+  const members = useMemo(() => [...persisted, ...pending], [persisted, pending]);
+  registry = members;
+
+  const updateMember: TeamCtx["updateMember"] = useCallback(
+    (id, patch) => {
+      const target = members.find((m) => m.id === id);
+      if (!target) return;
+      if (target.status === "pending") {
+        setPending((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+        return;
+      }
+      updateMutation.mutate({
+        id,
+        name: patch.name ?? target.name,
+        email: patch.email ?? target.email,
+        appRole: patch.role ?? target.role,
+      });
+    },
+    [members, updateMutation],
+  );
+
+  const removeMember: TeamCtx["removeMember"] = useCallback(
+    (id) => {
+      const target = members.find((m) => m.id === id);
+      if (!target) return;
+      if (target.status === "pending") {
+        setPending((prev) => prev.filter((m) => m.id !== id));
+        return;
+      }
+      removeMutation.mutate(id);
+    },
+    [members, removeMutation],
+  );
 
   const addMember: TeamCtx["addMember"] = useCallback((input) => {
     const member: Member = {
-      id: `u${Date.now()}`,
+      id: `invite-${Date.now()}`,
       name: input.name,
       email: input.email,
       role: input.role,
       status: input.status ?? "pending",
-      inviteToken: input.status === "active" ? undefined : Math.random().toString(36).slice(2, 10),
+      inviteToken: Math.random().toString(36).slice(2, 10),
       invitedAt: new Date().toISOString(),
     };
-    setMembers((prev) => [...prev, member]);
+    setPending((prev) => [...prev, member]);
     return member;
   }, []);
 
   const resendInvite: TeamCtx["resendInvite"] = useCallback((id) => {
     let updated: Member | undefined;
-    setMembers((prev) =>
+    setPending((prev) =>
       prev.map((m) => {
         if (m.id !== id) return m;
         updated = {
@@ -91,7 +156,16 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ members, updateMember, removeMember, addMember, resendInvite }}>
+    <Ctx.Provider
+      value={{
+        members,
+        loading: isLoading,
+        updateMember,
+        removeMember,
+        addMember,
+        resendInvite,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );
@@ -114,13 +188,10 @@ export function useTeamNameIndex(): TeamNameIndex {
 
 /**
  * Helper síncrono, consumível fora de componentes React (funções puras,
- * utilitários). Cacheado por módulo — hoje reflete apenas o seed mock;
- * quando a fonte for real, este helper vira o ponto único de swap.
+ * utilitários). Sem provider disponível, devolve índice vazio.
  */
-let cachedIndex: TeamNameIndex | null = null;
 export function getTeamNameIndex(): TeamNameIndex {
-  if (!cachedIndex) cachedIndex = buildTeamNameIndex(initialMembers);
-  return cachedIndex;
+  return buildTeamNameIndex(registry);
 }
 
 export function buildInviteLink(token: string) {

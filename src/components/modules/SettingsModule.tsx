@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useTeam, buildInviteLink, type Member } from "@/lib/team/teamStore";
+import { useTeam, buildInviteLink, roleLabel, type Member } from "@/lib/team/teamStore";
 import { EditMemberDialog } from "@/components/settings/EditMemberDialog";
 import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
 import { CommissionConfigSection } from "@/components/settings/CommissionConfigSection";
@@ -114,7 +114,7 @@ export function SettingsModule() {
                 </Badge>
               )}
               <Badge variant="outline" className="rounded-full text-xs hidden sm:inline-flex">
-                {m.role}
+                {roleLabel(m.role)}
               </Badge>
               <div className="flex items-center gap-1">
                 {m.status === "pending" && (
