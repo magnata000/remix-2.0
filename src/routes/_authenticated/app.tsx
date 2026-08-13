@@ -62,13 +62,16 @@ function AppShell() {
   // Guards: Multicálculo desabilitado ou módulo sem permissão caem no fallback.
   const fallback = defaultModule(appRole);
   const active: ModuleKey =
-    (rawActive === "multicalc" && !FEATURES.multicalc) || !canAccessModule(appRole, rawActive)
+    (rawActive === "multicalc" && !FEATURES.multicalc) ||
+    (!loading && !canAccessModule(appRole, rawActive))
       ? fallback
       : rawActive;
 
   useEffect(() => {
-    if (!loading && !canAccessModule(appRole, rawActive)) setActive(fallback);
-  }, [loading, appRole, rawActive, fallback]);
+    if (loading) return;
+    if (!canAccessModule(appRole, rawActive)) setActive(fallback);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, appRole]);
 
   return (
     <PipelineStoreProvider>
