@@ -19,7 +19,8 @@ import {
   DollarSign,
   Users,
 } from "lucide-react";
-import { formatBRL, team } from "@/lib/mock/data";
+import { formatBRL } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
 import { usePipelineStore } from "@/lib/pipeline/opportunityStore";
 import { computePipelineAnalytics, formatHours, STAGE_ORDER } from "@/lib/pipeline/salesStats";
 import { stageLabels } from "@/lib/pipeline/opportunityStore";
@@ -29,6 +30,7 @@ type Period = "30" | "90" | "365" | "all";
 
 export function PipelineAnalytics({ onBack }: Props) {
   const { opportunities } = usePipelineStore();
+  const { members } = useTeam();
   const [period, setPeriod] = useState<Period>("90");
   const [assignee, setAssignee] = useState<string>("all");
 
@@ -87,7 +89,7 @@ export function PipelineAnalytics({ onBack }: Props) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os responsáveis</SelectItem>
-              {team.map((m) => (
+              {members.map((m) => (
                 <SelectItem
                   key={m.id}
                   value={m.name

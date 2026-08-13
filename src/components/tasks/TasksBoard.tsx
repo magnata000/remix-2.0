@@ -21,7 +21,8 @@ import {
   Paperclip,
   User as UserIcon,
 } from "lucide-react";
-import { team } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
+import { useRole } from "@/lib/auth/roleStore";
 import { TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { searchTasks } from "@/lib/tasks/searchTasks";
 import { runWorkflows } from "@/lib/tasks/workflowEngine";
@@ -50,6 +51,9 @@ export function TasksBoard() {
   const { columns, tasks, moveTask, deleteTask, bulkAddTasks } = useTaskStore();
   const { policies } = usePolicies();
   const { clients } = useClients();
+  const { members } = useTeam();
+  const { appRole, userId } = useRole();
+  const canManageTask = (assigneeId: string) => appRole === "admin" || assigneeId === userId;
   const [confirmDelete, setConfirmDelete] = useState<TaskItem | null>(null);
   const [editTask, setEditTask] = useState<TaskItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
@@ -257,7 +261,7 @@ export function TasksBoard() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os colaboradores</SelectItem>
-                {team.map((m) => (
+                {members.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {m.name}
                   </SelectItem>
@@ -352,8 +356,8 @@ export function TasksBoard() {
                   <TaskCard
                     task={t}
                     onClick={() => setDetail(t)}
-                    onEdit={() => setEditTask(t)}
-                    onDelete={() => setConfirmDelete(t)}
+                    onEdit={canManageTask(t.assigneeId) ? () => setEditTask(t) : undefined}
+                    onDelete={canManageTask(t.assigneeId) ? () => setConfirmDelete(t) : undefined}
                   />
                 </div>
               ))}

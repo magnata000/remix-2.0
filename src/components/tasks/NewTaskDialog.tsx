@@ -29,7 +29,9 @@ import {
 } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { team, formatDateShort } from "@/lib/mock/data";
+import { formatDateShort } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
+import { useRole } from "@/lib/auth/roleStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { Priority, TaskItem, useTaskStore } from "@/lib/tasks/taskStore";
 import { toast } from "sonner";
@@ -44,12 +46,16 @@ type Props = {
 export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Props) {
   const { columns, addTask, updateTaskFields } = useTaskStore();
   const { clients } = useClients();
+  const { members } = useTeam();
+  const { appRole, userId } = useRole();
+  const canAssignOthers = appRole !== "vendedor";
+  const assignable = canAssignOthers ? members : members.filter((m) => m.id === userId);
   const isEdit = !!task;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [priority, setPriority] = useState<Priority>("media");
-  const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
+  const [assigneeId, setAssigneeId] = useState(userId);
   const [clientName, setClientName] = useState<string>("");
   const [clientOpen, setClientOpen] = useState(false);
   const [columnId, setColumnId] = useState(defaultColumnId ?? columns[0]?.id ?? "");
@@ -59,7 +65,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
     setDescription("");
     setDueDate(undefined);
     setPriority("media");
-    setAssigneeId(team[0]?.id ?? "");
+    setAssigneeId(userId);
     setClientName("");
     setColumnId(defaultColumnId ?? columns[0]?.id ?? "");
   };
@@ -79,11 +85,11 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
       setDescription("");
       setDueDate(undefined);
       setPriority("media");
-      setAssigneeId(team[0]?.id ?? "");
+      setAssigneeId(userId);
       setClientName("");
       setColumnId(defaultColumnId ?? columns[0]?.id ?? "");
     }
-  }, [open, task, defaultColumnId, columns]);
+  }, [open, task, defaultColumnId, columns, userId]);
 
   const submit = () => {
     if (!title.trim()) {
@@ -190,13 +196,13 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Colaborador</Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <Select value={assigneeId} onValueChange={setAssigneeId} disabled={!canAssignOthers}>
                 <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {team.map((m) => (
+                  {canAssignOthers && <SelectItem value="all">Todos</SelectItem>}
+                  {assignable.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.name}
                     </SelectItem>

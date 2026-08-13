@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { TopBar, type ModuleKey } from "@/components/shell/TopBar";
 import { DailyModule } from "@/components/modules/DailyModule";
 import { PortfolioModule } from "@/components/modules/PortfolioModule";
@@ -24,7 +23,8 @@ import { SlaConfigProvider } from "@/lib/sla/slaConfig";
 import { DreConfigProvider } from "@/lib/financial/dreConfigStore";
 import { NavigationProvider } from "@/lib/navigation";
 import { FEATURES } from "@/lib/featureFlags";
-import { ensureProfile } from "@/lib/auth/profile.functions";
+import { RoleProvider, useRole } from "@/lib/auth/roleStore";
+import { canAccessModule, defaultModule } from "@/lib/auth/moduleAccess";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
@@ -44,20 +44,31 @@ export const Route = createFileRoute("/_authenticated/app")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AppShell,
+  component: AppRoot,
 });
+
+function AppRoot() {
+  return (
+    <RoleProvider>
+      <AppShell />
+    </RoleProvider>
+  );
+}
 
 function AppShell() {
   const [rawActive, setActive] = useState<ModuleKey>("dashboard");
-  const bootstrapProfile = useServerFn(ensureProfile);
+  const { appRole, loading } = useRole();
+
+  // Guards: Multicálculo desabilitado ou módulo sem permissão caem no fallback.
+  const fallback = defaultModule(appRole);
+  const active: ModuleKey =
+    (rawActive === "multicalc" && !FEATURES.multicalc) || !canAccessModule(appRole, rawActive)
+      ? fallback
+      : rawActive;
 
   useEffect(() => {
-    void bootstrapProfile();
-  }, [bootstrapProfile]);
-
-  // Guard: se Multicálculo está desabilitado, força fallback para dashboard.
-  const active: ModuleKey =
-    rawActive === "multicalc" && !FEATURES.multicalc ? "dashboard" : rawActive;
+    if (!loading && !canAccessModule(appRole, rawActive)) setActive(fallback);
+  }, [loading, appRole, rawActive, fallback]);
 
   return (
     <PipelineStoreProvider>

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
-import { useTeam, TEAM_ROLES, buildInviteLink, type TeamRole } from "@/lib/team/teamStore";
+import { useTeam, TEAM_ROLES, roleLabel, buildInviteLink, type TeamRole } from "@/lib/team/teamStore";
 
 export function InviteMemberDialog({
   open,
@@ -31,13 +31,13 @@ export function InviteMemberDialog({
   const { addMember, members } = useTeam();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<TeamRole>("Vendedor");
+  const [role, setRole] = useState<TeamRole>("vendedor");
   const [inviteLink, setInviteLink] = useState<string | null>(null);
 
   const reset = () => {
     setName("");
     setEmail("");
-    setRole("Vendedor");
+    setRole("vendedor");
     setInviteLink(null);
   };
 
@@ -108,7 +108,7 @@ export function InviteMemberDialog({
                 <SelectContent>
                   {TEAM_ROLES.map((r) => (
                     <SelectItem key={r} value={r}>
-                      {r}
+                      {roleLabel(r)}
                     </SelectItem>
                   ))}
                 </SelectContent>

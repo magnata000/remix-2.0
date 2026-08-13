@@ -30,6 +30,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { FEATURES } from "@/lib/featureFlags";
+import { useRole } from "@/lib/auth/roleStore";
+import { visibleModules } from "@/lib/auth/moduleAccess";
 
 export type ModuleKey =
   | "dashboard"
@@ -48,7 +50,6 @@ const allModules: { key: ModuleKey; label: string; icon: typeof LayoutDashboard 
   { key: "settings", label: "Configurações", icon: Settings },
 ];
 
-const modules = allModules.filter((m) => m.key !== "multicalc" || FEATURES.multicalc);
 
 export function TopBar({
   active,
@@ -59,6 +60,10 @@ export function TopBar({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
+  const { appRole } = useRole();
+  const modules = allModules.filter(
+    (m) => (m.key !== "multicalc" || FEATURES.multicalc) && visibleModules(appRole).includes(m.key),
+  );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -80,7 +85,7 @@ export function TopBar({
   };
 
 
-  const navItem = (m: (typeof modules)[number], onClick?: () => void) => {
+  const navItem = (m: (typeof allModules)[number], onClick?: () => void) => {
     const isActive = m.key === active;
     const Icon = m.icon;
     return (

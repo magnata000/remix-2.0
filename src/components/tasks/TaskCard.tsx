@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, MessageSquare, Paperclip, Pencil, Trash2, Users } from "lucide-react";
 import { formatDateShort } from "@/lib/mock/data";
-import { team } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
 import { MESSAGE_PREVIEW_LIMIT, PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
 import { SlaBadge } from "@/components/shared/SlaBadge";
 import { nameOf } from "@/components/shared/Timeline";
@@ -10,13 +10,14 @@ import { nameOf } from "@/components/shared/Timeline";
 type Props = {
   task: TaskItem;
   onClick: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
 export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
   const isAll = task.assigneeId === "all";
-  const assignee = team.find((m) => m.id === task.assigneeId);
+  const { members } = useTeam();
+  const assignee = members.find((m) => m.id === task.assigneeId);
   const initials =
     assignee?.name
       .split(" ")
@@ -47,13 +48,17 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
       }}
       className="group relative w-full text-left bg-card border border-border rounded-xl p-3 hover:border-brand transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
-      <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity z-10">
+      <div
+        className={`absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity z-10 ${
+          onEdit || onDelete ? "" : "hidden"
+        }`}
+      >
         <button
           type="button"
           aria-label="Editar tarefa"
           onClick={(e) => {
             e.stopPropagation();
-            onEdit();
+            onEdit?.();
           }}
           className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         >
@@ -64,7 +69,7 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
           aria-label="Excluir tarefa"
           onClick={(e) => {
             e.stopPropagation();
-            onDelete();
+            onDelete?.();
           }}
           className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-destructive"
         >

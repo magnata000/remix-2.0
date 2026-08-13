@@ -46,6 +46,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useTeam } from "@/lib/team/teamStore";
+import { useRole } from "@/lib/auth/roleStore";
+import { initialsOf } from "@/components/shared/Timeline";
 
 const stages: { key: KanbanStage; label: string; color: string }[] = [
   { key: "lead", label: "Lead", color: "bg-info/15 text-info" },
@@ -58,6 +61,10 @@ const stages: { key: KanbanStage; label: string; color: string }[] = [
 export function KanbanModule() {
   useSlaTicker();
   const { opportunities, moveStage, setEstimatedValue, deleteOpportunity } = usePipelineStore();
+  const { appRole, userId } = useRole();
+  const { members } = useTeam();
+  const myInitials = initialsOf(members.find((m) => m.id === userId)?.name ?? "");
+  const canManageOpp = (assignee: string) => appRole === "admin" || assignee === myInitials;
   const { groups } = useQuoteStore();
   const { goTo, consumeFocus } = useNavigation();
   const [dragId, setDragId] = useState<string | null>(null);
@@ -186,7 +193,11 @@ export function KanbanModule() {
                               : "border-border"
                           }`}
                         >
-                          <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <div
+                            className={`absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 ${
+                              canManageOpp(t.assignee) ? "" : "hidden"
+                            }`}
+                          >
                             <button
                               type="button"
                               aria-label="Editar"
@@ -294,6 +305,7 @@ export function KanbanModule() {
           openQuote(gid);
         }}
         onDelete={(o) => {
+          if (!canManageOpp(o.assignee)) return;
           setDetailId(null);
           setPendingDelete(o);
         }}

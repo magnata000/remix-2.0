@@ -23,7 +23,7 @@ const SellerCtx = createContext<Ctx | null>(null);
 
 export function SellerCommissionStoreProvider({ children }: { children: ReactNode }) {
   const { members } = useTeam();
-  const sellers = useMemo(() => members.filter((m) => m.role === "Vendedor"), [members]);
+  const sellers = useMemo(() => members.filter((m) => m.role === "vendedor"), [members]);
 
   const [overrides, setOverrides] = useState<Record<string, number>>({});
 

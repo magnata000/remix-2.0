@@ -15,7 +15,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { team } from "@/lib/mock/data";
+import { getTeamMembers } from "@/lib/team/teamStore";
 import type { TaskAttachment, TaskComment } from "@/lib/tasks/taskStore";
 import { MESSAGE_PREVIEW_LIMIT } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "@/components/tasks/MentionInput";
@@ -24,7 +24,7 @@ export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const initialsOf = (id: string) => {
   if (id === "all") return "TD";
-  const m = team.find((x) => x.id === id);
+  const m = getTeamMembers().find((x) => x.id === id);
   return (
     m?.name
       .split(" ")
@@ -34,7 +34,7 @@ export const initialsOf = (id: string) => {
   );
 };
 export const nameOf = (id: string) =>
-  id === "all" ? "Todos" : (team.find((x) => x.id === id)?.name ?? "—");
+  id === "all" ? "Todos" : (getTeamMembers().find((x) => x.id === id)?.name ?? "—");
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", {
     day: "2-digit",
