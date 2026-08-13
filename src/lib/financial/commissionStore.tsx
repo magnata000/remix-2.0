@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  commissions as seedCommissions,
   type Commission,
   type CommissionStatusValue,
   type Policy,
