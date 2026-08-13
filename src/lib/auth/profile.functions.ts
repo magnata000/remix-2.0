@@ -39,7 +39,10 @@ export const ensureProfile = createServerFn({ method: "POST" })
 
       const { data: created, error } = await supabaseAdmin
         .from("team_members")
-        .insert({ id: userId, name, email, role: isFirst ? "admin" : "broker" })
+        .upsert(
+          { id: userId, name, email, role: isFirst ? "admin" : "broker" },
+          { onConflict: "id" },
+        )
         .select("id, name, email, role")
         .single();
       if (error) throw new Error(error.message);
@@ -47,8 +50,11 @@ export const ensureProfile = createServerFn({ method: "POST" })
 
       const { error: roleError } = await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: userId, role: isFirst ? "admin" : "broker" });
-      if (roleError && !roleError.message.includes("duplicate")) throw new Error(roleError.message);
+        .upsert(
+          { user_id: userId, role: isFirst ? "admin" : "broker" },
+          { onConflict: "user_id,role", ignoreDuplicates: true },
+        );
+      if (roleError) throw new Error(roleError.message);
     }
 
     const { data: roles } = await supabaseAdmin
