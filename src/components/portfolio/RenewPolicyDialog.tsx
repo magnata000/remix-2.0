@@ -55,7 +55,7 @@ const addYears = (d: Date, n: number) => {
 
 export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
   const { renewPolicy } = usePolicyStore();
-  const { ensurePolicyRoots } = useDocumentStore();
+  const { refresh: refreshDocuments } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
 
   const [branch, setBranch] = useState<Branch>("Auto");
@@ -112,13 +112,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
       comissaoLiquida,
       taxaImposto,
     });
-    ensurePolicyRoots({
-      policyId: created.id,
-      policyNumber: created.number,
-      branch: created.branch,
-      clientName: created.clientName,
-      startDate: created.startDate,
-    });
+    refreshDocuments();
     generateForPolicy(created);
     toast.success(`Renovação ${created.number} criada`);
     onOpenChange(false);

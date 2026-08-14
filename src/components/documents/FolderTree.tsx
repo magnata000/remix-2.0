@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Folder,
   FolderOpen,
@@ -61,7 +62,8 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
   const [newFolderParent, setNewFolderParent] = useState<DocFolder | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [uploadTo, setUploadTo] = useState<DocFolder | null>(null);
-  const [uploadName, setUploadName] = useState("");
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   // Garantir seleção válida quando rootFolders mudar
   useEffect(() => {
@@ -167,7 +169,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
                 className="h-8 rounded-lg"
                 onClick={() => {
                   setUploadTo(selected);
-                  setUploadName("");
+                  setUploadFiles([]);
                 }}
               >
                 <Upload className="h-3.5 w-3.5 mr-1" /> Upload
@@ -213,7 +215,7 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
                 className="mt-2 h-8 text-xs"
                 onClick={() => {
                   setUploadTo(selected);
-                  setUploadName("");
+                  setUploadFiles([]);
                 }}
               >
                 <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar arquivo
@@ -250,14 +252,8 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
               onChange={(e) => setNewFolderName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && newFolderParent) {
-                  const created = store.createFolder({
-                    name: newFolderName,
-                    parentId: newFolderParent.id,
-                    policyId: newFolderParent.policyId,
-                    clientName: newFolderParent.clientName,
-                  });
+                  store.createFolder({ name: newFolderName, parentId: newFolderParent.id });
                   setExpanded((prev) => new Set(prev).add(newFolderParent.id));
-                  setSelectedId(created.id);
                   setNewFolderParent(null);
                 }
               }}
@@ -270,14 +266,8 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
             <Button
               onClick={() => {
                 if (!newFolderParent) return;
-                const created = store.createFolder({
-                  name: newFolderName,
-                  parentId: newFolderParent.id,
-                  policyId: newFolderParent.policyId,
-                  clientName: newFolderParent.clientName,
-                });
+                store.createFolder({ name: newFolderName, parentId: newFolderParent.id });
                 setExpanded((prev) => new Set(prev).add(newFolderParent.id));
-                setSelectedId(created.id);
                 setNewFolderParent(null);
               }}
             >
@@ -287,8 +277,16 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: upload mock */}
-      <Dialog open={!!uploadTo} onOpenChange={(o) => !o && setUploadTo(null)}>
+      {/* Dialog: upload */}
+      <Dialog
+        open={!!uploadTo}
+        onOpenChange={(o) => {
+          if (!o) {
+            setUploadTo(null);
+            setUploadFiles([]);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Adicionar arquivo</DialogTitle>
@@ -298,31 +296,52 @@ export function FolderTree({ rootFolders, showRootNames = true, dense = false }:
               Em <span className="font-medium">{uploadTo?.name}</span>
             </p>
             <Input
+              type="file"
+              multiple
               autoFocus
-              placeholder="nome-do-arquivo.pdf"
-              value={uploadName}
-              onChange={(e) => setUploadName(e.target.value)}
+              onChange={(e) => setUploadFiles(Array.from(e.target.files ?? []))}
             />
-            <p className="text-[11px] text-muted-foreground">
-              Upload real estará disponível quando o backend for habilitado.
-            </p>
+            {uploadFiles.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                {uploadFiles.length} arquivo(s) selecionado(s)
+              </p>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUploadTo(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUploadTo(null);
+                setUploadFiles([]);
+              }}
+            >
               Cancelar
             </Button>
             <Button
-              onClick={() => {
-                if (!uploadTo) return;
-                store.addFile({ name: uploadName, folderId: uploadTo.id });
-                setUploadTo(null);
+              disabled={uploadFiles.length === 0 || uploading}
+              onClick={async () => {
+                if (!uploadTo || uploadFiles.length === 0) return;
+                setUploading(true);
+                try {
+                  for (const file of uploadFiles) {
+                    await store.uploadFile({ file, folderId: uploadTo.id });
+                  }
+                  toast.success(`${uploadFiles.length} arquivo(s) enviado(s)`);
+                  setUploadTo(null);
+                  setUploadFiles([]);
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Falha no upload");
+                } finally {
+                  setUploading(false);
+                }
               }}
             >
-              Adicionar
+              {uploading ? "Enviando..." : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Confirm delete */}
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
@@ -599,8 +618,21 @@ function FileRow({ file, onRequestDelete }: { file: DocFile; onRequestDelete: ()
             className="h-7 text-sm"
           />
         ) : (
-          <div className="text-sm font-medium truncate">{file.name}</div>
+          <button
+            type="button"
+            className="text-sm font-medium truncate hover:underline text-left w-full"
+            onClick={async () => {
+              try {
+                await store.openFile(file.id);
+              } catch {
+                toast.error("Não foi possível abrir o arquivo");
+              }
+            }}
+          >
+            {file.name}
+          </button>
         )}
+
         <div className="text-[11px] text-muted-foreground">
           {formatFileSize(file.sizeKB)} • {formatDateShort(file.uploadedAt)}
         </div>

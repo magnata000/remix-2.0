@@ -83,7 +83,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
   const isRenewal = !!sourcePolicy;
   const { clients } = useClients();
   const { addPolicy, renewPolicy } = usePolicies();
-  const { ensurePolicyRoots } = useDocumentStore();
+  const { refresh: refreshDocuments } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
   const { getConfig } = useCommissionConfigStore();
 
@@ -299,13 +299,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       isRenewal && sourcePolicy
         ? await renewPolicy(sourcePolicy.id, payload)
         : await addPolicy(payload);
-    ensurePolicyRoots({
-      policyId: created.id,
-      policyNumber: created.number,
-      branch: created.branch,
-      clientName: created.clientName,
-      startDate: created.startDate,
-    });
+    refreshDocuments();
     const gerados = generateForPolicy(created);
     const baseMsg = isRenewal
       ? `Renovação ${created.number} criada`
