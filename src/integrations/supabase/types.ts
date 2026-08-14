@@ -1143,12 +1143,26 @@ export type Database = {
     }
     Functions: {
       can_view_all: { Args: { _user_id: string }; Returns: boolean }
+      ensure_client_root: { Args: { _client_id: string }; Returns: string }
+      ensure_policy_folders: {
+        Args: { _policy_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      upsert_doc_folder: {
+        Args: {
+          _client_id: string
+          _name: string
+          _parent_id: string
+          _policy_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

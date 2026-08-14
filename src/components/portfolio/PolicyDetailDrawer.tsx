@@ -80,6 +80,7 @@ export function PolicyDetailDrawer({
     usePolicies();
   const { deleteByPolicy: deleteCommissionsByPolicy } = useCommissionStore();
   const root = policy ? docStore.rootFolderOf(policy.id) : undefined;
+  console.log("DBG docs", docStore.folders.length, docStore.loading, policy?.id, !!root);
   const docCount = policy ? docStore.countByPolicy(policy.id) : 0;
   const [renewOpen, setRenewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
