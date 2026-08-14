@@ -181,7 +181,7 @@ export const updateTask = createServerFn({ method: "POST" })
       upd["sla_paused_at"] = terminal ? new Date().toISOString() : null;
       upd["completed_at"] = terminal ? new Date().toISOString() : null;
 
-      const { error } = await supabase.from("tasks").update(upd).eq("id", id);
+      const { error } = await supabase.from("tasks").update(upd as never).eq("id", id);
       if (error) throw new Error(error.message);
 
       await supabase.from("task_timeline").insert({
@@ -195,7 +195,7 @@ export const updateTask = createServerFn({ method: "POST" })
     }
 
     if (Object.keys(upd).length === 0) return { ok: true };
-    const { error } = await supabase.from("tasks").update(upd).eq("id", id);
+    const { error } = await supabase.from("tasks").update(upd as never).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -383,7 +383,7 @@ export const updateColumn = createServerFn({ method: "POST" })
     if (data.title !== undefined) upd["title"] = data.title;
     if (data.color !== undefined) upd["color"] = data.color;
     if (!Object.keys(upd).length) return { ok: true };
-    const { error } = await context.supabase.from("task_columns").update(upd).eq("id", data.id);
+    const { error } = await context.supabase.from("task_columns").update(upd as never).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -444,7 +444,7 @@ export const updateScheduled = createServerFn({ method: "POST" })
     if (!Object.keys(upd).length) return { ok: true };
     const { error } = await context.supabase
       .from("scheduled_tasks")
-      .update(upd)
+      .update(upd as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
