@@ -695,6 +695,62 @@ export type Database = {
           },
         ]
       }
+      scheduled_tasks: {
+        Row: {
+          assignee_id: string
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          kind: Database["public"]["Enums"]["scheduled_kind"]
+          period: string | null
+          priority: Database["public"]["Enums"]["task_priority"]
+          recurrence: Json | null
+          start_date: string | null
+          title: string
+          updated_at: string
+          weekdays: number[] | null
+        }
+        Insert: {
+          assignee_id: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["scheduled_kind"]
+          period?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          recurrence?: Json | null
+          start_date?: string | null
+          title: string
+          updated_at?: string
+          weekdays?: number[] | null
+        }
+        Update: {
+          assignee_id?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["scheduled_kind"]
+          period?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          recurrence?: Json | null
+          start_date?: string | null
+          title?: string
+          updated_at?: string
+          weekdays?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_commission_rates: {
         Row: {
           branch: Database["public"]["Enums"]["branch"]
@@ -772,9 +828,173 @@ export type Database = {
           },
         ]
       }
+      task_attachments: {
+        Row: {
+          comment_id: string | null
+          id: string
+          mime: string
+          name: string
+          size_bytes: number
+          storage_path: string | null
+          task_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          comment_id?: string | null
+          id?: string
+          mime?: string
+          name: string
+          size_bytes?: number
+          storage_path?: string | null
+          task_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          comment_id?: string | null
+          id?: string
+          mime?: string
+          name?: string
+          size_bytes?: number
+          storage_path?: string | null
+          task_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "task_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_columns: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id: string
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          pinned: boolean
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body?: string
+          created_at?: string
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          pinned?: boolean
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          pinned?: boolean
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_timeline: {
+        Row: {
+          actor_id: string
+          at: string
+          attachment_id: string | null
+          comment_id: string | null
+          from_label: string | null
+          id: string
+          kind: string
+          task_id: string
+          to_label: string | null
+        }
+        Insert: {
+          actor_id: string
+          at?: string
+          attachment_id?: string | null
+          comment_id?: string | null
+          from_label?: string | null
+          id?: string
+          kind: string
+          task_id: string
+          to_label?: string | null
+        }
+        Update: {
+          actor_id?: string
+          at?: string
+          attachment_id?: string | null
+          comment_id?: string | null
+          from_label?: string | null
+          id?: string
+          kind?: string
+          task_id?: string
+          to_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_timeline_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee_id: string
+          client_name: string | null
           column_id: string | null
           completed_at: string | null
           created_at: string
@@ -782,11 +1002,17 @@ export type Database = {
           due_date: string | null
           id: string
           order_index: number
+          priority: Database["public"]["Enums"]["task_priority"]
+          sla_due_at: string | null
+          sla_hours: number | null
+          sla_paused_at: string | null
+          source_key: string | null
           title: string
           updated_at: string
         }
         Insert: {
           assignee_id: string
+          client_name?: string | null
           column_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -794,11 +1020,17 @@ export type Database = {
           due_date?: string | null
           id?: string
           order_index?: number
+          priority?: Database["public"]["Enums"]["task_priority"]
+          sla_due_at?: string | null
+          sla_hours?: number | null
+          sla_paused_at?: string | null
+          source_key?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           assignee_id?: string
+          client_name?: string | null
           column_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -806,6 +1038,11 @@ export type Database = {
           due_date?: string | null
           id?: string
           order_index?: number
+          priority?: Database["public"]["Enums"]["task_priority"]
+          sla_due_at?: string | null
+          sla_hours?: number | null
+          sla_paused_at?: string | null
+          source_key?: string | null
           title?: string
           updated_at?: string
         }
@@ -988,6 +1225,8 @@ export type Database = {
       kanban_stage: "lead" | "cotacao" | "negociacao" | "fechado" | "perdido"
       lost_reason: "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro"
       policy_status: "ativa" | "vencida" | "pendente" | "cancelada" | "renovada"
+      scheduled_kind: "data" | "semana" | "recorrente"
+      task_priority: "alta" | "media" | "baixa"
       tax_kind: "sobre_receita" | "sobre_lucro"
     }
     CompositeTypes: {
@@ -1196,6 +1435,8 @@ export const Constants = {
       kanban_stage: ["lead", "cotacao", "negociacao", "fechado", "perdido"],
       lost_reason: ["preco", "cobertura", "prazo", "sem-retorno", "outro"],
       policy_status: ["ativa", "vencida", "pendente", "cancelada", "renovada"],
+      scheduled_kind: ["data", "semana", "recorrente"],
+      task_priority: ["alta", "media", "baixa"],
       tax_kind: ["sobre_receita", "sobre_lucro"],
     },
   },
