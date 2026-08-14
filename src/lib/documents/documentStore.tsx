@@ -65,13 +65,12 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   const fileUrlFn = useServerFn(getDocFileUrl);
   const deleteByPolicyFn = useServerFn(deleteDocsByPolicy);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: QK,
     queryFn: () => fetchAll(),
     staleTime: 30_000,
   });
 
-  if (error) console.error("DBG documents query error", error);
   const folders = data?.folders ?? [];
   const files = data?.files ?? [];
 
