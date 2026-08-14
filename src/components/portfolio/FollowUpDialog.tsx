@@ -112,7 +112,7 @@ export function FollowUpDialog({ open, onOpenChange, followUp, defaultClient }: 
     return Object.keys(errs).length === 0;
   };
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (!validate()) return;
     if (!selectedClient) return;
 
@@ -132,7 +132,7 @@ export function FollowUpDialog({ open, onOpenChange, followUp, defaultClient }: 
         (p) => p.clientName === selectedClient.name && p.status === "ativa",
       );
       const branch = activePolicy?.branch ?? "Auto";
-      const task = addTask({
+      const task = await addTask({
         title: `Follow-up: ${selectedClient.name}`,
         description: notes,
         dueDate: date,
@@ -283,7 +283,7 @@ export function FollowUpDialog({ open, onOpenChange, followUp, defaultClient }: 
           <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={onSubmit}>
+          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => void onSubmit()}>
             {isEdit ? "Salvar" : "Criar follow-up"}
           </Button>
         </DialogFooter>
