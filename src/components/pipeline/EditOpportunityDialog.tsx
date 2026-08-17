@@ -94,8 +94,7 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
     setStage(opportunity.stage);
     setEstimatedValue(opportunity.estimatedValue > 0 ? formatBRL(opportunity.estimatedValue) : "");
     setDueDate(opportunity.dueDate ? new Date(opportunity.dueDate) : undefined);
-    const m = team.find((t) => initialsOf(t.name) === opportunity.assignee);
-    setAssigneeId(m?.id ?? userId);
+    setAssigneeId(opportunity.assigneeId || userId);
   }, [opportunity]);
 
   const valueNum = useMemo(() => parseMoney(estimatedValue), [estimatedValue]);
