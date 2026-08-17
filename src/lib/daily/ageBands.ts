@@ -13,9 +13,25 @@ const ANS_AGE_BANDS: Array<{ min: number; max: number; label: string }> = [
   { min: 59, max: 200, label: "59+" },
 ];
 
+/**
+ * Interpreta datas de nascimento no fuso local.
+ * `YYYY-MM-DD` puro seria lido como UTC por `new Date()`, deslocando o dia
+ * em fusos negativos (ex.: America/Sao_Paulo) — daí o parse manual.
+ */
+export function parseLocalDate(value: string): Date | null {
+  if (!value) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function ageAt(birthDateISO: string, ref: Date): number {
-  const b = new Date(birthDateISO);
-  if (Number.isNaN(b.getTime())) return -1;
+  const b = parseLocalDate(birthDateISO);
+  if (!b) return -1;
   let age = ref.getFullYear() - b.getFullYear();
   const m = ref.getMonth() - b.getMonth();
   if (m < 0 || (m === 0 && ref.getDate() < b.getDate())) age -= 1;
@@ -35,17 +51,19 @@ export function findBandChange(
   withinDays: number,
   now: Date = new Date(),
 ): { currentBand: string; nextBand: string; changeDate: Date } | null {
-  const b = new Date(birthDateISO);
-  if (Number.isNaN(b.getTime())) return null;
+  const b = parseLocalDate(birthDateISO);
+  if (!b) return null;
   const currentAge = ageAt(birthDateISO, now);
   const currentBand = bandOf(currentAge);
   if (!currentBand) return null;
 
-  // Próximo aniversário
-  const nextBirthday = new Date(now.getFullYear(), b.getMonth(), b.getDate());
-  if (nextBirthday < now) nextBirthday.setFullYear(now.getFullYear() + 1);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const daysUntil = Math.ceil((nextBirthday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Próximo aniversário (hoje conta como próximo)
+  const nextBirthday = new Date(today.getFullYear(), b.getMonth(), b.getDate());
+  if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+
+  const daysUntil = Math.round((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (daysUntil > withinDays) return null;
 
   const newAge = currentAge + 1;
@@ -56,7 +74,8 @@ export function findBandChange(
 }
 
 export function isBirthdayToday(birthDateISO: string, now: Date = new Date()): boolean {
-  const b = new Date(birthDateISO);
-  if (Number.isNaN(b.getTime())) return false;
+  const b = parseLocalDate(birthDateISO);
+  if (!b) return false;
   return b.getMonth() === now.getMonth() && b.getDate() === now.getDate();
 }
+
