@@ -115,8 +115,7 @@ export const updateOpportunity = createServerFn({ method: "POST" })
     if (patch.estimatedValue !== undefined) upd["estimated_value"] = patch.estimatedValue;
     if (patch.dueDate !== undefined)
       upd["due_date"] = patch.dueDate ? patch.dueDate.slice(0, 10) : null;
-    if (patch.assigneeId !== undefined)
-      upd["assignee_id"] = patch.assigneeId || context.userId;
+    if (patch.assigneeId !== undefined) upd["assignee_id"] = patch.assigneeId || context.userId;
     if (patch.quoteGroupId !== undefined) upd["quote_group_id"] = patch.quoteGroupId;
     if (patch.slaDueAt !== undefined) upd["sla_due_at"] = patch.slaDueAt ?? null;
     if (patch.slaHours !== undefined) upd["sla_hours"] = patch.slaHours ?? null;

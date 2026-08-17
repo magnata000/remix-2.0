@@ -17,7 +17,12 @@ import {
 } from "./types";
 
 export { stageLabels };
-export type { Opportunity, StageHistoryEntry, OpportunityPatch, NewOpportunityInput } from "./types";
+export type {
+  Opportunity,
+  StageHistoryEntry,
+  OpportunityPatch,
+  NewOpportunityInput,
+} from "./types";
 
 const QK = ["pipeline", "opportunities"] as const;
 const EMPTY: Opportunity[] = [];
@@ -52,7 +57,7 @@ type Ctx = {
 const PipelineContext = createContext<Ctx | null>(null);
 
 function safeName(name: string) {
-  return name.replace(/[^\w.\-]+/g, "_").slice(-80) || "arquivo";
+  return name.replace(/[^\w.-]+/g, "_").slice(-80) || "arquivo";
 }
 
 async function uploadFile(opportunityId: string, file: File | Blob, name: string, type: string) {
