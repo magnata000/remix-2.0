@@ -116,14 +116,13 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
-    const member = team.find((m) => m.id === assigneeId);
     updateOpportunity(opportunity.id, {
       title: title.trim(),
       clientName: clientName.trim(),
       branch,
       estimatedValue: valueNum,
       dueDate: dueDate.toISOString().slice(0, 10),
-      assignee: initialsOf(member?.name ?? opportunity.assignee),
+      assigneeId: assigneeId || userId,
     });
     if (stage !== opportunity.stage) {
       moveStage(opportunity.id, stage);

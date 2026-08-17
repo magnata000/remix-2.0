@@ -140,23 +140,27 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
 
   const valid = Object.keys(errors).length === 0;
 
-  const submit = () => {
+  const submit = async () => {
     if (!valid || !dueDate) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
-    const member = team.find((m) => m.id === assigneeId);
-    createOpportunity({
-      title: title.trim(),
-      clientName: clientName.trim(),
-      branch,
-      estimatedValue: valueNum,
-      dueDate: dueDate.toISOString().slice(0, 10),
-      assignee: initialsOf(member?.name ?? "AS"),
-      stage,
-    });
-    toast.success("Oportunidade criada");
-    onOpenChange(false);
+    try {
+      await createOpportunity({
+        title: title.trim(),
+        clientName: clientName.trim(),
+        clientId: clientId || undefined,
+        branch,
+        estimatedValue: valueNum,
+        dueDate: dueDate.toISOString().slice(0, 10),
+        assigneeId: assigneeId || userId,
+        stage,
+      });
+      toast.success("Oportunidade criada");
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível criar a oportunidade");
+    }
   };
 
   return (
