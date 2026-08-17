@@ -66,7 +66,7 @@ export function findBandChange(
   const daysUntil = Math.round((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (daysUntil > withinDays) return null;
 
-  const newAge = ageAt(birthDateISO, nextBirthday) + (daysUntil === 0 ? 1 : 0);
+  const newAge = currentAge + 1;
   const nextBand = bandOf(newAge);
   if (!nextBand || nextBand.label === currentBand.label) return null;
 
