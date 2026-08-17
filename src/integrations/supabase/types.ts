@@ -507,6 +507,7 @@ export type Database = {
           branch: Database["public"]["Enums"]["branch"]
           client_id: string | null
           client_name: string
+          closed_at: string | null
           created_at: string
           due_date: string | null
           estimated_value: number
@@ -514,7 +515,11 @@ export type Database = {
           lost_note: string | null
           lost_reason: Database["public"]["Enums"]["lost_reason"] | null
           quote_group_id: string | null
+          sla_due_at: string | null
+          sla_hours: number | null
+          sla_paused_at: string | null
           stage: Database["public"]["Enums"]["kanban_stage"]
+          stage_history: Json
           title: string
           updated_at: string
         }
@@ -523,6 +528,7 @@ export type Database = {
           branch: Database["public"]["Enums"]["branch"]
           client_id?: string | null
           client_name: string
+          closed_at?: string | null
           created_at?: string
           due_date?: string | null
           estimated_value?: number
@@ -530,7 +536,11 @@ export type Database = {
           lost_note?: string | null
           lost_reason?: Database["public"]["Enums"]["lost_reason"] | null
           quote_group_id?: string | null
+          sla_due_at?: string | null
+          sla_hours?: number | null
+          sla_paused_at?: string | null
           stage?: Database["public"]["Enums"]["kanban_stage"]
+          stage_history?: Json
           title: string
           updated_at?: string
         }
@@ -539,6 +549,7 @@ export type Database = {
           branch?: Database["public"]["Enums"]["branch"]
           client_id?: string | null
           client_name?: string
+          closed_at?: string | null
           created_at?: string
           due_date?: string | null
           estimated_value?: number
@@ -546,7 +557,11 @@ export type Database = {
           lost_note?: string | null
           lost_reason?: Database["public"]["Enums"]["lost_reason"] | null
           quote_group_id?: string | null
+          sla_due_at?: string | null
+          sla_hours?: number | null
+          sla_paused_at?: string | null
           stage?: Database["public"]["Enums"]["kanban_stage"]
+          stage_history?: Json
           title?: string
           updated_at?: string
         }
@@ -563,6 +578,156 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_attachments: {
+        Row: {
+          comment_id: string | null
+          id: string
+          mime: string
+          name: string
+          opportunity_id: string
+          size_bytes: number
+          storage_path: string | null
+          uploaded_at: string
+        }
+        Insert: {
+          comment_id?: string | null
+          id?: string
+          mime?: string
+          name: string
+          opportunity_id: string
+          size_bytes?: number
+          storage_path?: string | null
+          uploaded_at?: string
+        }
+        Update: {
+          comment_id?: string | null
+          id?: string
+          mime?: string
+          name?: string
+          opportunity_id?: string
+          size_bytes?: number
+          storage_path?: string | null
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_attachments_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          opportunity_id: string
+          pinned: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body?: string
+          created_at?: string
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          opportunity_id: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          opportunity_id?: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_comments_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_timeline: {
+        Row: {
+          actor_id: string
+          at: string
+          attachment_id: string | null
+          comment_id: string | null
+          from_label: string | null
+          id: string
+          kind: string
+          opportunity_id: string
+          to_label: string | null
+        }
+        Insert: {
+          actor_id: string
+          at?: string
+          attachment_id?: string | null
+          comment_id?: string | null
+          from_label?: string | null
+          id?: string
+          kind: string
+          opportunity_id: string
+          to_label?: string | null
+        }
+        Update: {
+          actor_id?: string
+          at?: string
+          attachment_id?: string | null
+          comment_id?: string | null
+          from_label?: string | null
+          id?: string
+          kind?: string
+          opportunity_id?: string
+          to_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_timeline_attachment_id_fkey"
+            columns: ["attachment_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_timeline_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_timeline_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
         ]
