@@ -94,8 +94,7 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
     setStage(opportunity.stage);
     setEstimatedValue(opportunity.estimatedValue > 0 ? formatBRL(opportunity.estimatedValue) : "");
     setDueDate(opportunity.dueDate ? new Date(opportunity.dueDate) : undefined);
-    const m = team.find((t) => initialsOf(t.name) === opportunity.assignee);
-    setAssigneeId(m?.id ?? userId);
+    setAssigneeId(opportunity.assigneeId || userId);
   }, [opportunity]);
 
   const valueNum = useMemo(() => parseMoney(estimatedValue), [estimatedValue]);
@@ -116,14 +115,13 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
-    const member = team.find((m) => m.id === assigneeId);
     updateOpportunity(opportunity.id, {
       title: title.trim(),
       clientName: clientName.trim(),
       branch,
       estimatedValue: valueNum,
       dueDate: dueDate.toISOString().slice(0, 10),
-      assignee: initialsOf(member?.name ?? opportunity.assignee),
+      assigneeId: assigneeId || userId,
     });
     if (stage !== opportunity.stage) {
       moveStage(opportunity.id, stage);
