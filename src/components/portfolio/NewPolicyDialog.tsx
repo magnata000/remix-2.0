@@ -30,7 +30,6 @@ import {
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 import {
-  team,
   formatBRL,
   formatDateShort,
   type Beneficiary,
@@ -39,6 +38,8 @@ import {
   type Policy,
   type PolicyStatus,
 } from "@/lib/mock/data";
+import { useTeam } from "@/lib/team/teamStore";
+import { useRole } from "@/lib/auth/roleStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
@@ -86,6 +87,8 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
   const { refresh: refreshDocuments } = useDocumentStore();
   const { generateForPolicy } = useCommissionStore();
   const { getConfig } = useCommissionConfigStore();
+  const { members: team } = useTeam();
+  const { userId, appRole, isAdmin } = useRole();
 
   const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
@@ -96,8 +99,14 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(addYears(new Date(), 1));
   const [status, setStatus] = useState<PolicyStatus>("ativa");
-  const [assigneeId, setAssigneeId] = useState(team[0]?.id ?? "");
+  const [assigneeId, setAssigneeId] = useState(userId);
   const [touched, setTouched] = useState(false);
+
+  // Apenas admin e pós-venda podem escolher qualquer vendedor; vendedor só se atribui.
+  const assignable = useMemo(
+    () => (isAdmin || appRole === "pos_venda" ? team : team.filter((m) => m.id === userId)),
+    [team, isAdmin, appRole, userId],
+  );
 
   // Extras: commission
   const [commissionStr, setCommissionStr] = useState("");
@@ -130,7 +139,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       setStartDate(newStart);
       setEndDate(addYears(newStart, 1));
       setStatus("ativa");
-      setAssigneeId(src.assigneeId ?? team[0]?.id ?? "");
+      setAssigneeId(src.assigneeId ?? userId);
       setTouched(false);
       setCommissionStr(
         src.commissionPct != null ? String(src.commissionPct).replace(".", ",") : "",
@@ -157,7 +166,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
     setStartDate(new Date());
     setEndDate(addYears(new Date(), 1));
     setStatus("ativa");
-    setAssigneeId(team[0]?.id ?? "");
+    setAssigneeId(userId);
     setTouched(false);
     setCommissionStr("");
     setAutoScheme("esgotamento");
@@ -521,7 +530,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {team.map((m) => (
+                {assignable.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {m.name}
                   </SelectItem>

@@ -109,6 +109,7 @@ function policyColumns(input: PolicyInput, clientId?: string) {
   if (input.startDate !== undefined) out["start_date"] = input.startDate;
   if (input.endDate !== undefined) out["end_date"] = input.endDate || null;
   if (input.status !== undefined) out["status"] = input.status;
+  if (input.assigneeId !== undefined) out["assignee_id"] = input.assigneeId || null;
   if (input.commissionPct !== undefined) out["commission_pct"] = input.commissionPct;
   if (input.commissionScheme !== undefined) out["commission_scheme"] = input.commissionScheme;
   if (input.commissionInstallments !== undefined)
@@ -261,7 +262,7 @@ async function insertPolicy(
     .insert({
       ...policyColumns(input, clientId),
       number,
-      assignee_id: context.userId,
+      assignee_id: input.assigneeId || context.userId,
       renewed_from_id: renewedFromId ?? null,
     })
     .select("id")
