@@ -43,8 +43,8 @@ type Props = {
 };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
-const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const STATUSES: { key: PolicyStatus; label: string }[] = [
+
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
 ];
