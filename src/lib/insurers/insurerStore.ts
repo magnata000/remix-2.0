@@ -1,5 +1,6 @@
-import type { Insurer } from "@/lib/mock/data";
+import type { Branch, Insurer } from "@/lib/mock/data";
 import { insurerLogos as seedLogos } from "@/lib/mock/data";
+
 
 /**
  * Catálogo estático de seguradoras. Ponto único de swap quando a fonte
