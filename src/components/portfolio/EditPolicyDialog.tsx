@@ -40,8 +40,8 @@ import { toast } from "sonner";
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; policy: Policy | null };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
-const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const BASE_STATUSES: { key: PolicyStatus; label: string }[] = [
+
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
   { key: "vencida", label: "Vencida" },
