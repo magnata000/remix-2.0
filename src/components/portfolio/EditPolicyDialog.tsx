@@ -252,12 +252,13 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => (
+                  {availableInsurers.map((i) => (
                     <SelectItem key={i} value={i}>
                       {i}
                     </SelectItem>
                   ))}
                 </SelectContent>
+
               </Select>
             </div>
 
