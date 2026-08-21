@@ -405,12 +405,13 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => (
+                  {availableInsurers.map((i) => (
                     <SelectItem key={i} value={i}>
                       {i}
                     </SelectItem>
                   ))}
                 </SelectContent>
+
               </Select>
             </div>
             <div>
