@@ -209,9 +209,10 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
           setClientName(prefill.clientName);
         }
       }
-      if (prefill.insurer && (INSURERS as string[]).includes(prefill.insurer)) {
+      if (prefill.insurer && (availableInsurers as string[]).includes(prefill.insurer)) {
         setInsurer(prefill.insurer as Insurer);
       }
+
       if (prefill.premium && prefill.premium > 0) {
         setPremium(formatBRLDecimal(prefill.premium));
       }
