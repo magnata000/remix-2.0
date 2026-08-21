@@ -1,5 +1,6 @@
-import type { Insurer } from "@/lib/mock/data";
+import type { Branch, Insurer } from "@/lib/mock/data";
 import { insurerLogos as seedLogos } from "@/lib/mock/data";
+
 
 /**
  * Catálogo estático de seguradoras. Ponto único de swap quando a fonte
@@ -45,3 +46,29 @@ export function useInsurers(): UseInsurersResult {
 export function getInsurers(): readonly Insurer[] {
   return INSURERS;
 }
+
+/** Seguradoras disponíveis por ramo. Saúde possui catálogo próprio. */
+const HEALTH_INSURERS: readonly Insurer[] = [
+  "Amil",
+  "Bradesco",
+  "MedSênior",
+  "Porto Seguro",
+  "Prevent Sênior",
+  "São Cristóvão",
+  "SulAmérica",
+];
+
+const GENERAL_INSURERS: readonly Insurer[] = [
+  "Azul",
+  "Bradesco",
+  "Itaú Seguros",
+  "Porto Seguro",
+  "Suhai",
+  "SulAmérica",
+  "Tokio Marine",
+];
+
+export function getInsurersForBranch(branch: Branch): readonly Insurer[] {
+  return branch === "Saúde" ? HEALTH_INSURERS : GENERAL_INSURERS;
+}
+

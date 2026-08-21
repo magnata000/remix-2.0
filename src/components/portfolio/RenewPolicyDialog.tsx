@@ -31,8 +31,10 @@ import {
 import { usePolicyStore } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
+
 
 type Props = {
   open: boolean;
@@ -41,8 +43,8 @@ type Props = {
 };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
-const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const STATUSES: { key: PolicyStatus; label: string }[] = [
+
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
 ];
@@ -82,7 +84,16 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     setTaxaImposto(sourcePolicy.taxaImposto);
   }, [open, sourcePolicy]);
 
+  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+
+  useEffect(() => {
+    if (!availableInsurers.includes(insurer)) {
+      setInsurer(availableInsurers[0]);
+    }
+  }, [availableInsurers, insurer]);
+
   const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
+
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -162,12 +173,13 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => (
+                  {availableInsurers.map((i) => (
                     <SelectItem key={i} value={i}>
                       {i}
                     </SelectItem>
                   ))}
                 </SelectContent>
+
               </Select>
             </div>
             <div>

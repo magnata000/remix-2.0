@@ -31,15 +31,17 @@ import {
 } from "@/lib/mock/data";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
+import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
+
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; policy: Policy | null };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
-const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const BASE_STATUSES: { key: PolicyStatus; label: string }[] = [
+
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
   { key: "vencida", label: "Vencida" },
@@ -111,7 +113,16 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     }
   }, [open, policy]);
 
+  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+
+  useEffect(() => {
+    if (!availableInsurers.includes(insurer)) {
+      setInsurer(availableInsurers[0]);
+    }
+  }, [availableInsurers, insurer]);
+
   // Limites de parcelas (Seguros) por seguradora
+
   const autoConfig = useMemo(() => getConfig(insurer, "auto"), [getConfig, insurer]);
   const installmentsNum = Math.max(1, Number(autoInstallments) || 1);
   const minParcelado = autoConfig.parceladoMinInstallments ?? 5;
@@ -241,12 +252,13 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => (
+                  {availableInsurers.map((i) => (
                     <SelectItem key={i} value={i}>
                       {i}
                     </SelectItem>
                   ))}
                 </SelectContent>
+
               </Select>
             </div>
 

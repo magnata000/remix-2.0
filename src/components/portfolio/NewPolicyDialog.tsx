@@ -46,7 +46,9 @@ import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
+import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { toast } from "sonner";
+
 
 export type PolicyPrefill = {
   clientName?: string;
@@ -66,8 +68,8 @@ type Props = {
 };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
-const INSURERS: Insurer[] = ["Porto Seguro", "Bradesco", "SulAmérica", "Allianz", "Mapfre"];
 const STATUSES: { key: PolicyStatus; label: string }[] = [
+
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
   { key: "vencida", label: "Vencida" },
@@ -125,8 +127,17 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
   const [consortiumQuota, setConsortiumQuota] = useState("");
   const [consortiumType, setConsortiumType] = useState<"Imóvel" | "Auto" | undefined>(undefined);
 
+  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+
+  useEffect(() => {
+    if (!availableInsurers.includes(insurer)) {
+      setInsurer(availableInsurers[0]);
+    }
+  }, [availableInsurers, insurer]);
+
   useEffect(() => {
     if (!open) return;
+
     if (sourcePolicy) {
       const src = sourcePolicy;
       const c = clients.find((x) => x.name === src.clientName);
@@ -198,9 +209,10 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
           setClientName(prefill.clientName);
         }
       }
-      if (prefill.insurer && (INSURERS as string[]).includes(prefill.insurer)) {
+      if (prefill.insurer && (availableInsurers as string[]).includes(prefill.insurer)) {
         setInsurer(prefill.insurer as Insurer);
       }
+
       if (prefill.premium && prefill.premium > 0) {
         setPremium(formatBRLDecimal(prefill.premium));
       }
@@ -393,12 +405,13 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => (
+                  {availableInsurers.map((i) => (
                     <SelectItem key={i} value={i}>
                       {i}
                     </SelectItem>
                   ))}
                 </SelectContent>
+
               </Select>
             </div>
             <div>
