@@ -173,12 +173,13 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSURERS.map((i) => (
+                  {availableInsurers.map((i) => (
                     <SelectItem key={i} value={i}>
                       {i}
                     </SelectItem>
                   ))}
                 </SelectContent>
+
               </Select>
             </div>
             <div>
