@@ -84,7 +84,16 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     setTaxaImposto(sourcePolicy.taxaImposto);
   }, [open, sourcePolicy]);
 
+  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+
+  useEffect(() => {
+    if (!availableInsurers.includes(insurer)) {
+      setInsurer(availableInsurers[0]);
+    }
+  }, [availableInsurers, insurer]);
+
   const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
+
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
