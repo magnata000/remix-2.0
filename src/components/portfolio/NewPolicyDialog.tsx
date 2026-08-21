@@ -127,8 +127,17 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
   const [consortiumQuota, setConsortiumQuota] = useState("");
   const [consortiumType, setConsortiumType] = useState<"Imóvel" | "Auto" | undefined>(undefined);
 
+  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+
+  useEffect(() => {
+    if (!availableInsurers.includes(insurer)) {
+      setInsurer(availableInsurers[0]);
+    }
+  }, [availableInsurers, insurer]);
+
   useEffect(() => {
     if (!open) return;
+
     if (sourcePolicy) {
       const src = sourcePolicy;
       const c = clients.find((x) => x.name === src.clientName);
