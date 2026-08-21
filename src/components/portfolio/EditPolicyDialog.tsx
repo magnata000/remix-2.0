@@ -113,7 +113,16 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     }
   }, [open, policy]);
 
+  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+
+  useEffect(() => {
+    if (!availableInsurers.includes(insurer)) {
+      setInsurer(availableInsurers[0]);
+    }
+  }, [availableInsurers, insurer]);
+
   // Limites de parcelas (Seguros) por seguradora
+
   const autoConfig = useMemo(() => getConfig(insurer, "auto"), [getConfig, insurer]);
   const installmentsNum = Math.max(1, Number(autoInstallments) || 1);
   const minParcelado = autoConfig.parceladoMinInstallments ?? 5;
