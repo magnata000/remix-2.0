@@ -16,6 +16,10 @@ import type {
 
 const BUCKET = "task-attachments";
 
+/** "all"/vazio não cabem na coluna uuid assignee_id — cai para o usuário logado. */
+const normAssignee = (a: string | undefined, fallback: string) =>
+  !a || a === "all" ? fallback : a;
+
 /* --------------------------------------------------------------- leitura */
 
 export const listBoard = createServerFn({ method: "GET" })
@@ -69,7 +73,7 @@ export const createTask = createServerFn({ method: "POST" })
   .inputValidator((d: NewTaskInput) => d)
   .handler(async ({ data, context }): Promise<TaskItem> => {
     const { supabase, userId } = context;
-    const assignee = data.assigneeId || userId;
+    const assignee = normAssignee(data.assigneeId, userId);
     const { data: row, error } = await supabase
       .from("tasks")
       .insert({
@@ -117,7 +121,7 @@ export const bulkCreateTasks = createServerFn({ method: "POST" })
       description: r.description ?? null,
       due_date: r.dueDate ? r.dueDate.slice(0, 10) : null,
       priority: r.priority,
-      assignee_id: r.assigneeId || userId,
+      assignee_id: normAssignee(r.assigneeId, userId),
       client_name: r.clientName ?? null,
       column_id: r.columnId,
       source_key: r.sourceKey ?? null,
@@ -412,7 +416,7 @@ export const createScheduled = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("scheduled_tasks").insert({
       title: data.title,
       description: data.description ?? null,
-      assignee_id: data.assigneeId || context.userId,
+      assignee_id: normAssignee(data.assigneeId, context.userId),
       priority: data.priority,
       kind: data.kind,
       start_date: data.startDate ?? null,
@@ -433,7 +437,7 @@ export const updateScheduled = createServerFn({ method: "POST" })
     const upd: Record<string, unknown> = {};
     if (p.title !== undefined) upd["title"] = p.title;
     if (p.description !== undefined) upd["description"] = p.description ?? null;
-    if (p.assigneeId !== undefined) upd["assignee_id"] = p.assigneeId || context.userId;
+    if (p.assigneeId !== undefined) upd["assignee_id"] = normAssignee(p.assigneeId, context.userId);
     if (p.priority !== undefined) upd["priority"] = p.priority;
     if (p.kind !== undefined) upd["kind"] = p.kind;
     if (p.startDate !== undefined) upd["start_date"] = p.startDate ?? null;
