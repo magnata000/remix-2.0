@@ -125,6 +125,7 @@ export function mapBoard(rows: BoardRows, urlByPath: Map<string, string>): Board
     assigneeId: s(r["assignee_id"]),
     priority: (r["priority"] as Priority) ?? "media",
     kind: (r["kind"] as ScheduledKind) ?? "data",
+    createdAt: opt(r["created_at"]),
     startDate: opt(r["start_date"]),
     endDate: opt(r["end_date"]),
     weekdays: Array.isArray(r["weekdays"]) ? (r["weekdays"] as number[]) : undefined,

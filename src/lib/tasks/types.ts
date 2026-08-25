@@ -65,6 +65,8 @@ export type ScheduledTask = {
   assigneeId: string;
   priority: Priority;
   kind: ScheduledKind;
+  /** Data de criação do agendamento — limite inferior para materialização. */
+  createdAt?: string;
   startDate?: string;
   endDate?: string;
   /** 0=Dom..6=Sab */

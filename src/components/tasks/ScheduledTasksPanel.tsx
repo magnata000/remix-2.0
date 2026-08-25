@@ -99,7 +99,7 @@ export function ScheduledTasksPanel({
     }
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!title.trim()) {
       toast.error("Informe um título");
       return;
@@ -138,14 +138,18 @@ export function ScheduledTasksPanel({
       period: kind === "data" && repeat !== "nenhuma" ? repeat : undefined,
       recurrence: kind === "recorrente" ? recurrence : undefined,
     };
-    if (editingId) {
-      updateScheduled(editingId, payload);
-      toast.success("Agendamento atualizado");
-    } else {
-      addScheduled(payload);
-      toast.success("Agendamento criado");
+    try {
+      if (editingId) {
+        await updateScheduled(editingId, payload);
+        toast.success("Agendamento atualizado");
+      } else {
+        await addScheduled(payload);
+        toast.success("Agendamento criado");
+      }
+      resetForm();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar o agendamento");
     }
-    resetForm();
   };
 
   return (
@@ -330,9 +334,16 @@ export function ScheduledTasksPanel({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => {
+                          onClick={async () => {
                             if (editingId === s.id) resetForm();
-                            removeScheduled(s.id);
+                            try {
+                              await removeScheduled(s.id);
+                              toast.success("Agendamento removido");
+                            } catch (e) {
+                              toast.error(
+                                e instanceof Error ? e.message : "Falha ao remover o agendamento",
+                              );
+                            }
                           }}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
