@@ -99,7 +99,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
         setHealthScheme("agenciamento");
       }
       setAutoInstallments(String(policy.commissionInstallments ?? 10));
-      setHealthAnniversary(policy.healthAnniversary ?? "");
+      setHealthAnniversary(isoToDdmm(policy.healthAnniversary));
       setAnniversaryTouched(!!policy.healthAnniversary);
       setHealthInitialValue(
         policy.healthInitialValue ? formatBRLDecimal(policy.healthInitialValue) : "",
