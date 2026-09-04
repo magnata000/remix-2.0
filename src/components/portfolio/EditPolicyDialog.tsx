@@ -166,12 +166,20 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     ? [...BASE_STATUSES, { key: "renovada" as PolicyStatus, label: "Renovada" }]
     : BASE_STATUSES;
 
-  const submit = () => {
+  const submit = async () => {
     setTouched(true);
     if (!valid || !startDate) {
       toast.error("Revise os campos obrigatórios");
       return;
     }
+    if (branch === "Saúde") {
+      const invalid = beneficiaries.find((b) => !b.name.trim() || !b.birthDate);
+      if (invalid) {
+        toast.error("Informe nome e data de nascimento de todos os beneficiários");
+        return;
+      }
+    }
+
     const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     updatePolicy(policy.id, {
