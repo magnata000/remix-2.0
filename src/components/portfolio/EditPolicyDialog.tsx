@@ -182,33 +182,41 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
 
     const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
-    updatePolicy(policy.id, {
-      clientName: policy.clientName,
-      branch,
-      insurer,
-      premium: premiumNum,
-      startDate: startDate.toISOString().slice(0, 10),
-      endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
-      status,
-      assigneeId: policy.assigneeId,
-      commissionPct: commissionPct || undefined,
-      comissaoLiquida,
-      taxaImposto,
-      commissionScheme:
-        branch === "Saúde" ? healthScheme : branch === "Consórcio" ? "unica" : autoScheme,
-      commissionInstallments: isAutoLike && autoScheme === "parcela" ? installmentsNum : undefined,
-      healthAnniversary: branch === "Saúde" ? healthAnniversary || undefined : undefined,
-      healthInitialValue: branch === "Saúde" ? healthInitialNum || undefined : undefined,
-      healthCategory: branch === "Saúde" ? healthCategory || undefined : undefined,
-      healthCoparticipation: branch === "Saúde" ? healthCoparticipation : undefined,
-      beneficiaries: branch === "Saúde" && beneficiaries.length ? beneficiaries : undefined,
-      consortiumGroup: branch === "Consórcio" ? consortiumGroup || undefined : undefined,
-      consortiumQuota: branch === "Consórcio" ? consortiumQuota || undefined : undefined,
-      consortiumType: branch === "Consórcio" ? consortiumType : undefined,
-    });
-    toast.success(`Apólice ${policy.number} atualizada`);
-    onOpenChange(false);
+    try {
+      await updatePolicy(policy.id, {
+        clientName: policy.clientName,
+        branch,
+        insurer,
+        premium: premiumNum,
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
+        status,
+        assigneeId: policy.assigneeId,
+        commissionPct: commissionPct || undefined,
+        comissaoLiquida,
+        taxaImposto,
+        commissionScheme:
+          branch === "Saúde" ? healthScheme : branch === "Consórcio" ? "unica" : autoScheme,
+        commissionInstallments:
+          isAutoLike && autoScheme === "parcela" ? installmentsNum : undefined,
+        healthAnniversary:
+          branch === "Saúde" ? annivToISO(healthAnniversary, startDate) : undefined,
+        healthInitialValue: branch === "Saúde" ? healthInitialNum || undefined : undefined,
+        healthCategory: branch === "Saúde" ? healthCategory || undefined : undefined,
+        healthCoparticipation: branch === "Saúde" ? healthCoparticipation : undefined,
+        beneficiaries: branch === "Saúde" && beneficiaries.length ? beneficiaries : undefined,
+        consortiumGroup: branch === "Consórcio" ? consortiumGroup || undefined : undefined,
+        consortiumQuota: branch === "Consórcio" ? consortiumQuota || undefined : undefined,
+        consortiumType: branch === "Consórcio" ? consortiumType : undefined,
+      });
+      toast.success(`Apólice ${policy.number} atualizada`);
+      onOpenChange(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Não foi possível salvar a apólice: ${msg}`);
+    }
   };
+
 
   const showErr = (key: string) => touched && errors[key];
 
