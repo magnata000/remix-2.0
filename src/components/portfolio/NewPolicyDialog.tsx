@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
+import { annivToISO, isoToDdmm } from "@/lib/portfolio/healthAnniversary";
+
 import {
   formatBRL,
   formatDateShort,
@@ -158,7 +160,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       setAutoScheme(src.commissionScheme === "parcela" ? "parcela" : "esgotamento");
       setAutoInstallments(src.commissionInstallments ? String(src.commissionInstallments) : "10");
       setHealthScheme(src.commissionScheme === "vitalicio" ? "vitalicio" : "agenciamento");
-      setHealthAnniversary(src.healthAnniversary ?? "");
+      setHealthAnniversary(isoToDdmm(src.healthAnniversary));
       setAnniversaryTouched(false);
       setHealthInitialValue(src.healthInitialValue ? formatBRLDecimal(src.healthInitialValue) : "");
       setHealthCategory(src.healthCategory ?? "");
@@ -284,6 +286,13 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       toast.error("Revise os campos obrigatórios");
       return;
     }
+    if (branch === "Saúde") {
+      const invalid = beneficiaries.find((b) => !b.name.trim() || !b.birthDate);
+      if (invalid) {
+        toast.error("Informe nome e data de nascimento de todos os beneficiários");
+        return;
+      }
+    }
     const healthInitialNum = parseMoneyInput(healthInitialValue);
     const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     const payload = {
@@ -302,7 +311,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
           autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
       }),
       ...(branch === "Saúde" && {
-        healthAnniversary: healthAnniversary || undefined,
+        healthAnniversary: annivToISO(healthAnniversary, startDate),
         healthInitialValue: healthInitialNum || undefined,
         healthCategory: healthCategory || undefined,
         healthCoparticipation,
@@ -316,22 +325,28 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
         commissionScheme: "unica" as const,
       }),
     };
-    const created =
-      isRenewal && sourcePolicy
-        ? await renewPolicy(sourcePolicy.id, payload)
-        : await addPolicy(payload);
-    refreshDocuments();
-    const gerados = generateForPolicy(created);
-    const baseMsg = isRenewal
-      ? `Renovação ${created.number} criada`
-      : `Apólice ${created.number} criada`;
-    toast.success(
-      gerados.length > 0
-        ? `${baseMsg} · ${gerados.length} parcela(s) de comissão geradas`
-        : baseMsg,
-    );
-    onOpenChange(false);
+    try {
+      const created =
+        isRenewal && sourcePolicy
+          ? await renewPolicy(sourcePolicy.id, payload)
+          : await addPolicy(payload);
+      refreshDocuments();
+      const gerados = generateForPolicy(created);
+      const baseMsg = isRenewal
+        ? `Renovação ${created.number} criada`
+        : `Apólice ${created.number} criada`;
+      toast.success(
+        gerados.length > 0
+          ? `${baseMsg} · ${gerados.length} parcela(s) de comissão geradas`
+          : baseMsg,
+      );
+      onOpenChange(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Não foi possível salvar a apólice: ${msg}`);
+    }
   };
+
 
   const showErr = (key: string) => touched && errors[key];
 
