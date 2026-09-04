@@ -160,7 +160,7 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
       setAutoScheme(src.commissionScheme === "parcela" ? "parcela" : "esgotamento");
       setAutoInstallments(src.commissionInstallments ? String(src.commissionInstallments) : "10");
       setHealthScheme(src.commissionScheme === "vitalicio" ? "vitalicio" : "agenciamento");
-      setHealthAnniversary(src.healthAnniversary ?? "");
+      setHealthAnniversary(isoToDdmm(src.healthAnniversary));
       setAnniversaryTouched(false);
       setHealthInitialValue(src.healthInitialValue ? formatBRLDecimal(src.healthInitialValue) : "");
       setHealthCategory(src.healthCategory ?? "");
