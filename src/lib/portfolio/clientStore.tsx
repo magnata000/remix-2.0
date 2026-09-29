@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import type { Client, ClientStatus } from "@/lib/mock/data";
 import {
   createClient as createClientFn,
+  deleteClient as deleteClientFn,
   listClients,
   setClientStatus as setClientStatusFn,
   updateClient as updateClientFn,
@@ -18,6 +19,7 @@ type Ctx = {
   addClient: (input: AddClientInput) => Promise<Client>;
   updateClient: (id: string, patch: Partial<AddClientInput>) => Promise<void>;
   setClientStatus: (id: string, status: ClientStatus) => Promise<void>;
+  removeClient: (id: string) => Promise<void>;
   findByName: (name: string) => Client | undefined;
 };
 
