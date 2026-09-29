@@ -195,6 +195,20 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteOpen(true)}
+                      aria-label="Excluir cliente"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Excluir cliente</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-foreground mr-8"
                       onClick={() => setEditOpen(true)}
                       aria-label="Editar dados"
