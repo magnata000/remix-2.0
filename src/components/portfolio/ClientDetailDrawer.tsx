@@ -107,6 +107,8 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
   const [newOpp, setNewOpp] = useState(false);
   const docCount = clientName ? docStore.countByClient(clientName) : 0;
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
 
@@ -156,6 +158,20 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
   const onStatusChange = (id: string, s: FollowUpStatus) => {
     changeStatus(id, s);
     toast.success("Status atualizado");
+  };
+
+  const onDeleteClient = async () => {
+    setDeleting(true);
+    try {
+      await removeClient(c.id);
+      toast.success("Cliente excluído");
+      setDeleteOpen(false);
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível excluir o cliente");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
