@@ -85,12 +85,18 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
     },
     [statusMutation],
   );
+  const removeClient = useCallback(
+    async (id: string) => {
+      await deleteMutation.mutateAsync(id);
+    },
+    [deleteMutation],
+  );
 
   const findByName = useCallback((name: string) => clients.find((c) => c.name === name), [clients]);
 
   const value = useMemo<Ctx>(
-    () => ({ clients, isLoading, addClient, updateClient, setClientStatus, findByName }),
-    [clients, isLoading, addClient, updateClient, setClientStatus, findByName],
+    () => ({ clients, isLoading, addClient, updateClient, setClientStatus, removeClient, findByName }),
+    [clients, isLoading, addClient, updateClient, setClientStatus, removeClient, findByName],
   );
 
   return <ClientCtx.Provider value={value}>{children}</ClientCtx.Provider>;
