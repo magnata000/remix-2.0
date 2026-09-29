@@ -347,6 +347,43 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
         followUp={editingFollowUp}
         defaultClient={c}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é definitiva e não pode ser desfeita. O cadastro de{" "}
+              <strong>{c.name}</strong> será removido junto com seus follow-ups e documentos.
+              {clientPolicies.length > 0 && (
+                <>
+                  {" "}
+                  Este cliente possui{" "}
+                  <strong>
+                    {clientPolicies.length} apólice{clientPolicies.length === 1 ? "" : "s"}
+                  </strong>{" "}
+                  que também será{clientPolicies.length === 1 ? "" : "ão"} excluída
+                  {clientPolicies.length === 1 ? "" : "s"}, junto com beneficiários e comissões
+                  vinculadas.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void onDeleteClient();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
