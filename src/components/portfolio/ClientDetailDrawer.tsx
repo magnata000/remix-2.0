@@ -37,7 +37,18 @@ import {
   CheckCircle2,
   XCircle,
   MoreHorizontal,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditClientDialog } from "@/components/portfolio/EditClientDialog";
 import { FollowUpDialog } from "@/components/portfolio/FollowUpDialog";
@@ -87,7 +98,7 @@ type Props = {
 };
 
 export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: Props) {
-  const { clients } = useClients();
+  const { clients, removeClient } = useClients();
   const { policies } = usePolicies();
   const { commissions } = useCommissionStore();
   const { followUps, listByClient, changeStatus, deleteFollowUp } = useFollowUps();
@@ -96,6 +107,8 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
   const [newOpp, setNewOpp] = useState(false);
   const docCount = clientName ? docStore.countByClient(clientName) : 0;
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
 
@@ -147,6 +160,20 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
     toast.success("Status atualizado");
   };
 
+  const onDeleteClient = async () => {
+    setDeleting(true);
+    try {
+      await removeClient(c.id);
+      toast.success("Cliente excluído");
+      setDeleteOpen(false);
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível excluir o cliente");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -163,6 +190,20 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
                 <Badge className={statusColor[stats.status]}>{statusLabel[stats.status]}</Badge>
               </div>
               <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteOpen(true)}
+                      aria-label="Excluir cliente"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Excluir cliente</TooltipContent>
+                </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -306,6 +347,43 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
         followUp={editingFollowUp}
         defaultClient={c}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é definitiva e não pode ser desfeita. O cadastro de{" "}
+              <strong>{c.name}</strong> será removido junto com seus follow-ups e documentos.
+              {clientPolicies.length > 0 && (
+                <>
+                  {" "}
+                  Este cliente possui{" "}
+                  <strong>
+                    {clientPolicies.length} apólice{clientPolicies.length === 1 ? "" : "s"}
+                  </strong>{" "}
+                  que também será{clientPolicies.length === 1 ? "" : "ão"} excluída
+                  {clientPolicies.length === 1 ? "" : "s"}, junto com beneficiários e comissões
+                  vinculadas.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void onDeleteClient();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

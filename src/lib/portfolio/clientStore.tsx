@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import type { Client, ClientStatus } from "@/lib/mock/data";
 import {
   createClient as createClientFn,
+  deleteClient as deleteClientFn,
   listClients,
   setClientStatus as setClientStatusFn,
   updateClient as updateClientFn,
@@ -18,6 +19,7 @@ type Ctx = {
   addClient: (input: AddClientInput) => Promise<Client>;
   updateClient: (id: string, patch: Partial<AddClientInput>) => Promise<void>;
   setClientStatus: (id: string, status: ClientStatus) => Promise<void>;
+  removeClient: (id: string) => Promise<void>;
   findByName: (name: string) => Client | undefined;
 };
 
@@ -31,6 +33,7 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
   const create = useServerFn(createClientFn);
   const update = useServerFn(updateClientFn);
   const setStatus = useServerFn(setClientStatusFn);
+  const remove = useServerFn(deleteClientFn);
 
   const { data, isLoading } = useQuery({
     queryKey: CLIENTS_KEY,
@@ -55,6 +58,16 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
     mutationFn: (vars: { id: string; status: ClientStatus }) => setStatus({ data: vars }),
     onSuccess: invalidate,
   });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => remove({ data: { id } }),
+    onSuccess: () => {
+      invalidate();
+      void qc.invalidateQueries({ queryKey: ["policies"] });
+      void qc.invalidateQueries({ queryKey: ["commissions"] });
+      void qc.invalidateQueries({ queryKey: ["follow-ups"] });
+      void qc.invalidateQueries({ queryKey: ["documents"] });
+    },
+  });
 
   const addClient = useCallback(
     (input: AddClientInput) => createMutation.mutateAsync(input),
@@ -72,12 +85,18 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
     },
     [statusMutation],
   );
+  const removeClient = useCallback(
+    async (id: string) => {
+      await deleteMutation.mutateAsync(id);
+    },
+    [deleteMutation],
+  );
 
   const findByName = useCallback((name: string) => clients.find((c) => c.name === name), [clients]);
 
   const value = useMemo<Ctx>(
-    () => ({ clients, isLoading, addClient, updateClient, setClientStatus, findByName }),
-    [clients, isLoading, addClient, updateClient, setClientStatus, findByName],
+    () => ({ clients, isLoading, addClient, updateClient, setClientStatus, removeClient, findByName }),
+    [clients, isLoading, addClient, updateClient, setClientStatus, removeClient, findByName],
   );
 
   return <ClientCtx.Provider value={value}>{children}</ClientCtx.Provider>;
