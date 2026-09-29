@@ -64,7 +64,7 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
       invalidate();
       void qc.invalidateQueries({ queryKey: ["policies"] });
       void qc.invalidateQueries({ queryKey: ["commissions"] });
-      void qc.invalidateQueries({ queryKey: ["followUps"] });
+      void qc.invalidateQueries({ queryKey: ["follow-ups"] });
       void qc.invalidateQueries({ queryKey: ["documents"] });
     },
   });
