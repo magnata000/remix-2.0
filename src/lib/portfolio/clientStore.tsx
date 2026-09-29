@@ -33,6 +33,7 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
   const create = useServerFn(createClientFn);
   const update = useServerFn(updateClientFn);
   const setStatus = useServerFn(setClientStatusFn);
+  const remove = useServerFn(deleteClientFn);
 
   const { data, isLoading } = useQuery({
     queryKey: CLIENTS_KEY,
@@ -56,6 +57,16 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
   const statusMutation = useMutation({
     mutationFn: (vars: { id: string; status: ClientStatus }) => setStatus({ data: vars }),
     onSuccess: invalidate,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => remove({ data: { id } }),
+    onSuccess: () => {
+      invalidate();
+      void qc.invalidateQueries({ queryKey: ["policies"] });
+      void qc.invalidateQueries({ queryKey: ["commissions"] });
+      void qc.invalidateQueries({ queryKey: ["followUps"] });
+      void qc.invalidateQueries({ queryKey: ["documents"] });
+    },
   });
 
   const addClient = useCallback(
