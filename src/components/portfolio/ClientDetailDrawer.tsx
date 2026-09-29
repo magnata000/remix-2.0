@@ -37,7 +37,18 @@ import {
   CheckCircle2,
   XCircle,
   MoreHorizontal,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditClientDialog } from "@/components/portfolio/EditClientDialog";
 import { FollowUpDialog } from "@/components/portfolio/FollowUpDialog";
@@ -87,7 +98,7 @@ type Props = {
 };
 
 export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: Props) {
-  const { clients } = useClients();
+  const { clients, removeClient } = useClients();
   const { policies } = usePolicies();
   const { commissions } = useCommissionStore();
   const { followUps, listByClient, changeStatus, deleteFollowUp } = useFollowUps();
