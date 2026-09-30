@@ -8,6 +8,13 @@
       "when": 1790688761314,
       "tag": "0000_client_delete_cascade",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790769905692,
+      "tag": "0001_restrict_team_policies",
+      "breakpoints": true
     }
   ]
 }
