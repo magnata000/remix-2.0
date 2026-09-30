@@ -1320,6 +1320,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_team_member: { Args: { _user_id: string }; Returns: boolean }
       upsert_doc_folder: {
         Args: {
           _client_id: string
