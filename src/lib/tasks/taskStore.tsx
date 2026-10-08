@@ -1,11 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import { supabase } from "@/integrations/supabase/client";
 import * as api from "./tasks.functions";
-import { computeDueScheduledTasks } from "./schedulerEngine";
 import {
   MAX_PINNED_COMMENTS,
   type AttachmentInput,
@@ -128,19 +127,7 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     [mutate],
   );
 
-  // Materializa agendamentos (data/recorrência) em cartões uma vez por sessão.
-  // Dedupe garantido no backend via upsert na source_key.
-  const materializedRef = useRef(false);
-  useEffect(() => {
-    if (materializedRef.current) return;
-    if (!data || !data.columns.length) return;
-    materializedRef.current = true;
-    const due = computeDueScheduledTasks({
-      scheduled: data.scheduled,
-      defaultColumnId: data.columns[0].id,
-    });
-    if (due.length) run(() => bulkCreateFn({ data: { records: due } }));
-  }, [data, bulkCreateFn, run]);
+  // Agendamentos viram cartões no backend (cron diário /api/public/hooks/tasks-cron).
 
   const createScheduledMutation = useMutation({
     mutationFn: (s: Omit<ScheduledTask, "id">) => createScheduledFn({ data: s }),
