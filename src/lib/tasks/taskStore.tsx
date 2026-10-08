@@ -128,19 +128,7 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
     [mutate],
   );
 
-  // Materializa agendamentos (data/recorrência) em cartões uma vez por sessão.
-  // Dedupe garantido no backend via upsert na source_key.
-  const materializedRef = useRef(false);
-  useEffect(() => {
-    if (materializedRef.current) return;
-    if (!data || !data.columns.length) return;
-    materializedRef.current = true;
-    const due = computeDueScheduledTasks({
-      scheduled: data.scheduled,
-      defaultColumnId: data.columns[0].id,
-    });
-    if (due.length) run(() => bulkCreateFn({ data: { records: due } }));
-  }, [data, bulkCreateFn, run]);
+  // Agendamentos viram cartões no backend (cron diário /api/public/hooks/tasks-cron).
 
   const createScheduledMutation = useMutation({
     mutationFn: (s: Omit<ScheduledTask, "id">) => createScheduledFn({ data: s }),
