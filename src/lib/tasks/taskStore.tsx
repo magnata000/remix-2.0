@@ -1,11 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import { supabase } from "@/integrations/supabase/client";
 import * as api from "./tasks.functions";
-import { computeDueScheduledTasks } from "./schedulerEngine";
 import {
   MAX_PINNED_COMMENTS,
   type AttachmentInput,
