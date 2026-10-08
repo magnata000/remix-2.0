@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as ApiPublicHooksTasksCronRouteImport } from './routes/api/public/hooks/tasks-cron'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -39,18 +40,25 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksTasksCronRoute = ApiPublicHooksTasksCronRouteImport.update({
+  id: '/api/public/hooks/tasks-cron',
+  path: '/api/public/hooks/tasks-cron',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/app': typeof AuthenticatedAppRoute
+  '/api/public/hooks/tasks-cron': typeof ApiPublicHooksTasksCronRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/app': typeof AuthenticatedAppRoute
+  '/api/public/hooks/tasks-cron': typeof ApiPublicHooksTasksCronRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +67,23 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/api/public/hooks/tasks-cron': typeof ApiPublicHooksTasksCronRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/reset-password' | '/app'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/app'
+    | '/api/public/hooks/tasks-cron'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/app'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/app'
+    | '/api/public/hooks/tasks-cron'
   id:
     | '__root__'
     | '/'
@@ -72,6 +91,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/app'
+    | '/api/public/hooks/tasks-cron'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -79,6 +99,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicHooksTasksCronRoute: typeof ApiPublicHooksTasksCronRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -118,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/tasks-cron': {
+      id: '/api/public/hooks/tasks-cron'
+      path: '/api/public/hooks/tasks-cron'
+      fullPath: '/api/public/hooks/tasks-cron'
+      preLoaderRoute: typeof ApiPublicHooksTasksCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -137,6 +165,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicHooksTasksCronRoute: ApiPublicHooksTasksCronRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
