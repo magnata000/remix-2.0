@@ -3,6 +3,7 @@ import { CaixaTab } from "@/components/financial/CaixaTab";
 import { ReportTab } from "@/components/financial/ReportTab";
 import { SellerCommissionsTab } from "@/components/financial/SellerCommissionsTab";
 import { CommissionsLedgerTab } from "@/components/financial/CommissionsLedgerTab";
+import { ExpensesTab } from "@/components/financial/ExpensesTab";
 import { useRole } from "@/lib/auth/roleStore";
 
 export function FinancialModule() {
@@ -11,7 +12,8 @@ export function FinancialModule() {
   const showRepasses = hasPage("financeiro_comissoes");
   const showReport = hasPage("financeiro_relatorios");
   const showCom = hasPage("financeiro_comissoes");
-  const first = showCom ? "comissoes" : showCaixa ? "caixa" : showRepasses ? "repasses" : "relatorio";
+  const showDesp = hasPage("financeiro_despesas");
+  const first = showCom ? "comissoes" : showDesp ? "despesas" : showCaixa ? "caixa" : showRepasses ? "repasses" : "relatorio";
 
   return (
     <div className="space-y-5">
@@ -25,6 +27,7 @@ export function FinancialModule() {
       <Tabs defaultValue={first} className="space-y-5">
         <TabsList>
           {showCom && <TabsTrigger value="comissoes">Comissões</TabsTrigger>}
+          {showDesp && <TabsTrigger value="despesas">Despesas</TabsTrigger>}
           {showCaixa && <TabsTrigger value="caixa">Caixa</TabsTrigger>}
           {showRepasses && <TabsTrigger value="repasses">Repasses de vendedores</TabsTrigger>}
           {showReport && <TabsTrigger value="relatorio">Relatório</TabsTrigger>}
@@ -32,6 +35,11 @@ export function FinancialModule() {
         {showCom && (
           <TabsContent value="comissoes" className="mt-0">
             <CommissionsLedgerTab />
+          </TabsContent>
+        )}
+        {showDesp && (
+          <TabsContent value="despesas" className="mt-0">
+            <ExpensesTab />
           </TabsContent>
         )}
         {showCaixa && (
