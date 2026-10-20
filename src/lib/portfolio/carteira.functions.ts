@@ -53,7 +53,7 @@ function mapPolicy(r: Row): Policy {
     id: s(r["id"]),
     number: s(r["number"]),
     clientName: client ? s(client["name"]) : "",
-    branch: r["branch"] as Branch,
+    branch: ((r["branches"] as Row | null)?.["name"] ?? r["branch"]) as Branch,
     insurer: r["insurer"] as Insurer,
     premium: Number(r["premium"] ?? 0),
     startDate: s(r["start_date"]),
@@ -98,14 +98,43 @@ function mapFollowUp(r: Row): FollowUp {
 }
 
 const POLICY_SELECT =
-  "*, clients(name), beneficiaries(id, title, title_custom, name, birth_date, cpf)";
+  "*, clients(name), branches(name), beneficiaries(id, title, title_custom, name, birth_date, cpf)";
+
+const LEGACY_BRANCHES = [
+  "Auto",
+  "Vida",
+  "Residencial",
+  "Empresarial",
+  "Saúde",
+  "Consórcio",
+  "Embarcador",
+  "Transporte",
+  "Viagem",
+  "Porto RC Profissional",
+  "Tuba/Instrumento",
+] as const;
+
+async function resolveBranchId(supabase: any, name: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("branches")
+    .select("id")
+    .eq("name", name)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error(`Ramo "${name}" não cadastrado`);
+  return data.id as string;
+}
 
 type PolicyInput = Partial<Omit<Policy, "id" | "number">>;
 
 function policyColumns(input: PolicyInput, clientId?: string) {
   const out: Record<string, unknown> = {};
   if (clientId) out["client_id"] = clientId;
-  if (input.branch !== undefined) out["branch"] = input.branch;
+  // Ramo legado (enum) só é preenchido quando o nome existe no enum antigo; branch_id é a fonte.
+  if (input.branch !== undefined)
+    out["branch"] = (LEGACY_BRANCHES as readonly string[]).includes(input.branch)
+      ? input.branch
+      : null;
   if (input.insurer !== undefined) out["insurer"] = input.insurer;
   if (input.premium !== undefined) out["premium"] = input.premium;
   if (input.startDate !== undefined) out["start_date"] = input.startDate;
@@ -276,6 +305,7 @@ async function insertPolicy(
     .from("policies")
     .insert({
       ...policyColumns(input, clientId),
+      ...(input.branch ? { branch_id: await resolveBranchId(context.supabase, input.branch) } : {}),
       number,
       assignee_id: input.assigneeId || context.userId,
       renewed_from_id: renewedFromId ?? null,
@@ -331,7 +361,12 @@ export const updatePolicy = createServerFn({ method: "POST" })
 
     const { error } = await context.supabase
       .from("policies")
-      .update(policyColumns(data.patch, clientId) as never)
+      .update({
+        ...policyColumns(data.patch, clientId),
+        ...(data.patch.branch
+          ? { branch_id: await resolveBranchId(context.supabase, data.patch.branch) }
+          : {}),
+      } as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
 

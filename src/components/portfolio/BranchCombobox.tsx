@@ -79,14 +79,21 @@ export function BranchCombobox({
                     setOpen(false);
                   }}
                 >
-                  <Check className={cn("h-4 w-4", value === b.name ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn("h-4 w-4", value === b.name ? "opacity-100" : "opacity-0")}
+                  />
                   {b.name}
                 </CommandItem>
               ))}
             </CommandGroup>
             {term && !exists && (
               <CommandGroup forceMount>
-                <CommandItem forceMount value={`__new__${term}`} disabled={saving} onSelect={addNew}>
+                <CommandItem
+                  forceMount
+                  value={`__new__${term}`}
+                  disabled={saving}
+                  onSelect={addNew}
+                >
                   <Plus className="h-4 w-4" />
                   Usar e adicionar novo ramo "{term}"
                 </CommandItem>
