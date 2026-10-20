@@ -22,7 +22,7 @@ export type ClientStats = {
   openOpportunities: number;
 };
 
-const isActiveStatus = (s: PolicyStatus) => s === "ativa" || s === "pendente";
+const isActiveStatus = (s: PolicyStatus) => s === "ativa" || s === "a_vencer" || s === "pendente";
 
 export function getClientStats(
   clientName: string,

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Search, Users, Plus } from "lucide-react";
 import { formatBRL, formatDateShort, type Branch } from "@/lib/mock/data";
 import {
@@ -56,6 +57,7 @@ export function ClientsTab({ onSelectClient }: Props) {
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
   const [newOpen, setNewOpen] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const all = useMemo(
     () => listClientsWithStats(clients, policies, commissions),
@@ -66,6 +68,7 @@ export function ClientsTab({ onSelectClient }: Props) {
     () =>
       all
         .filter((s: ClientStats) => {
+          if (!showInactive && s.client.isActive === false) return false;
           if (status !== "all" && s.status !== status) return false;
           if (branch !== "all" && !s.branches.includes(branch as Branch)) return false;
           if (q !== "") {
@@ -80,7 +83,7 @@ export function ClientsTab({ onSelectClient }: Props) {
           return true;
         })
         .sort((a, b) => compareByPrefixNumber(a.client.name, b.client.name)),
-    [all, q, status, branch],
+    [all, q, status, branch, showInactive],
   );
 
   return (
@@ -131,6 +134,10 @@ export function ClientsTab({ onSelectClient }: Props) {
               <SelectItem value="Saúde">Saúde</SelectItem>
             </SelectContent>
           </Select>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+            <Switch checked={showInactive} onCheckedChange={setShowInactive} />
+            Mostrar inativados
+          </label>
         </div>
       </Card>
 

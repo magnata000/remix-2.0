@@ -35,7 +35,6 @@ import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
-
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -44,7 +43,6 @@ type Props = {
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde"];
 const STATUSES: { key: PolicyStatus; label: string }[] = [
-
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
 ];
@@ -93,7 +91,6 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
   }, [availableInsurers, insurer]);
 
   const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
-
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -179,7 +176,6 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                     </SelectItem>
                   ))}
                 </SelectContent>
-
               </Select>
             </div>
             <div>

@@ -1,5 +1,13 @@
 // Mock data para vitrine TheInsuranceOS
-export type PolicyStatus = "ativa" | "vencida" | "pendente" | "cancelada" | "renovada";
+export type PolicyStatus =
+  | "ativa"
+  | "a_vencer"
+  | "vencida"
+  | "renovada"
+  | "nao_renovada"
+  | "cancelada"
+  /** @deprecated legado — não é mais gerado */
+  | "pendente";
 export type Branch =
   | "Auto"
   | "Vida"
@@ -40,6 +48,9 @@ export type Client = {
   document: string;
   birthDate?: string;
   statusOverride?: ClientStatus;
+  /** false = inativado logicamente (some das listagens padrão). */
+  isActive?: boolean;
+  sequenceNumber?: number;
 };
 
 export type FollowUpType = "ligacao" | "email" | "whatsapp" | "reuniao" | "videocall" | "nota";

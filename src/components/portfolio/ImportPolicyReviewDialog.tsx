@@ -102,23 +102,50 @@ export function ImportPolicyReviewDialog({ open, onOpenChange, extraction, onCon
 
         <div className="space-y-4">
           <Field label="Cliente" score={conf.clientName}>
-            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="rounded-xl bg-muted border-0" />
+            <Input
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              className="rounded-xl bg-muted border-0"
+            />
           </Field>
           <Field label="Seguradora" score={conf.insurer}>
-            <Input value={insurer} onChange={(e) => setInsurer(e.target.value)} className="rounded-xl bg-muted border-0" />
+            <Input
+              value={insurer}
+              onChange={(e) => setInsurer(e.target.value)}
+              className="rounded-xl bg-muted border-0"
+            />
           </Field>
           <Field label="Número da apólice" score={conf.policyNumber}>
-            <Input value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)} className="rounded-xl bg-muted border-0" />
+            <Input
+              value={policyNumber}
+              onChange={(e) => setPolicyNumber(e.target.value)}
+              className="rounded-xl bg-muted border-0"
+            />
           </Field>
           <Field label="Prêmio (R$)" score={conf.premium}>
-            <Input value={premium} onChange={(e) => setPremium(e.target.value)} inputMode="decimal" className="rounded-xl bg-muted border-0" />
+            <Input
+              value={premium}
+              onChange={(e) => setPremium(e.target.value)}
+              inputMode="decimal"
+              className="rounded-xl bg-muted border-0"
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Início vigência" score={conf.startDate}>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="rounded-xl bg-muted border-0" />
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="rounded-xl bg-muted border-0"
+              />
             </Field>
             <Field label="Fim vigência" score={conf.endDate}>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="rounded-xl bg-muted border-0" />
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="rounded-xl bg-muted border-0"
+              />
             </Field>
           </div>
         </div>
@@ -127,7 +154,10 @@ export function ImportPolicyReviewDialog({ open, onOpenChange, extraction, onCon
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">
             Cancelar
           </Button>
-          <Button onClick={confirm} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
+          <Button
+            onClick={confirm}
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+          >
             Continuar
           </Button>
         </DialogFooter>

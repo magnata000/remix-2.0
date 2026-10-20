@@ -10,6 +10,7 @@ import {
   setClientStatus as setClientStatusFn,
   updateClient as updateClientFn,
 } from "@/lib/portfolio/carteira.functions";
+import { reactivateClient as reactivateClientFn } from "@/lib/portfolio/portfolio.functions";
 
 type AddClientInput = Omit<Client, "id">;
 
@@ -19,7 +20,9 @@ type Ctx = {
   addClient: (input: AddClientInput) => Promise<Client>;
   updateClient: (id: string, patch: Partial<AddClientInput>) => Promise<void>;
   setClientStatus: (id: string, status: ClientStatus) => Promise<void>;
-  removeClient: (id: string) => Promise<void>;
+  /** Exclui se não houver vínculos; caso contrário inativa. */
+  removeClient: (id: string) => Promise<"deleted" | "deactivated">;
+  reactivateClient: (id: string) => Promise<void>;
   findByName: (name: string) => Client | undefined;
 };
 
@@ -34,6 +37,7 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
   const update = useServerFn(updateClientFn);
   const setStatus = useServerFn(setClientStatusFn);
   const remove = useServerFn(deleteClientFn);
+  const reactivate = useServerFn(reactivateClientFn);
 
   const { data, isLoading } = useQuery({
     queryKey: CLIENTS_KEY,
@@ -66,6 +70,14 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
       void qc.invalidateQueries({ queryKey: ["commissions"] });
       void qc.invalidateQueries({ queryKey: ["follow-ups"] });
       void qc.invalidateQueries({ queryKey: ["documents"] });
+      void qc.invalidateQueries({ queryKey: ["timeline"] });
+    },
+  });
+  const reactivateMutation = useMutation({
+    mutationFn: (id: string) => reactivate({ data: { id } }),
+    onSuccess: () => {
+      invalidate();
+      void qc.invalidateQueries({ queryKey: ["timeline"] });
     },
   });
 
@@ -86,17 +98,39 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
     [statusMutation],
   );
   const removeClient = useCallback(
-    async (id: string) => {
-      await deleteMutation.mutateAsync(id);
-    },
+    async (id: string) => (await deleteMutation.mutateAsync(id)).result,
     [deleteMutation],
+  );
+  const reactivateClient = useCallback(
+    async (id: string) => {
+      await reactivateMutation.mutateAsync(id);
+    },
+    [reactivateMutation],
   );
 
   const findByName = useCallback((name: string) => clients.find((c) => c.name === name), [clients]);
 
   const value = useMemo<Ctx>(
-    () => ({ clients, isLoading, addClient, updateClient, setClientStatus, removeClient, findByName }),
-    [clients, isLoading, addClient, updateClient, setClientStatus, removeClient, findByName],
+    () => ({
+      clients,
+      isLoading,
+      addClient,
+      updateClient,
+      setClientStatus,
+      removeClient,
+      reactivateClient,
+      findByName,
+    }),
+    [
+      clients,
+      isLoading,
+      addClient,
+      updateClient,
+      setClientStatus,
+      removeClient,
+      reactivateClient,
+      findByName,
+    ],
   );
 
   return <ClientCtx.Provider value={value}>{children}</ClientCtx.Provider>;

@@ -30,6 +30,8 @@ function mapClient(r: Row): Client {
     document: s(r["document"]),
     birthDate: (r["birth_date"] as string | null) ?? undefined,
     statusOverride: (r["status_override"] as ClientStatus | null) ?? undefined,
+    isActive: r["is_active"] !== false,
+    sequenceNumber: n(r["sequence_number"]),
   };
 }
 
@@ -121,7 +123,8 @@ function policyColumns(input: PolicyInput, clientId?: string) {
   if (input.taxaImposto !== undefined) out["taxa_imposto"] = input.taxaImposto;
   if (input.healthAnniversary !== undefined)
     out["health_anniversary"] = input.healthAnniversary || null;
-  if (input.healthInitialValue !== undefined) out["health_initial_value"] = input.healthInitialValue;
+  if (input.healthInitialValue !== undefined)
+    out["health_initial_value"] = input.healthInitialValue;
   if (input.healthCategory !== undefined) out["health_category"] = input.healthCategory;
   if (input.healthCoparticipation !== undefined)
     out["health_coparticipation"] = input.healthCoparticipation;
@@ -214,29 +217,16 @@ export const setClientStatus = createServerFn({ method: "POST" })
     return mapClient(row as Row);
   });
 
+/** Regra no banco: exclui se não houver vínculos; senão inativa (is_active=false). */
 export const deleteClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
-
-    // Remove os arquivos físicos do bucket antes de excluir o cliente
-    // (doc_files cai em cascata, mas os objetos do storage não).
-    const { data: files, error: fErr } = await supabase
-      .from("doc_files")
-      .select("storage_path")
-      .eq("client_id", data.id);
-    if (fErr) throw new Error(fErr.message);
-    const paths = (files ?? [])
-      .map((r) => (r as Row)["storage_path"])
-      .filter((p): p is string => typeof p === "string" && p.length > 0);
-    if (paths.length) {
-      await supabase.storage.from("client-documents").remove(paths);
-    }
-
-    const { error } = await supabase.from("clients").delete().eq("id", data.id);
+  .handler(async ({ data, context }): Promise<{ result: "deleted" | "deactivated" }> => {
+    const { data: result, error } = await context.supabase.rpc("remove_client", {
+      _client_id: data.id,
+    });
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { result: result as "deleted" | "deactivated" };
   });
 
 /* ----------------------------------------------------------------- policies */
@@ -279,8 +269,8 @@ async function insertPolicy(
   renewedFromId?: string,
 ): Promise<Policy> {
   const clientId = await resolveClientId(context.supabase, input.clientName, context.userId);
-  const { data: numbers } = await context.supabase.from("policies").select("number");
-  const number = nextNumber(((numbers ?? []) as { number: string }[]).map((r) => r.number));
+  // Número legível é gerado pelo banco (trigger); valor enviado é ignorado.
+  const number = "";
 
   const { data: row, error } = await context.supabase
     .from("policies")
@@ -327,13 +317,8 @@ export const renewPolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { sourceId: string; input: PolicyInput & { clientName: string } }) => data)
   .handler(async ({ data, context }): Promise<Policy> => {
-    const created = await insertPolicy(context as never, data.input, data.sourceId);
-    const { error } = await context.supabase
-      .from("policies")
-      .update({ status: "renovada", renewed_to_id: created.id })
-      .eq("id", data.sourceId);
-    if (error) throw new Error(error.message);
-    return created;
+    // O banco marca a origem como renovada, encadeia a linhagem e registra a Timeline.
+    return insertPolicy(context as never, data.input, data.sourceId);
   });
 
 export const updatePolicy = createServerFn({ method: "POST" })

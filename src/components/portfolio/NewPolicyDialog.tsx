@@ -51,7 +51,6 @@ import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore"
 import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { toast } from "sonner";
 
-
 export type PolicyPrefill = {
   clientName?: string;
   insurer?: string;
@@ -71,7 +70,6 @@ type Props = {
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const STATUSES: { key: PolicyStatus; label: string }[] = [
-
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
   { key: "vencida", label: "Vencida" },
@@ -84,7 +82,13 @@ const addYears = (d: Date, n: number) => {
   return r;
 };
 
-export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourcePolicy, prefill }: Props) {
+export function NewPolicyDialog({
+  open,
+  onOpenChange,
+  defaultClientName,
+  sourcePolicy,
+  prefill,
+}: Props) {
   const isRenewal = !!sourcePolicy;
   const { clients } = useClients();
   const { addPolicy, renewPolicy } = usePolicies();
@@ -347,7 +351,6 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
     }
   };
 
-
   const showErr = (key: string) => touched && errors[key];
 
   return (
@@ -426,7 +429,6 @@ export function NewPolicyDialog({ open, onOpenChange, defaultClientName, sourceP
                     </SelectItem>
                   ))}
                 </SelectContent>
-
               </Select>
             </div>
             <div>
