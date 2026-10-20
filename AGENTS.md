@@ -1,0 +1,2 @@
+- Carteira business rules (policy number, renewal chain, status transitions, timeline, client delete-vs-deactivate) live in database triggers/RPCs; app code calls them instead of reimplementing — keeps a single source of truth.
+- Branches and insurers are data tables (branches/insurers) referenced by FK; legacy enum columns on policies are deprecated bridges.
