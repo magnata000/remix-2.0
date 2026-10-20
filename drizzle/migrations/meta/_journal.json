@@ -64,6 +64,13 @@
       "when": 1792507578581,
       "tag": "0008_expenses_page_access",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792509259049,
+      "tag": "0009_purge_legacy_commissions",
+      "breakpoints": true
     }
   ]
 }
