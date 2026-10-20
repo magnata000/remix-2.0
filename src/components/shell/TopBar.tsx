@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { FEATURES } from "@/lib/featureFlags";
+import { NotificationBell } from "./NotificationBell";
 import { useRole } from "@/lib/auth/roleStore";
 import { visibleModules } from "@/lib/auth/moduleAccess";
 
