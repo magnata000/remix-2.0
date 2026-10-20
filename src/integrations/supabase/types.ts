@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          justificativa: string | null
+          name: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["access_request_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          justificativa?: string | null
+          name: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["access_request_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          justificativa?: string | null
+          name?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["access_request_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_requests_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beneficiaries: {
         Row: {
           birth_date: string
@@ -134,6 +181,51 @@ export type Database = {
             columns: ["assignee_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_config: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          insurer_id: string
+          modelo_pagamento: Database["public"]["Enums"]["payment_model"]
+          percentual_padrao: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          insurer_id: string
+          modelo_pagamento: Database["public"]["Enums"]["payment_model"]
+          percentual_padrao: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          insurer_id?: string
+          modelo_pagamento?: Database["public"]["Enums"]["payment_model"]
+          percentual_padrao?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_config_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_config_insurer_id_fkey"
+            columns: ["insurer_id"]
+            isOneToOne: false
+            referencedRelation: "insurers"
             referencedColumns: ["id"]
           },
         ]
@@ -557,6 +649,56 @@ export type Database = {
           source?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_actionable: boolean
+          read_at: string | null
+          recipient_user_id: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          resolved_at: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_actionable?: boolean
+          read_at?: string | null
+          recipient_user_id?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          resolved_at?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_actionable?: boolean
+          read_at?: string | null
+          recipient_user_id?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          resolved_at?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       opportunities: {
         Row: {
@@ -1397,30 +1539,74 @@ export type Database = {
       }
       team_members: {
         Row: {
+          can_view_all_opportunities: boolean
           created_at: string
           email: string
           id: string
           name: string
           role: string
+          role_label: Database["public"]["Enums"]["role_label"]
+          status: Database["public"]["Enums"]["user_status"]
           updated_at: string
         }
         Insert: {
+          can_view_all_opportunities?: boolean
           created_at?: string
           email: string
           id: string
           name: string
           role?: string
+          role_label?: Database["public"]["Enums"]["role_label"]
+          status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
         Update: {
+          can_view_all_opportunities?: boolean
           created_at?: string
           email?: string
           id?: string
           name?: string
           role?: string
+          role_label?: Database["public"]["Enums"]["role_label"]
+          status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
         Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          can_access: boolean
+          created_at: string
+          id: string
+          page_key: Database["public"]["Enums"]["page_key"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          page_key: Database["public"]["Enums"]["page_key"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          page_key?: Database["public"]["Enums"]["page_key"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1455,6 +1641,10 @@ export type Database = {
         Returns: boolean
       }
       can_view_all: { Args: { _user_id: string }; Returns: boolean }
+      can_view_all_opportunities: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       cancel_policy: {
         Args: {
           _categoria: string
@@ -1468,6 +1658,13 @@ export type Database = {
       ensure_policy_folders: {
         Args: { _policy_id: string }
         Returns: undefined
+      }
+      has_page_access: {
+        Args: {
+          _page: Database["public"]["Enums"]["page_key"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -1510,6 +1707,7 @@ export type Database = {
       }
     }
     Enums: {
+      access_request_status: "pendente" | "aprovado" | "recusado"
       app_role: "admin" | "pos_venda" | "vendedor"
       beneficiary_title:
         | "titular"
@@ -1582,6 +1780,21 @@ export type Database = {
         | "Aliro"
       kanban_stage: "lead" | "cotacao" | "negociacao" | "fechado" | "perdido"
       lost_reason: "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro"
+      notification_type: "access_request" | "policy_not_renewed_pending_reason"
+      page_key:
+        | "carteira"
+        | "kanban_pipeline"
+        | "kanban_tarefas"
+        | "financeiro_comissoes"
+        | "financeiro_despesas"
+        | "financeiro_relatorios"
+        | "configuracoes"
+        | "dashboard"
+      payment_model:
+        | "adiantamento"
+        | "parcelado"
+        | "parcela_vitalicio"
+        | "parcelado_vitalicio"
       policy_status:
         | "ativa"
         | "vencida"
@@ -1595,6 +1808,7 @@ export type Database = {
         | "anual"
         | "unico"
         | "distribuido_na_vigencia"
+      role_label: "admin" | "pos_venda" | "comercial"
       scheduled_kind: "data" | "semana" | "recorrente"
       task_priority: "alta" | "media" | "baixa"
       tax_kind: "sobre_receita" | "sobre_lucro"
@@ -1611,6 +1825,7 @@ export type Database = {
         | "cliente_inativado"
         | "cliente_reativado"
         | "outro"
+      user_status: "convidado" | "ativo" | "bloqueado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1738,6 +1953,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      access_request_status: ["pendente", "aprovado", "recusado"],
       app_role: ["admin", "pos_venda", "vendedor"],
       beneficiary_title: [
         "titular",
@@ -1817,6 +2033,26 @@ export const Constants = {
       ],
       kanban_stage: ["lead", "cotacao", "negociacao", "fechado", "perdido"],
       lost_reason: ["preco", "cobertura", "prazo", "sem-retorno", "outro"],
+      notification_type: [
+        "access_request",
+        "policy_not_renewed_pending_reason",
+      ],
+      page_key: [
+        "carteira",
+        "kanban_pipeline",
+        "kanban_tarefas",
+        "financeiro_comissoes",
+        "financeiro_despesas",
+        "financeiro_relatorios",
+        "configuracoes",
+        "dashboard",
+      ],
+      payment_model: [
+        "adiantamento",
+        "parcelado",
+        "parcela_vitalicio",
+        "parcelado_vitalicio",
+      ],
       policy_status: [
         "ativa",
         "vencida",
@@ -1832,6 +2068,7 @@ export const Constants = {
         "unico",
         "distribuido_na_vigencia",
       ],
+      role_label: ["admin", "pos_venda", "comercial"],
       scheduled_kind: ["data", "semana", "recorrente"],
       task_priority: ["alta", "media", "baixa"],
       tax_kind: ["sobre_receita", "sobre_lucro"],
@@ -1849,6 +2086,7 @@ export const Constants = {
         "cliente_reativado",
         "outro",
       ],
+      user_status: ["convidado", "ativo", "bloqueado"],
     },
   },
 } as const

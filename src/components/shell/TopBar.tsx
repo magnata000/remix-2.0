@@ -18,7 +18,6 @@ import {
   Calculator,
   Wallet,
   Settings,
-  Bell,
   Search,
   Menu,
   Zap,
@@ -30,6 +29,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { FEATURES } from "@/lib/featureFlags";
+import { NotificationBell } from "./NotificationBell";
 import { useRole } from "@/lib/auth/roleStore";
 import { visibleModules } from "@/lib/auth/moduleAccess";
 
@@ -60,9 +60,9 @@ export function TopBar({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
-  const { appRole } = useRole();
+  const { pages } = useRole();
   const modules = allModules.filter(
-    (m) => (m.key !== "multicalc" || FEATURES.multicalc) && visibleModules(appRole).includes(m.key),
+    (m) => (m.key !== "multicalc" || FEATURES.multicalc) && visibleModules(pages).includes(m.key),
   );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -134,10 +134,7 @@ export function TopBar({
               className="h-9 w-48 rounded-full pl-9 bg-muted border-0"
             />
           </div>
-          <Button variant="ghost" size="icon" className="rounded-full relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-warning" />
-          </Button>
+          <NotificationBell />
           <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-border">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

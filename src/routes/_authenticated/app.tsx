@@ -25,6 +25,8 @@ import { NavigationProvider } from "@/lib/navigation";
 import { FEATURES } from "@/lib/featureFlags";
 import { RoleProvider, useRole } from "@/lib/auth/roleStore";
 import { canAccessModule, defaultModule } from "@/lib/auth/moduleAccess";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
@@ -56,22 +58,52 @@ function AppRoot() {
 }
 
 function AppShell() {
+  const { accessStatus, loading } = useRole();
+  if (!loading && accessStatus !== "ok") return <AccessGate status={accessStatus} />;
+  return <AppModules />;
+}
+
+function AccessGate({ status }: { status: "pendente" | "bloqueado" }) {
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/auth";
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <div className="max-w-md text-center space-y-4">
+        <h1 className="text-2xl font-bold">
+          {status === "pendente" ? "Acesso aguardando autorização" : "Acesso bloqueado"}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {status === "pendente"
+            ? "Sua solicitação foi enviada ao administrador. Você poderá entrar assim que ela for aprovada."
+            : "Seu acesso foi suspenso pelo administrador da corretora."}
+        </p>
+        <Button variant="outline" className="rounded-xl" onClick={signOut}>
+          Sair
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function AppModules() {
   const [rawActive, setActive] = useState<ModuleKey>("dashboard");
-  const { appRole, loading } = useRole();
+  const { pages, loading } = useRole();
 
   // Guards: Multicálculo desabilitado ou módulo sem permissão caem no fallback.
-  const fallback = defaultModule(appRole);
+  const fallback = defaultModule(pages);
   const active: ModuleKey =
     (rawActive === "multicalc" && !FEATURES.multicalc) ||
-    (!loading && !canAccessModule(appRole, rawActive))
+    (!loading && !canAccessModule(pages, rawActive))
       ? fallback
       : rawActive;
 
   useEffect(() => {
     if (loading) return;
-    if (!canAccessModule(appRole, rawActive)) setActive(fallback);
+    if (!canAccessModule(pages, rawActive)) setActive(fallback);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, appRole]);
+  }, [loading, pages.join(",")]);
 
   return (
     <PipelineStoreProvider>

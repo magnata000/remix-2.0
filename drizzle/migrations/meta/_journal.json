@@ -36,6 +36,13 @@
       "when": 1792502724285,
       "tag": "0004_policies_branch_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792504442003,
+      "tag": "0005_configuracoes_v1",
+      "breakpoints": true
     }
   ]
 }

@@ -51,6 +51,10 @@ import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore"
 import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { toast } from "sonner";
 import { BranchCombobox } from "./BranchCombobox";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listCommissionModels } from "@/lib/settings/settings.functions";
+import { listBranches, listInsurers } from "@/lib/portfolio/portfolio.functions";
 
 export type PolicyPrefill = {
   clientName?: string;
@@ -118,6 +122,20 @@ export function NewPolicyDialog({
 
   // Extras: commission
   const [commissionStr, setCommissionStr] = useState("");
+
+  // Modelo Seguradora + Ramo (Configurações) pré-carrega o % como ponto de partida editável.
+  const modelsFn = useServerFn(listCommissionModels);
+  const branchListFn = useServerFn(listBranches);
+  const insurerListFn = useServerFn(listInsurers);
+  const { data: commissionModels = [] } = useQuery({ queryKey: ["commission-models"], queryFn: () => modelsFn(), enabled: open });
+  const { data: branchCatalog = [] } = useQuery({ queryKey: ["branches"], queryFn: () => branchListFn(), enabled: open });
+  const { data: insurerCatalog = [] } = useQuery({ queryKey: ["insurers"], queryFn: () => insurerListFn(), enabled: open });
+  useEffect(() => {
+    const bId = branchCatalog.find((b) => b.name === branch)?.id;
+    const iId = insurerCatalog.find((i) => i.name === insurer)?.id;
+    const m = commissionModels.find((x) => x.branchId === bId && x.insurerId === iId);
+    if (m) setCommissionStr(String(m.percentualPadrao).replace(".", ","));
+  }, [branch, insurer, commissionModels, branchCatalog, insurerCatalog]);
   const [autoScheme, setAutoScheme] = useState<"esgotamento" | "parcela">("esgotamento");
   const [autoInstallments, setAutoInstallments] = useState("10");
   // Saúde
