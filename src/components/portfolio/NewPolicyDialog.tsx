@@ -50,6 +50,7 @@ import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSp
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { toast } from "sonner";
+import { BranchCombobox } from "./BranchCombobox";
 
 export type PolicyPrefill = {
   clientName?: string;
@@ -68,7 +69,6 @@ type Props = {
   prefill?: PolicyPrefill | null;
 };
 
-const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const STATUSES: { key: PolicyStatus; label: string }[] = [
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
@@ -403,18 +403,7 @@ export function NewPolicyDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Ramo *</Label>
-              <Select value={branch} onValueChange={(v) => setBranch(v as Branch)}>
-                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BRANCHES.map((b) => (
-                    <SelectItem key={b} value={b}>
-                      {b}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <BranchCombobox value={branch} onChange={(v) => setBranch(v as Branch)} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Seguradora *</Label>
