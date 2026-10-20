@@ -23,7 +23,7 @@ import {
 import type { Database } from "@/integrations/supabase/types";
 
 type EventType = Database["public"]["Enums"]["commission_event_type"];
-type Row = Awaited<ReturnType<typeof listFinanceCommissions>>[number];
+type Row = NonNullable<Awaited<ReturnType<typeof listFinanceCommissions>>>[number];
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente", atrasado: "Atrasada", conciliada: "Conciliada", parcial: "Parcial",
@@ -68,7 +68,8 @@ export function CommissionsLedgerTab() {
   const to = `${year}-${pad(month + 1)}-${pad(lastDay(year, month))}`;
   const fetchFn = useServerFn(listFinanceCommissions);
   const queryKey = ["finance-commissions", from, to];
-  const { data: rows = [], isLoading } = useQuery({ queryKey, queryFn: () => fetchFn({ data: { from, to } }) });
+  const { data, isLoading } = useQuery({ queryKey, queryFn: () => fetchFn({ data: { from, to } }) });
+  const rows: Row[] = data ?? [];
 
   const insurerName = (c: Row) => c.insurers?.name ?? "—";
   const branchName = (c: Row) => c.policies?.branches?.name ?? "—";
