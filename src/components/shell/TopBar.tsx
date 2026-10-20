@@ -60,9 +60,9 @@ export function TopBar({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
-  const { appRole } = useRole();
+  const { pages } = useRole();
   const modules = allModules.filter(
-    (m) => (m.key !== "multicalc" || FEATURES.multicalc) && visibleModules(appRole).includes(m.key),
+    (m) => (m.key !== "multicalc" || FEATURES.multicalc) && visibleModules(pages).includes(m.key),
   );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
