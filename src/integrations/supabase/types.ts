@@ -284,62 +284,289 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_events: {
+        Row: {
+          commission_id: string
+          criado_em: string
+          criado_por: string | null
+          documento_referencia: string | null
+          id: string
+          installment_id: string | null
+          motivo: string | null
+          observacao: string | null
+          tipo: Database["public"]["Enums"]["commission_event_type"]
+          valor: number
+        }
+        Insert: {
+          commission_id: string
+          criado_em?: string
+          criado_por?: string | null
+          documento_referencia?: string | null
+          id?: string
+          installment_id?: string | null
+          motivo?: string | null
+          observacao?: string | null
+          tipo: Database["public"]["Enums"]["commission_event_type"]
+          valor: number
+        }
+        Update: {
+          commission_id?: string
+          criado_em?: string
+          criado_por?: string | null
+          documento_referencia?: string | null
+          id?: string
+          installment_id?: string | null
+          motivo?: string | null
+          observacao?: string | null
+          tipo?: Database["public"]["Enums"]["commission_event_type"]
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_events_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "commissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_events_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_events_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "commission_installments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_installments: {
+        Row: {
+          commission_id: string
+          competencia: string
+          created_at: string
+          id: string
+          numero_parcela: number
+          status: Database["public"]["Enums"]["commission_status"]
+          valor_previsto: number
+        }
+        Insert: {
+          commission_id: string
+          competencia: string
+          created_at?: string
+          id?: string
+          numero_parcela: number
+          status?: Database["public"]["Enums"]["commission_status"]
+          valor_previsto: number
+        }
+        Update: {
+          commission_id?: string
+          competencia?: string
+          created_at?: string
+          id?: string
+          numero_parcela?: number
+          status?: Database["public"]["Enums"]["commission_status"]
+          valor_previsto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_installments_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "commissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_payout_payments: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          observacao: string | null
+          payout_id: string
+          usuario_responsavel: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          payout_id: string
+          usuario_responsavel?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          payout_id?: string
+          usuario_responsavel?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payout_payments_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "commission_payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payout_payments_usuario_responsavel_fkey"
+            columns: ["usuario_responsavel"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_payouts: {
+        Row: {
+          commission_id: string
+          created_at: string
+          id: string
+          percentual_repasse: number
+          updated_at: string
+          user_id: string
+          valor_devido: number
+          valor_pago: number
+        }
+        Insert: {
+          commission_id: string
+          created_at?: string
+          id?: string
+          percentual_repasse: number
+          updated_at?: string
+          user_id: string
+          valor_devido?: number
+          valor_pago?: number
+        }
+        Update: {
+          commission_id?: string
+          created_at?: string
+          id?: string
+          percentual_repasse?: number
+          updated_at?: string
+          user_id?: string
+          valor_devido?: number
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payouts_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "commissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payouts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commissions: {
         Row: {
           amount: number
+          base_calculo: number | null
+          client_id: string | null
           client_name: string
+          competencia: string | null
           created_at: string
           due_date: string
           id: string
           installment_index: number | null
           installment_total: number | null
           insurer: Database["public"]["Enums"]["insurer"]
+          insurer_id: string | null
           kind: Database["public"]["Enums"]["commission_kind"] | null
+          modelo_pagamento: Database["public"]["Enums"]["payment_model"] | null
           paid_at: string | null
+          percentual: number | null
           policy_id: string
           policy_number: string
           refund_reason: string | null
           refunded_at: string | null
           status: Database["public"]["Enums"]["commission_status"]
           updated_at: string
+          valor_previsto: number | null
         }
         Insert: {
           amount: number
+          base_calculo?: number | null
+          client_id?: string | null
           client_name: string
+          competencia?: string | null
           created_at?: string
           due_date: string
           id?: string
           installment_index?: number | null
           installment_total?: number | null
           insurer: Database["public"]["Enums"]["insurer"]
+          insurer_id?: string | null
           kind?: Database["public"]["Enums"]["commission_kind"] | null
+          modelo_pagamento?: Database["public"]["Enums"]["payment_model"] | null
           paid_at?: string | null
+          percentual?: number | null
           policy_id: string
           policy_number: string
           refund_reason?: string | null
           refunded_at?: string | null
           status?: Database["public"]["Enums"]["commission_status"]
           updated_at?: string
+          valor_previsto?: number | null
         }
         Update: {
           amount?: number
+          base_calculo?: number | null
+          client_id?: string | null
           client_name?: string
+          competencia?: string | null
           created_at?: string
           due_date?: string
           id?: string
           installment_index?: number | null
           installment_total?: number | null
           insurer?: Database["public"]["Enums"]["insurer"]
+          insurer_id?: string | null
           kind?: Database["public"]["Enums"]["commission_kind"] | null
+          modelo_pagamento?: Database["public"]["Enums"]["payment_model"] | null
           paid_at?: string | null
+          percentual?: number | null
           policy_id?: string
           policy_number?: string
           refund_reason?: string | null
           refunded_at?: string | null
           status?: Database["public"]["Enums"]["commission_status"]
           updated_at?: string
+          valor_previsto?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "commissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_insurer_id_fkey"
+            columns: ["insurer_id"]
+            isOneToOne: false
+            referencedRelation: "insurers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "commissions_policy_id_fkey"
             columns: ["policy_id"]
@@ -505,39 +732,62 @@ export type Database = {
           amount: number
           category: string
           created_at: string
+          created_by: string | null
           description: string
+          dre_classification: Database["public"]["Enums"]["dre_classification"]
           dre_kind: Database["public"]["Enums"]["dre_category_kind"]
+          due_date: string | null
           due_day: number | null
           id: string
           notes: string | null
+          paid_at: string | null
           recurrence: Database["public"]["Enums"]["expense_recurrence"]
+          status: Database["public"]["Enums"]["expense_status"]
           updated_at: string
         }
         Insert: {
           amount?: number
           category: string
           created_at?: string
+          created_by?: string | null
           description: string
+          dre_classification?: Database["public"]["Enums"]["dre_classification"]
           dre_kind?: Database["public"]["Enums"]["dre_category_kind"]
+          due_date?: string | null
           due_day?: number | null
           id?: string
           notes?: string | null
+          paid_at?: string | null
           recurrence?: Database["public"]["Enums"]["expense_recurrence"]
+          status?: Database["public"]["Enums"]["expense_status"]
           updated_at?: string
         }
         Update: {
           amount?: number
           category?: string
           created_at?: string
+          created_by?: string | null
           description?: string
+          dre_classification?: Database["public"]["Enums"]["dre_classification"]
           dre_kind?: Database["public"]["Enums"]["dre_category_kind"]
+          due_date?: string | null
           due_day?: number | null
           id?: string
           notes?: string | null
+          paid_at?: string | null
           recurrence?: Database["public"]["Enums"]["expense_recurrence"]
+          status?: Database["public"]["Enums"]["expense_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       follow_ups: {
         Row: {
@@ -1654,6 +1904,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      commission_recognized: {
+        Args: { _commission_id: string }
+        Returns: number
+      }
       ensure_client_root: { Args: { _client_id: string }; Returns: string }
       ensure_policy_folders: {
         Args: { _policy_id: string }
@@ -1730,6 +1984,15 @@ export type Database = {
         | "Porto RC Profissional"
         | "Tuba/Instrumento"
       client_status: "ativo" | "inativo" | "lead"
+      commission_event_type:
+        | "comissao"
+        | "bonificacao"
+        | "imposto"
+        | "estorno_integral"
+        | "estorno_parcial"
+        | "ajuste_positivo"
+        | "ajuste_negativo"
+        | "pagamento"
       commission_kind:
         | "agenciamento"
         | "recorrencia"
@@ -1750,8 +2013,19 @@ export type Database = {
         | "atrasado"
         | "devolvido"
         | "cancelada"
+        | "conciliada"
+        | "parcial"
+        | "divergente"
+        | "estornada"
+        | "ajustada"
       dre_category_kind: "fixa" | "variavel" | "pessoal" | "imposto" | "outra"
+      dre_classification:
+        | "custo_operacional"
+        | "despesa_operacional"
+        | "imposto_sobre_lucro"
+        | "outro"
       expense_recurrence: "avulsa" | "mensal"
+      expense_status: "aguardando" | "paga" | "vencida"
       follow_up_status: "agendado" | "realizado" | "cancelado" | "adiado"
       follow_up_type:
         | "ligacao"
@@ -1978,6 +2252,16 @@ export const Constants = {
         "Tuba/Instrumento",
       ],
       client_status: ["ativo", "inativo", "lead"],
+      commission_event_type: [
+        "comissao",
+        "bonificacao",
+        "imposto",
+        "estorno_integral",
+        "estorno_parcial",
+        "ajuste_positivo",
+        "ajuste_negativo",
+        "pagamento",
+      ],
       commission_kind: [
         "agenciamento",
         "recorrencia",
@@ -2000,9 +2284,21 @@ export const Constants = {
         "atrasado",
         "devolvido",
         "cancelada",
+        "conciliada",
+        "parcial",
+        "divergente",
+        "estornada",
+        "ajustada",
       ],
       dre_category_kind: ["fixa", "variavel", "pessoal", "imposto", "outra"],
+      dre_classification: [
+        "custo_operacional",
+        "despesa_operacional",
+        "imposto_sobre_lucro",
+        "outro",
+      ],
       expense_recurrence: ["avulsa", "mensal"],
+      expense_status: ["aguardando", "paga", "vencida"],
       follow_up_status: ["agendado", "realizado", "cancelado", "adiado"],
       follow_up_type: [
         "ligacao",
