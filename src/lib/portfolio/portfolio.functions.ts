@@ -16,7 +16,7 @@ export type TimelineEvent = {
   entityId: string;
   eventType: string;
   description: string;
-  payload: unknown;
+  payload: Record<string, string | number | boolean | null> | null;
   relatedEntityId: string | null;
   createdBy: string | null;
   createdAt: string;
@@ -92,7 +92,7 @@ export const listTimeline = createServerFn({ method: "GET" })
       entityId: r.entity_id,
       eventType: r.event_type,
       description: r.description,
-      payload: r.payload,
+      payload: (r.payload ?? null) as TimelineEvent["payload"],
       relatedEntityId: r.related_entity_id,
       createdBy: r.created_by,
       createdAt: r.created_at,
