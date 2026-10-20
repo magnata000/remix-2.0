@@ -20,6 +20,8 @@ export const Route = createFileRoute("/api/public/hooks/tasks-cron")({
         const todayBrt = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
         const { error: stErr } = await supabaseAdmin.rpc("refresh_policy_statuses", { _today: todayBrt });
         if (stErr) console.error("policy status refresh error", stErr);
+        const { error: exErr } = await supabaseAdmin.rpc("refresh_expense_statuses", { _today: todayBrt });
+        if (exErr) console.error("expense status refresh error", exErr);
 
         const [cols, sched] = await Promise.all([
           supabaseAdmin.from("task_columns").select("id").order("order_index").limit(1),

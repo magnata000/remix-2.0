@@ -50,6 +50,13 @@
       "when": 1792506269703,
       "tag": "0006_financeiro_v1_structure",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792506594297,
+      "tag": "0007_financeiro_v1_rpcs",
+      "breakpoints": true
     }
   ]
 }
