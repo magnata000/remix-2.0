@@ -127,14 +127,23 @@ export const registerPolicyReason = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Exclusão física se não houver vínculos; caso contrário, inativação lógica. */
-export const removeClientSmart = createServerFn({ method: "POST" })
+/** Apólices não renovadas que ainda aguardam o registro do motivo. */
+export const listPendingReasons = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
-  .handler(async ({ data, context }): Promise<{ result: "deleted" | "deactivated" }> => {
-    const { data: result, error } = await context.supabase.rpc("remove_client", { _client_id: data.id });
+  .handler(async ({ context }): Promise<string[]> => {
+    const { data: pols, error } = await context.supabase.from("policies").select("id").eq("status", "nao_renovada");
     if (error) throw new Error(error.message);
-    return { result: result as "deleted" | "deactivated" };
+    const ids = pols.map((p) => p.id);
+    if (!ids.length) return [];
+    const { data: ev, error: e2 } = await context.supabase
+      .from("portfolio_timeline")
+      .select("entity_id")
+      .eq("entity_type", "policy")
+      .eq("event_type", "motivo_registrado")
+      .in("entity_id", ids);
+    if (e2) throw new Error(e2.message);
+    const done = new Set(ev.map((r) => r.entity_id));
+    return ids.filter((id) => !done.has(id));
   });
 
 export const reactivateClient = createServerFn({ method: "POST" })
