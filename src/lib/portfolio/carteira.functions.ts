@@ -30,6 +30,8 @@ function mapClient(r: Row): Client {
     document: s(r["document"]),
     birthDate: (r["birth_date"] as string | null) ?? undefined,
     statusOverride: (r["status_override"] as ClientStatus | null) ?? undefined,
+    isActive: r["is_active"] !== false,
+    sequenceNumber: n(r["sequence_number"]),
   };
 }
 
@@ -214,29 +216,14 @@ export const setClientStatus = createServerFn({ method: "POST" })
     return mapClient(row as Row);
   });
 
+/** Regra no banco: exclui se não houver vínculos; senão inativa (is_active=false). */
 export const deleteClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
-
-    // Remove os arquivos físicos do bucket antes de excluir o cliente
-    // (doc_files cai em cascata, mas os objetos do storage não).
-    const { data: files, error: fErr } = await supabase
-      .from("doc_files")
-      .select("storage_path")
-      .eq("client_id", data.id);
-    if (fErr) throw new Error(fErr.message);
-    const paths = (files ?? [])
-      .map((r) => (r as Row)["storage_path"])
-      .filter((p): p is string => typeof p === "string" && p.length > 0);
-    if (paths.length) {
-      await supabase.storage.from("client-documents").remove(paths);
-    }
-
-    const { error } = await supabase.from("clients").delete().eq("id", data.id);
+  .handler(async ({ data, context }): Promise<{ result: "deleted" | "deactivated" }> => {
+    const { data: result, error } = await context.supabase.rpc("remove_client", { _client_id: data.id });
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { result: result as "deleted" | "deactivated" };
   });
 
 /* ----------------------------------------------------------------- policies */
