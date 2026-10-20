@@ -134,3 +134,57 @@ export const payExpense = createServerFn({ method: "POST" })
     check(await context.supabase.rpc("pay_expense", { _expense_id: data.expenseId, _paid_at: data.paidAt }));
     return { ok: true };
   });
+
+type DreClass = Database["public"]["Enums"]["dre_classification"];
+
+export const listExpensesYear = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { year: number }) => d)
+  .handler(async ({ data, context }) =>
+    check(
+      await context.supabase
+        .from("expenses")
+        .select("id, description, category, amount, due_date, status, paid_at, dre_classification, notes")
+        .gte("due_date", `${data.year}-01-01`)
+        .lte("due_date", `${data.year}-12-31`)
+        .order("due_date", { ascending: true }),
+    ),
+  );
+
+export const createExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { description: string; category: string; amount: number; dueDate: string; dre: DreClass; notes?: string }) => {
+    if (!d.description.trim() || !(d.amount > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(d.dueDate)) throw new Error("Dados inválidos");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const today = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
+    check(
+      await context.supabase.from("expenses").insert({
+        description: data.description.trim(),
+        category: data.category.trim() || "Geral",
+        amount: data.amount,
+        due_date: data.dueDate,
+        dre_classification: data.dre,
+        notes: data.notes || null,
+        status: data.dueDate < today ? "vencida" : "aguardando",
+      }),
+    );
+    return { ok: true };
+  });
+
+/** Fluxo de caixa mensal: entradas = recebimentos de comissão; saídas = despesas pagas. */
+export const getCashFlow = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { year: number }) => d)
+  .handler(async ({ data, context }) => {
+    const from = `${data.year}-01-01`, to = `${data.year + 1}-01-01`;
+    const [ins, outs] = await Promise.all([
+      context.supabase.from("commission_events").select("valor, criado_em").eq("tipo", "pagamento").gte("criado_em", from).lt("criado_em", to).limit(10000),
+      context.supabase.from("expenses").select("amount, paid_at").eq("status", "paga").gte("paid_at", from).lt("paid_at", to).limit(10000),
+    ]);
+    const months = Array.from({ length: 12 }, () => ({ entradas: 0, saidas: 0 }));
+    for (const e of check(ins) ?? []) months[new Date(e.criado_em).getMonth()].entradas += Number(e.valor);
+    for (const e of check(outs) ?? []) if (e.paid_at) months[new Date(e.paid_at).getMonth()].saidas += Number(e.amount);
+    return months;
+  });
