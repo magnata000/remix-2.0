@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { KpiCard } from "@/components/financial/KpiCard";
 import { formatBRL } from "@/lib/mock/data";
 import { MONTHS_PT } from "@/lib/cash/cashStore";
-import { useTeamNameIndex } from "@/lib/team/teamStore";
+import { useTeam } from "@/lib/team/teamStore";
 import {
   listFinanceCommissions,
   reconcileCommission,
@@ -205,7 +205,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function CommissionSheet({ row, onClose, queryKey }: { row: Row | null; onClose: () => void; queryKey: unknown[] }) {
   const qc = useQueryClient();
-  const names = useTeamNameIndex();
+  const { members } = useTeam();
   const reconcileFn = useServerFn(reconcileCommission);
   const eventFn = useServerFn(addCommissionEvent);
   const [valor, setValor] = useState("");
@@ -328,7 +328,7 @@ function CommissionSheet({ row, onClose, queryKey }: { row: Row | null; onClose:
                 </span>
               </div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                {new Date(e.criado_em).toLocaleString("pt-BR")} · {e.criado_por ? names.get?.(e.criado_por) ?? "Usuário" : "Sistema"}
+                {new Date(e.criado_em).toLocaleString("pt-BR")} · {e.criado_por ? members.find((m) => m.id === e.criado_por)?.name ?? "Usuário" : "Sistema"}
               </div>
               {(e.motivo || e.observacao) && <div className="text-xs mt-1">{e.motivo ?? e.observacao}</div>}
             </li>
