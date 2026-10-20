@@ -793,7 +793,7 @@ export type Database = {
         Row: {
           agenciamento_schedule: number[] | null
           assignee_id: string
-          branch: Database["public"]["Enums"]["branch"]
+          branch: Database["public"]["Enums"]["branch"] | null
           branch_id: string | null
           client_id: string
           comissao_liquida: boolean
@@ -833,7 +833,7 @@ export type Database = {
         Insert: {
           agenciamento_schedule?: number[] | null
           assignee_id: string
-          branch: Database["public"]["Enums"]["branch"]
+          branch?: Database["public"]["Enums"]["branch"] | null
           branch_id?: string | null
           client_id: string
           comissao_liquida?: boolean
@@ -873,7 +873,7 @@ export type Database = {
         Update: {
           agenciamento_schedule?: number[] | null
           assignee_id?: string
-          branch?: Database["public"]["Enums"]["branch"]
+          branch?: Database["public"]["Enums"]["branch"] | null
           branch_id?: string | null
           client_id?: string
           comissao_liquida?: boolean
