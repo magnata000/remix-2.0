@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KpiCard } from "@/components/financial/KpiCard";
+import { TaxesCard } from "@/components/financial/TaxesCard";
 import { formatBRL } from "@/lib/mock/data";
 import { MONTHS_PT } from "@/lib/cash/cashStore";
 import { listExpensesYear, createExpense, payExpense, getCashFlow } from "@/lib/financial/financeiro.functions";
@@ -132,6 +133,8 @@ export function ExpensesTab() {
           </TableBody>
         </Table>
       </Card>
+
+      <TaxesCard year={year} month={month === "todos" ? null : Number(month)} />
 
       <Card className="rounded-2xl border-border shadow-none">
         <div className="p-5 pb-3">
