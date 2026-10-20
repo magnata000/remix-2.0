@@ -266,8 +266,8 @@ async function insertPolicy(
   renewedFromId?: string,
 ): Promise<Policy> {
   const clientId = await resolveClientId(context.supabase, input.clientName, context.userId);
-  const { data: numbers } = await context.supabase.from("policies").select("number");
-  const number = nextNumber(((numbers ?? []) as { number: string }[]).map((r) => r.number));
+  // Número legível é gerado pelo banco (trigger); valor enviado é ignorado.
+  const number = "";
 
   const { data: row, error } = await context.supabase
     .from("policies")
