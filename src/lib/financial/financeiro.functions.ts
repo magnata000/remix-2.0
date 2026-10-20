@@ -13,14 +13,21 @@ function check<T>(r: { data: T; error: { message: string } | null }): T {
 
 export const listFinanceCommissions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
+  .inputValidator((d: { from: string; to: string }) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.from) || !/^\d{4}-\d{2}-\d{2}$/.test(d.to)) throw new Error("Período inválido");
+    return d;
+  })
+  .handler(async ({ context, data }) =>
     check(
       await context.supabase
         .from("commissions")
         .select(
-          "id, policy_id, policy_number, client_name, client_id, insurer_id, competencia, base_calculo, percentual, modelo_pagamento, valor_previsto, status, commission_events(id, tipo, valor, motivo, observacao, documento_referencia, criado_por, criado_em, installment_id), commission_installments(id, numero_parcela, competencia, valor_previsto, status), commission_payouts(id, user_id, percentual_repasse, valor_devido, valor_pago)",
+          "id, policy_id, policy_number, client_name, client_id, insurer_id, competencia, base_calculo, percentual, modelo_pagamento, valor_previsto, status, commission_events(id, tipo, valor, motivo, observacao, documento_referencia, criado_por, criado_em, installment_id), commission_installments(id, numero_parcela, competencia, valor_previsto, status), commission_payouts(id, user_id, percentual_repasse, valor_devido, valor_pago), insurers(name), policies(branches(name))",
         )
-        .order("competencia", { ascending: true }),
+        .gte("competencia", data.from)
+        .lte("competencia", data.to)
+        .order("competencia", { ascending: true })
+        .limit(1000),
     ),
   );
 
