@@ -61,7 +61,7 @@ const stages: { key: KanbanStage; label: string; color: string }[] = [
 export function KanbanModule() {
   useSlaTicker();
   const { opportunities, moveStage, setEstimatedValue, deleteOpportunity } = usePipelineStore();
-  const { appRole, userId } = useRole();
+  const { appRole, userId, hasPage } = useRole();
   const { members } = useTeam();
   const myInitials = initialsOf(members.find((m) => m.id === userId)?.name ?? "");
   const canManageOpp = (assignee: string) => appRole === "admin" || assignee === myInitials;
@@ -125,10 +125,10 @@ export function KanbanModule() {
         </p>
       </div>
 
-      <Tabs defaultValue="pipeline" className="w-full">
+      <Tabs defaultValue={hasPage("kanban_pipeline") ? "pipeline" : "tarefas"} className="w-full">
         <TabsList className="h-10">
-          <TabsTrigger value="pipeline">Pipeline de Vendas</TabsTrigger>
-          <TabsTrigger value="tarefas">Tarefas</TabsTrigger>
+          {hasPage("kanban_pipeline") && <TabsTrigger value="pipeline">Pipeline de Vendas</TabsTrigger>}
+          {hasPage("kanban_tarefas") && <TabsTrigger value="tarefas">Tarefas</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="pipeline" className="mt-5 space-y-5">

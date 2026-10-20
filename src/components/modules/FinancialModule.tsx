@@ -2,8 +2,15 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CaixaTab } from "@/components/financial/CaixaTab";
 import { ReportTab } from "@/components/financial/ReportTab";
 import { SellerCommissionsTab } from "@/components/financial/SellerCommissionsTab";
+import { useRole } from "@/lib/auth/roleStore";
 
 export function FinancialModule() {
+  const { hasPage } = useRole();
+  const showCaixa = hasPage("financeiro_comissoes") || hasPage("financeiro_despesas");
+  const showRepasses = hasPage("financeiro_comissoes");
+  const showReport = hasPage("financeiro_relatorios");
+  const first = showCaixa ? "caixa" : showRepasses ? "repasses" : "relatorio";
+
   return (
     <div className="space-y-5">
       <div>
@@ -13,21 +20,27 @@ export function FinancialModule() {
         </p>
       </div>
 
-      <Tabs defaultValue="caixa" className="space-y-5">
+      <Tabs defaultValue={first} className="space-y-5">
         <TabsList>
-          <TabsTrigger value="caixa">Caixa</TabsTrigger>
-          <TabsTrigger value="repasses">Repasses de vendedores</TabsTrigger>
-          <TabsTrigger value="relatorio">Relatório</TabsTrigger>
+          {showCaixa && <TabsTrigger value="caixa">Caixa</TabsTrigger>}
+          {showRepasses && <TabsTrigger value="repasses">Repasses de vendedores</TabsTrigger>}
+          {showReport && <TabsTrigger value="relatorio">Relatório</TabsTrigger>}
         </TabsList>
-        <TabsContent value="caixa" className="mt-0">
-          <CaixaTab />
-        </TabsContent>
-        <TabsContent value="repasses" className="mt-0">
-          <SellerCommissionsTab />
-        </TabsContent>
-        <TabsContent value="relatorio" className="mt-0">
-          <ReportTab />
-        </TabsContent>
+        {showCaixa && (
+          <TabsContent value="caixa" className="mt-0">
+            <CaixaTab />
+          </TabsContent>
+        )}
+        {showRepasses && (
+          <TabsContent value="repasses" className="mt-0">
+            <SellerCommissionsTab />
+          </TabsContent>
+        )}
+        {showReport && (
+          <TabsContent value="relatorio" className="mt-0">
+            <ReportTab />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
