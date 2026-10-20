@@ -314,13 +314,8 @@ export const renewPolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { sourceId: string; input: PolicyInput & { clientName: string } }) => data)
   .handler(async ({ data, context }): Promise<Policy> => {
-    const created = await insertPolicy(context as never, data.input, data.sourceId);
-    const { error } = await context.supabase
-      .from("policies")
-      .update({ status: "renovada", renewed_to_id: created.id })
-      .eq("id", data.sourceId);
-    if (error) throw new Error(error.message);
-    return created;
+    // O banco marca a origem como renovada, encadeia a linhagem e registra a Timeline.
+    return insertPolicy(context as never, data.input, data.sourceId);
   });
 
 export const updatePolicy = createServerFn({ method: "POST" })
