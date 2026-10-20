@@ -58,6 +58,33 @@ export type Database = {
           },
         ]
       }
+      branches: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           assignee_id: string
@@ -66,8 +93,10 @@ export type Database = {
           document: string
           email: string
           id: string
+          is_active: boolean
           name: string
           phone: string
+          sequence_number: number
           status_override: Database["public"]["Enums"]["client_status"] | null
           updated_at: string
         }
@@ -78,8 +107,10 @@ export type Database = {
           document?: string
           email?: string
           id?: string
+          is_active?: boolean
           name: string
           phone?: string
+          sequence_number?: number
           status_override?: Database["public"]["Enums"]["client_status"] | null
           updated_at?: string
         }
@@ -90,8 +121,10 @@ export type Database = {
           document?: string
           email?: string
           id?: string
+          is_active?: boolean
           name?: string
           phone?: string
+          sequence_number?: number
           status_override?: Database["public"]["Enums"]["client_status"] | null
           updated_at?: string
         }
@@ -471,6 +504,30 @@ export type Database = {
           },
         ]
       }
+      insurers: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       manual_incomes: {
         Row: {
           amount: number
@@ -737,6 +794,7 @@ export type Database = {
           agenciamento_schedule: number[] | null
           assignee_id: string
           branch: Database["public"]["Enums"]["branch"]
+          branch_id: string | null
           client_id: string
           comissao_liquida: boolean
           commission_installments: number | null
@@ -747,6 +805,7 @@ export type Database = {
           consortium_group: string | null
           consortium_quota: string | null
           consortium_type: string | null
+          contract_sequence: number | null
           created_at: string
           end_date: string | null
           health_anniversary: string | null
@@ -755,11 +814,17 @@ export type Database = {
           health_initial_value: number | null
           id: string
           insurer: Database["public"]["Enums"]["insurer"]
+          insurer_id: string | null
           number: string
+          premio_liquido: number | null
+          premio_total: number | null
           premium: number
+          premium_periodicity: Database["public"]["Enums"]["premium_periodicity"]
           recorrencia_pct: number | null
+          renewal_sequence: number
           renewed_from_id: string | null
           renewed_to_id: string | null
+          root_policy_id: string | null
           start_date: string
           status: Database["public"]["Enums"]["policy_status"]
           taxa_imposto: number
@@ -769,6 +834,7 @@ export type Database = {
           agenciamento_schedule?: number[] | null
           assignee_id: string
           branch: Database["public"]["Enums"]["branch"]
+          branch_id?: string | null
           client_id: string
           comissao_liquida?: boolean
           commission_installments?: number | null
@@ -779,6 +845,7 @@ export type Database = {
           consortium_group?: string | null
           consortium_quota?: string | null
           consortium_type?: string | null
+          contract_sequence?: number | null
           created_at?: string
           end_date?: string | null
           health_anniversary?: string | null
@@ -787,11 +854,17 @@ export type Database = {
           health_initial_value?: number | null
           id?: string
           insurer: Database["public"]["Enums"]["insurer"]
+          insurer_id?: string | null
           number: string
+          premio_liquido?: number | null
+          premio_total?: number | null
           premium?: number
+          premium_periodicity?: Database["public"]["Enums"]["premium_periodicity"]
           recorrencia_pct?: number | null
+          renewal_sequence?: number
           renewed_from_id?: string | null
           renewed_to_id?: string | null
+          root_policy_id?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["policy_status"]
           taxa_imposto?: number
@@ -801,6 +874,7 @@ export type Database = {
           agenciamento_schedule?: number[] | null
           assignee_id?: string
           branch?: Database["public"]["Enums"]["branch"]
+          branch_id?: string | null
           client_id?: string
           comissao_liquida?: boolean
           commission_installments?: number | null
@@ -811,6 +885,7 @@ export type Database = {
           consortium_group?: string | null
           consortium_quota?: string | null
           consortium_type?: string | null
+          contract_sequence?: number | null
           created_at?: string
           end_date?: string | null
           health_anniversary?: string | null
@@ -819,11 +894,17 @@ export type Database = {
           health_initial_value?: number | null
           id?: string
           insurer?: Database["public"]["Enums"]["insurer"]
+          insurer_id?: string | null
           number?: string
+          premio_liquido?: number | null
+          premio_total?: number | null
           premium?: number
+          premium_periodicity?: Database["public"]["Enums"]["premium_periodicity"]
           recorrencia_pct?: number | null
+          renewal_sequence?: number
           renewed_from_id?: string | null
           renewed_to_id?: string | null
+          root_policy_id?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["policy_status"]
           taxa_imposto?: number
@@ -838,10 +919,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "policies_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "policies_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policies_insurer_id_fkey"
+            columns: ["insurer_id"]
+            isOneToOne: false
+            referencedRelation: "insurers"
             referencedColumns: ["id"]
           },
           {
@@ -858,7 +953,50 @@ export type Database = {
             referencedRelation: "policies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "policies_root_policy_id_fkey"
+            columns: ["root_policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      portfolio_timeline: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["timeline_entity"]
+          event_type: Database["public"]["Enums"]["timeline_event"]
+          id: string
+          payload: Json | null
+          related_entity_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["timeline_entity"]
+          event_type: Database["public"]["Enums"]["timeline_event"]
+          id?: string
+          payload?: Json | null
+          related_entity_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["timeline_entity"]
+          event_type?: Database["public"]["Enums"]["timeline_event"]
+          id?: string
+          payload?: Json | null
+          related_entity_id?: string | null
+        }
+        Relationships: []
       }
       scheduled_tasks: {
         Row: {
@@ -1307,7 +1445,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      branch_code_base: { Args: { _name: string }; Returns: string }
+      can_access_client: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_access_policy: {
+        Args: { _policy_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_all: { Args: { _user_id: string }; Returns: boolean }
+      cancel_policy: {
+        Args: {
+          _categoria: string
+          _motivo: string
+          _observacoes: string
+          _policy_id: string
+        }
+        Returns: undefined
+      }
       ensure_client_root: { Args: { _client_id: string }; Returns: string }
       ensure_policy_folders: {
         Args: { _policy_id: string }
@@ -1321,6 +1477,28 @@ export type Database = {
         Returns: boolean
       }
       is_team_member: { Args: { _user_id: string }; Returns: boolean }
+      log_policy_event: {
+        Args: {
+          _description: string
+          _event: Database["public"]["Enums"]["timeline_event"]
+          _payload?: Json
+          _policy: Database["public"]["Tables"]["policies"]["Row"]
+          _related?: string
+        }
+        Returns: undefined
+      }
+      reactivate_client: { Args: { _client_id: string }; Returns: undefined }
+      refresh_policy_statuses: { Args: { _today: string }; Returns: number }
+      register_policy_reason: {
+        Args: {
+          _categoria: string
+          _motivo: string
+          _observacoes: string
+          _policy_id: string
+        }
+        Returns: undefined
+      }
+      remove_client: { Args: { _client_id: string }; Returns: string }
       upsert_doc_folder: {
         Args: {
           _client_id: string
