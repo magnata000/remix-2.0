@@ -1404,10 +1404,35 @@ export type Database = {
         | "Aliro"
       kanban_stage: "lead" | "cotacao" | "negociacao" | "fechado" | "perdido"
       lost_reason: "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro"
-      policy_status: "ativa" | "vencida" | "pendente" | "cancelada" | "renovada"
+      policy_status:
+        | "ativa"
+        | "vencida"
+        | "pendente"
+        | "cancelada"
+        | "renovada"
+        | "a_vencer"
+        | "nao_renovada"
+      premium_periodicity:
+        | "mensal"
+        | "anual"
+        | "unico"
+        | "distribuido_na_vigencia"
       scheduled_kind: "data" | "semana" | "recorrente"
       task_priority: "alta" | "media" | "baixa"
       tax_kind: "sobre_receita" | "sobre_lucro"
+      timeline_entity: "client" | "policy"
+      timeline_event:
+        | "apolice_criada"
+        | "apolice_alterada"
+        | "apolice_cancelada"
+        | "apolice_vencida"
+        | "apolice_renovada"
+        | "apolice_nao_renovada"
+        | "motivo_registrado"
+        | "follow_up_registrado"
+        | "cliente_inativado"
+        | "cliente_reativado"
+        | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1614,10 +1639,38 @@ export const Constants = {
       ],
       kanban_stage: ["lead", "cotacao", "negociacao", "fechado", "perdido"],
       lost_reason: ["preco", "cobertura", "prazo", "sem-retorno", "outro"],
-      policy_status: ["ativa", "vencida", "pendente", "cancelada", "renovada"],
+      policy_status: [
+        "ativa",
+        "vencida",
+        "pendente",
+        "cancelada",
+        "renovada",
+        "a_vencer",
+        "nao_renovada",
+      ],
+      premium_periodicity: [
+        "mensal",
+        "anual",
+        "unico",
+        "distribuido_na_vigencia",
+      ],
       scheduled_kind: ["data", "semana", "recorrente"],
       task_priority: ["alta", "media", "baixa"],
       tax_kind: ["sobre_receita", "sobre_lucro"],
+      timeline_entity: ["client", "policy"],
+      timeline_event: [
+        "apolice_criada",
+        "apolice_alterada",
+        "apolice_cancelada",
+        "apolice_vencida",
+        "apolice_renovada",
+        "apolice_nao_renovada",
+        "motivo_registrado",
+        "follow_up_registrado",
+        "cliente_inativado",
+        "cliente_reativado",
+        "outro",
+      ],
     },
   },
 } as const

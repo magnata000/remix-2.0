@@ -15,6 +15,13 @@
       "when": 1790769905692,
       "tag": "0001_restrict_team_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792501585014,
+      "tag": "0002_carteira_v2_enums",
+      "breakpoints": true
     }
   ]
 }
