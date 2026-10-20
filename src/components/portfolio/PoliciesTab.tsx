@@ -12,8 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, FileText, Plus, FileUp, Loader2 } from "lucide-react";
-import { formatBRL, formatDateShort, type Policy, type PolicyStatus } from "@/lib/mock/data";
+import { Search, FileText, Plus, FileUp, Loader2, AlertTriangle, RotateCw, Ban } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { POLICY_STATUS_META, POLICY_STATUS_FILTER, isTerminalStatus } from "@/lib/portfolio/policyStatus";
+import { listPendingReasons } from "@/lib/portfolio/portfolio.functions";
+import { PolicyReasonDialog } from "@/components/portfolio/PolicyReasonDialog";
+import { formatBRL, formatDateShort, type Policy } from "@/lib/mock/data";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog, type PolicyPrefill } from "@/components/portfolio/NewPolicyDialog";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
@@ -22,30 +33,67 @@ import { extractPolicyFromPdf, type PolicyExtractionResult } from "@/lib/portfol
 import { compareByPrefixNumber } from "@/lib/prefixSort";
 import { toast } from "sonner";
 
-const statusColor: Record<PolicyStatus, string> = {
-  ativa: "bg-success/15 text-success border-0",
-  pendente: "bg-warning/15 text-warning border-0",
-  vencida: "bg-destructive/15 text-destructive border-0",
-  cancelada: "bg-muted text-muted-foreground border-0",
-  renovada: "bg-info/15 text-info border-0",
-};
-
-const POLICY_STATUS_CYCLE: PolicyStatus[] = ["ativa", "pendente", "vencida", "cancelada"];
-function nextPolicyStatus(current: PolicyStatus): PolicyStatus {
-  const idx = POLICY_STATUS_CYCLE.indexOf(current);
-  if (idx === -1) return POLICY_STATUS_CYCLE[0];
-  return POLICY_STATUS_CYCLE[(idx + 1) % POLICY_STATUS_CYCLE.length];
-}
-
 type Props = {
   initialClientFilter?: string;
   onClientClick?: (clientName: string) => void;
 };
 
 export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) {
-  const { policies, updatePolicy } = usePolicies();
-  const cycleStatus = (id: string, current: PolicyStatus) =>
-    updatePolicy(id, { status: nextPolicyStatus(current) });
+  const { policies } = usePolicies();
+  const fetchPending = useServerFn(listPendingReasons);
+  const { data: pendingIds = [] } = useQuery({
+    queryKey: ["pending-reasons"],
+    queryFn: () => fetchPending(),
+  });
+  const pendingSet = useMemo(() => new Set(pendingIds), [pendingIds]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [renewSource, setRenewSource] = useState<Policy | null>(null);
+  const [reasonTarget, setReasonTarget] = useState<{ policy: Policy; mode: "cancel" | "reason" } | null>(null);
+
+  const StatusControl = ({ p }: { p: Policy }) => {
+    const meta = POLICY_STATUS_META[p.status];
+    const pending = pendingSet.has(p.id);
+    const badge = <Badge className={`${meta.className} whitespace-nowrap`}>{meta.label}</Badge>;
+    return (
+      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        {isTerminalStatus(p.status) ? (
+          badge
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                title="Alterar status"
+                className="rounded-full cursor-pointer hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+              >
+                {badge}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {p.branch !== "Saúde" && (
+                <DropdownMenuItem onClick={() => setRenewSource(p)}>
+                  <RotateCw className="h-4 w-4" /> Marcar como renovada
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setReasonTarget({ policy: p, mode: "cancel" })}>
+                <Ban className="h-4 w-4" /> Cancelar apólice
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {pending && (
+          <button
+            type="button"
+            title="Registrar motivo da não renovação"
+            onClick={() => setReasonTarget({ policy: p, mode: "reason" })}
+            className="text-warning hover:opacity-80"
+          >
+            <AlertTriangle className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    );
+  };
   const [q, setQ] = useState(initialClientFilter ?? "");
   const [status, setStatus] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
@@ -69,7 +117,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
       policies
         .filter(
           (p) =>
-            (status === "all" || p.status === status) &&
+            (status === "all" ? showHistory || p.status !== "renovada" : p.status === status) &&
             (branch === "all" || p.branch === branch) &&
             (insurer === "all" || p.insurer === insurer) &&
             (q === "" ||
@@ -80,7 +128,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
           const byPrefix = compareByPrefixNumber(a.clientName, b.clientName);
           return byPrefix !== 0 ? byPrefix : a.startDate.localeCompare(b.startDate);
         }),
-    [policies, q, status, branch, insurer],
+    [policies, q, status, branch, insurer, showHistory],
   );
 
   const handleFileSelected = async (file: File) => {
@@ -174,11 +222,11 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="ativa">Ativa</SelectItem>
-              <SelectItem value="pendente">Pendente</SelectItem>
-              <SelectItem value="vencida">Vencida</SelectItem>
-              <SelectItem value="renovada">Renovada</SelectItem>
-              <SelectItem value="cancelada">Cancelada</SelectItem>
+              {POLICY_STATUS_FILTER.map((st) => (
+                <SelectItem key={st} value={st}>
+                  {POLICY_STATUS_META[st].label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={branch} onValueChange={setBranch}>
@@ -207,6 +255,10 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
               ))}
             </SelectContent>
           </Select>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+            <Switch checked={showHistory} onCheckedChange={setShowHistory} />
+            Mostrar renovadas
+          </label>
         </div>
       </Card>
 
@@ -235,21 +287,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                   </p>
                   <p className="mt-3 text-lg font-bold">{formatBRL(p.premium)}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    cycleStatus(p.id, p.status);
-                  }}
-                  title="Clique para alterar o status"
-                  className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
-                >
-                  <Badge
-                    className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}
-                  >
-                    {p.status}
-                  </Badge>
-                </button>
+                <StatusControl p={p} />
               </div>
               </button>
             ))}
@@ -298,21 +336,7 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                         {p.branch === "Saúde" ? "Vitalício" : formatDateShort(p.endDate)}
                       </td>
                       <td className="px-5 py-3">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            cycleStatus(p.id, p.status);
-                          }}
-                          title="Clique para alterar o status"
-                          className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
-                        >
-                          <Badge
-                            className={`${statusColor[p.status]} cursor-pointer hover:opacity-80 transition`}
-                          >
-                            {p.status}
-                          </Badge>
-                        </button>
+                        <StatusControl p={p} />
                       </td>
                     </tr>
                   ))}
@@ -337,6 +361,22 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
           if (!o) setPrefill(null);
         }}
         prefill={prefill}
+      />
+
+      {renewSource && (
+        <NewPolicyDialog
+          open={!!renewSource}
+          onOpenChange={(o) => !o && setRenewSource(null)}
+          sourcePolicy={renewSource}
+        />
+      )}
+
+      <PolicyReasonDialog
+        open={!!reasonTarget}
+        onOpenChange={(o) => !o && setReasonTarget(null)}
+        policyId={reasonTarget?.policy.id ?? null}
+        policyNumber={reasonTarget?.policy.number}
+        mode={reasonTarget?.mode ?? "cancel"}
       />
 
       <ImportPolicyReviewDialog
