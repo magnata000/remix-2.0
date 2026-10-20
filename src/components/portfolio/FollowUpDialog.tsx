@@ -45,7 +45,14 @@ const statusLabel: Record<FollowUpStatus, string> = {
   adiado: "Adiado",
 };
 
-const typeOptions: FollowUpType[] = ["ligacao", "email", "whatsapp", "reuniao", "videocall", "nota"];
+const typeOptions: FollowUpType[] = [
+  "ligacao",
+  "email",
+  "whatsapp",
+  "reuniao",
+  "videocall",
+  "nota",
+];
 const statusOptions: FollowUpStatus[] = ["agendado", "realizado", "cancelado", "adiado"];
 
 const isoDate = (d?: Date) => (d ? d.toISOString().slice(0, 10) : "");
@@ -145,7 +152,10 @@ export function FollowUpDialog({ open, onOpenChange, followUp, defaultClient }: 
     }
 
     if (isEdit && followUp) {
-      updateFollowUp(followUp.id, { ...payload, createdTaskId: linkedTaskId ?? followUp.createdTaskId });
+      updateFollowUp(followUp.id, {
+        ...payload,
+        createdTaskId: linkedTaskId ?? followUp.createdTaskId,
+      });
       toast.success("Follow-up atualizado");
     } else {
       addFollowUp({ ...payload, createdTaskId: linkedTaskId });
@@ -283,7 +293,10 @@ export function FollowUpDialog({ open, onOpenChange, followUp, defaultClient }: 
           <Button variant="outline" className="rounded-xl" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => void onSubmit()}>
+          <Button
+            className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+            onClick={() => void onSubmit()}
+          >
             {isEdit ? "Salvar" : "Criar follow-up"}
           </Button>
         </DialogFooter>

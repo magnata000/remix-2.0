@@ -12,7 +12,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, FileText, Plus, FileUp, Loader2, AlertTriangle, RotateCw, Ban } from "lucide-react";
+import {
+  Search,
+  FileText,
+  Plus,
+  FileUp,
+  Loader2,
+  AlertTriangle,
+  RotateCw,
+  Ban,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -21,7 +30,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { POLICY_STATUS_META, POLICY_STATUS_FILTER, isTerminalStatus } from "@/lib/portfolio/policyStatus";
+import {
+  POLICY_STATUS_META,
+  POLICY_STATUS_FILTER,
+  isTerminalStatus,
+} from "@/lib/portfolio/policyStatus";
 import { listPendingReasons } from "@/lib/portfolio/portfolio.functions";
 import { PolicyReasonDialog } from "@/components/portfolio/PolicyReasonDialog";
 import { formatBRL, formatDateShort, type Policy } from "@/lib/mock/data";
@@ -29,7 +42,10 @@ import { usePolicies } from "@/lib/portfolio/policyStore";
 import { NewPolicyDialog, type PolicyPrefill } from "@/components/portfolio/NewPolicyDialog";
 import { PolicyDetailDrawer } from "@/components/portfolio/PolicyDetailDrawer";
 import { ImportPolicyReviewDialog } from "@/components/portfolio/ImportPolicyReviewDialog";
-import { extractPolicyFromPdf, type PolicyExtractionResult } from "@/lib/portfolio/policyExtraction.functions";
+import {
+  extractPolicyFromPdf,
+  type PolicyExtractionResult,
+} from "@/lib/portfolio/policyExtraction.functions";
 import { compareByPrefixNumber } from "@/lib/prefixSort";
 import { toast } from "sonner";
 
@@ -48,7 +64,10 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
   const pendingSet = useMemo(() => new Set(pendingIds), [pendingIds]);
   const [showHistory, setShowHistory] = useState(false);
   const [renewSource, setRenewSource] = useState<Policy | null>(null);
-  const [reasonTarget, setReasonTarget] = useState<{ policy: Policy; mode: "cancel" | "reason" } | null>(null);
+  const [reasonTarget, setReasonTarget] = useState<{
+    policy: Policy;
+    mode: "cancel" | "reason";
+  } | null>(null);
 
   const StatusControl = ({ p }: { p: Policy }) => {
     const meta = POLICY_STATUS_META[p.status];
@@ -279,16 +298,16 @@ export function PoliciesTab({ initialClientFilter, onClientClick }: Props = {}) 
                 onClick={() => setSelected(p)}
                 className="text-left bg-card border border-border rounded-2xl p-4 hover:border-brand transition"
               >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0 pr-2">
-                  <p className="font-semibold truncate">{p.clientName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {p.branch} • {p.insurer}
-                  </p>
-                  <p className="mt-3 text-lg font-bold">{formatBRL(p.premium)}</p>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0 pr-2">
+                    <p className="font-semibold truncate">{p.clientName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {p.branch} • {p.insurer}
+                    </p>
+                    <p className="mt-3 text-lg font-bold">{formatBRL(p.premium)}</p>
+                  </div>
+                  <StatusControl p={p} />
                 </div>
-                <StatusControl p={p} />
-              </div>
               </button>
             ))}
           </div>

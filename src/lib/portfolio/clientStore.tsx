@@ -111,8 +111,26 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
   const findByName = useCallback((name: string) => clients.find((c) => c.name === name), [clients]);
 
   const value = useMemo<Ctx>(
-    () => ({ clients, isLoading, addClient, updateClient, setClientStatus, removeClient, reactivateClient, findByName }),
-    [clients, isLoading, addClient, updateClient, setClientStatus, removeClient, reactivateClient, findByName],
+    () => ({
+      clients,
+      isLoading,
+      addClient,
+      updateClient,
+      setClientStatus,
+      removeClient,
+      reactivateClient,
+      findByName,
+    }),
+    [
+      clients,
+      isLoading,
+      addClient,
+      updateClient,
+      setClientStatus,
+      removeClient,
+      reactivateClient,
+      findByName,
+    ],
   );
 
   return <ClientCtx.Provider value={value}>{children}</ClientCtx.Provider>;

@@ -25,7 +25,10 @@ export type TimelineEvent = {
 export const listBranches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<CatalogItem[]> => {
-    const { data, error } = await context.supabase.from("branches").select("id, code, name, is_active").order("name");
+    const { data, error } = await context.supabase
+      .from("branches")
+      .select("id, code, name, is_active")
+      .order("name");
     if (error) throw new Error(error.message);
     return data.map((r) => ({ id: r.id, code: r.code, name: r.name, isActive: r.is_active }));
   });
@@ -33,7 +36,10 @@ export const listBranches = createServerFn({ method: "GET" })
 export const listInsurers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<CatalogItem[]> => {
-    const { data, error } = await context.supabase.from("insurers").select("id, name, is_active").order("name");
+    const { data, error } = await context.supabase
+      .from("insurers")
+      .select("id, name, is_active")
+      .order("name");
     if (error) throw new Error(error.message);
     return data.map((r) => ({ id: r.id, name: r.name, isActive: r.is_active }));
   });
@@ -53,7 +59,12 @@ export const createCatalogItem = createServerFn({ method: "POST" })
         .insert({ name: data.name, code: data.code?.toUpperCase() ?? null } as never)
         .select("id, code, name, is_active")
         .single();
-      if (error) throw new Error(error.code === "23505" ? "Ramo ou código já existe — informe outro código" : error.message);
+      if (error)
+        throw new Error(
+          error.code === "23505"
+            ? "Ramo ou código já existe — informe outro código"
+            : error.message,
+        );
       return { id: r.id, code: r.code, name: r.name, isActive: r.is_active };
     }
     const { data: r, error } = await context.supabase
@@ -70,7 +81,10 @@ export const setCatalogItemActive = createServerFn({ method: "POST" })
   .inputValidator((d: { kind: "branch" | "insurer"; id: string; isActive: boolean }) => d)
   .handler(async ({ data, context }) => {
     const table = data.kind === "branch" ? "branches" : "insurers";
-    const { error } = await context.supabase.from(table).update({ is_active: data.isActive }).eq("id", data.id);
+    const { error } = await context.supabase
+      .from(table)
+      .update({ is_active: data.isActive })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -131,7 +145,10 @@ export const registerPolicyReason = createServerFn({ method: "POST" })
 export const listPendingReasons = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<string[]> => {
-    const { data: pols, error } = await context.supabase.from("policies").select("id").eq("status", "nao_renovada");
+    const { data: pols, error } = await context.supabase
+      .from("policies")
+      .select("id")
+      .eq("status", "nao_renovada");
     if (error) throw new Error(error.message);
     const ids = pols.map((p) => p.id);
     if (!ids.length) return [];

@@ -38,12 +38,10 @@ import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSp
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
 
-
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; policy: Policy | null };
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 const BASE_STATUSES: { key: PolicyStatus; label: string }[] = [
-
   { key: "ativa", label: "Ativa" },
   { key: "pendente", label: "Pendente" },
   { key: "vencida", label: "Vencida" },
@@ -219,7 +217,6 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     }
   };
 
-
   const showErr = (key: string) => touched && errors[key];
 
   return (
@@ -276,7 +273,6 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
                     </SelectItem>
                   ))}
                 </SelectContent>
-
               </Select>
             </div>
 

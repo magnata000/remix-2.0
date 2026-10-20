@@ -101,8 +101,10 @@ export const extractPolicyFromPdf = createServerFn({ method: "POST" })
 
     if (!res.ok) {
       const errText = await res.text();
-      if (res.status === 429) throw new Error("Limite de requisições atingido. Tente novamente em alguns segundos.");
-      if (res.status === 402) throw new Error("Créditos Lovable AI esgotados. Adicione créditos no workspace.");
+      if (res.status === 429)
+        throw new Error("Limite de requisições atingido. Tente novamente em alguns segundos.");
+      if (res.status === 402)
+        throw new Error("Créditos Lovable AI esgotados. Adicione créditos no workspace.");
       throw new Error(`Falha na extração (${res.status}): ${errText.slice(0, 200)}`);
     }
 

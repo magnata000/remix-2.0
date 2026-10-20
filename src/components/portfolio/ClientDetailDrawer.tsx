@@ -252,7 +252,9 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
               </TabsTrigger>
               <TabsTrigger value="followups" className="rounded-lg">
                 Follow-ups
-                <span className="ml-1.5 text-xs text-muted-foreground">({clientFollowUps.length})</span>
+                <span className="ml-1.5 text-xs text-muted-foreground">
+                  ({clientFollowUps.length})
+                </span>
               </TabsTrigger>
               <TabsTrigger value="timeline" className="rounded-lg">
                 Timeline
@@ -386,18 +388,21 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {clientPolicies.length > 0 || clientFollowUps.length > 0 || docCount > 0 ? "Inativar cliente?" : "Excluir cliente?"}
+              {clientPolicies.length > 0 || clientFollowUps.length > 0 || docCount > 0
+                ? "Inativar cliente?"
+                : "Excluir cliente?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {clientPolicies.length > 0 || clientFollowUps.length > 0 || docCount > 0 ? (
                 <>
-                  <strong>{c.name}</strong> possui apólices, follow-ups ou documentos vinculados, por isso
-                  não será apagado: o cadastro será <strong>inativado</strong> e sairá das listagens, mas todo o
-                  histórico continua preservado. Você pode reativá-lo depois.
+                  <strong>{c.name}</strong> possui apólices, follow-ups ou documentos vinculados,
+                  por isso não será apagado: o cadastro será <strong>inativado</strong> e sairá das
+                  listagens, mas todo o histórico continua preservado. Você pode reativá-lo depois.
                 </>
               ) : (
                 <>
-                  O cadastro de <strong>{c.name}</strong> não tem nenhum vínculo e será excluído definitivamente.
+                  O cadastro de <strong>{c.name}</strong> não tem nenhum vínculo e será excluído
+                  definitivamente.
                 </>
               )}
             </AlertDialogDescription>
@@ -541,13 +546,19 @@ function ClientFollowUpsPanel({
             className="pl-9 rounded-xl bg-muted border-0"
           />
         </div>
-        <Button onClick={onNew} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90 h-9">
+        <Button
+          onClick={onNew}
+          className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90 h-9"
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
 
       <div className="flex gap-2">
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FollowUpStatus | "all")}>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as FollowUpStatus | "all")}
+        >
           <SelectTrigger className="rounded-xl bg-muted border-0 flex-1">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -626,7 +637,9 @@ function ClientFollowUpsPanel({
                       </DropdownMenu>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge className={followUpStatusColor[f.status]}>{followUpStatusLabel[f.status]}</Badge>
+                      <Badge className={followUpStatusColor[f.status]}>
+                        {followUpStatusLabel[f.status]}
+                      </Badge>
                       <span className="text-xs text-muted-foreground capitalize">{f.type}</span>
                       {f.createdTaskId && (
                         <span className="text-[10px] text-muted-foreground">· via Kanban</span>

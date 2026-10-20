@@ -123,7 +123,8 @@ function policyColumns(input: PolicyInput, clientId?: string) {
   if (input.taxaImposto !== undefined) out["taxa_imposto"] = input.taxaImposto;
   if (input.healthAnniversary !== undefined)
     out["health_anniversary"] = input.healthAnniversary || null;
-  if (input.healthInitialValue !== undefined) out["health_initial_value"] = input.healthInitialValue;
+  if (input.healthInitialValue !== undefined)
+    out["health_initial_value"] = input.healthInitialValue;
   if (input.healthCategory !== undefined) out["health_category"] = input.healthCategory;
   if (input.healthCoparticipation !== undefined)
     out["health_coparticipation"] = input.healthCoparticipation;
@@ -221,7 +222,9 @@ export const deleteClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data, context }): Promise<{ result: "deleted" | "deactivated" }> => {
-    const { data: result, error } = await context.supabase.rpc("remove_client", { _client_id: data.id });
+    const { data: result, error } = await context.supabase.rpc("remove_client", {
+      _client_id: data.id,
+    });
     if (error) throw new Error(error.message);
     return { result: result as "deleted" | "deactivated" };
   });

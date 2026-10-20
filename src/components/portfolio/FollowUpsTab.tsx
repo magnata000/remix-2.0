@@ -10,13 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Phone, Mail, MessageCircle, Users, Plus, Search, Pencil, Trash2, CheckCircle2, XCircle, MoreHorizontal } from "lucide-react";
+import {
+  CalendarIcon,
+  Phone,
+  Mail,
+  MessageCircle,
+  Users,
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  MoreHorizontal,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -262,15 +271,23 @@ export function FollowUpsTab() {
                   {grouped.map(([date, items]) => (
                     <>
                       <tr key={`h-${date}`} className="bg-muted/30">
-                        <td colSpan={6} className="px-5 py-2 text-xs font-medium text-muted-foreground">
+                        <td
+                          colSpan={6}
+                          className="px-5 py-2 text-xs font-medium text-muted-foreground"
+                        >
                           {formatDateHeader(date)}
                         </td>
                       </tr>
                       {items.map((f) => (
-                        <tr key={f.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                        <tr
+                          key={f.id}
+                          className="border-b border-border last:border-0 hover:bg-muted/40"
+                        >
                           <td className="px-5 py-3 whitespace-nowrap">
                             <div className="font-medium">{formatDateShort(f.date)}</div>
-                            {f.time && <div className="text-xs text-muted-foreground">{f.time}</div>}
+                            {f.time && (
+                              <div className="text-xs text-muted-foreground">{f.time}</div>
+                            )}
                           </td>
                           <td className="px-5 py-3 font-medium">{f.clientName}</td>
                           <td className="px-5 py-3">
@@ -306,7 +323,15 @@ export function FollowUpsTab() {
   );
 }
 
-function DatePicker({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function DatePicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
@@ -443,7 +468,12 @@ function FollowUpCard({
             <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Realizado
           </Button>
         )}
-        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={onDelete}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-xs text-destructive"
+          onClick={onDelete}
+        >
           <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
         </Button>
       </div>

@@ -22,7 +22,8 @@ export function PortfolioTimeline({ entityType, entityId, onOpenPolicy }: Props)
     queryFn: () => fetchTimeline({ data: { entityType, entityId } }),
   });
 
-  if (isLoading) return <p className="text-xs text-muted-foreground py-6 text-center">Carregando…</p>;
+  if (isLoading)
+    return <p className="text-xs text-muted-foreground py-6 text-center">Carregando…</p>;
   if (!data.length)
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -43,7 +44,9 @@ export function PortfolioTimeline({ entityType, entityId, onOpenPolicy }: Props)
         const canNavigate =
           !!onOpenPolicy &&
           !!ev.relatedEntityId &&
-          (entityType === "client" ? ev.eventType.startsWith("apolice") || ev.eventType === "motivo_registrado" : POLICY_LINK_EVENTS.has(ev.eventType));
+          (entityType === "client"
+            ? ev.eventType.startsWith("apolice") || ev.eventType === "motivo_registrado"
+            : POLICY_LINK_EVENTS.has(ev.eventType));
         return (
           <li key={ev.id} className="ml-4">
             <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full bg-brand" />
@@ -63,11 +66,16 @@ export function PortfolioTimeline({ entityType, entityId, onOpenPolicy }: Props)
               <p className="text-xs mt-0.5">
                 Motivo: <strong>{reason}</strong>
                 {p?.["categoria_avulsa"] ? ` — ${String(p["categoria_avulsa"])}` : ""}
-                {p?.["observacoes"] ? <span className="block text-muted-foreground">{String(p["observacoes"])}</span> : null}
+                {p?.["observacoes"] ? (
+                  <span className="block text-muted-foreground">{String(p["observacoes"])}</span>
+                ) : null}
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-0.5">
-              {new Date(ev.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+              {new Date(ev.createdAt).toLocaleString("pt-BR", {
+                dateStyle: "short",
+                timeStyle: "short",
+              })}
               {author ? ` • ${author}` : ""}
             </p>
           </li>

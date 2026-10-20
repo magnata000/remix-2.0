@@ -13,9 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { cancelPolicy, registerPolicyReason, type ReasonInput } from "@/lib/portfolio/portfolio.functions";
+import {
+  cancelPolicy,
+  registerPolicyReason,
+  type ReasonInput,
+} from "@/lib/portfolio/portfolio.functions";
 import { REASON_OPTIONS } from "@/lib/portfolio/policyStatus";
 
 type Props = {
@@ -36,7 +46,8 @@ export function PolicyReasonDialog({ open, onOpenChange, policyId, policyNumber,
   const [obs, setObs] = useState("");
 
   const m = useMutation({
-    mutationFn: (input: ReasonInput) => (mode === "cancel" ? cancelFn({ data: input }) : reasonFn({ data: input })),
+    mutationFn: (input: ReasonInput) =>
+      mode === "cancel" ? cancelFn({ data: input }) : reasonFn({ data: input }),
     onSuccess: () => {
       for (const k of ["policies", "clients", "timeline", "pending-reasons", "commissions"])
         void qc.invalidateQueries({ queryKey: [k] });
@@ -55,9 +66,12 @@ export function PolicyReasonDialog({ open, onOpenChange, policyId, policyNumber,
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{mode === "cancel" ? "Cancelar apólice" : "Motivo da não renovação"}</DialogTitle>
+          <DialogTitle>
+            {mode === "cancel" ? "Cancelar apólice" : "Motivo da não renovação"}
+          </DialogTitle>
           <DialogDescription>
-            {policyNumber ? `${policyNumber} — ` : ""}o motivo fica registrado no histórico do cliente e da apólice.
+            {policyNumber ? `${policyNumber} — ` : ""}o motivo fica registrado no histórico do
+            cliente e da apólice.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -79,12 +93,21 @@ export function PolicyReasonDialog({ open, onOpenChange, policyId, policyNumber,
           {motivo === "outro" && (
             <div className="space-y-1.5">
               <Label>Qual?</Label>
-              <Input value={categoria} onChange={(e) => setCategoria(e.target.value)} className="rounded-xl" />
+              <Input
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                className="rounded-xl"
+              />
             </div>
           )}
           <div className="space-y-1.5">
             <Label>Observações</Label>
-            <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3} className="rounded-xl" />
+            <Textarea
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              rows={3}
+              className="rounded-xl"
+            />
           </div>
         </div>
         <DialogFooter>
@@ -96,7 +119,12 @@ export function PolicyReasonDialog({ open, onOpenChange, policyId, policyNumber,
             variant={mode === "cancel" ? "destructive" : "default"}
             onClick={() =>
               policyId &&
-              m.mutate({ policyId, motivo: motivo as ReasonInput["motivo"], categoria, observacoes: obs })
+              m.mutate({
+                policyId,
+                motivo: motivo as ReasonInput["motivo"],
+                categoria,
+                observacoes: obs,
+              })
             }
           >
             {mode === "cancel" ? "Confirmar cancelamento" : "Salvar motivo"}
