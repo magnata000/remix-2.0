@@ -1881,6 +1881,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_commission_event: {
+        Args: {
+          _commission_id: string
+          _documento?: string
+          _installment_id?: string
+          _motivo?: string
+          _observacao?: string
+          _tipo: Database["public"]["Enums"]["commission_event_type"]
+          _valor: number
+        }
+        Returns: string
+      }
+      assert_finance: { Args: never; Returns: undefined }
       branch_code_base: { Args: { _name: string }; Returns: string }
       can_access_client: {
         Args: { _client_id: string; _user_id: string }
@@ -1907,6 +1920,18 @@ export type Database = {
       commission_recognized: {
         Args: { _commission_id: string }
         Returns: number
+      }
+      create_policy_commission: {
+        Args: {
+          _base_calculo: number
+          _modelo: Database["public"]["Enums"]["payment_model"]
+          _parcelas?: number
+          _percentual: number
+          _policy_id: string
+          _repasse_pct?: number
+          _repasse_user?: string
+        }
+        Returns: string
       }
       ensure_client_root: { Args: { _client_id: string }; Returns: string }
       ensure_policy_folders: {
@@ -1938,7 +1963,55 @@ export type Database = {
         }
         Returns: undefined
       }
+      my_payout_events: {
+        Args: never
+        Returns: {
+          commission_id: string
+          criado_em: string
+          tipo: Database["public"]["Enums"]["commission_event_type"]
+          valor: number
+        }[]
+      }
+      my_payouts: {
+        Args: never
+        Returns: {
+          client_name: string
+          commission_id: string
+          competencia: string
+          payout_id: string
+          percentual_repasse: number
+          policy_number: string
+          status: Database["public"]["Enums"]["commission_status"]
+          valor_devido: number
+          valor_pago: number
+        }[]
+      }
+      pay_commission_payout: {
+        Args: {
+          _data?: string
+          _observacao?: string
+          _payout_id: string
+          _valor: number
+        }
+        Returns: string
+      }
+      pay_expense: {
+        Args: { _expense_id: string; _paid_at?: string }
+        Returns: undefined
+      }
       reactivate_client: { Args: { _client_id: string }; Returns: undefined }
+      reconcile_commission: {
+        Args: {
+          _commission_id: string
+          _installment_id?: string
+          _motivo?: string
+          _observacao?: string
+          _tipo_diferenca?: Database["public"]["Enums"]["commission_event_type"]
+          _valor_recebido: number
+        }
+        Returns: Database["public"]["Enums"]["commission_status"]
+      }
+      refresh_expense_statuses: { Args: { _today: string }; Returns: number }
       refresh_policy_statuses: { Args: { _today: string }; Returns: number }
       register_policy_reason: {
         Args: {
@@ -1950,6 +2023,10 @@ export type Database = {
         Returns: undefined
       }
       remove_client: { Args: { _client_id: string }; Returns: string }
+      set_commission_payout: {
+        Args: { _commission_id: string; _pct: number; _user_id: string }
+        Returns: string
+      }
       upsert_doc_folder: {
         Args: {
           _client_id: string
