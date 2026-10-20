@@ -36,14 +36,8 @@ import { EditPolicyDialog } from "@/components/portfolio/EditPolicyDialog";
 import { useDocumentStore } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
 import { toast } from "sonner";
-
-const statusColor: Record<PolicyStatus, string> = {
-  ativa: "bg-success/15 text-success border-0",
-  pendente: "bg-warning/15 text-warning border-0",
-  vencida: "bg-destructive/15 text-destructive border-0",
-  cancelada: "bg-muted text-muted-foreground border-0",
-  renovada: "bg-info/15 text-info border-0",
-};
+import { POLICY_STATUS_META } from "@/lib/portfolio/policyStatus";
+import { PortfolioTimeline } from "@/components/portfolio/PortfolioTimeline";
 
 const titleLabel: Record<BeneficiaryTitle, string> = {
   titular: "Titular",
@@ -192,10 +186,26 @@ export function PolicyDetailDrawer({
                   Documentos
                   <span className="ml-1.5 text-xs text-muted-foreground">({docCount})</span>
                 </TabsTrigger>
+                <TabsTrigger value="timeline" className="rounded-lg">
+                  Timeline
+                </TabsTrigger>
               </TabsList>
 
+              <TabsContent value="timeline" className="mt-5 pb-6">
+                <PortfolioTimeline
+                  entityType="policy"
+                  entityId={policy.id}
+                  onOpenPolicy={(id) => {
+                    const target = findPolicy(id);
+                    if (target) onSelectPolicy?.(target);
+                  }}
+                />
+              </TabsContent>
+
               <TabsContent value="details" className="mt-5 space-y-5">
-                <Badge className={statusColor[policy.status]}>{policy.status}</Badge>
+                <Badge className={POLICY_STATUS_META[policy.status].className}>
+                  {POLICY_STATUS_META[policy.status].label}
+                </Badge>
 
                 <div className="space-y-3">
                   <Row icon={User} label="Cliente" value={policy.clientName} />

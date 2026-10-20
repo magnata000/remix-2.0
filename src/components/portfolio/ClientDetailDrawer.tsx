@@ -61,6 +61,8 @@ import { useNavigation } from "@/lib/navigation";
 import { getClientStats, initialsOf, type ClientStatus } from "@/lib/portfolio/clientStats";
 import type { FollowUp, FollowUpStatus, FollowUpType } from "@/lib/mock/data";
 import { toast } from "sonner";
+import { POLICY_STATUS_META } from "@/lib/portfolio/policyStatus";
+import { PortfolioTimeline } from "@/components/portfolio/PortfolioTimeline";
 
 import { useDocumentStore, formatFileSize } from "@/lib/documents/documentStore";
 import { FolderTree } from "@/components/documents/FolderTree";
@@ -83,14 +85,6 @@ const statusLabel: Record<ClientStatus, string> = {
   lead: "Lead",
 };
 
-const policyStatusColor: Record<PolicyStatus, string> = {
-  ativa: "bg-success/15 text-success border-0",
-  pendente: "bg-warning/15 text-warning border-0",
-  vencida: "bg-destructive/15 text-destructive border-0",
-  cancelada: "bg-muted text-muted-foreground border-0",
-  renovada: "bg-info/15 text-info border-0",
-};
-
 type Props = {
   clientName: string | null;
   onOpenChange: (open: boolean) => void;
@@ -98,7 +92,7 @@ type Props = {
 };
 
 export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: Props) {
-  const { clients, removeClient } = useClients();
+  const { clients, removeClient, reactivateClient } = useClients();
   const { policies } = usePolicies();
   const { commissions } = useCommissionStore();
   const { followUps, listByClient, changeStatus, deleteFollowUp } = useFollowUps();
@@ -163,8 +157,12 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
   const onDeleteClient = async () => {
     setDeleting(true);
     try {
-      await removeClient(c.id);
-      toast.success("Cliente excluído");
+      const result = await removeClient(c.id);
+      toast.success(
+        result === "deleted"
+          ? "Cliente excluído"
+          : "Cliente inativado — o histórico foi preservado",
+      );
       setDeleteOpen(false);
       onOpenChange(false);
     } catch (e) {
@@ -187,7 +185,27 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="text-lg font-semibold">{c.name}</div>
-                <Badge className={statusColor[stats.status]}>{statusLabel[stats.status]}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className={statusColor[stats.status]}>{statusLabel[stats.status]}</Badge>
+                  {c.isActive === false && (
+                    <>
+                      <Badge className="bg-muted text-muted-foreground border-0">Inativado</Badge>
+                      <button
+                        className="text-xs text-brand hover:underline"
+                        onClick={async () => {
+                          try {
+                            await reactivateClient(c.id);
+                            toast.success("Cliente reativado");
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Falha ao reativar");
+                          }
+                        }}
+                      >
+                        Reativar
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
               <TooltipProvider>
                 <Tooltip>
@@ -236,7 +254,21 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
                 Follow-ups
                 <span className="ml-1.5 text-xs text-muted-foreground">({clientFollowUps.length})</span>
               </TabsTrigger>
+              <TabsTrigger value="timeline" className="rounded-lg">
+                Timeline
+              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="timeline" className="mt-5 pb-6">
+              <PortfolioTimeline
+                entityType="client"
+                entityId={c.id}
+                onOpenPolicy={(id) => {
+                  const target = policies.find((x) => x.id === id);
+                  if (target) onOpenPolicy?.(target);
+                }}
+              />
+            </TabsContent>
 
             <TabsContent value="overview" className="mt-5 pb-6 space-y-6">
               {/* Contato */}
@@ -281,7 +313,9 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
                             <span className="font-mono text-xs text-muted-foreground">
                               {p.number}
                             </span>
-                            <Badge className={policyStatusColor[p.status]}>{p.status}</Badge>
+                            <Badge className={POLICY_STATUS_META[p.status].className}>
+                              {POLICY_STATUS_META[p.status].label}
+                            </Badge>
                           </div>
                           <div className="text-sm font-medium mt-1">
                             {p.branch} • {p.insurer}
@@ -351,20 +385,19 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {clientPolicies.length > 0 || clientFollowUps.length > 0 || docCount > 0 ? "Inativar cliente?" : "Excluir cliente?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é definitiva e não pode ser desfeita. O cadastro de{" "}
-              <strong>{c.name}</strong> será removido junto com seus follow-ups e documentos.
-              {clientPolicies.length > 0 && (
+              {clientPolicies.length > 0 || clientFollowUps.length > 0 || docCount > 0 ? (
                 <>
-                  {" "}
-                  Este cliente possui{" "}
-                  <strong>
-                    {clientPolicies.length} apólice{clientPolicies.length === 1 ? "" : "s"}
-                  </strong>{" "}
-                  que também será{clientPolicies.length === 1 ? "" : "ão"} excluída
-                  {clientPolicies.length === 1 ? "" : "s"}, junto com beneficiários e comissões
-                  vinculadas.
+                  <strong>{c.name}</strong> possui apólices, follow-ups ou documentos vinculados, por isso
+                  não será apagado: o cadastro será <strong>inativado</strong> e sairá das listagens, mas todo o
+                  histórico continua preservado. Você pode reativá-lo depois.
+                </>
+              ) : (
+                <>
+                  O cadastro de <strong>{c.name}</strong> não tem nenhum vínculo e será excluído definitivamente.
                 </>
               )}
             </AlertDialogDescription>
