@@ -61,7 +61,7 @@ export function SellerCommissionsTab() {
   const salesFn = useServerFn(listSellerSales);
   const { data: sales = [] } = useQuery({
     queryKey: ["seller-sales", sellerId],
-    queryFn: () => salesFn({ data: { userId: sellerId } }),
+    queryFn: async () => (await salesFn({ data: { userId: sellerId } })) ?? [],
     enabled: !!sellerId,
   });
 
