@@ -146,7 +146,7 @@ function UsersSection() {
               <p className="text-xs text-muted-foreground truncate">{u.email}</p>
             </div>
             <Badge variant="outline" className="rounded-full text-xs">
-              {ROLE_LABEL_NAMES[u.roleLabel]}
+              {u.roleLabels.map((r) => ROLE_LABEL_NAMES[r]).join(" · ")}
             </Badge>
             <Badge
               className={
@@ -234,13 +234,17 @@ function UserDialog({
   const updateFn = useServerFn(updateSettingsUser);
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
-  const [roleLabel, setRoleLabel] = useState<RoleLabel>(user?.roleLabel ?? "comercial");
+  const { userId } = useRole();
+  const isSelf = !!user && user.id === userId;
+  const [roleLabels, setRoleLabels] = useState<RoleLabel[]>(user?.roleLabels ?? ["comercial"]);
   const [pages, setPages] = useState<PageKey[]>(user?.pages ?? defaultPermissions("comercial"));
   const [viewAll, setViewAll] = useState(user?.canViewAllOpportunities ?? false);
+  const onlyComercial = !roleLabels.includes("admin") && !roleLabels.includes("pos_venda");
 
   const save = useMutation({
     mutationFn: () => {
-      const base = { name, roleLabel, pages, canViewAllOpportunities: roleLabel === "comercial" && viewAll };
+      if (roleLabels.length === 0) throw new Error("Selecione pelo menos uma role");
+      const base = { name, roleLabels, pages, canViewAllOpportunities: onlyComercial && viewAll };
       return user
         ? updateFn({ data: { ...base, id: user.id } })
         : inviteFn({ data: { ...base, email, redirectTo: window.location.origin } });
@@ -253,10 +257,8 @@ function UserDialog({
     onError: (e) => toast.error(errMsg(e)),
   });
 
-  const changeRole = (r: RoleLabel) => {
-    setRoleLabel(r);
-    if (!user) setPages(defaultPermissions(r));
-  };
+  const toggleRole = (r: RoleLabel, on: boolean) =>
+    setRoleLabels((prev) => (on ? [...new Set([...prev, r])] : prev.filter((x) => x !== r)));
   const toggle = (p: PageKey, on: boolean) =>
     setPages((prev) => (on ? [...new Set([...prev, p])] : prev.filter((x) => x !== p)));
 
@@ -278,19 +280,25 @@ function UserDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs">Role</Label>
-            <Select value={roleLabel} onValueChange={(v) => changeRole(v as RoleLabel)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(ROLE_LABEL_NAMES) as RoleLabel[]).map((r) => (
-                  <SelectItem key={r} value={r}>
+            <Label className="text-xs">Roles</Label>
+            <div className="mt-2 flex flex-wrap gap-4">
+              {(Object.keys(ROLE_LABEL_NAMES) as RoleLabel[]).map((r) => {
+                const locked = isSelf && r === "admin";
+                return (
+                  <label key={r} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={roleLabels.includes(r)}
+                      disabled={locked}
+                      onCheckedChange={(c) => toggleRole(r, c === true)}
+                    />
                     {ROLE_LABEL_NAMES[r]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </label>
+                );
+              })}
+            </div>
+            {isSelf && (
+              <p className="text-xs text-muted-foreground mt-1">Você não pode remover o próprio papel de Administrador.</p>
+            )}
           </div>
           <div>
             <Label className="text-xs">Páginas permitidas</Label>
@@ -303,7 +311,7 @@ function UserDialog({
               ))}
             </div>
           </div>
-          {roleLabel === "comercial" && (
+          {onlyComercial && (
             <div className="flex items-center justify-between rounded-xl border border-border p-3">
               <div>
                 <p className="text-sm font-medium">Ver todas as oportunidades</p>

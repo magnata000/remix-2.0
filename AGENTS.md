@@ -6,3 +6,4 @@
 
 - Financeiro: commission_events and commission_payout_payments are append-only ledgers (trigger trg_append_only); recognized commission = commission_recognized(); payout valor_devido/valor_pago are maintained by triggers — app code only inserts events/payments.
 - User deletion goes through the delete_team_member RPC (reassigns ownership to the deleting admin in one transaction), then the auth account is deleted server-side.
+- Vários papéis por usuário: linhas em user_roles, vale o mais amplo; team_members.role_label é só o papel principal derivado.
