@@ -71,6 +71,13 @@
       "when": 1792509259049,
       "tag": "0009_purge_legacy_commissions",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792598080327,
+      "tag": "0010_deprecate_policy_commission_installments",
+      "breakpoints": true
     }
   ]
 }
