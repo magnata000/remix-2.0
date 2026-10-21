@@ -28,6 +28,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { CalendarIcon } from "lucide-react";
+import { useSellerCommissionStore } from "@/lib/financial/sellerCommissionStore";
 import { cn, parseMoneyInput, formatBRLDecimal } from "@/lib/utils";
 import { annivToISO, isoToDdmm } from "@/lib/portfolio/healthAnniversary";
 
@@ -115,6 +116,13 @@ export function NewPolicyDialog({
   const [status, setStatus] = useState<PolicyStatus>("ativa");
   const [assigneeId, setAssigneeId] = useState(userId);
   const [touched, setTouched] = useState(false);
+  const { getRate: getSellerRate } = useSellerCommissionStore();
+  const [repasseStr, setRepasseStr] = useState("");
+  // Pré-preenche o repasse com a taxa do vendedor no ramo (aba Repasse dos Vendedores).
+  useEffect(() => {
+    if (!open || !assigneeId) return;
+    setRepasseStr(String(getSellerRate(assigneeId, branch)).replace(".", ","));
+  }, [open, assigneeId, branch, getSellerRate]);
 
   // Apenas admin e pós-venda podem escolher qualquer vendedor; vendedor só se atribui.
   const assignable = useMemo(
