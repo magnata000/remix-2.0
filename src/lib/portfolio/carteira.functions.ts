@@ -64,7 +64,6 @@ function mapPolicy(r: Row): Policy {
     renewedToId: (r["renewed_to_id"] as string | null) ?? undefined,
     commissionPct: n(r["commission_pct"]),
     commissionScheme: (r["commission_scheme"] as Policy["commissionScheme"]) ?? undefined,
-    commissionInstallments: n(r["commission_installments"]),
     agenciamentoSchedule: (r["agenciamento_schedule"] as number[] | null)?.map(Number) ?? undefined,
     recorrenciaPct: n(r["recorrencia_pct"]),
     comissaoLiquida: (r["comissao_liquida"] as boolean | null) ?? undefined,
@@ -148,8 +147,6 @@ function policyColumns(input: PolicyInput, clientId?: string) {
   if (input.assigneeId !== undefined) out["assignee_id"] = input.assigneeId || null;
   if (input.commissionPct !== undefined) out["commission_pct"] = input.commissionPct;
   if (input.commissionScheme !== undefined) out["commission_scheme"] = input.commissionScheme;
-  if (input.commissionInstallments !== undefined)
-    out["commission_installments"] = input.commissionInstallments;
   if (input.agenciamentoSchedule !== undefined)
     out["agenciamento_schedule"] = input.agenciamentoSchedule;
   if (input.recorrenciaPct !== undefined) out["recorrencia_pct"] = input.recorrenciaPct;
