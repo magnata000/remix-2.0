@@ -188,13 +188,13 @@ export const inviteSettingsUser = createServerFn({ method: "POST" })
       id,
       name: data.name.trim(),
       email,
-      role: appRoleFor(data.roleLabel),
-      role_label: data.roleLabel,
+      role: appRoleFor(primaryLabel(data.roleLabels)),
+      role_label: primaryLabel(data.roleLabels),
       status: "convidado",
-      can_view_all_opportunities: data.canViewAllOpportunities,
+      can_view_all_opportunities: primaryLabel(data.roleLabels) === "comercial" && data.canViewAllOpportunities,
     });
     if (memberError) throw new Error(memberError.message);
-    await writeAccess(db, id, data.roleLabel, data.pages);
+    await writeAccess(db, id, data.roleLabels, data.pages);
     return { ok: true };
   });
 
@@ -249,7 +249,7 @@ export const resolveAccessRequest = createServerFn({ method: "POST" })
         { onConflict: "id" },
       );
       if (error) throw new Error(error.message);
-      await writeAccess(db, req.user_id, label, data.pages ?? defaultPermissions(label));
+      await writeAccess(db, req.user_id, [label], data.pages ?? defaultPermissions(label));
     }
     const { error } = await db
       .from("access_requests")
