@@ -2141,6 +2141,7 @@ export type Database = {
         | "financeiro_relatorios"
         | "configuracoes"
         | "dashboard"
+        | "daily"
       payment_model:
         | "adiantamento"
         | "parcelado"
@@ -2419,6 +2420,7 @@ export const Constants = {
         "financeiro_relatorios",
         "configuracoes",
         "dashboard",
+        "daily",
       ],
       payment_model: [
         "adiantamento",
