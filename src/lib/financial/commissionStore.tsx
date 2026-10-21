@@ -139,33 +139,8 @@ export function CommissionStoreProvider({ children }: { children: ReactNode }) {
     [configForPolicy, createMutation],
   );
 
-  // Efeito: garantir recorrências mensais para apólices Saúde até o mês corrente.
-  // Usa um ref para não duplicar comissões durante o carregamento inicial.
-  const generatedRecurrencesRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    const reference = new Date();
-    const additions: Commission[] = [];
-    const keys = new Set<string>();
-    for (const policy of policies) {
-      if (branchToProduct(policy.branch) !== "saude") continue;
-      if (policy.status === "cancelada" || policy.status === "vencida") continue;
-      const existing = commissions.filter((c) => c.policyId === policy.id && c.kind === "recorrencia");
-      const existingDates = new Set(existing.map((c) => c.dueDate));
-      const config = configForPolicy(policy);
-      const novos = expectedRecurrencesUntil(policy, config, reference, existingDates);
-      novos.forEach((c) => {
-        const key = `${policy.id}:${c.dueDate}`;
-        if (!generatedRecurrencesRef.current.has(key)) {
-          additions.push(c);
-          keys.add(key);
-        }
-      });
-    }
-    if (additions.length > 0) {
-      keys.forEach((k) => generatedRecurrencesRef.current.add(k));
-      createMutation.mutate(additions);
-    }
-  }, [policies, configForPolicy, createMutation]);
+  // Recorrências retroativas de Saúde desativadas: só novas apólices geram
+  // comissão (via motor oficial no formulário de Nova Apólice).
 
   // Cascata de cancelamento: pagas → devolvido, pendentes/atrasadas → cancelada
   const prevStatusRef = useRef<Map<string, Policy["status"]>>(new Map());

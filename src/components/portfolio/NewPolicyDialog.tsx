@@ -45,7 +45,7 @@ import { useRole } from "@/lib/auth/roleStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
-import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
@@ -98,7 +98,7 @@ export function NewPolicyDialog({
   const { clients } = useClients();
   const { addPolicy, renewPolicy } = usePolicies();
   const { refresh: refreshDocuments } = useDocumentStore();
-  const { generateForPolicy } = useCommissionStore();
+  const queryClient = useQueryClient();
   const { getConfig } = useCommissionConfigStore();
   const { members: team } = useTeam();
   const { userId, appRole, isAdmin } = useRole();
@@ -339,22 +339,21 @@ export function NewPolicyDialog({
         ? `Renovação ${created.number} criada`
         : `Apólice ${created.number} criada`;
       let extra = "";
-      if (branch === "Saúde") {
-        const gerados = generateForPolicy(created);
-        if (gerados.length > 0) extra = ` · ${gerados.length} parcela(s) de comissão geradas`;
-      } else if (commissionPct > 0 && liquidoNum > 0) {
-        // Fluxo flexível: comissão prevista única sobre o prêmio líquido;
-        // recebimentos parciais são lançados na aba Comissões do Financeiro.
+      // Fluxo flexível (todos os ramos, só para apólices criadas aqui):
+      // comissão prevista única; recebimentos parciais na aba Comissões.
+      const base = branch === "Saúde" ? liquidoNum || premiumNum : liquidoNum;
+      if (commissionPct > 0 && base > 0) {
         try {
           await createCommissionFn({
             data: {
               policyId: created.id,
-              baseCalculo: liquidoNum,
+              baseCalculo: base,
               percentual: commissionPct,
               modelo: "adiantamento",
               parcelas: 1,
             },
           });
+          queryClient.invalidateQueries({ queryKey: ["finance-commissions"] });
           extra = " · comissão enviada ao Financeiro";
         } catch (e) {
           toast.error(
