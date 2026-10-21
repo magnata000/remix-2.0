@@ -103,6 +103,8 @@ export type Policy = {
   branch: Branch;
   insurer: Insurer;
   premium: number;
+  /** Prêmio líquido — base de cálculo da comissão. */
+  premioLiquido?: number;
   startDate: string;
   endDate: string;
   status: PolicyStatus;
