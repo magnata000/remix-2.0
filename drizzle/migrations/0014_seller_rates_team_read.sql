@@ -1,0 +1,2 @@
+CREATE POLICY "Team read rates" ON public.seller_commission_rates FOR SELECT TO authenticated USING (public.is_team_member(auth.uid()));
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.seller_commission_rates TO authenticated;
