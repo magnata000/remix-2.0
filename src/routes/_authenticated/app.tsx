@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TopBar, type ModuleKey } from "@/components/shell/TopBar";
 import { DailyModule } from "@/components/modules/DailyModule";
+import { DashboardModule } from "@/components/modules/DashboardModule";
 import { PortfolioModule } from "@/components/modules/PortfolioModule";
 import { KanbanModule } from "@/components/modules/KanbanModule";
 import { MulticalcModule } from "@/components/modules/MulticalcModule";
@@ -88,7 +89,7 @@ function AccessGate({ status }: { status: "pendente" | "bloqueado" }) {
 }
 
 function AppModules() {
-  const [rawActive, setActive] = useState<ModuleKey>("dashboard");
+  const [rawActive, setActive] = useState<ModuleKey>("daily");
   const { pages, loading } = useRole();
 
   // Guards: Multicálculo desabilitado ou módulo sem permissão caem no fallback.
@@ -124,7 +125,8 @@ function AppModules() {
                                   <div className="min-h-screen bg-background">
                                     <TopBar active={active} onChange={setActive} />
                                     <main className="mx-auto max-w-[1400px] px-4 md:px-6 py-6 md:py-8">
-                                      {active === "dashboard" && <DailyModule />}
+                                      {active === "daily" && <DailyModule />}
+                                      {active === "dashboard" && <DashboardModule />}
                                       {active === "policies" && <PortfolioModule />}
                                       {active === "kanban" && <KanbanModule />}
                                       {active === "multicalc" && FEATURES.multicalc && (

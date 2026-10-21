@@ -7,6 +7,7 @@ export type PaymentModel = Database["public"]["Enums"]["payment_model"];
 
 /** Ordem de exibição das páginas/sub-áreas controladas por permissão. */
 export const PAGE_KEYS: PageKey[] = [
+  "daily",
   "dashboard",
   "carteira",
   "kanban_pipeline",
@@ -18,7 +19,8 @@ export const PAGE_KEYS: PageKey[] = [
 ];
 
 export const PAGE_LABELS: Record<PageKey, string> = {
-  dashboard: "Daily",
+  daily: "Daily",
+  dashboard: "Dashboard",
   carteira: "Carteira",
   kanban_pipeline: "Pipeline de Vendas",
   kanban_tarefas: "Tarefas",
@@ -50,7 +52,7 @@ export const PAYMENT_MODEL_NAMES: Record<PaymentModel, string> = {
 /** Sugestão inicial de permissões por rótulo; o Admin ajusta usuário a usuário. */
 export function defaultPermissions(label: RoleLabel): PageKey[] {
   if (label === "admin") return [...PAGE_KEYS];
-  if (label === "pos_venda") return ["dashboard", "carteira", "kanban_pipeline", "kanban_tarefas"];
+  if (label === "pos_venda") return ["daily", "carteira", "kanban_pipeline", "kanban_tarefas"];
   return ["carteira", "kanban_pipeline", "kanban_tarefas"];
 }
 
