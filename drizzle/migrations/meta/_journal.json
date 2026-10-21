@@ -85,6 +85,13 @@
       "when": 1792603165745,
       "tag": "0011_dashboard_v1_enum",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792603203001,
+      "tag": "0012_dashboard_v1_rpc",
+      "breakpoints": true
     }
   ]
 }
