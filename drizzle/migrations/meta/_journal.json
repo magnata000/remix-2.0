@@ -99,6 +99,13 @@
       "when": 1792610149624,
       "tag": "0013_delete_team_member",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792611840872,
+      "tag": "0014_seller_rates_team_read",
+      "breakpoints": true
     }
   ]
 }

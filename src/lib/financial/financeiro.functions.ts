@@ -188,3 +188,20 @@ export const getCashFlow = createServerFn({ method: "GET" })
     for (const e of check(outs) ?? []) if (e.paid_at) months[new Date(e.paid_at).getMonth()].saidas += Number(e.amount);
     return months;
   });
+
+/** Vendas (comissões) com repasse atribuído a um vendedor. */
+export const listSellerSales = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => d)
+  .handler(async ({ data, context }) =>
+    check(
+      await context.supabase
+        .from("commission_payouts")
+        .select(
+          "id, percentual_repasse, valor_devido, valor_pago, commissions(id, policy_number, client_name, competencia, valor_previsto, status, insurers(name), policies(branches(name)))",
+        )
+        .eq("user_id", data.userId)
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ),
+  );
