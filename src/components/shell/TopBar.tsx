@@ -34,6 +34,7 @@ import { useRole } from "@/lib/auth/roleStore";
 import { visibleModules } from "@/lib/auth/moduleAccess";
 
 export type ModuleKey =
+  | "daily"
   | "dashboard"
   | "policies"
   | "kanban"
@@ -42,7 +43,8 @@ export type ModuleKey =
   | "settings";
 
 const allModules: { key: ModuleKey; label: string; icon: typeof LayoutDashboard }[] = [
-  { key: "dashboard", label: "Daily", icon: Sparkles },
+  { key: "daily", label: "Daily", icon: Sparkles },
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "policies", label: "Carteira", icon: FileText },
   { key: "kanban", label: "Kanban", icon: KanbanSquare },
   { key: "multicalc", label: "Multicálculo", icon: Calculator },

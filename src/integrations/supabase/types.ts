@@ -1938,6 +1938,10 @@ export type Database = {
         Args: { _policy_id: string }
         Returns: undefined
       }
+      get_dashboard_analytics: {
+        Args: { _branch_id?: string; _month: number; _year: number }
+        Returns: Json
+      }
       has_page_access: {
         Args: {
           _page: Database["public"]["Enums"]["page_key"]
@@ -2141,6 +2145,7 @@ export type Database = {
         | "financeiro_relatorios"
         | "configuracoes"
         | "dashboard"
+        | "daily"
       payment_model:
         | "adiantamento"
         | "parcelado"
@@ -2419,6 +2424,7 @@ export const Constants = {
         "financeiro_relatorios",
         "configuracoes",
         "dashboard",
+        "daily",
       ],
       payment_model: [
         "adiantamento",
