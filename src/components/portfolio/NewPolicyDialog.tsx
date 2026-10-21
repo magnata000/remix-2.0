@@ -54,6 +54,7 @@ import { BranchCombobox } from "./BranchCombobox";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listCommissionModels } from "@/lib/settings/settings.functions";
+import { createPolicyCommission } from "@/lib/financial/financeiro.functions";
 import { listBranches, listInsurers } from "@/lib/portfolio/portfolio.functions";
 
 export type PolicyPrefill = {
@@ -108,6 +109,7 @@ export function NewPolicyDialog({
   const [branch, setBranch] = useState<Branch>("Auto");
   const [insurer, setInsurer] = useState<Insurer>("Porto Seguro");
   const [premium, setPremium] = useState("");
+  const [premioLiquido, setPremioLiquido] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(addYears(new Date(), 1));
   const [status, setStatus] = useState<PolicyStatus>("ativa");
@@ -125,6 +127,7 @@ export function NewPolicyDialog({
 
   // Modelo Seguradora + Ramo (Configurações) pré-carrega o % como ponto de partida editável.
   const modelsFn = useServerFn(listCommissionModels);
+  const createCommissionFn = useServerFn(createPolicyCommission);
   const branchListFn = useServerFn(listBranches);
   const insurerListFn = useServerFn(listInsurers);
   const { data: commissionModels = [] } = useQuery({ queryKey: ["commission-models"], queryFn: () => modelsFn(), enabled: open });
@@ -170,6 +173,7 @@ export function NewPolicyDialog({
       setBranch(src.branch);
       setInsurer(src.insurer);
       setPremium(formatBRLDecimal(src.premium));
+      setPremioLiquido(src.premioLiquido ? formatBRLDecimal(src.premioLiquido) : "");
       const newStart = new Date(src.endDate || src.startDate);
       setStartDate(newStart);
       setEndDate(addYears(newStart, 1));
@@ -198,6 +202,7 @@ export function NewPolicyDialog({
     setBranch("Auto");
     setInsurer("Porto Seguro");
     setPremium("");
+    setPremioLiquido("");
     setStartDate(new Date());
     setEndDate(addYears(new Date(), 1));
     setStatus("ativa");
