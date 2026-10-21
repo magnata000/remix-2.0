@@ -139,8 +139,6 @@ export function NewPolicyDialog({
     const m = commissionModels.find((x) => x.branchId === bId && x.insurerId === iId);
     if (m) setCommissionStr(String(m.percentualPadrao).replace(".", ","));
   }, [branch, insurer, commissionModels, branchCatalog, insurerCatalog]);
-  const [autoScheme, setAutoScheme] = useState<"esgotamento" | "parcela">("esgotamento");
-  const [autoInstallments, setAutoInstallments] = useState("10");
   // Saúde
   const [healthScheme, setHealthScheme] = useState<"agenciamento" | "vitalicio">("agenciamento");
   const [healthAnniversary, setHealthAnniversary] = useState("");
@@ -183,8 +181,6 @@ export function NewPolicyDialog({
       setCommissionStr(
         src.commissionPct != null ? String(src.commissionPct).replace(".", ",") : "",
       );
-      setAutoScheme(src.commissionScheme === "parcela" ? "parcela" : "esgotamento");
-      setAutoInstallments(src.commissionInstallments ? String(src.commissionInstallments) : "10");
       setHealthScheme(src.commissionScheme === "vitalicio" ? "vitalicio" : "agenciamento");
       setHealthAnniversary(isoToDdmm(src.healthAnniversary));
       setAnniversaryTouched(false);
@@ -278,23 +274,6 @@ export function NewPolicyDialog({
 
   const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
 
-  // Limites por seguradora para Parcelado/Adiantamento (Seguros)
-  const autoConfig = useMemo(() => getConfig(insurer, "auto"), [getConfig, insurer]);
-  const installmentsNum = Math.max(1, Number(autoInstallments) || 1);
-  const minParcelado = autoConfig.parceladoMinInstallments ?? 5;
-  const maxAdiantamento = autoConfig.adiantamentoMaxInstallments ?? 4;
-  const parceladoAllowed = installmentsNum >= minParcelado;
-  const adiantamentoAllowed = installmentsNum <= maxAdiantamento;
-
-  // Se a seleção atual virar inválida, alterna para a outra opção (quando possível)
-  useEffect(() => {
-    if (autoScheme === "parcela" && !parceladoAllowed && adiantamentoAllowed) {
-      setAutoScheme("esgotamento");
-    } else if (autoScheme === "esgotamento" && !adiantamentoAllowed && parceladoAllowed) {
-      setAutoScheme("parcela");
-    }
-  }, [autoScheme, parceladoAllowed, adiantamentoAllowed]);
-
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!clientId) e.client = "Selecione um cliente";
@@ -326,7 +305,6 @@ export function NewPolicyDialog({
       }
     }
     const healthInitialNum = parseMoneyInput(healthInitialValue);
-    const isAutoLike = !["Saúde", "Consórcio"].includes(branch);
     const payload = {
       clientName,
       branch,
@@ -338,11 +316,6 @@ export function NewPolicyDialog({
       status,
       assigneeId: assigneeId || undefined,
       commissionPct: commissionPct || undefined,
-      ...(isAutoLike && {
-        commissionScheme: autoScheme,
-        commissionInstallments:
-          autoScheme === "parcela" ? Math.max(1, Number(autoInstallments) || 1) : undefined,
-      }),
       ...(branch === "Saúde" && {
         healthAnniversary: annivToISO(healthAnniversary, startDate),
         healthInitialValue: healthInitialNum || undefined,
@@ -646,42 +619,6 @@ export function NewPolicyDialog({
             </div>
           </div>
 
-          {!["Saúde", "Consórcio"].includes(branch) && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">Número de parcelas</Label>
-                <Input
-                  inputMode="numeric"
-                  value={autoInstallments}
-                  onChange={(e) => setAutoInstallments(e.target.value.replace(/\D/g, ""))}
-                  placeholder="10"
-                  className="mt-1.5 rounded-xl bg-muted border-0"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
-                <Select
-                  value={autoScheme}
-                  onValueChange={(v) => setAutoScheme(v as typeof autoScheme)}
-                >
-                  <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="esgotamento" disabled={!adiantamentoAllowed}>
-                      Adiantamento{!adiantamentoAllowed ? ` (máx ${maxAdiantamento} parcelas)` : ""}
-                    </SelectItem>
-                    <SelectItem value="parcela" disabled={!parceladoAllowed}>
-                      Parcelado{!parceladoAllowed ? ` (mín ${minParcelado} parcelas)` : ""}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  Adiantamento até {maxAdiantamento} · Parcelado a partir de {minParcelado}.
-                </p>
-              </div>
-            </div>
-          )}
           {branch === "Saúde" && (
             <div>
               <Label className="text-xs text-muted-foreground">Tipo de comissão</Label>
