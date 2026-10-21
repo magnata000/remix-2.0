@@ -5,7 +5,11 @@ import type { Database } from "@/integrations/supabase/types";
 import {
   PAGE_KEYS,
   appRoleFor,
+  assertSelfKeepsAdmin,
   defaultPermissions,
+  labelForAppRole,
+  normalizeLabels,
+  primaryLabel,
   type PageKey,
   type PaymentModel,
   type RoleLabel,
@@ -24,8 +28,8 @@ async function admin() {
   return supabaseAdmin;
 }
 
-/** Grava o acesso de cada página (uma linha por usuário+página) e sincroniza o papel técnico. */
-async function writeAccess(db: Db, userId: string, label: RoleLabel, pages: PageKey[]) {
+/** Grava o acesso de cada página e sincroniza os papéis técnicos (uma linha por papel). */
+async function writeAccess(db: Db, userId: string, labels: RoleLabel[], pages: PageKey[]) {
   const rows = PAGE_KEYS.map((page_key) => ({
     user_id: userId,
     page_key,
@@ -36,7 +40,7 @@ async function writeAccess(db: Db, userId: string, label: RoleLabel, pages: Page
   await db.from("user_roles").delete().eq("user_id", userId);
   const { error: roleError } = await db
     .from("user_roles")
-    .insert({ user_id: userId, role: appRoleFor(label) });
+    .insert(labels.map((l) => ({ user_id: userId, role: appRoleFor(l) })));
   if (roleError) throw new Error(roleError.message);
 }
 
@@ -45,6 +49,7 @@ export type SettingsUser = {
   name: string;
   email: string;
   roleLabel: RoleLabel;
+  roleLabels: RoleLabel[];
   status: UserStatus;
   canViewAllOpportunities: boolean;
   pages: PageKey[];
@@ -55,40 +60,47 @@ export const listSettingsUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SettingsUser[]> => {
     await assertAdmin(context.supabase, context.userId);
-    const [{ data: members, error }, { data: perms }] = await Promise.all([
+    const db = await admin();
+    const [{ data: members, error }, { data: perms }, { data: roles }] = await Promise.all([
       context.supabase
         .from("team_members")
         .select("id, name, email, role_label, status, can_view_all_opportunities, created_at")
         .order("name"),
       context.supabase.from("user_permissions").select("user_id, page_key, can_access"),
+      db.from("user_roles").select("user_id, role"),
     ]);
     if (error) throw new Error(error.message);
-    return (members ?? []).map((m) => ({
-      id: m.id,
-      name: m.name,
-      email: m.email,
-      roleLabel: m.role_label,
-      status: m.status,
-      canViewAllOpportunities: m.can_view_all_opportunities,
-      createdAt: m.created_at,
-      pages: (perms ?? []).filter((p) => p.user_id === m.id && p.can_access).map((p) => p.page_key),
-    }));
+    return (members ?? []).map((m) => {
+      const own = (roles ?? []).filter((r) => r.user_id === m.id).map((r) => labelForAppRole(r.role));
+      const roleLabels = own.length ? normalizeLabels(own) : [m.role_label];
+      return {
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        roleLabel: primaryLabel(roleLabels),
+        roleLabels,
+        status: m.status,
+        canViewAllOpportunities: m.can_view_all_opportunities,
+        createdAt: m.created_at,
+        pages: (perms ?? []).filter((p) => p.user_id === m.id && p.can_access).map((p) => p.page_key),
+      };
+    });
   });
 
 type UserInput = {
   id: string;
   name: string;
-  roleLabel: RoleLabel;
+  roleLabels: RoleLabel[];
   pages: PageKey[];
   canViewAllOpportunities: boolean;
 };
 
 function validateUser<T extends Omit<UserInput, "id">>(d: T): T {
   if (d.name.trim().length < 2) throw new Error("Informe um nome válido");
-  if (!["admin", "pos_venda", "comercial"].includes(d.roleLabel)) throw new Error("Role inválida");
+  const roleLabels = normalizeLabels(d.roleLabels);
   if (!Array.isArray(d.pages) || d.pages.some((p) => !PAGE_KEYS.includes(p)))
     throw new Error("Permissões inválidas");
-  return d;
+  return { ...d, roleLabels };
 }
 
 export const updateSettingsUser = createServerFn({ method: "POST" })
@@ -96,20 +108,23 @@ export const updateSettingsUser = createServerFn({ method: "POST" })
   .inputValidator((d: UserInput) => validateUser(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    if (data.id === context.userId && (data.roleLabel !== "admin" || !data.pages.includes("configuracoes")))
+    const isSelf = data.id === context.userId;
+    assertSelfKeepsAdmin(isSelf, data.roleLabels);
+    if (isSelf && !data.pages.includes("configuracoes"))
       throw new Error("Você não pode remover o próprio acesso administrativo.");
+    const main = primaryLabel(data.roleLabels);
     const db = await admin();
     const { error } = await db
       .from("team_members")
       .update({
         name: data.name.trim(),
-        role_label: data.roleLabel,
-        role: appRoleFor(data.roleLabel),
-        can_view_all_opportunities: data.canViewAllOpportunities,
+        role_label: main,
+        role: appRoleFor(main),
+        can_view_all_opportunities: main === "comercial" && data.canViewAllOpportunities,
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
-    await writeAccess(db, data.id, data.roleLabel, data.pages);
+    await writeAccess(db, data.id, data.roleLabels, data.pages);
     return { ok: true };
   });
 

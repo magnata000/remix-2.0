@@ -60,3 +60,29 @@ export function defaultPermissions(label: RoleLabel): PageKey[] {
 export function appRoleFor(label: RoleLabel): "admin" | "pos_venda" | "vendedor" {
   return label === "comercial" ? "vendedor" : label;
 }
+
+export function labelForAppRole(role: string): RoleLabel {
+  return role === "vendedor" ? "comercial" : (role as RoleLabel);
+}
+
+const ROLE_RANK: RoleLabel[] = ["admin", "pos_venda", "comercial"];
+
+/** Papel principal = o mais amplo entre os atribuídos (admin > pós-venda > comercial). */
+export function primaryLabel(labels: RoleLabel[]): RoleLabel {
+  return ROLE_RANK.find((r) => labels.includes(r)) ?? "comercial";
+}
+
+/** Normaliza a lista de papéis: sem duplicados, ordenada do mais amplo, pelo menos um. */
+export function normalizeLabels(labels: RoleLabel[]): RoleLabel[] {
+  if (!Array.isArray(labels) || labels.some((l) => !ROLE_RANK.includes(l)))
+    throw new Error("Role inválida");
+  const out = ROLE_RANK.filter((r) => labels.includes(r));
+  if (out.length === 0) throw new Error("Selecione pelo menos uma role");
+  return out;
+}
+
+/** O admin nunca pode tirar de si o papel de Administrador. */
+export function assertSelfKeepsAdmin(isSelf: boolean, labels: RoleLabel[]) {
+  if (isSelf && !labels.includes("admin"))
+    throw new Error("Você não pode remover o próprio papel de Administrador.");
+}
