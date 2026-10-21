@@ -263,42 +263,16 @@ export function NewPolicyDialog({
   };
 
   const premiumNum = useMemo(() => parseMoneyInput(premium), [premium]);
+  const liquidoNum = useMemo(() => parseMoneyInput(premioLiquido), [premioLiquido]);
 
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
   const commissionValue = useMemo(
-    () => (premiumNum * commissionPct) / 100,
-    [premiumNum, commissionPct],
+    () => (liquidoNum * commissionPct) / 100,
+    [liquidoNum, commissionPct],
   );
 
   const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
-
-  // Limites por seguradora para Parcelado/Adiantamento (Seguros)
-  const autoConfig = useMemo(() => getConfig(insurer, "auto"), [getConfig, insurer]);
-  const installmentsNum = Math.max(1, Number(autoInstallments) || 1);
-  const minParcelado = autoConfig.parceladoMinInstallments ?? 5;
-  const maxAdiantamento = autoConfig.adiantamentoMaxInstallments ?? 4;
-  const parceladoAllowed = installmentsNum >= minParcelado;
-  const adiantamentoAllowed = installmentsNum <= maxAdiantamento;
-
-  // Se a seleção atual virar inválida, alterna para a outra opção (quando possível)
-  useEffect(() => {
-    if (autoScheme === "parcela" && !parceladoAllowed && adiantamentoAllowed) {
-      setAutoScheme("esgotamento");
-    } else if (autoScheme === "esgotamento" && !adiantamentoAllowed && parceladoAllowed) {
-      setAutoScheme("parcela");
-    }
-  }, [autoScheme, parceladoAllowed, adiantamentoAllowed]);
-
-  const errors = useMemo(() => {
-    const e: Record<string, string> = {};
-    if (!clientId) e.client = "Selecione um cliente";
-    if (premiumNum <= 0) e.premium = "Prêmio deve ser maior que zero";
-    if (!startDate) e.startDate = "Selecione a data de início";
-    if (endDateRequired && !endDate) e.endDate = "Selecione a data de fim";
-    if (endDateRequired && startDate && endDate && endDate <= startDate)
-      e.endDate = "Fim deve ser após início";
-    return e;
-  }, [clientId, premiumNum, startDate, endDate, endDateRequired]);
+REPLACE_MIDDLE
 
   const valid = Object.keys(errors).length === 0;
 
@@ -322,6 +296,7 @@ export function NewPolicyDialog({
       branch,
       insurer,
       premium: premiumNum,
+      premioLiquido: liquidoNum || undefined,
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
       status,
@@ -353,15 +328,34 @@ export function NewPolicyDialog({
           ? await renewPolicy(sourcePolicy.id, payload)
           : await addPolicy(payload);
       refreshDocuments();
-      const gerados = generateForPolicy(created);
       const baseMsg = isRenewal
         ? `Renovação ${created.number} criada`
         : `Apólice ${created.number} criada`;
-      toast.success(
-        gerados.length > 0
-          ? `${baseMsg} · ${gerados.length} parcela(s) de comissão geradas`
-          : baseMsg,
-      );
+      let extra = "";
+      if (branch === "Saúde") {
+        const gerados = generateForPolicy(created);
+        if (gerados.length > 0) extra = ` · ${gerados.length} parcela(s) de comissão geradas`;
+      } else if (commissionPct > 0 && liquidoNum > 0) {
+        // Fluxo flexível: comissão prevista única sobre o prêmio líquido;
+        // recebimentos parciais são lançados na aba Comissões do Financeiro.
+        try {
+          await createCommissionFn({
+            data: {
+              policyId: created.id,
+              baseCalculo: liquidoNum,
+              percentual: commissionPct,
+              modelo: "adiantamento",
+              parcelas: 1,
+            },
+          });
+          extra = " · comissão enviada ao Financeiro";
+        } catch (e) {
+          toast.error(
+            `Apólice salva, mas a comissão não foi gerada: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        }
+      }
+      toast.success(baseMsg + extra);
       onOpenChange(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -440,7 +434,7 @@ export function NewPolicyDialog({
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">
-                {branch === "Saúde" ? "Prêmio mensal *" : "Prêmio anual *"}
+                {branch === "Saúde" ? "Prêmio mensal *" : "Prêmio Total *"}
               </Label>
               <Input
                 inputMode="decimal"
@@ -455,6 +449,25 @@ export function NewPolicyDialog({
               />
               {showErr("premium") && (
                 <p className="text-xs text-destructive mt-1">{errors.premium}</p>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Prêmio Líquido *</Label>
+              <Input
+                inputMode="decimal"
+                value={premioLiquido}
+                onChange={(e) => setPremioLiquido(e.target.value.replace(/[^\d.,]/g, ""))}
+                onBlur={() => {
+                  if (liquidoNum > 0) setPremioLiquido(formatBRLDecimal(liquidoNum));
+                }}
+                onFocus={() =>
+                  setPremioLiquido(liquidoNum ? String(liquidoNum).replace(".", ",") : "")
+                }
+                placeholder="R$ 0,00"
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+              {showErr("premioLiquido") && (
+                <p className="text-xs text-destructive mt-1">{errors.premioLiquido}</p>
               )}
             </div>
             <div>
