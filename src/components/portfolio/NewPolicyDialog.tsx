@@ -45,7 +45,7 @@ import { useRole } from "@/lib/auth/roleStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useDocumentStore } from "@/lib/documents/documentStore";
-import { useCommissionStore } from "@/lib/financial/commissionStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
 import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
