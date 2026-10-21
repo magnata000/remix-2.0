@@ -273,10 +273,11 @@ export function NewPolicyDialog({
   const liquidoNum = useMemo(() => parseMoneyInput(premioLiquido), [premioLiquido]);
 
   const commissionPct = useMemo(() => parsePercent(commissionStr), [commissionStr]);
-  const commissionValue = useMemo(
-    () => (liquidoNum * commissionPct) / 100,
-    [liquidoNum, commissionPct],
-  );
+  const commissionBase = branch === "Saúde" ? liquidoNum || premiumNum : liquidoNum;
+  const commissionValue = (commissionBase * commissionPct) / 100;
+  // Repasse incide sobre a comissão da corretora, nunca sobre o prêmio.
+  const repassePct = Math.min(100, parsePercent(repasseStr));
+  const repasseValue = (commissionValue * repassePct) / 100;
 
   const endDateRequired = !(branch === "Saúde" && status !== "cancelada");
 
@@ -349,16 +350,18 @@ export function NewPolicyDialog({
       let extra = "";
       // Fluxo flexível (todos os ramos, só para apólices criadas aqui):
       // comissão prevista única; recebimentos parciais na aba Comissões.
-      const base = branch === "Saúde" ? liquidoNum || premiumNum : liquidoNum;
-      if (commissionPct > 0 && base > 0) {
+      if (commissionPct > 0 && commissionBase > 0) {
         try {
           await createCommissionFn({
             data: {
               policyId: created.id,
-              baseCalculo: base,
+              baseCalculo: commissionBase,
               percentual: commissionPct,
               modelo: "adiantamento",
               parcelas: 1,
+              ...(assigneeId && repassePct > 0
+                ? { repasseUserId: assigneeId, repassePct }
+                : {}),
             },
           });
           queryClient.invalidateQueries({ queryKey: ["finance-commissions"] });
@@ -622,6 +625,30 @@ export function NewPolicyDialog({
                 className="mt-1.5 rounded-xl bg-muted border-0"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Repasse do vendedor (%)</Label>
+              <Input
+                inputMode="decimal"
+                value={repasseStr}
+                onChange={(e) => setRepasseStr(maskPercentInput(e.target.value))}
+                placeholder="0"
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Valor do repasse</Label>
+              <Input
+                value={formatBRL(repasseValue)}
+                disabled
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+            </div>
+            <p className="col-span-2 text-[11px] text-muted-foreground -mt-1">
+              Calculado sobre a comissão da corretora. Pré-preenchido com a taxa do vendedor neste ramo.
+            </p>
           </div>
 
           {branch === "Saúde" && (
