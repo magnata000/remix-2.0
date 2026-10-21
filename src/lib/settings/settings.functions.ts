@@ -129,6 +129,27 @@ export const setSettingsUserBlocked = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Exclusão definitiva: a RPC delete_team_member valida as regras e transfere os registros
+ * para o admin executor; em seguida a conta de login é apagada (sem acesso futuro).
+ */
+export const deleteSettingsUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => {
+    if (!d.id) throw new Error("Usuário inválido");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    if (data.id === context.userId) throw new Error("Você não pode excluir o próprio usuário.");
+    const { error } = await context.supabase.rpc("delete_team_member", { _user_id: data.id });
+    if (error) throw new Error(error.message);
+    const db = await admin();
+    const { error: authError } = await db.auth.admin.deleteUser(data.id);
+    if (authError && !/not found/i.test(authError.message)) throw new Error(authError.message);
+    return { ok: true };
+  });
+
 /** Pré-cadastro + convite por e-mail. O usuário só entra pelo link do convite. */
 export const inviteSettingsUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

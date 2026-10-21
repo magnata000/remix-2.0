@@ -27,6 +27,7 @@ import {
 } from "@/lib/settings/permissions";
 import {
   deleteCommissionModel,
+  deleteSettingsUser,
   inviteSettingsUser,
   listAccessRequests,
   listCommissionModels,
@@ -92,6 +93,7 @@ function UsersSection() {
   const listFn = useServerFn(listSettingsUsers);
   const blockFn = useServerFn(setSettingsUserBlocked);
   const resendFn = useServerFn(resendSettingsInvite);
+  const deleteFn = useServerFn(deleteSettingsUser);
   const { userId } = useRole();
   const { data: users = [] } = useQuery({ queryKey: ["settings-users"], queryFn: () => listFn() });
   const [editing, setEditing] = useState<SettingsUser | "new" | null>(null);
@@ -111,6 +113,17 @@ function UsersSection() {
   const resend = useMutation({
     mutationFn: (id: string) => resendFn({ data: { id, redirectTo: window.location.origin } }),
     onSuccess: () => toast.success("Convite reenviado por e-mail"),
+    onError: (e) => toast.error(errMsg(e)),
+  });
+  const [deleting, setDeleting] = useState<SettingsUser | null>(null);
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Usuário excluído");
+      setDeleting(null);
+      refresh();
+      for (const k of ["clients", "policies", "opportunities", "tasks"]) void qc.invalidateQueries({ queryKey: [k] });
+    },
     onError: (e) => toast.error(errMsg(e)),
   });
 
@@ -166,6 +179,11 @@ function UsersSection() {
                   {u.status === "bloqueado" ? <Check className="h-4 w-4" /> : <Ban className="h-4 w-4 text-destructive" />}
                 </Button>
               )}
+              {u.id !== userId && (
+                <Button size="icon" variant="ghost" className="h-8 w-8" title="Excluir" onClick={() => setDeleting(u)}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
             </div>
           </div>
         ))}
@@ -177,6 +195,28 @@ function UsersSection() {
           onSaved={refresh}
         />
       )}
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir {deleting?.name}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tudo que está atribuído a {deleting?.name} (clientes, apólices, oportunidades, tarefas e tarefas
+            agendadas) passará para você. O histórico é mantido. O usuário perde o acesso imediatamente e esta
+            ação não pode ser desfeita.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              disabled={remove.isPending}
+              onClick={() => deleting && remove.mutate(deleting.id)}
+            >
+              {remove.isPending ? "Excluindo..." : "Excluir usuário"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

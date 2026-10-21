@@ -330,13 +330,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "commission_events_criado_por_fkey"
-            columns: ["criado_por"]
-            isOneToOne: false
-            referencedRelation: "team_members"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "commission_events_installment_id_fkey"
             columns: ["installment_id"]
             isOneToOne: false
@@ -417,13 +410,6 @@ export type Database = {
             columns: ["payout_id"]
             isOneToOne: false
             referencedRelation: "commission_payouts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commission_payout_payments_usuario_responsavel_fkey"
-            columns: ["usuario_responsavel"]
-            isOneToOne: false
-            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -1933,6 +1919,7 @@ export type Database = {
         }
         Returns: string
       }
+      delete_team_member: { Args: { _user_id: string }; Returns: undefined }
       ensure_client_root: { Args: { _client_id: string }; Returns: string }
       ensure_policy_folders: {
         Args: { _policy_id: string }
