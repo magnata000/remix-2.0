@@ -84,20 +84,6 @@ describe("generateCommissionSchedule — Auto", () => {
     expect(c.dueDate).toBe("2026-02-14");
   });
 
-  it("parcela → N parcelas iguais, soma = premium * pct", () => {
-    const p = policy({
-      commissionPct: 20,
-      commissionScheme: "parcela",
-      commissionInstallments: 4,
-    });
-    const list = generateCommissionSchedule(p, config());
-    expect(list).toHaveLength(4);
-    expect(list.every((c) => c.kind === "parcela")).toBe(true);
-    expect(list.map((c) => c.installmentIndex)).toEqual([1, 2, 3, 4]);
-    const total = list.reduce((sum, c) => sum + c.amount, 0);
-    expect(total).toBeCloseTo(240, 2); // 1200 * 0.20
-  });
-
   it("aplica imposto quando comissaoLiquida=true", () => {
     const p = policy({ commissionPct: 20 });
     const cfg = config({ comissaoLiquida: true, taxaImposto: 0.1 });

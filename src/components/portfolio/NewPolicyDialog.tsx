@@ -205,8 +205,6 @@ export function NewPolicyDialog({
     setAssigneeId(userId);
     setTouched(false);
     setCommissionStr("");
-    setAutoScheme("esgotamento");
-    setAutoInstallments("10");
     setHealthScheme("agenciamento");
     setHealthAnniversary("");
     setAnniversaryTouched(false);
