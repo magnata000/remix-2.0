@@ -121,6 +121,14 @@
   --chart-3: oklch(0.7 0.15 155); /* verde */
   --chart-4: oklch(0.62 0.22 27); /* vermelho */
   --chart-5: oklch(0.72 0.1 280); /* lilás suave */
+  /* Paleta de ramos (Dashboard): tons fora das cores de status */
+  --branch-1: oklch(0.6 0.15 300); /* roxo */
+  --branch-2: oklch(0.55 0.09 200); /* azul-petróleo */
+  --branch-3: oklch(0.7 0.15 50); /* laranja */
+  --branch-4: oklch(0.65 0.15 350); /* rosa */
+  --branch-5: oklch(0.5 0.07 60); /* marrom */
+  --branch-6: oklch(0.55 0.1 260); /* índigo */
+  --branch-other: oklch(0.75 0.01 260); /* cinza "Outros" */
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.18 0.015 260);
@@ -166,6 +174,13 @@
   --chart-3: oklch(0.7 0.15 155);
   --chart-4: oklch(0.62 0.22 27);
   --chart-5: oklch(0.72 0.1 280);
+  --branch-1: oklch(0.65 0.15 300);
+  --branch-2: oklch(0.62 0.09 200);
+  --branch-3: oklch(0.72 0.14 50);
+  --branch-4: oklch(0.7 0.14 350);
+  --branch-5: oklch(0.58 0.07 60);
+  --branch-6: oklch(0.6 0.1 260);
+  --branch-other: oklch(0.55 0.01 260);
   --sidebar: oklch(0.22 0.02 260);
   --sidebar-foreground: oklch(0.97 0.005 250);
   --sidebar-primary: oklch(0.82 0.08 235);
