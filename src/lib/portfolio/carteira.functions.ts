@@ -55,7 +55,8 @@ function mapPolicy(r: Row): Policy {
     clientName: client ? s(client["name"]) : "",
     branch: ((r["branches"] as Row | null)?.["name"] ?? r["branch"]) as Branch,
     insurer: r["insurer"] as Insurer,
-    premium: Number(r["premium"] ?? 0),
+    premium: Number(r["premio_total"] ?? r["premium"] ?? 0),
+    premioLiquido: n(r["premio_liquido"]),
     startDate: s(r["start_date"]),
     endDate: (r["end_date"] as string | null) ?? "",
     status: r["status"] as PolicyStatus,
@@ -136,7 +137,11 @@ function policyColumns(input: PolicyInput, clientId?: string) {
       ? input.branch
       : null;
   if (input.insurer !== undefined) out["insurer"] = input.insurer;
-  if (input.premium !== undefined) out["premium"] = input.premium;
+  if (input.premium !== undefined) {
+    out["premium"] = input.premium;
+    out["premio_total"] = input.premium;
+  }
+  if (input.premioLiquido !== undefined) out["premio_liquido"] = input.premioLiquido;
   if (input.startDate !== undefined) out["start_date"] = input.startDate;
   if (input.endDate !== undefined) out["end_date"] = input.endDate || null;
   if (input.status !== undefined) out["status"] = input.status;
