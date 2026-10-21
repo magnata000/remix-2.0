@@ -27,6 +27,9 @@ import { useSellerCommissionStore } from "@/lib/financial/sellerCommissionStore"
 import { useSellerPayoutStore } from "@/lib/financial/sellerPayoutStore";
 import { formatDateBR, MONTHS_PT } from "@/lib/cash/cashStore";
 import { PaySellerPayoutDialog } from "@/components/financial/PaySellerPayoutDialog";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listSellerSales } from "@/lib/financial/financeiro.functions";
 
 const BRANCHES: Branch[] = ["Auto", "Vida", "Residencial", "Empresarial", "Saúde", "Consórcio"];
 
@@ -54,6 +57,13 @@ export function SellerCommissionsTab() {
   }, [sellers, sellerId]);
 
   const selectedSeller = sellers.find((s) => s.id === sellerId);
+
+  const salesFn = useServerFn(listSellerSales);
+  const { data: sales = [] } = useQuery({
+    queryKey: ["seller-sales", sellerId],
+    queryFn: () => salesFn({ data: { userId: sellerId } }),
+    enabled: !!sellerId,
+  });
 
   const policyById = useMemo(() => {
     const m = new Map<string, (typeof policies)[number]>();
@@ -237,6 +247,77 @@ export function SellerCommissionsTab() {
               )}
             </TableBody>
           </Table>
+        </div>
+      </Card>
+
+      {/* Vendas e repasses gerados */}
+      <Card className="rounded-2xl border-border shadow-none">
+        <div className="p-5 pb-3">
+          <h2 className="text-lg font-semibold">Vendas e repasses gerados</h2>
+          <p className="text-xs text-muted-foreground">
+            Apólices de {selectedSeller?.name ?? "—"} com repasse. O valor do repasse acompanha o
+            que a corretora já recebeu da comissão.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          {sales.length === 0 ? (
+            <div className="px-5 pb-5">
+              <div className="text-sm text-muted-foreground py-8 text-center bg-muted/30 rounded-xl">
+                Nenhuma venda com repasse registrada.
+              </div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-y border-border bg-muted/40">
+                  <TableHead className="text-xs">Competência</TableHead>
+                  <TableHead className="text-xs">Apólice</TableHead>
+                  <TableHead className="text-xs">Cliente</TableHead>
+                  <TableHead className="text-xs">Ramo / Seguradora</TableHead>
+                  <TableHead className="text-xs text-right">Comissão corretora</TableHead>
+                  <TableHead className="text-xs text-right">% repasse</TableHead>
+                  <TableHead className="text-xs text-right">Repasse liberado</TableHead>
+                  <TableHead className="text-xs text-right">Já pago</TableHead>
+                  <TableHead className="text-xs">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sales.map((s) => {
+                  const c = s.commissions;
+                  const st = Number(s.valor_pago) >= Number(s.valor_devido) && Number(s.valor_devido) > 0
+                    ? "Repassado"
+                    : Number(s.valor_devido) > 0
+                      ? "Liberado"
+                      : "Aguardando seguradora";
+                  return (
+                    <TableRow key={s.id}>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {c?.competencia ? formatDateBR(c.competencia) : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs font-medium">{c?.policy_number ?? "—"}</TableCell>
+                      <TableCell className="text-sm">{c?.client_name ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {c?.policies?.branches?.name ?? "—"} · {c?.insurers?.name ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {formatBRL(Number(c?.valor_previsto ?? 0))}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {Number(s.percentual_repasse)}%
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-semibold">
+                        {formatBRL(Number(s.valor_devido))}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {formatBRL(Number(s.valor_pago))}
+                      </TableCell>
+                      <TableCell className="text-xs">{st}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </Card>
 
