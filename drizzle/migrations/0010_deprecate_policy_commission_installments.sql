@@ -1,0 +1,2 @@
+COMMENT ON COLUMN public.policies.commission_installments IS 'DEPRECATED: fluxo flexível — recebimentos parciais lançados na aba Comissões';
+COMMENT ON COLUMN public.policies.commission_scheme IS 'Usado apenas no ramo Saúde (agenciamento/vitalicio); demais ramos usam fluxo flexível';

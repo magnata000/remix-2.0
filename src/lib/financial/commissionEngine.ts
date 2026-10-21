@@ -123,7 +123,7 @@ export function generateCommissionSchedule(
   const totalBruto = policy.premium * pct;
 
   if (scheme === "parcela") {
-    const n = Math.max(1, policy.commissionInstallments ?? 1);
+    const n = Math.max(1, 1);
     const each = totalBruto / n;
     return Array.from({ length: n }, (_, i) => ({
       id: `c-${policy.id}-pc${i + 1}-${newId()}`,

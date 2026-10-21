@@ -113,7 +113,7 @@ export type Policy = {
   commissionPct?: number;
   // Comissionamento (overrides do padrão da seguradora)
   commissionScheme?: CommissionScheme;
-  commissionInstallments?: number; // p/ scheme "parcela" (Auto)
+  
   agenciamentoSchedule?: number[]; // p/ Saúde (ex: [1, 0.5, 0.3, 0.2])
   recorrenciaPct?: number; // p/ Saúde (ex: 0.03)
   comissaoLiquida?: boolean; // override por apólice
