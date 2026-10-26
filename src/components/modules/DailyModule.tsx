@@ -25,7 +25,7 @@ import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import { useTeam, useTeamNameIndex } from "@/lib/team/teamStore";
 import { type Policy, type Beneficiary, type FollowUpType } from "@/lib/mock/data";
 import { formatDateShort } from "@/lib/format";
-import { ageAt, findBandChange, isBirthdayToday } from "@/lib/daily/ageBands";
+import { ageAt, findBandChange, isBirthdayToday, parseLocalDate } from "@/lib/daily/ageBands";
 import { daysBetween, relativeDueLabel, toneClass, type RelativeDue } from "@/lib/daily/dateUtils";
 import { textMentionsUser, type TeamNameIndex } from "@/lib/daily/mentions";
 import { TaskDetailDialog } from "@/components/tasks/TaskDetailDialog";
@@ -383,9 +383,10 @@ function useUpcomingRenewals(now: Date): RenewalEntry[] {
   return useMemo(() => {
     const out: RenewalEntry[] = [];
     policies.forEach((p) => {
-      if (p.status !== "ativa") return;
-      const end = new Date(p.endDate);
-      if (Number.isNaN(end.getTime())) return;
+      if (p.status !== "ativa" && p.status !== "a_vencer") return;
+      if (p.renewedToId || !p.endDate) return;
+      const end = parseLocalDate(p.endDate);
+      if (!end || Number.isNaN(end.getTime())) return;
       const days = daysBetween(now, end);
       if (days >= 0 && days <= 30) out.push({ policy: p, daysLeft: days });
     });
@@ -422,8 +423,8 @@ function RenewalsSection({
       {entries.length === 0 ? (
         <EmptyState text="Nada vencendo nos próximos 30 dias." />
       ) : (
-        <ul className="divide-y divide-border">
-          {entries.slice(0, 8).map(({ policy, daysLeft }) => {
+        <ul className="divide-y divide-border max-h-96 overflow-y-auto scroll-smooth pr-1">
+          {entries.map(({ policy, daysLeft }) => {
             const tone = daysLeft <= 7 ? "danger" : daysLeft <= 15 ? "warning" : "info";
             const mine = policy.assigneeId === currentUserId;
             return (
