@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bell } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PolicyReasonDialog } from "@/components/portfolio/PolicyReasonDialog";
 import { useNavigation } from "@/lib/navigation";
 import {
+  deleteNotification,
   listNotifications,
   markNotificationsRead,
   type NotificationRow,
@@ -20,6 +21,7 @@ export function NotificationBell() {
   const qc = useQueryClient();
   const fetchFn = useServerFn(listNotifications);
   const readFn = useServerFn(markNotificationsRead);
+  const deleteFn = useServerFn(deleteNotification);
   const { goTo } = useNavigation();
   const [open, setOpen] = useState(false);
   const [reasonFor, setReasonFor] = useState<NotificationRow | null>(null);
@@ -33,9 +35,16 @@ export function NotificationBell() {
     mutationFn: (ids: string[]) => readFn({ data: { ids } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
   });
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onMutate: (id) =>
+      qc.setQueryData<NotificationRow[]>(["notifications"], (old) => old?.filter((n) => n.id !== id)),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
 
   const badge = useMemo(() => data.filter(isPending).length, [data]);
-  const unreadInfo = data.filter((n) => !n.isActionable && !n.readAt).map((n) => n.id);
+  // Todas as não lidas (inclusive acionáveis) — antes só contava informativas, deixando o botão sempre desativado.
+  const unreadInfo = data.filter((n) => !n.readAt).map((n) => n.id);
 
   const openItem = (n: NotificationRow) => {
     if (!n.readAt) markRead.mutate([n.id]);
@@ -76,25 +85,39 @@ export function NotificationBell() {
               <p className="p-4 text-xs text-muted-foreground text-center">Nenhuma notificação.</p>
             )}
             {data.map((n) => (
-              <button
+              <div
                 key={n.id}
-                type="button"
-                onClick={() => openItem(n)}
                 className={cn(
-                  "w-full text-left px-3 py-2.5 border-b border-border last:border-0 hover:bg-muted/50",
+                  "group relative border-b border-border last:border-0 hover:bg-muted/50",
                   isPending(n) && "bg-warning/10",
+                  !n.readAt && "font-medium",
                 )}
               >
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium flex-1">{n.title}</p>
-                  {n.isActionable && !n.resolvedAt && (
-                    <span className="text-[10px] rounded-full bg-warning/20 text-warning px-1.5 py-0.5">
-                      Pendente
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{n.body}</p>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openItem(n)}
+                  className="w-full text-left px-3 py-2.5 pr-10"
+                >
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium flex-1">{n.title}</p>
+                    {n.isActionable && !n.resolvedAt && (
+                      <span className="text-[10px] rounded-full bg-warning/20 text-warning px-1.5 py-0.5">
+                        Pendente
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 font-normal">{n.body}</p>
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Excluir notificação"
+                  className="absolute top-2 right-1.5 h-7 w-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-muted-foreground hover:text-destructive"
+                  onClick={() => remove.mutate(n.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             ))}
           </div>
         </PopoverContent>
