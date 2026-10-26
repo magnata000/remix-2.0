@@ -423,7 +423,7 @@ function RenewalsSection({
       {entries.length === 0 ? (
         <EmptyState text="Nada vencendo nos próximos 30 dias." />
       ) : (
-        <ul className="divide-y divide-border max-h-96 overflow-y-auto scroll-smooth pr-1">
+        <ul className="divide-y divide-border">
           {entries.map(({ policy, daysLeft }) => {
             const tone = daysLeft <= 7 ? "danger" : daysLeft <= 15 ? "warning" : "info";
             const mine = policy.assigneeId === currentUserId;
@@ -608,7 +608,9 @@ function SectionCard({
         </div>
         {action}
       </div>
-      <div className="max-h-80 overflow-y-auto pr-1">{children}</div>
+      <div className="max-h-80 overflow-y-auto scroll-smooth pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden hover:[scrollbar-width:thin] hover:[&::-webkit-scrollbar]:block hover:[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
+        {children}
+      </div>
     </Card>
   );
 }
