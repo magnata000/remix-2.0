@@ -113,6 +113,13 @@
       "when": 1793024464330,
       "tag": "0015_health_lifetime_no_renewal",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793025065024,
+      "tag": "0016_notifications_delete_policy",
+      "breakpoints": true
     }
   ]
 }
