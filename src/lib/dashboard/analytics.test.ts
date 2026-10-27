@@ -3,7 +3,7 @@ import { churnRate, donutSlices, renewalRate } from "./analytics";
 
 describe("dashboard analytics", () => {
   it("churn = (canceladas + não renovadas) / base", () => {
-    expect(churnRate({ month: "2026-10", canceladas: 2, nao_renovadas: 1, base: 100, is_partial: false })).toBe(3);
+    expect(churnRate({ month: "2026-10", canceladas: 2, nao_renovadas: 1, base: 100, is_partial: false, has_history: true })).toBe(3);
   });
   it("renovação = renovadas / elegíveis", () => {
     expect(renewalRate({ renovadas: 8, aguardando: 1, nao_renovadas: 1, futuras: 0, total: 10 })).toBe(80);

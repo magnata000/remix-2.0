@@ -127,6 +127,13 @@
       "when": 1793102301414,
       "tag": "0017_task_dismissals",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793103177950,
+      "tag": "0018_dashboard_churn_fix",
+      "breakpoints": true
     }
   ]
 }
