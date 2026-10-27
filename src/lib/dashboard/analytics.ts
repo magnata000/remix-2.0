@@ -2,11 +2,13 @@
 
 export type BranchStat = { id: string; name: string; code: string; premio: number; apolices: number; clientes: number };
 export type ChurnPoint = { month: string; canceladas: number; nao_renovadas: number; base: number; is_partial: boolean; has_history: boolean };
+export type RenewalGroup = "renovadas" | "aguardando" | "nao_renovadas" | "futuras";
+export type RenewalItem = { id: string; number: string | null; client: string | null; branch: string; start_date: string | null; end_date: string; group: RenewalGroup };
 export type DashboardAnalytics = {
   kpis: { premio_total: number; apolices: number; clientes_unicos: number };
   by_branch: BranchStat[];
   churn: ChurnPoint[];
-  renewal: { renovadas: number; aguardando: number; nao_renovadas: number; futuras: number; total: number };
+  renewal: { renovadas: number; aguardando: number; nao_renovadas: number; futuras: number; total: number; items?: RenewalItem[] };
   top_clients: { id: string; name: string; premio: number; codes: string[] }[];
 };
 

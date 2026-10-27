@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ClientDetailDrawer } from "@/components/portfolio/ClientDetailDrawer";
 import { getDashboardAnalytics } from "@/lib/dashboard/dashboard.functions";
 import {
-  branchColor, churnRate, donutSlices, formatCompactBRL, formatPct, renewalRate, type DashboardAnalytics,
+  branchColor, churnRate, donutSlices, formatCompactBRL, formatPct, renewalRate, type DashboardAnalytics, type RenewalGroup,
 } from "@/lib/dashboard/analytics";
 import { formatBRL } from "@/lib/mock/data";
 
@@ -214,22 +214,7 @@ function DashboardBody({
         <ChartCard className="lg:col-span-5" title="Renovação no período"
           footer={r.futuras > 0 ? `Mês em andamento: ${r.futuras} apólice(s) ainda vencem. Exclui Saúde e Consórcio.` : "Exclui Saúde e Consórcio."}
           table={[["Renovadas", String(r.renovadas)], ["Vencidas aguardando", String(r.aguardando)], ["Não renovadas", String(r.nao_renovadas)], ["A vencer no mês", String(r.futuras)]]}>
-          {r.total === 0 ? <Empty /> : (
-            <div className="space-y-3 pt-6">
-              <div className="flex h-10 w-full overflow-hidden rounded-md">
-                {([["Renovadas", r.renovadas, "bg-info text-info-foreground"], ["Aguardando", r.aguardando, "bg-destructive text-destructive-foreground"], ["Não renovadas", r.nao_renovadas, "bg-muted-foreground text-background"], ["A vencer", r.futuras, "bg-muted text-muted-foreground"]] as const)
-                  .filter(([, v]) => v > 0)
-                  .map(([l, v, cls]) => (
-                    <div key={l} className={`flex items-center justify-center text-xs font-medium ${cls}`} style={{ width: `${(v / r.total) * 100}%` }} title={l}>
-                      {v} · {formatPct((v / r.total) * 100)}
-                    </div>
-                  ))}
-              </div>
-              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <Legend cls="bg-info" label="Renovadas" /><Legend cls="bg-destructive" label="Vencidas aguardando" /><Legend cls="bg-muted-foreground" label="Não renovadas" /><Legend cls="bg-muted" label="A vencer no mês" />
-              </div>
-            </div>
-          )}
+          {r.total === 0 ? <Empty /> : <RenewalBar r={r} />}
         </ChartCard>
       </Section>
 
@@ -328,3 +313,61 @@ const Legend = ({ cls, label }: { cls: string; label: string }) => (
   <span className="inline-flex items-center gap-1"><span className={`h-2.5 w-2.5 rounded-sm ${cls}`} />{label}</span>
 );
 const Empty = () => <p className="py-8 text-center text-sm text-muted-foreground">Sem dados no período.</p>;
+
+const RENEWAL_GROUPS: { key: RenewalGroup; short: string; label: string; bar: string; dot: string }[] = [
+  { key: "renovadas", short: "Renovadas", label: "Renovadas", bar: "bg-info text-info-foreground", dot: "bg-info" },
+  { key: "aguardando", short: "Aguardando", label: "Vencidas aguardando", bar: "bg-destructive text-destructive-foreground", dot: "bg-destructive" },
+  { key: "nao_renovadas", short: "Não renovadas", label: "Não renovadas", bar: "bg-muted-foreground text-background", dot: "bg-muted-foreground" },
+  { key: "futuras", short: "A vencer", label: "A vencer no mês", bar: "bg-muted text-muted-foreground", dot: "bg-muted" },
+];
+
+const fmtDate = (d: string | null) => (d ? d.slice(0, 10).split("-").reverse().join("/") : "—");
+
+function RenewalBar({ r }: { r: DashboardAnalytics["renewal"] }) {
+  const [open, setOpen] = useState<RenewalGroup | null>(null);
+  const toggle = (k: RenewalGroup) => setOpen((c) => (c === k ? null : k));
+  const items = (r.items ?? []).filter((i) => i.group === open);
+  const active = RENEWAL_GROUPS.find((g) => g.key === open);
+  return (
+    <div className="space-y-3 pt-6">
+      <div className="flex h-10 w-full overflow-hidden rounded-md">
+        {RENEWAL_GROUPS.filter((g) => r[g.key] > 0).map((g) => (
+          <button key={g.key} type="button" onClick={() => toggle(g.key)} title={g.label}
+            className={`flex items-center justify-center text-xs font-medium transition-opacity ${g.bar} ${open && open !== g.key ? "opacity-40" : ""}`}
+            style={{ width: `${(r[g.key] / r.total) * 100}%` }}>
+            {r[g.key]} · {formatPct((r[g.key] / r.total) * 100)}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        {RENEWAL_GROUPS.map((g) => (
+          <button key={g.key} type="button" onClick={() => toggle(g.key)}
+            className={`flex items-center gap-1.5 rounded px-1 hover:text-foreground ${open === g.key ? "font-medium text-foreground" : ""}`}>
+            <span className={`h-2.5 w-2.5 rounded-sm ${g.dot}`} />{g.label}
+          </button>
+        ))}
+      </div>
+      {active && (
+        <div className="rounded-md border border-border">
+          <div className="flex items-center justify-between border-b border-border px-3 py-2 text-xs font-medium">
+            <span>{active.label} ({items.length})</span>
+            <button type="button" onClick={() => setOpen(null)} aria-label="Fechar"><X className="h-3.5 w-3.5" /></button>
+          </div>
+          {items.length === 0 ? <p className="p-3 text-xs text-muted-foreground">Nenhuma apólice.</p> : (
+            <ul className="max-h-64 divide-y divide-border overflow-y-auto text-xs">
+              {items.map((i) => (
+                <li key={i.id} className="flex items-start justify-between gap-2 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{i.client ?? "—"}</p>
+                    <p className="text-muted-foreground">{i.branch}{i.number ? ` · ${i.number}` : ""}</p>
+                  </div>
+                  <span className="shrink-0 text-muted-foreground">{fmtDate(i.start_date)} – {fmtDate(i.end_date)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
