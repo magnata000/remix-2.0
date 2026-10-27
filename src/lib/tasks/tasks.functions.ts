@@ -116,7 +116,19 @@ export const bulkCreateTasks = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!data.records.length) return { created: 0 };
-    const payload = data.records.map((r) => ({
+    // Cards automáticos já excluídos pelo usuário nunca são recriados.
+    const keys = data.records.map((r) => r.sourceKey).filter((k): k is string => !!k);
+    const dismissed = new Set<string>();
+    if (keys.length) {
+      const { data: dis } = await supabase
+        .from("task_dismissals")
+        .select("source_key")
+        .in("source_key", keys);
+      (dis ?? []).forEach((d) => dismissed.add(d.source_key));
+    }
+    const records = data.records.filter((r) => !r.sourceKey || !dismissed.has(r.sourceKey));
+    if (!records.length) return { created: 0 };
+    const payload = records.map((r) => ({
       title: r.title,
       description: r.description ?? null,
       due_date: r.dueDate ? r.dueDate.slice(0, 10) : null,
