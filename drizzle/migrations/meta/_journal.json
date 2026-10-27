@@ -134,6 +134,13 @@
       "when": 1793103177950,
       "tag": "0018_dashboard_churn_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793104610434,
+      "tag": "0019_dashboard_renewal_items",
+      "breakpoints": true
     }
   ]
 }
