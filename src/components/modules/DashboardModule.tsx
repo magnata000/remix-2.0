@@ -214,22 +214,7 @@ function DashboardBody({
         <ChartCard className="lg:col-span-5" title="Renovação no período"
           footer={r.futuras > 0 ? `Mês em andamento: ${r.futuras} apólice(s) ainda vencem. Exclui Saúde e Consórcio.` : "Exclui Saúde e Consórcio."}
           table={[["Renovadas", String(r.renovadas)], ["Vencidas aguardando", String(r.aguardando)], ["Não renovadas", String(r.nao_renovadas)], ["A vencer no mês", String(r.futuras)]]}>
-          {r.total === 0 ? <Empty /> : (
-            <div className="space-y-3 pt-6">
-              <div className="flex h-10 w-full overflow-hidden rounded-md">
-                {([["Renovadas", r.renovadas, "bg-info text-info-foreground"], ["Aguardando", r.aguardando, "bg-destructive text-destructive-foreground"], ["Não renovadas", r.nao_renovadas, "bg-muted-foreground text-background"], ["A vencer", r.futuras, "bg-muted text-muted-foreground"]] as const)
-                  .filter(([, v]) => v > 0)
-                  .map(([l, v, cls]) => (
-                    <div key={l} className={`flex items-center justify-center text-xs font-medium ${cls}`} style={{ width: `${(v / r.total) * 100}%` }} title={l}>
-                      {v} · {formatPct((v / r.total) * 100)}
-                    </div>
-                  ))}
-              </div>
-              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <Legend cls="bg-info" label="Renovadas" /><Legend cls="bg-destructive" label="Vencidas aguardando" /><Legend cls="bg-muted-foreground" label="Não renovadas" /><Legend cls="bg-muted" label="A vencer no mês" />
-              </div>
-            </div>
-          )}
+          {r.total === 0 ? <Empty /> : <RenewalBar r={r} />}
         </ChartCard>
       </Section>
 
