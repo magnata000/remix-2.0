@@ -1,7 +1,7 @@
 /** Tipos e regras de apresentação do Dashboard (cálculos agregados vivem na RPC get_dashboard_analytics). */
 
 export type BranchStat = { id: string; name: string; code: string; premio: number; apolices: number; clientes: number };
-export type ChurnPoint = { month: string; canceladas: number; nao_renovadas: number; base: number; is_partial: boolean };
+export type ChurnPoint = { month: string; canceladas: number; nao_renovadas: number; base: number; is_partial: boolean; has_history: boolean };
 export type DashboardAnalytics = {
   kpis: { premio_total: number; apolices: number; clientes_unicos: number };
   by_branch: BranchStat[];

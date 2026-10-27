@@ -87,11 +87,15 @@ export function DashboardModule() {
 function DashboardBody({
   data, branchId, onBranch, onClient,
 }: { data: DashboardAnalytics; branchId: string | null; onBranch: (id: string) => void; onClient: (n: string) => void }) {
-  const churn = data.churn.map((p) => ({ ...p, rate: churnRate(p), label: MONTHS[Number(p.month.slice(5)) - 1] }));
+  // Meses sem histórico registrado ficam sem ponto (null) em vez de um 0% enganoso.
+  const churn = data.churn.map((p) => ({
+    ...p, rate: p.has_history ? churnRate(p) : null, label: MONTHS[Number(p.month.slice(5)) - 1],
+  }));
+  const tracked = churn.filter((p) => p.rate !== null) as (typeof churn[number] & { rate: number })[];
   const cur = churn[churn.length - 1];
   const prev = churn[churn.length - 2];
-  const delta = cur && prev ? cur.rate - prev.rate : 0;
-  const avg = churn.length ? churn.reduce((s, p) => s + p.rate, 0) / churn.length : 0;
+  const delta = cur?.rate != null && prev?.rate != null ? cur.rate - prev.rate : null;
+  const avg = tracked.length ? tracked.reduce((s, p) => s + p.rate, 0) / tracked.length : 0;
   const r = data.renewal;
   const fade = (id: string) => (branchId && branchId !== id ? 0.3 : 1);
   const donut = useMemo(() => donutSlices(data.by_branch), [data.by_branch]);
@@ -109,16 +113,19 @@ function DashboardBody({
         <Kpi label="Clientes únicos" value={data.kpis.clientes_unicos.toLocaleString("pt-BR")} />
         <Kpi
           label="Taxa de churn"
-          value={formatPct(cur?.rate ?? 0)}
-          hint={`${(cur?.canceladas ?? 0) + (cur?.nao_renovadas ?? 0)} perdidas (${cur?.canceladas ?? 0} canc. + ${cur?.nao_renovadas ?? 0} não ren.)`}
-          delta={
+          value={cur?.rate != null ? formatPct(cur.rate) : "—"}
+          hint={cur?.rate != null
+            ? `${cur.canceladas + cur.nao_renovadas} perdidas (${cur.canceladas} canc. + ${cur.nao_renovadas} não ren.)`
+            : "Sem histórico neste mês"}
+          delta={delta === null ? undefined : (
             <span className={`inline-flex items-center gap-0.5 ${delta > 0 ? "text-destructive" : "text-success"}`}>
               {delta > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
               {delta > 0 ? "+" : "−"}{Math.abs(delta).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} p.p.
             </span>
-          }
+          )}
         />
-        <Kpi label="Taxa de renovação" value={formatPct(renewalRate(r))} hint={`${r.renovadas} de ${r.total} apólices`} />
+        <Kpi label="Taxa de renovação" value={formatPct(renewalRate(r))}
+          hint={`${r.renovadas} de ${r.total} apólices${r.futuras ? ` · ${r.futuras} a vencer` : ""}`} />
       </div>
 
       <Section title="Carteira" subtitle="Fotografia de hoje">
@@ -186,15 +193,17 @@ function DashboardBody({
 
       <Section title="Retenção" subtitle="O que estou perdendo e mantendo">
         <ChartCard className="lg:col-span-7" title="Churn — últimos 12 meses"
-          table={churn.map((p) => [p.month, `${formatPct(p.rate)} (${p.canceladas} canc. / ${p.nao_renovadas} não ren. / base ${p.base})`])}>
+          footer={tracked.length < churn.length ? "Meses sem ponto ainda não tinham histórico registrado no sistema." : undefined}
+          table={churn.map((p) => [p.month, p.rate === null ? "sem histórico" : `${formatPct(p.rate)} (${p.canceladas} canc. / ${p.nao_renovadas} não ren. / base ${p.base})`])}>
           <ResponsiveContainer height={240}>
             <LineChart data={churn} margin={{ top: 20, right: 20 }}>
               <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
               <YAxis domain={[0, "auto"]} tickFormatter={(v: number) => `${v}%`} width={40} fontSize={11} tickLine={false} axisLine={false} />
-              <ReferenceLine y={avg} stroke="var(--muted-foreground)" strokeDasharray="4 4" />
+              {tracked.length > 1 && <ReferenceLine y={avg} stroke="var(--muted-foreground)" strokeDasharray="4 4" />}
               <Tooltip content={<ChurnTooltip />} />
-              <Line dataKey="rate" stroke="var(--destructive)" strokeWidth={2}
-                dot={(props: { cx: number; cy: number; index: number; payload: { is_partial: boolean } }) => (
+              <Line dataKey="rate" stroke="var(--destructive)" strokeWidth={2} connectNulls={false}
+                dot={(props: { cx: number; cy: number; index: number; value: number | null; payload: { is_partial: boolean } }) =>
+                  props.value == null ? <g key={props.index} /> : (
                   <circle key={props.index} cx={props.cx} cy={props.cy} r={props.index === churn.length - 1 ? 5 : 3}
                     fill={props.payload.is_partial ? "var(--card)" : "var(--destructive)"} stroke="var(--destructive)" strokeWidth={2} />
                 )} />
@@ -203,24 +212,21 @@ function DashboardBody({
         </ChartCard>
 
         <ChartCard className="lg:col-span-5" title="Renovação no período"
-          footer={r.futuras > 0 ? `Taxa parcial: ${r.futuras} apólices ainda vencem neste período.` : "Exclui Saúde e Consórcio."}
-          table={[["Renovadas", String(r.renovadas)], ["Vencidas aguardando", String(r.aguardando)], ["Não renovadas", String(r.nao_renovadas)]]}>
-          {r.renovadas + r.aguardando + r.nao_renovadas === 0 ? <Empty /> : (
+          footer={r.futuras > 0 ? `Mês em andamento: ${r.futuras} apólice(s) ainda vencem. Exclui Saúde e Consórcio.` : "Exclui Saúde e Consórcio."}
+          table={[["Renovadas", String(r.renovadas)], ["Vencidas aguardando", String(r.aguardando)], ["Não renovadas", String(r.nao_renovadas)], ["A vencer no mês", String(r.futuras)]]}>
+          {r.total === 0 ? <Empty /> : (
             <div className="space-y-3 pt-6">
               <div className="flex h-10 w-full overflow-hidden rounded-md">
-                {([["Renovadas", r.renovadas, "bg-info text-info-foreground"], ["Aguardando", r.aguardando, "bg-destructive text-destructive-foreground"], ["Não renovadas", r.nao_renovadas, "bg-muted text-muted-foreground"]] as const)
+                {([["Renovadas", r.renovadas, "bg-info text-info-foreground"], ["Aguardando", r.aguardando, "bg-destructive text-destructive-foreground"], ["Não renovadas", r.nao_renovadas, "bg-muted-foreground text-background"], ["A vencer", r.futuras, "bg-muted text-muted-foreground"]] as const)
                   .filter(([, v]) => v > 0)
-                  .map(([l, v, cls]) => {
-                    const base = r.renovadas + r.aguardando + r.nao_renovadas;
-                    return (
-                      <div key={l} className={`flex items-center justify-center text-xs font-medium ${cls}`} style={{ width: `${(v / base) * 100}%` }} title={l}>
-                        {v} · {formatPct((v / base) * 100)}
-                      </div>
-                    );
-                  })}
+                  .map(([l, v, cls]) => (
+                    <div key={l} className={`flex items-center justify-center text-xs font-medium ${cls}`} style={{ width: `${(v / r.total) * 100}%` }} title={l}>
+                      {v} · {formatPct((v / r.total) * 100)}
+                    </div>
+                  ))}
               </div>
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <Legend cls="bg-info" label="Renovadas" /><Legend cls="bg-destructive" label="Vencidas aguardando" /><Legend cls="bg-muted" label="Não renovadas" />
+                <Legend cls="bg-info" label="Renovadas" /><Legend cls="bg-destructive" label="Vencidas aguardando" /><Legend cls="bg-muted-foreground" label="Não renovadas" /><Legend cls="bg-muted" label="A vencer no mês" />
               </div>
             </div>
           )}
