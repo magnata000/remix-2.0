@@ -1628,6 +1628,24 @@ export type Database = {
           },
         ]
       }
+      task_dismissals: {
+        Row: {
+          dismissed_at: string
+          dismissed_by: string | null
+          source_key: string
+        }
+        Insert: {
+          dismissed_at?: string
+          dismissed_by?: string | null
+          source_key: string
+        }
+        Update: {
+          dismissed_at?: string
+          dismissed_by?: string | null
+          source_key?: string
+        }
+        Relationships: []
+      }
       task_timeline: {
         Row: {
           actor_id: string
