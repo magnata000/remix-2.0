@@ -311,13 +311,13 @@ function ChartCard({ title, footer, table, className, children }: {
   );
 }
 
-function ChurnTooltip({ active, payload }: { active?: boolean; payload?: { payload: { month: string; rate: number; canceladas: number; nao_renovadas: number; base: number; is_partial: boolean } }[] }) {
+function ChurnTooltip({ active, payload }: { active?: boolean; payload?: { payload: { month: string; rate: number | null; canceladas: number; nao_renovadas: number; base: number; is_partial: boolean } }[] }) {
   const p = payload?.[0]?.payload;
   if (!active || !p) return null;
   return (
     <div className="rounded-md border border-border bg-popover p-2 text-xs shadow-sm">
       <div className="font-semibold">{p.month}{p.is_partial ? " (parcial)" : ""}</div>
-      <div>Churn: {formatPct(p.rate)}</div>
+      <div>Churn: {p.rate === null ? "sem histórico" : formatPct(p.rate)}</div>
       <div>Canceladas: {p.canceladas} · Não renovadas: {p.nao_renovadas}</div>
       <div>Base no início do mês: {p.base}</div>
     </div>
