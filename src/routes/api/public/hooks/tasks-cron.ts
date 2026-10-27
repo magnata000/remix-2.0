@@ -52,7 +52,15 @@ export const Route = createFileRoute("/api/public/hooks/tasks-cron")({
         // "Hoje" no horário de Brasília (UTC-3), independente do fuso do servidor.
         const nowBrt = new Date(Date.now() - 3 * 60 * 60 * 1000);
         const now = new Date(nowBrt.getUTCFullYear(), nowBrt.getUTCMonth(), nowBrt.getUTCDate());
-        const due = computeDueScheduledTasks({ scheduled, defaultColumnId: columnId, now });
+        const allDue = computeDueScheduledTasks({ scheduled, defaultColumnId: columnId, now });
+        if (!allDue.length) return Response.json({ created: 0 });
+        // Ocorrências já excluídas pelo usuário não voltam ao quadro.
+        const { data: dis } = await supabaseAdmin
+          .from("task_dismissals")
+          .select("source_key")
+          .in("source_key", allDue.map((r) => r.sourceKey!).filter(Boolean));
+        const dismissed = new Set((dis ?? []).map((d) => d.source_key));
+        const due = allDue.filter((r) => !r.sourceKey || !dismissed.has(r.sourceKey));
         if (!due.length) return Response.json({ created: 0 });
 
         const { data: rows, error } = await supabaseAdmin
