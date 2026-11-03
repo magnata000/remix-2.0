@@ -13,7 +13,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KpiCard } from "@/components/financial/KpiCard";
 import { formatBRL } from "@/lib/mock/data";
-import { MONTHS_PT } from "@/lib/cash/cashStore";
 import { useTeam } from "@/lib/team/teamStore";
 import {
   listFinanceCommissions,
@@ -40,8 +39,6 @@ const POS_TYPES: EventType[] = ["bonificacao", "ajuste_positivo"];
 const MANUAL_TYPES: EventType[] = [...NEG_TYPES, ...POS_TYPES];
 const NEG_SET = new Set<EventType>(["imposto", "estorno_parcial", "estorno_integral", "ajuste_negativo"]);
 
-const pad = (n: number) => String(n).padStart(2, "0");
-const lastDay = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
 const ymd = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—");
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const sumEv = (c: Row, t: EventType) =>
