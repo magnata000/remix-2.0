@@ -13,7 +13,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KpiCard } from "@/components/financial/KpiCard";
 import { formatBRL } from "@/lib/mock/data";
-import { MONTHS_PT } from "@/lib/cash/cashStore";
 import { useTeam } from "@/lib/team/teamStore";
 import {
   listFinanceCommissions,
@@ -40,8 +39,6 @@ const POS_TYPES: EventType[] = ["bonificacao", "ajuste_positivo"];
 const MANUAL_TYPES: EventType[] = [...NEG_TYPES, ...POS_TYPES];
 const NEG_SET = new Set<EventType>(["imposto", "estorno_parcial", "estorno_integral", "ajuste_negativo"]);
 
-const pad = (n: number) => String(n).padStart(2, "0");
-const lastDay = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
 const ymd = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—");
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const sumEv = (c: Row, t: EventType) =>
@@ -55,20 +52,15 @@ function statusVariant(s: string): "default" | "secondary" | "destructive" | "ou
 }
 
 export function CommissionsLedgerTab() {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
   const [status, setStatus] = useState("todos");
   const [insurer, setInsurer] = useState("todas");
   const [branch, setBranch] = useState("todos");
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const from = `${year}-${pad(month + 1)}-01`;
-  const to = `${year}-${pad(month + 1)}-${pad(lastDay(year, month))}`;
   const fetchFn = useServerFn(listFinanceCommissions);
-  const queryKey = ["finance-commissions", from, to];
-  const { data, isLoading } = useQuery({ queryKey, queryFn: () => fetchFn({ data: { from, to } }) });
+  const queryKey = ["finance-commissions", "all"];
+  const { data, isLoading } = useQuery({ queryKey, queryFn: () => fetchFn({ data: {} }) });
   const rows: Row[] = data ?? [];
 
   const insurerName = (c: Row) => c.insurers?.name ?? "—";
@@ -112,15 +104,6 @@ export function CommissionsLedgerTab() {
       </div>
 
       <Card className="rounded-2xl border-border shadow-none p-4 flex flex-wrap gap-3 items-end">
-        <Field label="Competência">
-          <div className="flex gap-2">
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="h-9 w-[130px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{MONTHS_PT.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Input type="number" className="h-9 w-[90px]" value={year} onChange={(e) => setYear(Number(e.target.value) || year)} />
-          </div>
-        </Field>
         <Field label="Status">
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="h-9 w-[150px]"><SelectValue /></SelectTrigger>
@@ -160,7 +143,7 @@ export function CommissionsLedgerTab() {
               <TableHead className="text-xs">Cliente</TableHead>
               <TableHead className="text-xs">Apólice</TableHead>
               <TableHead className="text-xs">Seguradora · Ramo</TableHead>
-              <TableHead className="text-xs">Competência</TableHead>
+              <TableHead className="text-xs">Início vigência</TableHead>
               <TableHead className="text-xs text-right">Previsto</TableHead>
               <TableHead className="text-xs text-right">Recebido</TableHead>
               <TableHead className="text-xs">Status</TableHead>
@@ -169,7 +152,7 @@ export function CommissionsLedgerTab() {
           <TableBody>
             {filtered.length === 0 && (
               <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">
-                {isLoading ? "Carregando…" : "Nenhuma comissão nesta competência."}
+                {isLoading ? "Carregando…" : "Nenhuma comissão encontrada."}
               </TableCell></TableRow>
             )}
             {filtered.map((c) => (
@@ -177,7 +160,7 @@ export function CommissionsLedgerTab() {
                 <TableCell className="text-sm font-medium">{c.client_name}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{c.policy_number}</TableCell>
                 <TableCell className="text-xs">{insurerName(c)} · {branchName(c)}</TableCell>
-                <TableCell className="text-xs">{ymd(c.competencia)}</TableCell>
+                <TableCell className="text-xs">{ymd(c.policies?.start_date ?? c.competencia)}</TableCell>
                 <TableCell className="text-right text-sm">{formatBRL(Number(c.valor_previsto ?? 0))}</TableCell>
                 <TableCell className="text-right text-sm">{formatBRL(sumEv(c, "pagamento"))}</TableCell>
                 <TableCell><Badge variant={statusVariant(c.status)}>{STATUS_LABEL[c.status] ?? c.status}</Badge></TableCell>
