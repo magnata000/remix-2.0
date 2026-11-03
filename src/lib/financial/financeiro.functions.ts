@@ -24,7 +24,9 @@ export const listFinanceCommissions = createServerFn({ method: "GET" })
       .from("commissions")
       .select(
         "id, policy_id, policy_number, client_name, client_id, insurer_id, competencia, base_calculo, percentual, modelo_pagamento, valor_previsto, status, created_at, commission_events(id, tipo, valor, motivo, observacao, documento_referencia, criado_por, criado_em, installment_id), commission_installments(id, numero_parcela, competencia, valor_previsto, status), commission_payouts(id, user_id, percentual_repasse, valor_devido, valor_pago), insurers(name), policies(start_date, branches(name))",
-      );
+      )
+      // Só comissões do motor oficial (registros legados não têm valor_previsto).
+      .not("valor_previsto", "is", null);
     if (data.from) q = q.gte("competencia", data.from);
     if (data.to) q = q.lte("competencia", data.to);
     return check(await q.order("created_at", { ascending: false }).limit(1000));
