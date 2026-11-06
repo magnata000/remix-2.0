@@ -11,6 +11,11 @@ export type TeamRole = AppRole;
 export const TEAM_ROLES: TeamRole[] = ["admin", "pos_venda", "vendedor"];
 export const roleLabel = (role: TeamRole) => ROLE_LABELS[role];
 
+/** Quem atua como vendedor (Comercial), mesmo que também seja admin/pós-venda. */
+export function isSeller(m: { role: TeamRole; roles?: TeamRole[] }): boolean {
+  return m.role === "vendedor" || (m.roles ?? []).includes("vendedor");
+}
+
 export type MemberStatus = "active" | "pending";
 
 export type Member = {
@@ -18,6 +23,8 @@ export type Member = {
   name: string;
   email: string;
   role: TeamRole;
+  /** Todos os papéis técnicos; ausente em convites locais. */
+  roles?: TeamRole[];
   status: MemberStatus;
   inviteToken?: string;
   invitedAt?: string;
@@ -86,6 +93,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         name: m.name,
         email: m.email,
         role: m.appRole,
+        roles: m.roles,
         status: "active" as const,
       })),
     [data],

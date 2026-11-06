@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Users, Wallet, HandCoins } from "lucide-react";
 import { formatBRL, type Branch } from "@/lib/mock/data";
-import { useTeam } from "@/lib/team/teamStore";
+import { isSeller, useTeam } from "@/lib/team/teamStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useSellerCommissionStore } from "@/lib/financial/sellerCommissionStore";
@@ -40,7 +40,7 @@ export function SellerCommissionsTab() {
   const { getRate, updateRate, computePayout } = useSellerCommissionStore();
   const { payouts, totalPaid } = useSellerPayoutStore();
 
-  const sellers = useMemo(() => members.filter((m) => m.role === "vendedor"), [members]);
+  const sellers = useMemo(() => members.filter(isSeller), [members]);
   const currentYear = new Date().getFullYear();
   const [month, setMonth] = useState<number>(new Date().getMonth());
   const [sellerId, setSellerId] = useState<string>("");
