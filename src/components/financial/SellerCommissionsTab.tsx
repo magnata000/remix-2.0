@@ -24,8 +24,7 @@ import { isSeller, useTeam } from "@/lib/team/teamStore";
 import { useCommissionStore } from "@/lib/financial/commissionStore";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useSellerCommissionStore } from "@/lib/financial/sellerCommissionStore";
-import { useSellerPayoutStore } from "@/lib/financial/sellerPayoutStore";
-import { formatDateBR, MONTHS_PT } from "@/lib/cash/cashStore";
+import { formatDateBR } from "@/lib/cash/cashStore";
 import { PaySellerPayoutDialog } from "@/components/financial/PaySellerPayoutDialog";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -38,11 +37,8 @@ export function SellerCommissionsTab() {
   const { commissions } = useCommissionStore();
   const { policies } = usePolicies();
   const { getRate, updateRate, computePayout } = useSellerCommissionStore();
-  const { payouts, totalPaid } = useSellerPayoutStore();
 
   const sellers = useMemo(() => members.filter(isSeller), [members]);
-  const currentYear = new Date().getFullYear();
-  const [month, setMonth] = useState<number>(new Date().getMonth());
   const [sellerId, setSellerId] = useState<string>("");
   const [payOpen, setPayOpen] = useState(false);
 
@@ -74,7 +70,7 @@ export function SellerCommissionsTab() {
   // Saldo devedor (all-time): soma dos repasses computados sobre comissões pagas do vendedor,
   // descontando o que já foi repassado.
   // Valores reais do backend (commission_payouts do vendedor).
-  void commissions; void policyById; void computePayout; void totalPaid;
+  void commissions; void policyById; void computePayout;
   const owedAllTime = useMemo(
     () => Math.round(sales.reduce((s, r) => s + Number(r.valor_devido ?? 0), 0) * 100) / 100,
     [sales],
@@ -96,20 +92,6 @@ export function SellerCommissionsTab() {
         .filter((r) => r.open > 0),
     [sales],
   );
-
-  // Histórico de repasses (filtrado por mês/ano e vendedor).
-  const payoutHistory = useMemo(() => {
-    if (!sellerId) return [];
-    return payouts
-      .filter((p) => {
-        if (p.sellerId !== sellerId) return false;
-        const d = new Date(p.paidAt);
-        return d.getMonth() === month && d.getFullYear() === currentYear;
-      })
-      .sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime());
-  }, [payouts, sellerId, month, currentYear]);
-
-  const historyTotal = payoutHistory.reduce((s, p) => s + p.amount, 0);
 
   if (sellers.length === 0) {
     return (
@@ -133,7 +115,7 @@ export function SellerCommissionsTab() {
               Filtros
             </div>
             <div className="text-sm text-muted-foreground mt-0.5">
-              O vendedor afeta toda a página. O mês filtra apenas o histórico de repasses.
+              Selecione o vendedor para ver saldo, percentuais e repasses.
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -147,21 +129,6 @@ export function SellerCommissionsTab() {
                   {sellers.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground">Mês (histórico)</Label>
-              <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-                <SelectTrigger className="h-9 w-[140px] rounded-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS_PT.map((m, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {m}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -317,61 +284,6 @@ export function SellerCommissionsTab() {
                     </TableRow>
                   );
                 })}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      </Card>
-
-      {/* Histórico de repasses */}
-      <Card className="rounded-2xl border-border shadow-none">
-        <div className="p-5 pb-3">
-          <h2 className="text-lg font-semibold">Histórico de repasses</h2>
-          <p className="text-xs text-muted-foreground">
-            Repasses efetuados a {selectedSeller?.name ?? "—"} em {MONTHS_PT[month]} de{" "}
-            {currentYear}.
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          {payoutHistory.length === 0 ? (
-            <div className="px-5 pb-5">
-              <div className="text-sm text-muted-foreground py-8 text-center bg-muted/30 rounded-xl">
-                Nenhum repasse registrado neste mês.
-              </div>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-y border-border bg-muted/40">
-                  <TableHead className="text-xs">Data</TableHead>
-                  <TableHead className="text-xs">Vendedor</TableHead>
-                  <TableHead className="text-xs">Observações</TableHead>
-                  <TableHead className="text-xs text-right">Valor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payoutHistory.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {formatDateBR(p.paidAt)}
-                    </TableCell>
-                    <TableCell className="text-sm">{selectedSeller?.name ?? "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {p.notes ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold text-destructive">
-                      {formatBRL(p.amount)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-muted/40">
-                  <TableCell colSpan={3} className="text-right font-semibold">
-                    Total no mês
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-destructive">
-                    {formatBRL(historyTotal)}
-                  </TableCell>
-                </TableRow>
               </TableBody>
             </Table>
           )}
