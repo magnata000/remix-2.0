@@ -14,12 +14,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatBRL } from "@/lib/mock/data";
 import { useSellerPayoutStore } from "@/lib/financial/sellerPayoutStore";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
+import { payCommissionPayout } from "@/lib/financial/financeiro.functions";
 
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   seller: { id: string; name: string } | null;
   suggestedAmount: number;
+  openPayouts: { id: string; open: number }[];
 };
 
 const todayLocal = () => {
@@ -28,8 +32,11 @@ const todayLocal = () => {
   return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
 };
 
-export function PaySellerPayoutDialog({ open, onOpenChange, seller, suggestedAmount }: Props) {
+export function PaySellerPayoutDialog({ open, onOpenChange, seller, suggestedAmount, openPayouts }: Props) {
   const { addPayout } = useSellerPayoutStore();
+  const payFn = useServerFn(payCommissionPayout);
+  const qc = useQueryClient();
+  const [saving, setSaving] = useState(false);
   const [amount, setAmount] = useState<string>("");
   const [date, setDate] = useState<string>(todayLocal());
   const [notes, setNotes] = useState<string>("");
@@ -46,16 +53,33 @@ export function PaySellerPayoutDialog({ open, onOpenChange, seller, suggestedAmo
   const valid =
     seller && Number.isFinite(parsed) && parsed > 0 && parsed <= suggestedAmount + 0.001;
 
-  const submit = () => {
-    if (!seller || !valid) return;
-    addPayout({
-      sellerId: seller.id,
-      amount: Math.round(parsed * 100) / 100,
-      paidAt: new Date(`${date}T12:00:00`).toISOString(),
-      notes: notes.trim() || undefined,
-    });
-    toast.success(`Repasse de ${formatBRL(parsed)} registrado para ${seller.name}`);
-    onOpenChange(false);
+  const submit = async () => {
+    if (!seller || !valid || saving) return;
+    setSaving(true);
+    try {
+      // Distribui o valor pelos repasses em aberto (mais antigos primeiro) no motor oficial.
+      let left = Math.round(parsed * 100) / 100;
+      for (const p of openPayouts) {
+        if (left <= 0) break;
+        const v = Math.min(left, p.open);
+        await payFn({ data: { payoutId: p.id, valor: v, data: date, observacao: notes.trim() || undefined } });
+        left = Math.round((left - v) * 100) / 100;
+      }
+      addPayout({
+        sellerId: seller.id,
+        amount: Math.round(parsed * 100) / 100,
+        paidAt: new Date(`${date}T12:00:00`).toISOString(),
+        notes: notes.trim() || undefined,
+      });
+      await qc.invalidateQueries({ queryKey: ["seller-sales"] });
+      await qc.invalidateQueries({ queryKey: ["finance-commissions"] });
+      toast.success(`Repasse de ${formatBRL(parsed)} registrado para ${seller.name}`);
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao registrar repasse");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -121,7 +145,7 @@ export function PaySellerPayoutDialog({ open, onOpenChange, seller, suggestedAmo
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={!valid}>
+          <Button onClick={submit} disabled={!valid || saving}>
             Confirmar repasse
           </Button>
         </DialogFooter>
