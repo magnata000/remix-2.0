@@ -383,6 +383,7 @@ export function SellerCommissionsTab() {
         onOpenChange={setPayOpen}
         seller={selectedSeller ? { id: selectedSeller.id, name: selectedSeller.name } : null}
         suggestedAmount={balance}
+        openPayouts={openPayouts}
       />
     </div>
   );
