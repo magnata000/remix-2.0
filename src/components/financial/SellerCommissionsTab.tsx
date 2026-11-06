@@ -73,27 +73,29 @@ export function SellerCommissionsTab() {
 
   // Saldo devedor (all-time): soma dos repasses computados sobre comissões pagas do vendedor,
   // descontando o que já foi repassado.
-  const owedAllTime = useMemo(() => {
-    if (!sellerId) return 0;
-    return commissions.reduce((sum, c) => {
-      if (c.status !== "pago") return sum;
-      const p = c.policyId ? policyById.get(c.policyId) : undefined;
-      if (!p || p.assigneeId !== sellerId) return sum;
-      return sum + computePayout(c, p);
-    }, 0);
-  }, [commissions, policyById, sellerId, computePayout]);
-
-  const paidAllTime = sellerId ? totalPaid(sellerId) : 0;
+  // Valores reais do backend (commission_payouts do vendedor).
+  void commissions; void policyById; void computePayout; void totalPaid;
+  const owedAllTime = useMemo(
+    () => Math.round(sales.reduce((s, r) => s + Number(r.valor_devido ?? 0), 0) * 100) / 100,
+    [sales],
+  );
+  const paidAllTime = useMemo(
+    () => Math.round(sales.reduce((s, r) => s + Number(r.valor_pago ?? 0), 0) * 100) / 100,
+    [sales],
+  );
   const balance = Math.max(0, Math.round((owedAllTime - paidAllTime) * 100) / 100);
-
-  const commissionsCounted = useMemo(() => {
-    if (!sellerId) return 0;
-    return commissions.filter((c) => {
-      if (c.status !== "pago") return false;
-      const p = c.policyId ? policyById.get(c.policyId) : undefined;
-      return !!p && p.assigneeId === sellerId;
-    }).length;
-  }, [commissions, policyById, sellerId]);
+  const commissionsCounted = useMemo(
+    () => sales.filter((r) => Number(r.valor_devido ?? 0) > 0).length,
+    [sales],
+  );
+  const openPayouts = useMemo(
+    () =>
+      [...sales]
+        .reverse()
+        .map((r) => ({ id: r.id as string, open: Math.round((Number(r.valor_devido) - Number(r.valor_pago)) * 100) / 100 }))
+        .filter((r) => r.open > 0),
+    [sales],
+  );
 
   // Histórico de repasses (filtrado por mês/ano e vendedor).
   const payoutHistory = useMemo(() => {
