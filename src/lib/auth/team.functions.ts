@@ -9,6 +9,8 @@ export type TeamMemberRow = {
   name: string;
   email: string;
   appRole: AppRole;
+  /** Todos os papéis técnicos do usuário (vários por pessoa). */
+  roles: AppRole[];
 };
 
 const APP_ROLES: AppRole[] = ["admin", "pos_venda", "vendedor"];
@@ -37,6 +39,7 @@ export const listTeam = createServerFn({ method: "GET" })
       name: m.name,
       email: m.email,
       appRole: pickRole((roles ?? []).filter((r) => r.user_id === m.id).map((r) => r.role)),
+      roles: (roles ?? []).filter((r) => r.user_id === m.id).map((r) => r.role as AppRole),
     }));
   });
 
