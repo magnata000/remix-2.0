@@ -4,6 +4,7 @@ import {
   extractMentions,
   resolveMentionId,
   textMentionsUser,
+  pendingMentionComments,
 } from "./mentions";
 
 const TEAM = [
@@ -93,5 +94,35 @@ describe("textMentionsUser", () => {
     const sizeBefore = cache.size;
     textMentionsUser(text, "u2", IDX, cache);
     expect(cache.size).toBe(sizeBefore);
+  });
+});
+
+describe("pendingMentionComments", () => {
+  // u3 = Ana
+  it("lista menção não respondida", () => {
+    const cs = [{ id: "a", authorId: "u1", text: "@Ana veja" }];
+    expect(pendingMentionComments(cs, "u3", IDX).map((c) => c.id)).toEqual(["a"]);
+  });
+  it("some quando o usuário responde explicitamente", () => {
+    const cs = [
+      { id: "a", authorId: "u1", text: "@Ana veja" },
+      { id: "b", authorId: "u3", text: "feito", replyToId: "a" },
+    ];
+    expect(pendingMentionComments(cs, "u3", IDX)).toEqual([]);
+  });
+  it("comentário solto sem Responder não dá baixa", () => {
+    const cs = [
+      { id: "a", authorId: "u1", text: "@Ana veja" },
+      { id: "b", authorId: "u3", text: "feito" },
+    ];
+    expect(pendingMentionComments(cs, "u3", IDX).map((c) => c.id)).toEqual(["a"]);
+  });
+  it("volta quando alguém responde à resposta do usuário", () => {
+    const cs = [
+      { id: "a", authorId: "u1", text: "@Ana veja" },
+      { id: "b", authorId: "u3", text: "feito", replyToId: "a" },
+      { id: "c", authorId: "u1", text: "e o outro?", replyToId: "b" },
+    ];
+    expect(pendingMentionComments(cs, "u3", IDX).map((c) => c.id)).toEqual(["c"]);
   });
 });

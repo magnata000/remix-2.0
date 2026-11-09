@@ -65,3 +65,36 @@ export function textMentionsUser(
     return index.get(lc) === userId;
   });
 }
+
+/** Comentário mínimo para a regra de menções pendentes. */
+export type ThreadComment = {
+  id: string;
+  authorId: string;
+  text: string;
+  replyToId?: string;
+};
+
+/**
+ * Comentários que aguardam resposta de `userId` (caixa "Menções para mim"):
+ * - de outro autor, que menciona o usuário OU responde a uma mensagem dele
+ *   (continuidade da conversa);
+ * - e que o usuário ainda não respondeu explicitamente ("Responder").
+ * Só comentários da timeline contam — a descrição da tarefa não.
+ */
+export function pendingMentionComments<T extends ThreadComment>(
+  comments: readonly T[],
+  userId: string,
+  index: TeamNameIndex,
+  cache?: Map<string, string[]>,
+): T[] {
+  const byId = new Map(comments.map((c) => [c.id, c]));
+  const answered = new Set(
+    comments.filter((c) => c.authorId === userId && c.replyToId).map((c) => c.replyToId!),
+  );
+  return comments.filter((c) => {
+    if (c.authorId === userId || answered.has(c.id)) return false;
+    if (c.text && textMentionsUser(c.text, userId, index, cache)) return true;
+    const parent = c.replyToId ? byId.get(c.replyToId) : undefined;
+    return parent?.authorId === userId;
+  });
+}

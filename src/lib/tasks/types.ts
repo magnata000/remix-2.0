@@ -15,6 +15,8 @@ export type TaskComment = {
   editedBy?: string;
   attachmentIds?: string[];
   pinned?: boolean;
+  /** Comentário respondido (citação). */
+  replyToId?: string;
 };
 
 export const MESSAGE_PREVIEW_LIMIT = 120;

@@ -27,7 +27,7 @@ import { type Policy, type Beneficiary, type FollowUpType } from "@/lib/mock/dat
 import { formatDateShort } from "@/lib/format";
 import { ageAt, findBandChange, isBirthdayToday, parseLocalDate } from "@/lib/daily/ageBands";
 import { daysBetween, relativeDueLabel, toneClass, type RelativeDue } from "@/lib/daily/dateUtils";
-import { textMentionsUser, type TeamNameIndex } from "@/lib/daily/mentions";
+import { pendingMentionComments, type TeamNameIndex } from "@/lib/daily/mentions";
 import { TaskDetailDialog } from "@/components/tasks/TaskDetailDialog";
 import { useNavigation } from "@/lib/navigation";
 
@@ -126,24 +126,12 @@ function useMyMentions(teamIndex: TeamNameIndex): MentionEntry[] {
     // Cache local — `extractMentions` faz backtracking O(n) por match;
     // muitos comentários repetem @menções, então cachear por texto ajuda.
     const mentionCache = new Map<string, string[]>();
-    const hit = (text: string) => textMentionsUser(text, currentUserId, teamIndex, mentionCache);
 
     const out: MentionEntry[] = [];
     tasks.forEach((task) => {
-      // Descrição da task (autor = assigneeId como proxy — ainda não temos createdBy)
-      if (task.description && hit(task.description)) {
-        out.push({
-          taskId: task.id,
-          taskTitle: task.title,
-          authorId: task.assigneeId,
-          at: task.createdAt,
-          preview: task.description,
-          clientName: task.clientName,
-        });
-      }
-      task.comments.forEach((c) => {
-        if (c.authorId === currentUserId) return; // não me menciono
-        if (c.text && hit(c.text)) {
+      // Só comentários da timeline; some quando respondido via "Responder".
+      pendingMentionComments(task.comments, currentUserId, teamIndex, mentionCache).forEach(
+        (c) => {
           out.push({
             taskId: task.id,
             taskTitle: task.title,
@@ -152,8 +140,8 @@ function useMyMentions(teamIndex: TeamNameIndex): MentionEntry[] {
             preview: c.text,
             clientName: task.clientName,
           });
-        }
-      });
+        },
+      );
     });
 
     // Dedup por taskId+at, mais recente primeiro
@@ -182,7 +170,7 @@ function MentionsSection({
     <SectionCard
       icon={<AtSign className="h-4 w-4" />}
       title="Menções para mim"
-      subtitle="Onde alguém te marcou"
+      subtitle="Aguardando sua resposta"
       count={entries.length}
     >
       {entries.length === 0 ? (

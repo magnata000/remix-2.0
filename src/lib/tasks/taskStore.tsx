@@ -51,7 +51,7 @@ type Ctx = {
   deleteTask: (id: string) => void;
   updateTaskFields: (id: string, patch: TaskPatch) => void;
   addComment: (taskId: string, text: string) => void;
-  addMessage: (taskId: string, text: string, files: File[]) => void;
+  addMessage: (taskId: string, text: string, files: File[], replyToId?: string) => void;
   addAudioMessage: (taskId: string, blob: Blob, durationSec: number) => void;
   editComment: (taskId: string, commentId: string, text: string) => void;
   removeCommentAttachment: (taskId: string, commentId: string, attachmentId: string) => void;
@@ -180,7 +180,7 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const addMessage = useCallback(
-    (taskId: string, text: string, files: File[]) => {
+    (taskId: string, text: string, files: File[], replyToId?: string) => {
       const clean = text.trim();
       if (!clean && files.length === 0) return;
       run(async () => {
@@ -194,7 +194,7 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
             storagePath,
           });
         }
-        return addMessageFn({ data: { taskId, text: clean, attachments } });
+        return addMessageFn({ data: { taskId, text: clean, attachments, replyToId } });
       });
     },
     [addMessageFn, run],

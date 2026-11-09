@@ -238,12 +238,19 @@ export const deleteTask = createServerFn({ method: "POST" })
 
 export const addMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { taskId: string; text: string; attachments: AttachmentInput[] }) => d)
+  .inputValidator(
+    (d: { taskId: string; text: string; attachments: AttachmentInput[]; replyToId?: string }) => d,
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: comment, error } = await supabase
       .from("task_comments")
-      .insert({ task_id: data.taskId, author_id: userId, body: data.text })
+      .insert({
+        task_id: data.taskId,
+        author_id: userId,
+        body: data.text,
+        reply_to_id: data.replyToId ?? null,
+      } as never)
       .select("id")
       .single();
     if (error) throw new Error(error.message);
