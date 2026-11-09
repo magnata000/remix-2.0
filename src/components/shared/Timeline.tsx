@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   ChevronDown,
+  Reply,
   ChevronUp,
   FileText,
   Image as ImageIcon,
@@ -261,6 +262,9 @@ export function CommentBubble({
   onSaveText,
   onRemoveAttachment,
   onDelete,
+  onReply,
+  quoted,
+  onQuoteClick,
 }: {
   comment: TaskComment;
   attachments: TaskAttachment[];
@@ -272,6 +276,10 @@ export function CommentBubble({
   onSaveText: (text: string) => void;
   onRemoveAttachment: (attachmentId: string) => void;
   onDelete: () => void;
+  onReply?: () => void;
+  /** Mensagem citada (quando este comentário é uma resposta). */
+  quoted?: { authorId: string; text: string } | null;
+  onQuoteClick?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.text);
@@ -352,6 +360,22 @@ export function CommentBubble({
     <div className="group/comment">
       <div className="flex items-start gap-1.5">
         <div className="flex-1 min-w-0 space-y-1.5">
+          {comment.replyToId && (
+            <button
+              type="button"
+              onClick={onQuoteClick}
+              className="block w-full text-left border-l-2 border-brand/60 bg-muted/60 rounded-r-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+            >
+              {quoted ? (
+                <>
+                  <span className="font-medium text-foreground">{nameOf(quoted.authorId)}</span>
+                  <span className="block truncate">{quoted.text || "Anexo"}</span>
+                </>
+              ) : (
+                <em>Mensagem original removida</em>
+              )}
+            </button>
+          )}
           {comment.text && (
             <span className="block whitespace-pre-wrap break-words">
               {renderMentions(displayText)}
@@ -381,6 +405,17 @@ export function CommentBubble({
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {onReply && (
+            <button
+              type="button"
+              onClick={onReply}
+              title="Responder"
+              aria-label="Responder mensagem"
+              className="opacity-0 group-hover/comment:opacity-100 text-muted-foreground hover:text-foreground transition shrink-0"
+            >
+              <Reply className="h-3 w-3" />
+            </button>
+          )}
           {onTogglePin && (
             <button
               type="button"

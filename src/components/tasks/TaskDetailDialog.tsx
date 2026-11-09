@@ -63,6 +63,7 @@ export function TaskDetailDialog({
   const { taskColumnHours } = useSlaConfig();
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
+  const [replyToId, setReplyToId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,10 +112,22 @@ export function TaskDetailDialog({
 
   const submit = () => {
     if (!canSend) return;
-    addMessage(task.id, text, pending);
+    addMessage(task.id, text, pending, replyToId ?? undefined);
+    setReplyToId(null);
     setText("");
     setPending([]);
   };
+
+  const quoteOf = (id?: string) => {
+    const q = id ? task.comments.find((x) => x.id === id) : undefined;
+    return q ? { authorId: q.authorId, text: q.text } : null;
+  };
+  const scrollToComment = (id?: string) => {
+    if (!id) return;
+    const el = timelineRef.current?.querySelector(`[data-comment-id="${id}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+  const replyTarget = replyToId ? task.comments.find((x) => x.id === replyToId) : undefined;
 
   const addFiles = (files: FileList | File[] | null) => {
     if (!files) return;
@@ -294,6 +307,7 @@ export function TaskDetailDialog({
                     .filter((a): a is TaskAttachment => !!a);
                   return (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
+                      <div data-comment-id={c.id}>
                       <CommentBubble
                         comment={c}
                         attachments={atts}
@@ -311,7 +325,11 @@ export function TaskDetailDialog({
                         onSaveText={(t) => editComment(task.id, c.id, t)}
                         onRemoveAttachment={(aid) => removeCommentAttachment(task.id, c.id, aid)}
                         onDelete={() => deleteComment(task.id, c.id)}
+                        onReply={() => setReplyToId(c.id)}
+                        quoted={quoteOf(c.replyToId)}
+                        onQuoteClick={() => scrollToComment(c.replyToId)}
                       />
+                      </div>
                     </TimelineRow>
                   );
                 }
@@ -344,6 +362,25 @@ export function TaskDetailDialog({
               }}
               className={`mt-3 shrink-0 rounded-xl border bg-muted/60 p-2 transition ${dragOver ? "border-brand ring-2 ring-brand/40 bg-brand/5" : "border-border"}`}
             >
+              {replyTarget && (
+                <div className="flex items-start gap-2 mb-2 border-l-2 border-brand bg-background/60 rounded-r-md px-2 py-1 text-xs">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-muted-foreground">Respondendo a </span>
+                    <span className="font-medium">{nameOf(replyTarget.authorId)}</span>
+                    <span className="block truncate text-muted-foreground">
+                      {replyTarget.text || "Anexo"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyToId(null)}
+                    aria-label="Cancelar resposta"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
               {pending.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {pending.map((f, i) => (
