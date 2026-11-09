@@ -1593,6 +1593,7 @@ export type Database = {
           edited_by: string | null
           id: string
           pinned: boolean
+          reply_to_id: string | null
           task_id: string
           updated_at: string
         }
@@ -1604,6 +1605,7 @@ export type Database = {
           edited_by?: string | null
           id?: string
           pinned?: boolean
+          reply_to_id?: string | null
           task_id: string
           updated_at?: string
         }
@@ -1615,10 +1617,18 @@ export type Database = {
           edited_by?: string | null
           id?: string
           pinned?: boolean
+          reply_to_id?: string | null
           task_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "task_comments_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "task_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
