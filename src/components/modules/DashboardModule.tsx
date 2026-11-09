@@ -17,7 +17,6 @@ import {
 } from "@/lib/dashboard/analytics";
 import { formatBRL } from "@/lib/mock/data";
 
-const fmtDate = (d: string) => { const [y, m, day] = d.slice(0, 10).split("-"); return `${day}/${m}/${y}`; };
 const GROUP_LABEL: Record<RenewalGroup, string> = {
   renovadas: "Renovada", aguardando: "Vencida aguardando", nao_renovadas: "Não renovada", futuras: "A vencer",
 };
