@@ -69,6 +69,7 @@ export function mapBoard(rows: BoardRows, urlByPath: Map<string, string>): Board
       editedBy: opt(c["edited_by"]),
       attachmentIds: attachmentIdsByComment.get(id),
       pinned: c["pinned"] === true,
+      replyToId: opt(c["reply_to_id"]),
     };
     const taskId = s(c["task_id"]);
     const list = commentsByTask.get(taskId) ?? [];
