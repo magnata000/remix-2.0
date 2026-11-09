@@ -17,6 +17,10 @@ import {
 } from "@/lib/dashboard/analytics";
 import { formatBRL } from "@/lib/mock/data";
 
+const fmtDate = (d: string) => { const [y, m, day] = d.slice(0, 10).split("-"); return `${day}/${m}/${y}`; };
+const GROUP_LABEL: Record<RenewalGroup, string> = {
+  renovadas: "Renovada", aguardando: "Vencida aguardando", nao_renovadas: "Não renovada", futuras: "A vencer",
+};
 const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export function DashboardModule() {
@@ -194,7 +198,15 @@ function DashboardBody({
       <Section title="Retenção" subtitle="O que estou perdendo e mantendo">
         <ChartCard className="lg:col-span-7" title="Churn — últimos 12 meses"
           footer={tracked.length < churn.length ? "Meses sem ponto ainda não tinham histórico registrado no sistema." : undefined}
-          table={churn.map((p) => [p.month, p.rate === null ? "sem histórico" : `${formatPct(p.rate)} (${p.canceladas} canc. / ${p.nao_renovadas} não ren. / base ${p.base})`])}>
+          table={churn.map((p) => [p.month, p.rate === null ? "sem histórico" : `${formatPct(p.rate)} (${p.canceladas} canc. / ${p.nao_renovadas} não ren. / base ${p.base})`])}
+          details={{
+            title: "Apólices perdidas nos últimos 12 meses",
+            head: ["Mês", "Apólice", "Cliente", "Ramo", "Motivo", "Data"],
+            rows: (data.churn_items ?? []).map((i) => ({
+              key: `${i.id}-${i.type}`,
+              cells: [i.date.slice(0, 7), i.number, i.client ?? "—", i.branch, i.type === "cancelada" ? "Cancelada" : "Não renovada", fmtDate(i.date)],
+            })),
+          }}>
           <ResponsiveContainer height={240}>
             <LineChart data={churn} margin={{ top: 20, right: 20 }}>
               <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
@@ -213,7 +225,15 @@ function DashboardBody({
 
         <ChartCard className="lg:col-span-5" title="Renovação no período"
           footer={r.futuras > 0 ? `Mês em andamento: ${r.futuras} apólice(s) ainda vencem. Exclui Saúde e Consórcio.` : "Exclui Saúde e Consórcio."}
-          table={[["Renovadas", String(r.renovadas)], ["Vencidas aguardando", String(r.aguardando)], ["Não renovadas", String(r.nao_renovadas)], ["A vencer no mês", String(r.futuras)]]}>
+          table={[["Renovadas", String(r.renovadas)], ["Vencidas aguardando", String(r.aguardando)], ["Não renovadas", String(r.nao_renovadas)], ["A vencer no mês", String(r.futuras)]]}
+          details={{
+            title: "Apólices com vencimento no mês",
+            head: ["Apólice", "Cliente", "Ramo", "Vencimento", "Situação"],
+            rows: (r.items ?? []).map((i) => ({
+              key: i.id,
+              cells: [i.number ?? "—", i.client ?? "—", i.branch, fmtDate(i.end_date), GROUP_LABEL[i.group]],
+            })),
+          }}>
           {r.total === 0 ? <Empty /> : <RenewalBar r={r} />}
         </ChartCard>
       </Section>
@@ -274,8 +294,10 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
   );
 }
 
-function ChartCard({ title, footer, table, className, children }: {
+type DetailRow = { key: string; cells: string[] };
+function ChartCard({ title, footer, table, details, className, children }: {
   title: string; footer?: string; table: string[][]; className?: string; children: React.ReactNode;
+  details?: { title: string; head: string[]; rows: DetailRow[] };
 }) {
   const [asTable, setAsTable] = useState(false);
   return (
@@ -287,9 +309,28 @@ function ChartCard({ title, footer, table, className, children }: {
         </Button>
       </div>
       {asTable ? (
-        <table className="w-full text-xs">
-          <tbody>{table.map((row, i) => <tr key={i} className="border-b border-border last:border-0">{row.map((c, j) => <td key={j} className={`py-1.5 ${j ? "text-right" : ""}`}>{c}</td>)}</tr>)}</tbody>
-        </table>
+        <div className="space-y-4">
+          <table className="w-full text-xs">
+            <tbody>{table.map((row, i) => <tr key={i} className="border-b border-border last:border-0">{row.map((c, j) => <td key={j} className={`py-1.5 ${j ? "text-right" : ""}`}>{c}</td>)}</tr>)}</tbody>
+          </table>
+          {details && (
+            <div>
+              <h4 className="mb-1 text-xs font-semibold">{details.title} ({details.rows.length})</h4>
+              {details.rows.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma apólice.</p> : (
+                <div className="max-h-72 overflow-auto rounded border border-border">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 bg-card text-left text-muted-foreground">
+                      <tr className="border-b border-border">{details.head.map((h) => <th key={h} className="px-2 py-1.5 font-medium">{h}</th>)}</tr>
+                    </thead>
+                    <tbody>{details.rows.map((r) => (
+                      <tr key={r.key} className="border-b border-border last:border-0">{r.cells.map((c, j) => <td key={j} className="px-2 py-1.5">{c}</td>)}</tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       ) : children}
       {footer && <p className="mt-2 text-xs text-muted-foreground">{footer}</p>}
     </Card>
