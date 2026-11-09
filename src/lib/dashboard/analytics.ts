@@ -4,7 +4,9 @@ export type BranchStat = { id: string; name: string; code: string; premio: numbe
 export type ChurnPoint = { month: string; canceladas: number; nao_renovadas: number; base: number; is_partial: boolean; has_history: boolean };
 export type RenewalGroup = "renovadas" | "aguardando" | "nao_renovadas" | "futuras";
 export type RenewalItem = { id: string; number: string | null; client: string | null; branch: string; start_date: string | null; end_date: string; group: RenewalGroup };
+export type ChurnItem = { id: string; number: string; client: string | null; branch: string; date: string; type: "cancelada" | "nao_renovada" };
 export type DashboardAnalytics = {
+  churn_items?: ChurnItem[];
   kpis: { premio_total: number; apolices: number; clientes_unicos: number };
   by_branch: BranchStat[];
   churn: ChurnPoint[];
