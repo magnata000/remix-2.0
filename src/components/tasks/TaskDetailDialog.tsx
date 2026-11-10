@@ -255,6 +255,7 @@ export function TaskDetailDialog({
                       return (
                         <TimelineRow key={`pin-${c.id}`} authorId={c.authorId} at={c.createdAt}>
                           <CommentBubble
+ imagePreview
                             comment={c}
                             attachments={atts}
                             canEdit={
@@ -309,6 +310,7 @@ export function TaskDetailDialog({
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
                       <div data-comment-id={c.id}>
                       <CommentBubble
+ imagePreview
                         comment={c}
                         attachments={atts}
                         canEdit={
@@ -338,7 +340,7 @@ export function TaskDetailDialog({
                   if (!a || !attachmentMatches(a.name)) return null;
                   return (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
-                      <AttachmentChip a={a} />
+                      <AttachmentChip a={a} preview />
                     </TimelineRow>
                   );
                 }
@@ -392,6 +394,7 @@ export function TaskDetailDialog({
                 value={text}
                 onChange={setText}
                 onSubmit={submit}
+                onPasteFiles={addFiles}
                 placeholder={
                   dragOver
                     ? "Solte os arquivos para anexar..."
