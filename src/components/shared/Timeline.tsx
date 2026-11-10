@@ -275,7 +275,9 @@ export function CommentBubble({
   onReply,
   quoted,
   onQuoteClick,
+  imagePreview,
 }: {
+  imagePreview?: boolean;
   comment: TaskComment;
   attachments: TaskAttachment[];
   canEdit: boolean;
@@ -409,7 +411,7 @@ export function CommentBubble({
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {attachments.map((a) => (
-                <AttachmentChip key={a.id} a={a} />
+                <AttachmentChip key={a.id} a={a} preview={imagePreview} />
               ))}
             </div>
           )}
