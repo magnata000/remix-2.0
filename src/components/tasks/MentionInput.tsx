@@ -12,6 +12,8 @@ type Props = {
   placeholder?: string;
   rows?: number;
   className?: string;
+  /** Opcional: recebe imagens coladas (Ctrl+V). Sem ele, a colagem segue o padrão. */
+  onPasteFiles?: (files: File[]) => void;
 };
 
 type MentionOption = { id: string; name: string; role: string };
@@ -41,7 +43,25 @@ export function MentionInput({
   placeholder,
   rows = 2,
   className,
+  onPasteFiles,
 }: Props) {
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    if (!onPasteFiles) return;
+    const files: File[] = [];
+    const stamp = new Date();
+    const hh = String(stamp.getHours()).padStart(2, "0");
+    const mm = String(stamp.getMinutes()).padStart(2, "0");
+    Array.from(e.clipboardData?.items ?? []).forEach((it, i) => {
+      if (it.kind !== "file" || !it.type.startsWith("image/")) return;
+      const f = it.getAsFile();
+      if (!f) return;
+      const ext = it.type.split("/")[1] || "png";
+      files.push(new File([f], `print_${hh}h${mm}${i ? `_${i}` : ""}.${ext}`, { type: it.type }));
+    });
+    if (!files.length) return;
+    e.preventDefault();
+    onPasteFiles(files);
+  };
   const ref = useRef<HTMLTextAreaElement>(null);
   const { members } = useTeam();
   const [open, setOpen] = useState(false);
@@ -195,6 +215,7 @@ export function MentionInput({
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={onKeyDown}
+        onPaste={handlePaste}
         onKeyUp={() => setCursorPos(ref.current?.selectionStart ?? 0)}
         onClick={() => setCursorPos(ref.current?.selectionStart ?? 0)}
         placeholder={placeholder}

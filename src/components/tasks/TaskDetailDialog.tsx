@@ -392,6 +392,7 @@ export function TaskDetailDialog({
                 value={text}
                 onChange={setText}
                 onSubmit={submit}
+                onPasteFiles={addFiles}
                 placeholder={
                   dragOver
                     ? "Solte os arquivos para anexar..."

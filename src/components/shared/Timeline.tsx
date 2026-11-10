@@ -20,6 +20,7 @@ import { getTeamMembers } from "@/lib/team/teamStore";
 import type { TaskAttachment, TaskComment } from "@/lib/tasks/taskStore";
 import { MESSAGE_PREVIEW_LIMIT } from "@/lib/tasks/taskStore";
 import { MentionInput, renderMentions } from "@/components/tasks/MentionInput";
+import { ImageThumb } from "@/components/shared/ImageViewer";
 
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -218,6 +219,7 @@ export function PendingChip({ file, onRemove }: { file: File; onRemove: () => vo
 
 export function AttachmentChip({ a, onRemove }: { a: TaskAttachment; onRemove?: () => void }) {
   if (isAudio(a.type)) return <AudioBubble a={a} onRemove={onRemove} />;
+  if (isImage(a.type) && a.url && !onRemove) return <ImageThumb src={a.url} name={a.name} />;
   return (
     <div className="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border pl-1 pr-1.5 py-1 text-xs max-w-[220px]">
       <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-muted-foreground">
