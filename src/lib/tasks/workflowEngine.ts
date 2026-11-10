@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 import type { Policy, Beneficiary } from "@/lib/mock/data";
 import type { TaskItem } from "./taskStore";
 
@@ -17,7 +18,7 @@ const fmtBR = (d: Date) =>
   `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 const fmtShort = (d: Date) =>
   `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
-const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+const isoDay = (d: Date) => localYmd(d);
 
 /** Próxima ocorrência (this year or next) de um dia/mês a partir de `from`. */
 function nextOccurrence(from: Date, month: number, day: number): Date {
@@ -36,7 +37,7 @@ function daysBetween(a: Date, b: Date) {
 }
 
 function parseISODate(s: string): Date | null {
-  const d = new Date(s);
+  const d = parseDue(s.slice(0, 10).length === 10 && /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : s);
   return isNaN(d.getTime()) ? null : d;
 }
 
@@ -72,7 +73,7 @@ export function runWorkflows({
             out.push({
               title: `Renovação ${policy.branch} — ${policy.clientName} (vence ${fmtShort(end)})`,
               description: `Apólice ${policy.number} vence em ${fmtBR(end)}. Confirmar coberturas e enviar proposta de renovação.`,
-              dueDate: end.toISOString(),
+              dueDate: localYmd(end),
               priority: "alta",
               assigneeId: "all",
               clientName: policy.clientName,
@@ -97,7 +98,7 @@ export function runWorkflows({
             out.push({
               title: `Reajuste Saúde — ${policy.clientName} (${fmtShort(target)})`,
               description: `Aniversário da apólice ${policy.number} em ${fmtBR(target)}. Revisar reajuste anual e comunicar o cliente.`,
-              dueDate: target.toISOString(),
+              dueDate: localYmd(target),
               priority: "alta",
               assigneeId: "all",
               clientName: policy.clientName,
@@ -126,7 +127,7 @@ export function runWorkflows({
         out.push({
           title: `Faixa etária — ${ben.name} faz ${ageOnNextBday} em ${fmtShort(nextBday)}`,
           description: `Beneficiário da apólice ${policy.number} (${titular?.name ?? policy.clientName}) completa ${ageOnNextBday} anos em ${fmtBR(nextBday)} — possível mudança de faixa etária.`,
-          dueDate: nextBday.toISOString(),
+          dueDate: localYmd(nextBday),
           priority: "alta",
           assigneeId: "all",
           clientName: policy.clientName,

@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
@@ -180,7 +181,7 @@ export function NewPolicyDialog({
       setInsurer(src.insurer);
       setPremium(formatBRLDecimal(src.premium));
       setPremioLiquido(src.premioLiquido ? formatBRLDecimal(src.premioLiquido) : "");
-      const newStart = new Date(src.endDate || src.startDate);
+      const newStart = parseDue(src.endDate || src.startDate);
       setStartDate(newStart);
       setEndDate(addYears(newStart, 1));
       setStatus("ativa");
@@ -248,14 +249,14 @@ export function NewPolicyDialog({
         setPremium(formatBRLDecimal(prefill.premium));
       }
       if (prefill.startDate) {
-        const d = new Date(prefill.startDate);
+        const d = parseDue(prefill.startDate);
         if (!isNaN(d.getTime())) {
           setStartDate(d);
           if (!prefill.endDate) setEndDate(addYears(d, 1));
         }
       }
       if (prefill.endDate) {
-        const d = new Date(prefill.endDate);
+        const d = parseDue(prefill.endDate);
         if (!isNaN(d.getTime())) setEndDate(d);
       }
     }
@@ -318,8 +319,8 @@ export function NewPolicyDialog({
       insurer,
       premium: premiumNum,
       premioLiquido: liquidoNum || undefined,
-      startDate: startDate.toISOString().slice(0, 10),
-      endDate: endDate ? endDate.toISOString().slice(0, 10) : "",
+      startDate: localYmd(startDate),
+      endDate: endDate ? localYmd(endDate) : "",
       status,
       assigneeId: assigneeId || undefined,
       commissionPct: commissionPct || undefined,
@@ -514,7 +515,7 @@ export function NewPolicyDialog({
                     )}
                   >
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {startDate ? formatDateShort(startDate.toISOString()) : "Selecionar"}
+                    {startDate ? formatDateShort(localYmd(startDate)) : "Selecionar"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -547,7 +548,7 @@ export function NewPolicyDialog({
                       )}
                     >
                       <CalendarIcon className="h-4 w-4 mr-2" />
-                      {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
+                      {endDate ? formatDateShort(localYmd(endDate)) : "Selecionar"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">

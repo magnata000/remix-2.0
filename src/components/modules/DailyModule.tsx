@@ -269,7 +269,7 @@ function FollowUpsSection({ now, onGoToPortfolio }: { now: Date; onGoToPortfolio
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {f.date === now.toISOString().slice(0, 10) ? "Hoje" : "Amanhã"} · {f.type}
+                    {f.date === localYmd(now) ? "Hoje" : "Amanhã"} · {f.type}
                   </p>
                 </div>
               </li>

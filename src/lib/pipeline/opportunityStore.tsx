@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -129,7 +130,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
             clientName: input.clientName,
             branch: input.branch,
             estimatedValue: input.estimatedValue,
-            dueDate: due.toISOString().slice(0, 10),
+            dueDate: localYmd(due),
             assigneeId: currentUserId,
             stage: "cotacao",
             quoteGroupId: input.quoteGroupId,

@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
@@ -93,7 +94,7 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
     setBranch(opportunity.branch);
     setStage(opportunity.stage);
     setEstimatedValue(opportunity.estimatedValue > 0 ? formatBRL(opportunity.estimatedValue) : "");
-    setDueDate(opportunity.dueDate ? new Date(opportunity.dueDate) : undefined);
+    setDueDate(opportunity.dueDate ? parseDue(opportunity.dueDate) : undefined);
     setAssigneeId(opportunity.assigneeId || userId);
   }, [opportunity]);
 
@@ -120,7 +121,7 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
       clientName: clientName.trim(),
       branch,
       estimatedValue: valueNum,
-      dueDate: dueDate.toISOString().slice(0, 10),
+      dueDate: localYmd(dueDate),
       assigneeId: assigneeId || userId,
     });
     if (stage !== opportunity.stage) {
@@ -262,7 +263,7 @@ export function EditOpportunityDialog({ opportunity, onOpenChange }: Props) {
                       )}
                     >
                       <CalendarIcon className="h-4 w-4 mr-2" />
-                      {dueDate ? formatDateShort(dueDate.toISOString()) : "Selecionar data"}
+                      {dueDate ? formatDateShort(localYmd(dueDate)) : "Selecionar data"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
