@@ -338,7 +338,7 @@ export function TaskDetailDialog({
                   if (!a || !attachmentMatches(a.name)) return null;
                   return (
                     <TimelineRow key={i} authorId={ev.by} at={ev.at}>
-                      <AttachmentChip a={a} />
+                      <AttachmentChip a={a} preview />
                     </TimelineRow>
                   );
                 }
