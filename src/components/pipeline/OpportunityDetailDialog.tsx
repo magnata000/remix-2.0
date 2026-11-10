@@ -233,6 +233,7 @@ export function OpportunityDetailDialog({
                           attachments={atts}
                           canEdit={c.authorId === currentUserId && within24h}
                           canDelete={c.authorId === currentUserId && within24h}
+                          imagePreview
                           pinned
                           canPin={canPinMore}
                           onTogglePin={() => togglePinComment(o.id, c.id)}
@@ -277,6 +278,7 @@ export function OpportunityDetailDialog({
                         attachments={atts}
                         canEdit={c.authorId === currentUserId && within24h}
                         canDelete={c.authorId === currentUserId && within24h}
+                        imagePreview
                         pinned={!!c.pinned}
                         canPin={pinnedCount < MAX_PINNED_COMMENTS}
                         onTogglePin={() => togglePinComment(o.id, c.id)}
@@ -326,6 +328,7 @@ export function OpportunityDetailDialog({
                 value={text}
                 onChange={setText}
                 onSubmit={submit}
+                onPasteFiles={(files) => addFiles(files)}
                 placeholder={
                   dragOver
                     ? "Solte os arquivos para anexar..."
