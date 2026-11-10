@@ -371,9 +371,9 @@ function DateRangePick({
 }) {
   const label = (() => {
     if (!value?.from) return "Selecionar intervalo";
-    const from = formatDateShort(value.from.toISOString());
+    const from = formatDateShort(localYmd(value.from));
     if (!value.to || value.to.getTime() === value.from.getTime()) return from;
-    return `${from} → ${formatDateShort(value.to.toISOString())}`;
+    return `${from} → ${formatDateShort(localYmd(value.to))}`;
   })();
   return (
     <Popover>
