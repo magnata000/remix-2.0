@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export function ScheduledTasksPanel({
     setWeekdays(s.weekdays?.map(String) ?? []);
     if (s.recurrence) setRecurrence(s.recurrence);
     if (s.kind === "data" && s.startDate) {
-      setRange({ from: new Date(s.startDate), to: s.endDate ? new Date(s.endDate) : undefined });
+      setRange({ from: parseDue(s.startDate.slice(0, 10)), to: s.endDate ? parseDue(s.endDate.slice(0, 10)) : undefined });
     } else {
       setRange(undefined);
     }
@@ -370,9 +371,9 @@ function DateRangePick({
 }) {
   const label = (() => {
     if (!value?.from) return "Selecionar intervalo";
-    const from = formatDateShort(value.from.toISOString());
+    const from = formatDateShort(localYmd(value.from));
     if (!value.to || value.to.getTime() === value.from.getTime()) return from;
-    return `${from} → ${formatDateShort(value.to.toISOString())}`;
+    return `${from} → ${formatDateShort(localYmd(value.to))}`;
   })();
   return (
     <Popover>

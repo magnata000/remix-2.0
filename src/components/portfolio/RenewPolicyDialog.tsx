@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
@@ -73,7 +74,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
     setBranch(sourcePolicy.branch);
     setInsurer(sourcePolicy.insurer);
     setPremium(formatBRLDecimal(sourcePolicy.premium));
-    const newStart = new Date(sourcePolicy.endDate);
+    const newStart = parseDue(sourcePolicy.endDate);
     setStartDate(newStart);
     setEndDate(addYears(newStart, 1));
     setStatus("ativa");
@@ -114,8 +115,8 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
       branch,
       insurer,
       premium: premiumNum,
-      startDate: startDate.toISOString().slice(0, 10),
-      endDate: endDate.toISOString().slice(0, 10),
+      startDate: localYmd(startDate),
+      endDate: localYmd(endDate),
       status,
       comissaoLiquida,
       taxaImposto,
@@ -222,7 +223,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                     )}
                   >
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {startDate ? formatDateShort(startDate.toISOString()) : "Selecionar"}
+                    {startDate ? formatDateShort(localYmd(startDate)) : "Selecionar"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -254,7 +255,7 @@ export function RenewPolicyDialog({ open, onOpenChange, sourcePolicy }: Props) {
                     )}
                   >
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {endDate ? formatDateShort(endDate.toISOString()) : "Selecionar"}
+                    {endDate ? formatDateShort(localYmd(endDate)) : "Selecionar"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

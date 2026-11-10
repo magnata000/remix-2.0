@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Dialog,
@@ -152,7 +153,7 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
         clientId: clientId || undefined,
         branch,
         estimatedValue: valueNum,
-        dueDate: dueDate.toISOString().slice(0, 10),
+        dueDate: localYmd(dueDate),
         assigneeId: assigneeId || userId,
         stage,
       });
@@ -345,7 +346,7 @@ export function NewOpportunityDialog({ open, onOpenChange, defaultClientName }: 
                       )}
                     >
                       <CalendarIcon className="h-4 w-4 mr-2" />
-                      {dueDate ? formatDateShort(dueDate.toISOString()) : "Selecionar data"}
+                      {dueDate ? formatDateShort(localYmd(dueDate)) : "Selecionar data"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
