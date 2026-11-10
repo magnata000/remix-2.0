@@ -26,7 +26,7 @@ import { useTeam, useTeamNameIndex } from "@/lib/team/teamStore";
 import { type Policy, type Beneficiary, type FollowUpType } from "@/lib/mock/data";
 import { formatDateShort } from "@/lib/format";
 import { ageAt, findBandChange, isBirthdayToday, parseLocalDate } from "@/lib/daily/ageBands";
-import { daysBetween, relativeDueLabel, toneClass, type RelativeDue } from "@/lib/daily/dateUtils";
+import { daysBetween, localYmd, parseDue, relativeDueLabel, toneClass, type RelativeDue } from "@/lib/daily/dateUtils";
 import { pendingMentionComments, type TeamNameIndex } from "@/lib/daily/mentions";
 import { TaskDetailDialog } from "@/components/tasks/TaskDetailDialog";
 import { useNavigation } from "@/lib/navigation";
@@ -42,20 +42,18 @@ function useMyTasks(now: Date): TaskEntry[] {
     const concluidoIds = new Set(
       columns.filter((c) => /conclu|finaliz|done/i.test(c.title)).map((c) => c.id),
     );
-    const horizon = new Date(now);
-    horizon.setDate(horizon.getDate() + 3);
     return tasks
       .filter((t) => t.assigneeId === currentUserId && !concluidoIds.has(t.columnId))
       .filter((t) => {
         if (!t.dueDate) return false;
-        const d = new Date(t.dueDate);
+        const d = parseDue(t.dueDate);
         if (Number.isNaN(d.getTime())) return false; // datas ruins não entram na Daily
-        return d <= horizon; // inclui atrasadas
+        return daysBetween(now, d) <= 3; // inclui atrasadas
       })
       .map((task) => ({ task, relative: relativeDueLabel(task.dueDate, now) }))
       .sort((a, b) => {
-        const da = new Date(a.task.dueDate!).getTime();
-        const db = new Date(b.task.dueDate!).getTime();
+        const da = parseDue(a.task.dueDate!).getTime();
+        const db = parseDue(b.task.dueDate!).getTime();
         if (da !== db) return da - db;
         const rank = { alta: 0, media: 1, baixa: 2 } as const;
         return rank[a.task.priority] - rank[b.task.priority];
@@ -217,10 +215,10 @@ const typeIcon: Record<FollowUpType, typeof Phone> = {
 
 function useTodayFollowUps(now: Date) {
   const { followUps } = useFollowUps();
-  const today = now.toISOString().slice(0, 10);
+  const today = localYmd(now);
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+  const tomorrowStr = localYmd(tomorrow);
 
   return useMemo(
     () =>

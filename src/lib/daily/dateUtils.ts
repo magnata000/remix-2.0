@@ -10,12 +10,25 @@ export function daysBetween(a: Date, b: Date): number {
   return Math.round((db - da) / DAY_MS);
 }
 
+/** Converte prazo ("YYYY-MM-DD" ou ISO) em Date local; "YYYY-MM-DD" não é lido como UTC. */
+export function parseDue(iso: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(iso);
+}
+
+/** Data local no formato YYYY-MM-DD (toISOString usaria UTC e viraria o dia após 21h). */
+export function localYmd(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 export type DueTone = "muted" | "danger" | "warning" | "info";
 export type RelativeDue = { text: string; tone: DueTone };
 
 export function relativeDueLabel(dueISO: string | undefined, now: Date): RelativeDue {
   if (!dueISO) return { text: "Sem prazo", tone: "muted" };
-  const parsed = new Date(dueISO);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueISO);
+  const parsed = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(dueISO);
   if (Number.isNaN(parsed.getTime())) {
     return { text: "Data inválida", tone: "muted" };
   }

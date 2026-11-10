@@ -1,3 +1,4 @@
+import { localYmd, parseDue } from "@/lib/daily/dateUtils";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -75,7 +76,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
     if (task) {
       setTitle(task.title);
       setDescription(task.description ?? "");
-      setDueDate(task.dueDate ? new Date(task.dueDate) : undefined);
+      setDueDate(task.dueDate ? parseDue(task.dueDate) : undefined);
       setPriority(task.priority);
       setAssigneeId(task.assigneeId);
       setClientName(task.clientName ?? "");
@@ -100,7 +101,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
       updateTaskFields(task.id, {
         title: title.trim(),
         description,
-        dueDate: dueDate?.toISOString(),
+        dueDate: dueDate ? localYmd(dueDate) : undefined,
         priority,
         assigneeId,
         clientName: clientName || undefined,
@@ -111,7 +112,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
       addTask({
         title: title.trim(),
         description,
-        dueDate: dueDate?.toISOString(),
+        dueDate: dueDate ? localYmd(dueDate) : undefined,
         priority,
         assigneeId,
         clientName: clientName || undefined,
@@ -167,7 +168,7 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
                     )}
                   >
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {dueDate ? formatDateShort(dueDate.toISOString()) : "Selecionar data"}
+                    {dueDate ? formatDateShort(localYmd(dueDate)) : "Selecionar data"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

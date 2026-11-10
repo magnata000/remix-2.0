@@ -70,3 +70,12 @@ describe("relativeDueLabel", () => {
     expect(relativeDueLabel(iso, NOW).text).toBe("Amanhã");
   });
 });
+
+describe("prazos em YYYY-MM-DD (fuso local)", () => {
+  it("prazo de hoje não aparece como atrasado", () => {
+    expect(relativeDueLabel("2026-07-15", new Date(2026, 6, 15, 22, 0)).text).toBe("Hoje");
+  });
+  it("prazo de amanhã é Amanhã", () => {
+    expect(relativeDueLabel("2026-07-16", NOW).text).toBe("Amanhã");
+  });
+});
