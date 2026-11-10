@@ -12,9 +12,15 @@ function taxInRangeByCompetence(t: TaxEntry, r: DateRange): boolean {
 
 export type DateRange = { start: Date; end: Date };
 
+/** "YYYY-MM-DD" puro é lido no fuso local (new Date() o trataria como UTC e voltaria um dia). */
+export function parseDay(iso: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(iso);
+}
+
 export function inRange(iso: string | undefined, r: DateRange) {
   if (!iso) return false;
-  const t = new Date(iso).getTime();
+  const t = parseDay(iso).getTime();
   return t >= r.start.getTime() && t <= r.end.getTime();
 }
 
@@ -147,7 +153,7 @@ export function revenueLosses(commissions: Commission[], r: DateRange): RevenueL
     const m = cur.getMonth();
     const canceladas = canc
       .filter((c) => {
-        const d = new Date(c.dueDate);
+        const d = parseDay(c.dueDate);
         return d.getFullYear() === y && d.getMonth() === m;
       })
       .reduce((s, c) => s + c.amount, 0);
@@ -263,8 +269,8 @@ export function projectedCashFlow(
     .filter(
       (c) =>
         (c.status === "pendente" || c.status === "atrasado") &&
-        new Date(c.dueDate).getTime() > now &&
-        new Date(c.dueDate).getTime() <= horizon,
+        parseDay(c.dueDate).getTime() > now &&
+        parseDay(c.dueDate).getTime() <= horizon,
     )
     .reduce((s, c) => s + c.amount, 0);
 
@@ -319,7 +325,7 @@ export function delinquency(commissions: Commission[], asOf = new Date()) {
     const label = MONTHS[dt.getMonth()];
     const value = atrasadas
       .filter((c) => {
-        const d = new Date(c.dueDate);
+        const d = parseDay(c.dueDate);
         return d.getFullYear() === dt.getFullYear() && d.getMonth() === dt.getMonth();
       })
       .reduce((s, c) => s + c.amount, 0);
