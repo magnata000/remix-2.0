@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +66,7 @@ export function TaskDetailDialog({
   const [pending, setPending] = useState<File[]>([]);
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [pinnedCollapsed, setPinnedCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -243,12 +245,21 @@ export function TaskDetailDialog({
                 const visiblePinned = pinnedComments.filter((c) => matchesTerm(c));
                 if (visiblePinned.length === 0) return null;
                 return (
-                  <div className="mb-3 rounded-xl border border-border bg-muted/40 p-2 space-y-2">
-                    <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                  <div className="mb-3 shrink-0 max-h-[20%] min-h-[2rem] overflow-y-auto rounded-xl border border-border bg-muted/40 p-2 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setPinnedCollapsed((v) => !v)}
+                      className="w-full text-[11px] font-semibold text-muted-foreground flex items-center gap-1 hover:text-foreground"
+                      aria-expanded={!pinnedCollapsed}
+                    >
                       <Pin className="h-3 w-3" /> Fixadas ({pinnedComments.length}/
                       {MAX_PINNED_COMMENTS})
-                    </p>
-                    {visiblePinned.map((c) => {
+                      <span className="ml-auto flex items-center gap-0.5 font-normal">
+                        {pinnedCollapsed ? "Mostrar" : "Recolher"}
+                        {pinnedCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+                      </span>
+                    </button>
+                    {!pinnedCollapsed && visiblePinned.map((c) => {
                       const atts = (c.attachmentIds ?? [])
                         .map((id) => task.attachments.find((a) => a.id === id))
                         .filter((a): a is TaskAttachment => !!a);
