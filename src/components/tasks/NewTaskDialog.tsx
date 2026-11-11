@@ -100,14 +100,14 @@ export function NewTaskDialog({ open, onOpenChange, defaultColumnId, task }: Pro
     if (isEdit && task) {
       try {
         await updateTaskFields(task.id, {
-        title: title.trim(),
-        description,
-        dueDate: dueDate ? localYmd(dueDate) : undefined,
-        priority,
-        assigneeId,
-        clientName: clientName || "",
-        columnId,
-      });
+          title: title.trim(),
+          description,
+          dueDate: dueDate ? localYmd(dueDate) : undefined,
+          priority,
+          assigneeId,
+          clientName: clientName || "",
+          columnId,
+        });
       } catch (e) {
         toast.error("Não foi possível atualizar a tarefa", {
           description: e instanceof Error ? e.message : undefined,
