@@ -105,7 +105,7 @@ export function mapBoard(rows: BoardRows, urlByPath: Map<string, string>): Board
       description: s(t["description"]),
       dueDate: opt(t["due_date"]),
       priority: (t["priority"] as Priority) ?? "media",
-      assigneeId: s(t["assignee_id"]),
+      assigneeId: t["assignee_id"] == null ? "all" : s(t["assignee_id"]),
       clientName: opt(t["client_name"]),
       columnId: s(t["column_id"]),
       createdAt: s(t["created_at"]),
