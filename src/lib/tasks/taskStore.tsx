@@ -49,7 +49,7 @@ type Ctx = {
   bulkAddTasks: (records: NewTaskInput[]) => void;
   moveTask: (id: string, columnId: string) => void;
   deleteTask: (id: string) => void;
-  updateTaskFields: (id: string, patch: TaskPatch) => void;
+  updateTaskFields: (id: string, patch: TaskPatch) => Promise<void>;
   addComment: (taskId: string, text: string) => void;
   addMessage: (taskId: string, text: string, files: File[], replyToId?: string) => void;
   addAudioMessage: (taskId: string, blob: Blob, durationSec: number) => void;
@@ -161,8 +161,11 @@ export function TaskStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const updateTaskFields = useCallback<Ctx["updateTaskFields"]>(
-    (id, patch) => run(() => updateTaskFn({ data: { id, patch } })),
-    [run, updateTaskFn],
+    async (id, patch) => {
+      await updateTaskFn({ data: { id, patch } });
+      invalidate();
+    },
+    [invalidate, updateTaskFn],
   );
 
   const moveTask = useCallback(

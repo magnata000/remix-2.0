@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/public/hooks/tasks-cron")({
         }
         if (rows?.length) {
           await supabaseAdmin.from("task_timeline").insert(
-            rows.map((r) => ({ task_id: r.id, kind: "created", actor_id: r.assignee_id })),
+            rows.map((r) => ({ task_id: r.id, kind: "created", actor_id: r.assignee_id as string })),
           );
         }
         return Response.json({ created: rows?.length ?? 0 });

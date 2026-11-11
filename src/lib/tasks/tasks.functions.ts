@@ -19,6 +19,9 @@ const BUCKET = "task-attachments";
 /** "all"/vazio não cabem na coluna uuid assignee_id — cai para o usuário logado. */
 const normAssignee = (a: string | undefined, fallback: string) =>
   !a || a === "all" ? fallback : a;
+/** Tarefas: "all" = todos os colaboradores (NULL no banco). */
+const taskAssignee = (a: string | undefined, fallback: string): string | null =>
+  a === "all" ? null : a || fallback;
 
 /* --------------------------------------------------------------- leitura */
 
@@ -73,7 +76,7 @@ export const createTask = createServerFn({ method: "POST" })
   .inputValidator((d: NewTaskInput) => d)
   .handler(async ({ data, context }): Promise<TaskItem> => {
     const { supabase, userId } = context;
-    const assignee = normAssignee(data.assigneeId, userId);
+    const assignee = taskAssignee(data.assigneeId, userId);
     const { data: row, error } = await supabase
       .from("tasks")
       .insert({
@@ -133,7 +136,7 @@ export const bulkCreateTasks = createServerFn({ method: "POST" })
       description: r.description ?? null,
       due_date: r.dueDate ? r.dueDate.slice(0, 10) : null,
       priority: r.priority,
-      assignee_id: normAssignee(r.assigneeId, userId),
+      assignee_id: taskAssignee(r.assigneeId, userId),
       client_name: r.clientName ?? null,
       column_id: r.columnId,
       source_key: r.sourceKey ?? null,
@@ -178,8 +181,8 @@ export const updateTask = createServerFn({ method: "POST" })
     if (patch.dueDate !== undefined)
       upd["due_date"] = patch.dueDate ? patch.dueDate.slice(0, 10) : null;
     if (patch.priority !== undefined) upd["priority"] = patch.priority;
-    if (patch.assigneeId !== undefined) upd["assignee_id"] = patch.assigneeId || userId;
-    if (patch.clientName !== undefined) upd["client_name"] = patch.clientName ?? null;
+    if (patch.assigneeId !== undefined) upd["assignee_id"] = taskAssignee(patch.assigneeId, userId);
+    if (patch.clientName !== undefined) upd["client_name"] = patch.clientName || null;
     if (patch.columnId !== undefined) upd["column_id"] = patch.columnId;
     if (patch.slaDueAt !== undefined) upd["sla_due_at"] = patch.slaDueAt ?? null;
     if (patch.slaHours !== undefined) upd["sla_hours"] = patch.slaHours ?? null;
