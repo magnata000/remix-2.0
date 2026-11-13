@@ -216,7 +216,7 @@ export function PolicyDetailDrawer({
                     label="Vigência"
                     value={
                       policy.branch === "Saúde"
-                        ? "Vitalício"
+                        ? `Início: ${formatDateShort(policy.startDate)}`
                         : `${formatDateShort(policy.startDate)}${policy.endDate ? ` → ${formatDateShort(policy.endDate)}` : ""}`
                     }
                   />
