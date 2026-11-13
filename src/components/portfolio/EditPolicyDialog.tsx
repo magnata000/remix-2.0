@@ -89,7 +89,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
 
   useEffect(() => {
     if (!open || !policy) return;
-    setAssigneeId(policy.assigneeId);
+    setAssigneeId(policy.assigneeId ?? "");
     setRepasseStr("");
     setCommissionIds([]);
     (async () => {
