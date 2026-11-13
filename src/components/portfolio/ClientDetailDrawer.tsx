@@ -323,7 +323,9 @@ export function ClientDetailDrawer({ clientName, onOpenChange, onOpenPolicy }: P
                             {p.branch} • {p.insurer}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            até {formatDateShort(p.endDate)}
+                            {p.branch === "Saúde"
+                              ? `início ${formatDateShort(p.startDate)}`
+                              : `até ${formatDateShort(p.endDate)}`}
                           </div>
                         </div>
                         <div className="text-right">
