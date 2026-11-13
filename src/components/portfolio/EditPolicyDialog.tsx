@@ -38,6 +38,11 @@ import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { setCommissionPayout } from "@/lib/financial/financeiro.functions";
+import { useTeam, isSeller } from "@/lib/team/teamStore";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; policy: Policy | null };
 
@@ -74,6 +79,41 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
   const [consortiumType, setConsortiumType] = useState<"Imóvel" | "Auto" | undefined>(undefined);
   const [comissaoLiquida, setComissaoLiquida] = useState<boolean | undefined>(undefined);
   const [taxaImposto, setTaxaImposto] = useState<number | undefined>(undefined);
+  const { members: team } = useTeam();
+  const sellers = useMemo(() => team.filter(isSeller), [team]);
+  const setPayoutFn = useServerFn(setCommissionPayout);
+  const qc = useQueryClient();
+  const [assigneeId, setAssigneeId] = useState("");
+  const [repasseStr, setRepasseStr] = useState("");
+  const [commissionIds, setCommissionIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!open || !policy) return;
+    setAssigneeId(policy.assigneeId);
+    setRepasseStr("");
+    setCommissionIds([]);
+    (async () => {
+      const { data: comms } = await supabase
+        .from("commissions")
+        .select("id,status")
+        .eq("policy_id", policy.id);
+      const ids = (comms ?? [])
+        .filter((c) => !["cancelada", "estornada", "devolvido"].includes(c.status))
+        .map((c) => c.id);
+      setCommissionIds(ids);
+      if (!ids.length) return;
+      const { data: pays } = await supabase
+        .from("commission_payouts")
+        .select("user_id,percentual_repasse")
+        .in("commission_id", ids)
+        .limit(1);
+      const p0 = pays?.[0];
+      if (p0) {
+        setAssigneeId(p0.user_id);
+        setRepasseStr(String(p0.percentual_repasse).replace(".", ","));
+      }
+    })();
+  }, [open, policy]);
 
   useEffect(() => {
     if (open && policy) {
@@ -170,7 +210,7 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
         startDate: localYmd(startDate),
         endDate: endDate ? localYmd(endDate) : "",
         status,
-        assigneeId: policy.assigneeId,
+        assigneeId: assigneeId || policy.assigneeId,
         commissionPct: commissionPct || undefined,
         comissaoLiquida,
         taxaImposto,
@@ -186,6 +226,14 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
         consortiumQuota: branch === "Consórcio" ? consortiumQuota || undefined : undefined,
         consortiumType: branch === "Consórcio" ? consortiumType : undefined,
       });
+      const repPct = Math.min(100, parsePercent(repasseStr));
+      if (assigneeId && repasseStr.trim() !== "" && commissionIds.length) {
+        for (const cid of commissionIds) {
+          await setPayoutFn({ data: { commissionId: cid, userId: assigneeId, pct: repPct } });
+        }
+        qc.invalidateQueries({ queryKey: ["finance-commissions"] });
+        qc.invalidateQueries();
+      }
       toast.success(`Apólice ${policy.number} atualizada`);
       onOpenChange(false);
     } catch (err) {
@@ -393,6 +441,51 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Vendedor</Label>
+              <Select value={assigneeId} onValueChange={setAssigneeId}>
+                <SelectTrigger className="mt-1.5 rounded-xl bg-muted border-0">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(sellers.some((m) => m.id === assigneeId)
+                    ? sellers
+                    : [...sellers, ...team.filter((m) => m.id === assigneeId)]
+                  ).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Repasse (%)</Label>
+              <Input
+                inputMode="decimal"
+                value={repasseStr}
+                onChange={(e) => setRepasseStr(maskPercentInput(e.target.value))}
+                placeholder="0"
+                disabled={!commissionIds.length}
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Valor do repasse</Label>
+              <Input
+                value={formatBRL((commissionValue * Math.min(100, parsePercent(repasseStr))) / 100)}
+                disabled
+                className="mt-1.5 rounded-xl bg-muted border-0"
+              />
+            </div>
+          </div>
+          {!commissionIds.length && (
+            <p className="text-xs text-muted-foreground -mt-3">
+              Esta apólice não tem comissão no Financeiro; o repasse não pode ser definido.
+            </p>
+          )}
 
           {branch === "Saúde" && (
             <div>
