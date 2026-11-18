@@ -17,6 +17,7 @@ import { z } from "zod";
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; client: Client | null };
 
 const schema = z.object({
+  name: z.string().trim().min(3, "Nome obrigatório").max(200),
   email: z.string().trim().email("E-mail inválido").max(255),
   phone: z.string().trim().min(8, "Telefone obrigatório").max(30),
   document: z.string().trim().min(5, "Documento obrigatório").max(30),
@@ -69,6 +70,7 @@ function maskCpfCnpj(input: string): string {
 
 export function EditClientDialog({ open, onOpenChange, client }: Props) {
   const { updateClient } = useClients();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
@@ -77,6 +79,7 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
 
   useEffect(() => {
     if (open && client) {
+      setName(client.name);
       setEmail(client.email);
       setPhone(maskPhone(client.phone));
       setDocument(maskCpfCnpj(client.document));
@@ -87,9 +90,9 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
 
   if (!client) return null;
 
-  const submit = () => {
+  const submit = async () => {
     if (!isValidISODate(birthDate)) {
-      const parsed = schema.safeParse({ email, phone, document, birthDate: "" });
+      const parsed = schema.safeParse({ name, email, phone, document, birthDate: "" });
       const errs: Record<string, string> = {};
       if (!parsed.success) {
         parsed.error.issues.forEach((i) => {
@@ -101,7 +104,7 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
       setErrors(errs);
       return;
     }
-    const parsed = schema.safeParse({ email, phone, document, birthDate });
+    const parsed = schema.safeParse({ name, email, phone, document, birthDate });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       parsed.error.issues.forEach((i) => {
@@ -110,9 +113,13 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
       setErrors(errs);
       return;
     }
-    updateClient(client.id, parsed.data);
-    toast.success("Cliente atualizado");
-    onOpenChange(false);
+    try {
+      await updateClient(client.id, parsed.data);
+      toast.success("Cliente atualizado");
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(`Não foi possível salvar: ${e instanceof Error ? e.message : "erro"}`);
+    }
   };
 
   return (
@@ -124,11 +131,14 @@ export function EditClientDialog({ open, onOpenChange, client }: Props) {
 
         <div className="space-y-4">
           <div>
-            <Label className="text-xs text-muted-foreground">Nome</Label>
-            <Input value={client.name} disabled className="mt-1.5 rounded-xl bg-muted border-0" />
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Nome não pode ser alterado (referenciado em apólices e oportunidades).
-            </p>
+            <Label className="text-xs text-muted-foreground">Nome *</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={200}
+              className="mt-1.5 rounded-xl bg-muted border-0"
+            />
+            {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">E-mail *</Label>

@@ -155,6 +155,13 @@
       "when": 1794575371673,
       "tag": "0021_fix_policy_folders_branch_name",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795020872290,
+      "tag": "0022_sync_client_name",
+      "breakpoints": true
     }
   ]
 }
