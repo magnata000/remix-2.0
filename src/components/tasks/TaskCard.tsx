@@ -49,13 +49,6 @@ export function TaskCard({ task, onClick, onEdit, onDelete, unread }: Props) {
       }}
       className="group relative w-full text-left bg-card border border-border rounded-xl p-3 hover:border-brand transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
-      {unread && (
-        <span
-          aria-label="Nova mensagem"
-          title="Nova mensagem"
-          className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-success ring-2 ring-card"
-        />
-      )}
       <div
         className={`absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity z-10 ${
           onEdit || onDelete ? "" : "hidden"
@@ -119,8 +112,17 @@ export function TaskCard({ task, onClick, onEdit, onDelete, unread }: Props) {
             </span>
           )}
           {task.comments.length > 0 && (
-            <span className="flex items-center gap-1">
-              <MessageSquare className="h-3 w-3" />
+            <span
+              className={`flex items-center gap-1 ${unread ? "text-success font-semibold" : ""}`}
+              title={unread ? "Nova mensagem" : undefined}
+              aria-label={unread ? `${task.comments.length} mensagens, há mensagem nova` : undefined}
+            >
+              <span className="relative inline-flex">
+                <MessageSquare className="h-3 w-3" />
+                {unread && (
+                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-success ring-1 ring-card" />
+                )}
+              </span>
               {task.comments.length}
             </span>
           )}
