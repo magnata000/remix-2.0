@@ -1656,6 +1656,32 @@ export type Database = {
         }
         Relationships: []
       }
+      task_reads: {
+        Row: {
+          last_read_at: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          last_read_at?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          last_read_at?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_reads_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_timeline: {
         Row: {
           actor_id: string

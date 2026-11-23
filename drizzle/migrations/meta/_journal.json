@@ -162,6 +162,13 @@
       "when": 1795020872290,
       "tag": "0022_sync_client_name",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795446378120,
+      "tag": "0023_task_reads",
+      "breakpoints": true
     }
   ]
 }

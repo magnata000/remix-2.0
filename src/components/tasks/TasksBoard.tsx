@@ -29,6 +29,7 @@ import { runWorkflows } from "@/lib/tasks/workflowEngine";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useClients } from "@/lib/portfolio/clientStore";
 import { TaskCard } from "./TaskCard";
+import { hasUnreadMessages, useTaskReads } from "@/lib/tasks/taskReads";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { ManageColumnsDialog } from "./ManageColumnsDialog";
@@ -72,6 +73,11 @@ export function TasksBoard() {
   const [fPriority, setFPriority] = useState<string[]>([]);
   const [fClient, setFClient] = useState<string>("");
   const [fSort, setFSort] = useState<"recent" | "old">("recent");
+  const [fUnread, setFUnread] = useState(false);
+  const { reads, markRead } = useTaskReads(userId);
+  const isUnread = (t: TaskItem) => hasUnreadMessages(t, userId, reads[t.id]);
+  const lastMsgAt = (t: TaskItem) =>
+    t.comments.reduce((m, c) => Math.max(m, +new Date(c.createdAt)), 0);
 
   // Workflow engine — roda no mount da aba, dedupe via ref
   const defaultColumnId = columns[0]?.id;
@@ -99,13 +105,22 @@ export function TasksBoard() {
     if (fPriority.length) list = list.filter((t) => fPriority.includes(t.priority));
     if (fClient)
       list = list.filter((t) => t.clientName?.toLowerCase().includes(fClient.toLowerCase()));
+    if (fUnread) {
+      list = list.filter(isUnread);
+      list.sort((a, b) => lastMsgAt(b) - lastMsgAt(a));
+      return list;
+    }
     list.sort((a, b) =>
       fSort === "recent"
         ? +new Date(b.createdAt) - +new Date(a.createdAt)
         : +new Date(a.createdAt) - +new Date(b.createdAt),
     );
     return list;
-  }, [tasks, fAssignee, fPriority, fClient, fSort]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, fAssignee, fPriority, fClient, fSort, fUnread, reads, userId]);
+  const unreadCount = useMemo(() => tasks.filter(isUnread).length, // eslint-disable-next-line react-hooks/exhaustive-deps
+  [tasks, reads, userId]);
+  useEffect(() => { if (detail) void markRead(detail.id); }, [detail, markRead]);
 
   const byColumn = (id: string) => filtered.filter((t) => t.columnId === id);
 
@@ -279,6 +294,22 @@ export function TasksBoard() {
               </SelectContent>
             </Select>
 
+            <Button
+              type="button"
+              variant={fUnread ? "default" : "outline"}
+              className="rounded-xl h-9 text-xs"
+              onClick={() => setFUnread((v) => !v)}
+              aria-pressed={fUnread}
+            >
+              <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+              Últimas Atualizações
+              {unreadCount > 0 && (
+                <span className="ml-1.5 rounded-full bg-destructive text-destructive-foreground px-1.5 text-[10px] font-semibold">
+                  {unreadCount}
+                </span>
+              )}
+            </Button>
+
             <ToggleGroup
               type="multiple"
               value={fPriority}
@@ -356,6 +387,7 @@ export function TasksBoard() {
                   <TaskCard
                     task={t}
                     onClick={() => setDetail(t)}
+                    unread={isUnread(t)}
                     onEdit={canManageTask(t.assigneeId) ? () => setEditTask(t) : undefined}
                     onDelete={canManageTask(t.assigneeId) ? () => setConfirmDelete(t) : undefined}
                   />

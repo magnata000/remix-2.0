@@ -12,9 +12,10 @@ type Props = {
   onClick: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  unread?: boolean;
 };
 
-export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
+export function TaskCard({ task, onClick, onEdit, onDelete, unread }: Props) {
   const isAll = task.assigneeId === "all";
   const { members } = useTeam();
   const assignee = members.find((m) => m.id === task.assigneeId);
@@ -78,6 +79,11 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: Props) {
       </div>
       <div className="flex items-start justify-between gap-2 pr-16">
         <p className="font-semibold text-sm flex-1 min-w-0">{task.title}</p>
+        {unread && (
+          <span className="shrink-0 rounded-full bg-destructive text-destructive-foreground px-1.5 py-0.5 text-[10px] font-semibold">
+            Nova mensagem
+          </span>
+        )}
         <Badge className={`${pr.className} border-0 shrink-0`}>{pr.label}</Badge>
       </div>
       {task.clientName && (
