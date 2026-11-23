@@ -276,8 +276,11 @@ export function CommentBubble({
   quoted,
   onQuoteClick,
   imagePreview,
+  reactionSlot,
 }: {
   imagePreview?: boolean;
+  /** Área opcional de reações (usada só nas tarefas). */
+  reactionSlot?: React.ReactNode;
   comment: TaskComment;
   attachments: TaskAttachment[];
   canEdit: boolean;
@@ -369,7 +372,7 @@ export function CommentBubble({
   }
 
   return (
-    <div className="group/comment">
+    <div className="group/comment group/reactable">
       <div className="flex items-start gap-1.5">
         <div className="flex-1 min-w-0 space-y-1.5">
           {comment.replyToId && (
@@ -472,6 +475,7 @@ export function CommentBubble({
           )}
         </div>
       </div>
+      {reactionSlot}
       {comment.editedAt && comment.editedBy && (
         <span className="text-[10px] text-muted-foreground italic">
           editada por {nameOf(comment.editedBy)}

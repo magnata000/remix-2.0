@@ -388,6 +388,7 @@ export function TasksBoard() {
                     task={t}
                     onClick={() => setDetail(t)}
                     unread={isUnread(t)}
+                    onReacted={() => void markRead(t.id)}
                     onEdit={canManageTask(t.assigneeId) ? () => setEditTask(t) : undefined}
                     onDelete={canManageTask(t.assigneeId) ? () => setConfirmDelete(t) : undefined}
                   />

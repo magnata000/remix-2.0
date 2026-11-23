@@ -169,6 +169,13 @@
       "when": 1795446378120,
       "tag": "0023_task_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795447495278,
+      "tag": "0024_task_comment_reactions",
+      "breakpoints": true
     }
   ]
 }

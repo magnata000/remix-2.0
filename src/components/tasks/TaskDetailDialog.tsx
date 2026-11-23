@@ -31,6 +31,7 @@ import { AudioRecorder } from "@/components/shared/AudioRecorder";
 import { SlaControl } from "@/components/shared/SlaControl";
 import { useSlaConfig, isTerminalTaskColumnTitle } from "@/lib/sla/slaConfig";
 import { MentionInput } from "./MentionInput";
+import { ReactionBar, useTaskReactions } from "@/lib/tasks/taskReactions";
 import {
   AttachmentChip,
   CommentBubble,
@@ -62,6 +63,7 @@ export function TaskDetailDialog({
     currentUserId,
   } = useTaskStore();
   const { taskColumnHours } = useSlaConfig();
+  const { byComment: reactionsByComment, toggle: toggleReaction } = useTaskReactions(currentUserId);
   const [text, setText] = useState("");
   const [pending, setPending] = useState<File[]>([]);
   const [replyToId, setReplyToId] = useState<string | null>(null);
@@ -267,6 +269,7 @@ export function TaskDetailDialog({
                         <TimelineRow key={`pin-${c.id}`} authorId={c.authorId} at={c.createdAt}>
                           <CommentBubble
  imagePreview
+                            reactionSlot={<ReactionBar reactions={reactionsByComment.get(c.id) ?? []} userId={currentUserId} onToggle={(e) => void toggleReaction(c.id, e)} />}
                             comment={c}
                             attachments={atts}
                             canEdit={
@@ -322,6 +325,7 @@ export function TaskDetailDialog({
                       <div data-comment-id={c.id}>
                       <CommentBubble
  imagePreview
+                            reactionSlot={<ReactionBar reactions={reactionsByComment.get(c.id) ?? []} userId={currentUserId} onToggle={(e) => void toggleReaction(c.id, e)} />}
                         comment={c}
                         attachments={atts}
                         canEdit={

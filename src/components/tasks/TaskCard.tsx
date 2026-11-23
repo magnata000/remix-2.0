@@ -6,6 +6,8 @@ import { useTeam } from "@/lib/team/teamStore";
 import { MESSAGE_PREVIEW_LIMIT, PRIORITY_META, TaskItem } from "@/lib/tasks/taskStore";
 import { SlaBadge } from "@/components/shared/SlaBadge";
 import { nameOf } from "@/components/shared/Timeline";
+import { ReactionBar, useTaskReactions } from "@/lib/tasks/taskReactions";
+import { useRole } from "@/lib/auth/roleStore";
 
 type Props = {
   task: TaskItem;
@@ -13,9 +15,13 @@ type Props = {
   onEdit?: () => void;
   onDelete?: () => void;
   unread?: boolean;
+  /** Chamado ao reagir pelo card: a tarefa passa a contar como lida. */
+  onReacted?: () => void;
 };
 
-export function TaskCard({ task, onClick, onEdit, onDelete, unread }: Props) {
+export function TaskCard({ task, onClick, onEdit, onDelete, unread, onReacted }: Props) {
+  const { userId } = useRole();
+  const { byComment, toggle } = useTaskReactions(userId);
   const isAll = task.assigneeId === "all";
   const { members } = useTeam();
   const assignee = members.find((m) => m.id === task.assigneeId);
@@ -85,11 +91,20 @@ export function TaskCard({ task, onClick, onEdit, onDelete, unread }: Props) {
         <p className="text-xs text-muted-foreground mt-1 truncate">Cliente · {task.clientName}</p>
       )}
       {lastComment && lastCommentPreview && (
-        <div className="mt-2 rounded-lg bg-muted/60 px-2 py-1.5">
+        <div className="group/reactable mt-2 rounded-lg bg-muted/60 px-2 py-1.5">
           <p className="text-[10px] text-muted-foreground font-medium">
             {nameOf(lastComment.authorId)}
           </p>
           <p className="text-xs mt-0.5 break-words">{lastCommentPreview}</p>
+          <ReactionBar
+            compact
+            reactions={byComment.get(lastComment.id) ?? []}
+            userId={userId}
+            onToggle={(e) => {
+              void toggle(lastComment.id, e);
+              onReacted?.();
+            }}
+          />
         </div>
       )}
       {task.slaDueAt && (
