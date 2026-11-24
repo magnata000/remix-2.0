@@ -832,6 +832,39 @@ export type Database = {
           },
         ]
       }
+      insurer_branches: {
+        Row: {
+          branch_id: string
+          created_at: string
+          insurer_id: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          insurer_id: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          insurer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurer_branches_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurer_branches_insurer_id_fkey"
+            columns: ["insurer_id"]
+            isOneToOne: false
+            referencedRelation: "insurers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurers: {
         Row: {
           created_at: string

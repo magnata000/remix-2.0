@@ -408,3 +408,33 @@ export const deleteNotification = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---------------- Ramos por seguradora ----------------
+
+export type InsurerBranchLink = { insurerId: string; branchId: string };
+
+export const listInsurerBranches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<InsurerBranchLink[]> => {
+    const { data, error } = await context.supabase.from("insurer_branches").select("insurer_id, branch_id");
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => ({ insurerId: r.insurer_id, branchId: r.branch_id }));
+  });
+
+export const setInsurerBranches = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { insurerId: string; branchIds: string[] }) => {
+    if (!d.insurerId) throw new Error("Seguradora inválida");
+    if (d.branchIds.length === 0) throw new Error("Selecione ao menos um ramo");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error: delErr } = await context.supabase.from("insurer_branches").delete().eq("insurer_id", data.insurerId);
+    if (delErr) throw new Error(delErr.message);
+    const { error } = await context.supabase
+      .from("insurer_branches")
+      .insert(data.branchIds.map((b) => ({ insurer_id: data.insurerId, branch_id: b })));
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

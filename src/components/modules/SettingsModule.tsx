@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Ban, Check, MailPlus, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Ban, Check, Layers, MailPlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,9 @@ import {
   inviteSettingsUser,
   listAccessRequests,
   listCommissionModels,
+  listInsurerBranches,
   listSettingsUsers,
+  setInsurerBranches,
   renameCatalogItem,
   resendSettingsInvite,
   resolveAccessRequest,
@@ -387,6 +389,13 @@ function CatalogSection({ kind }: { kind: "branch" | "insurer" }) {
   const refresh = () => void qc.invalidateQueries({ queryKey: [key] });
   const onError = (e: unknown) => toast.error(errMsg(e));
 
+  const branchesFn = useServerFn(listBranches);
+  const linksFn = useServerFn(listInsurerBranches);
+  const setLinksFn = useServerFn(setInsurerBranches);
+  const isInsurer = kind === "insurer";
+  const { data: allBranches = [] } = useQuery({ queryKey: ["branches"], queryFn: () => branchesFn(), enabled: isInsurer });
+  const { data: links = [] } = useQuery({ queryKey: ["insurer-branches"], queryFn: () => linksFn(), enabled: isInsurer });
+  const [branchDialog, setBranchDialog] = useState<{ id?: string; name: string } | null>(null);
   const create = useMutation({
     mutationFn: () => createFn({ data: { kind, name: newName } }),
     onSuccess: () => {
@@ -395,6 +404,25 @@ function CatalogSection({ kind }: { kind: "branch" | "insurer" }) {
     },
     onError,
   });
+  const saveInsurer = useMutation({
+    mutationFn: async (d: { id?: string; name: string; branchIds: string[] }) => {
+      if (d.branchIds.length === 0) throw new Error("Selecione ao menos um ramo");
+      const id = d.id ?? (await createFn({ data: { kind: "insurer", name: d.name } })).id;
+      await setLinksFn({ data: { insurerId: id, branchIds: d.branchIds } });
+    },
+    onSuccess: (_r, d) => {
+      toast.success(d.id ? "Ramos atualizados" : "Seguradora adicionada");
+      setNewName("");
+      setBranchDialog(null);
+      refresh();
+      void qc.invalidateQueries({ queryKey: ["insurer-branches"] });
+    },
+    onError,
+  });
+  const branchesOf = (id: string) => {
+    const ids = new Set(links.filter((l) => l.insurerId === id).map((l) => l.branchId));
+    return allBranches.filter((b) => ids.has(b.id));
+  };
   const rename = useMutation({
     mutationFn: (d: { id: string; name: string }) => renameFn({ data: { kind, ...d } }),
     onSuccess: () => {
@@ -419,7 +447,9 @@ function CatalogSection({ kind }: { kind: "branch" | "insurer" }) {
         className="flex gap-2 mb-4"
         onSubmit={(e) => {
           e.preventDefault();
-          if (newName.trim()) create.mutate();
+          if (!newName.trim()) return;
+          if (isInsurer) setBranchDialog({ name: newName.trim() });
+          else create.mutate();
         }}
       >
         <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Novo nome" />
@@ -444,7 +474,25 @@ function CatalogSection({ kind }: { kind: "branch" | "insurer" }) {
                 <Button size="sm" type="button" variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
               </form>
             ) : (
-              <p className={`flex-1 text-sm ${item.isActive ? "" : "text-muted-foreground line-through"}`}>{item.name}</p>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm ${item.isActive ? "" : "text-muted-foreground line-through"}`}>{item.name}</p>
+                {isInsurer && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {branchesOf(item.id).length === 0 ? (
+                      <span className="text-xs text-muted-foreground">Sem ramos definidos (aparece em todos)</span>
+                    ) : (
+                      branchesOf(item.id).map((b) => (
+                        <Badge key={b.id} variant="secondary" className="text-[10px] font-normal">{b.name}</Badge>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {isInsurer && editing?.id !== item.id && (
+              <Button size="icon" variant="ghost" className="h-8 w-8" title="Ramos de atuação" onClick={() => setBranchDialog({ id: item.id, name: item.name })}>
+                <Layers className="h-4 w-4" />
+              </Button>
             )}
             {editing?.id !== item.id && (
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing({ id: item.id, name: item.name })}>
@@ -455,7 +503,54 @@ function CatalogSection({ kind }: { kind: "branch" | "insurer" }) {
           </div>
         ))}
       </div>
+      {branchDialog && (
+        <InsurerBranchesDialog
+          name={branchDialog.name}
+          branches={allBranches.filter((b) => b.isActive)}
+          initial={branchDialog.id ? branchesOf(branchDialog.id).map((b) => b.id) : allBranches.filter((b) => b.isActive).map((b) => b.id)}
+          pending={saveInsurer.isPending}
+          onClose={() => setBranchDialog(null)}
+          onSave={(branchIds) => saveInsurer.mutate({ id: branchDialog.id, name: branchDialog.name, branchIds })}
+        />
+      )}
     </Card>
+  );
+}
+
+function InsurerBranchesDialog(props: {
+  name: string;
+  branches: CatalogItem[];
+  initial: string[];
+  pending: boolean;
+  onClose: () => void;
+  onSave: (branchIds: string[]) => void;
+}) {
+  const [sel, setSel] = useState<string[]>(props.initial);
+  const toggle = (id: string, on: boolean) => setSel((s) => (on ? [...s, id] : s.filter((x) => x !== id)));
+  return (
+    <Dialog open onOpenChange={(o) => !o && props.onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Ramos de atuação · {props.name}</DialogTitle>
+        </DialogHeader>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setSel(props.branches.map((b) => b.id))}>Selecionar todos</Button>
+          <Button size="sm" variant="ghost" onClick={() => setSel([])}>Limpar</Button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
+          {props.branches.map((b) => (
+            <label key={b.id} className="flex items-center gap-2 text-sm">
+              <Checkbox checked={sel.includes(b.id)} onCheckedChange={(c) => toggle(b.id, c === true)} />
+              {b.name}
+            </label>
+          ))}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={props.onClose}>Cancelar</Button>
+          <Button disabled={props.pending || sel.length === 0} onClick={() => props.onSave(sel)}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

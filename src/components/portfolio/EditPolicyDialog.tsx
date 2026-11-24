@@ -34,7 +34,7 @@ import {
 } from "@/lib/mock/data";
 import { usePolicies } from "@/lib/portfolio/policyStore";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
-import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
+import { useInsurersForBranch } from "@/lib/insurers/useInsurersForBranch";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { PolicyTaxOverrideFields } from "./PolicyTaxOverrideFields";
 import { toast } from "sonner";
@@ -149,7 +149,11 @@ export function EditPolicyDialog({ open, onOpenChange, policy }: Props) {
     }
   }, [open, policy]);
 
-  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+  const branchInsurers = useInsurersForBranch(branch, open);
+  const availableInsurers = useMemo(
+    () => (policy && !branchInsurers.includes(policy.insurer) ? [policy.insurer, ...branchInsurers] : branchInsurers),
+    [branchInsurers, policy],
+  );
 
   useEffect(() => {
     if (!availableInsurers.includes(insurer)) {

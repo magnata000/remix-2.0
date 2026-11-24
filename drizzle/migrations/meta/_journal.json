@@ -176,6 +176,13 @@
       "when": 1795447495278,
       "tag": "0024_task_comment_reactions",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795529121705,
+      "tag": "0025_insurer_branches",
+      "breakpoints": true
     }
   ]
 }

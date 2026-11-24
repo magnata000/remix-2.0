@@ -50,7 +50,7 @@ import { useDocumentStore } from "@/lib/documents/documentStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { BranchSpecificFields, maskPercentInput, parsePercent } from "./BranchSpecificFields";
 import { useCommissionConfigStore } from "@/lib/financial/commissionConfigStore";
-import { getInsurersForBranch } from "@/lib/insurers/insurerStore";
+import { useInsurersForBranch } from "@/lib/insurers/useInsurersForBranch";
 import { toast } from "sonner";
 import { BranchCombobox } from "./BranchCombobox";
 import { useQuery } from "@tanstack/react-query";
@@ -161,7 +161,7 @@ export function NewPolicyDialog({
   const [consortiumQuota, setConsortiumQuota] = useState("");
   const [consortiumType, setConsortiumType] = useState<"Imóvel" | "Auto" | undefined>(undefined);
 
-  const availableInsurers = useMemo(() => [...getInsurersForBranch(branch)], [branch]);
+  const availableInsurers = useInsurersForBranch(branch, open);
 
   useEffect(() => {
     if (!availableInsurers.includes(insurer)) {
