@@ -2236,6 +2236,8 @@ export type Database = {
         | "Itaú Seguros"
         | "NotreDame"
         | "Aliro"
+        | "Itaú"
+        | "Alice"
       kanban_stage: "lead" | "cotacao" | "negociacao" | "fechado" | "perdido"
       lost_reason: "preco" | "cobertura" | "prazo" | "sem-retorno" | "outro"
       notification_type: "access_request" | "policy_not_renewed_pending_reason"
@@ -2511,6 +2513,8 @@ export const Constants = {
         "Itaú Seguros",
         "NotreDame",
         "Aliro",
+        "Itaú",
+        "Alice",
       ],
       kanban_stage: ["lead", "cotacao", "negociacao", "fechado", "perdido"],
       lost_reason: ["preco", "cobertura", "prazo", "sem-retorno", "outro"],

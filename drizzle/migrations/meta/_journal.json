@@ -183,6 +183,13 @@
       "when": 1795529121705,
       "tag": "0025_insurer_branches",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795532915786,
+      "tag": "0026_sync_insurer_enum",
+      "breakpoints": true
     }
   ]
 }
